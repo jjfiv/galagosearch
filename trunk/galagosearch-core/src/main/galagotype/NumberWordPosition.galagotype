@@ -1,0 +1,9 @@
+package org.galagosearch.core.types;
+
+type NumberWordPosition {
+    int document;
+    bytes word;
+    int position;
+    
+    order: +word +document +position;
+}

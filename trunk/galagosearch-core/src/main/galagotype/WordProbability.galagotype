@@ -1,0 +1,8 @@
+package org.galagosearch.core.types;
+
+type WordProbability {
+    String word;
+    double probability;          
+    
+    order: +word;
+}

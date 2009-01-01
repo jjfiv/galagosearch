@@ -1,0 +1,11 @@
+package org.galagosearch.core.types;
+
+type NumberedValuedExtent {
+    bytes extentName;
+    long number;
+    int begin;
+    int end;
+    long value;
+
+    order: +extentName +number +begin;
+}
