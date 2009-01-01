@@ -1,0 +1,9 @@
+package org.galagosearch.core.types;
+
+type IdentifiedLink {
+    String identifier;
+    String url;
+    String anchorText;
+    
+    order: +url;
+}
