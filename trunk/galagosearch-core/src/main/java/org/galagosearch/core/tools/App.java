@@ -400,7 +400,7 @@ public class App {
         //args = new String[] { "doc", "/tmp/cacm.corpus", "CACM-3200" };
         //args = new String[] { "docs", "/Users/trevor/Desktop/wiki-small.corpus" };
         //args = new String[] { "build", "/Users/trevor/Desktop/wiki-small.corpus", "/tmp/wiki-small-index" };
-        args =  new String[] { "search", "/tmp/wiki-small-index", "/Users/trevor/Desktop/wiki-small.corpus" };
+        //args =  new String[] { "search", "/tmp/wiki-small-index", "/Users/trevor/Desktop/wiki-small.corpus" };
 
         if (args[0].equals("doc")) {
             DocumentIndexReader reader = new DocumentIndexReader(args[1]);
