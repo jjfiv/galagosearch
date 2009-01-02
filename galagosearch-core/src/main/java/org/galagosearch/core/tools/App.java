@@ -111,11 +111,12 @@ public class App {
             store = new NullStore();
         }
         Search search = new Search(retrieval, store);
-        Server server = new Server(8090);
+        int port = Utility.getFreePort();
+        Server server = new Server(port);
         server.addHandler(new SearchWebHandler(search));
         server.start();
+        System.out.println("Server: http://localhost:" + port);
     }
-
 
     public static Job getDocumentConverter(String directory, String outputCorpus) {
         Job job = new Job();

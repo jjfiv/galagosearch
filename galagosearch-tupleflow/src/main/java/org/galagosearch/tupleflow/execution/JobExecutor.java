@@ -1144,8 +1144,8 @@ public class JobExecutor {
         }
     }
 
-    public void run(StageExecutor executor) throws InterruptedException, ExecutionException, UnknownHostException {
-        Server server = new Server(8055);
+    public void run(StageExecutor executor) throws InterruptedException, ExecutionException, UnknownHostException, IOException {
+        Server server = new Server(Utility.getFreePort());
         runWithServer(executor, server);
     }
 
@@ -1175,9 +1175,10 @@ public class JobExecutor {
             return false;
         }
 
-        Server server = new Server(8055);
+        int port = Utility.getFreePort();
+        Server server = new Server(port);
         server.start();
-        System.out.println("Status: http://localhost:8055");
+        System.out.println("Status: http://localhost:" + port);
         jobExecutor.runWithServer(executor, server);
         server.stop();
         executor.shutdown();
