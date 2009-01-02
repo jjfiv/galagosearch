@@ -17,6 +17,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.logging.Logger;
+import org.galagosearch.tupleflow.execution.Step;
 
 /**
  * Lots of static methods here that have broad use.
@@ -24,6 +25,19 @@ import java.util.logging.Logger;
  * @author trevor
  */
 public class Utility {
+    /**
+     * Builds a simple Sorter step that can be added to a TupleFlow stage.
+     *
+     * @param sortOrder An order object representing how and what to sort.
+     * @return a Step object that can be added to a TupleFlow Stage.
+     */
+    public static Step getSorter(Order sortOrder) {
+        Parameters p = new Parameters();
+        p.add("class", sortOrder.getOrderedClass().getName());
+        p.add("order", Utility.join(sortOrder.getOrderSpec()));
+        return new Step(Sorter.class, p);
+    }
+
     public static boolean isInteger(String s) {
         try {
             Integer.parseInt(s);
