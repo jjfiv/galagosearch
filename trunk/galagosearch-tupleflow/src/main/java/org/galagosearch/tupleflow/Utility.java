@@ -308,16 +308,12 @@ public class Utility {
             Method m = File.class.getMethod("getUsableSpace");
             Long result = (Long) m.invoke(new File(pathname));
             return (long) result;
-        } catch (IllegalAccessException e) {
-            return getUnixFreeSpace(pathname);
-        } catch (IllegalArgumentException e) {
-            return getUnixFreeSpace(pathname);
-        } catch (ExceptionInInitializerError e) {
-            return getUnixFreeSpace(pathname);
-        } catch (NoSuchMethodException e) {
-            return getUnixFreeSpace(pathname);
-        } catch (InvocationTargetException e) {
-            throw (IOException) new IOException("Trouble calling File.getUsableSpace").initCause(e);
+        } catch (Exception e) {
+            try {
+                return getUnixFreeSpace(pathname);
+            } catch(Exception ex) {
+                return 1024*1024*1024; // 1GB
+            }
         }
     }
 
