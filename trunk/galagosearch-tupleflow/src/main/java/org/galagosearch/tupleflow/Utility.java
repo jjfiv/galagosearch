@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.ServerSocket;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,6 +37,17 @@ public class Utility {
         p.add("class", sortOrder.getOrderedClass().getName());
         p.add("order", Utility.join(sortOrder.getOrderSpec()));
         return new Step(Sorter.class, p);
+    }
+    
+    /**
+     * Finds a free port to listen on.  Useful for starting up internal web servers.
+     * (copied from chaoticjava.com)
+     */
+    public static int getFreePort() throws IOException {
+      ServerSocket server = new ServerSocket(0);
+      int port = server.getLocalPort();
+      server.close();
+      return port;
     }
 
     public static boolean isInteger(String s) {
