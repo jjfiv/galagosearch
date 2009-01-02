@@ -1179,10 +1179,13 @@ public class JobExecutor {
         Server server = new Server(port);
         server.start();
         System.out.println("Status: http://localhost:" + port);
-        jobExecutor.runWithServer(executor, server);
-        server.stop();
-        executor.shutdown();
-
+        try {
+            jobExecutor.runWithServer(executor, server);
+        } finally {
+            server.stop();
+            executor.shutdown();
+        }
+        
         return !store.hasStatements();
     }
 
