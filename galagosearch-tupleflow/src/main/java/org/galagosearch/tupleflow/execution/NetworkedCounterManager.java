@@ -2,10 +2,7 @@
 
 package org.galagosearch.tupleflow.execution;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.galagosearch.tupleflow.Counter;
 
 /**
@@ -40,16 +37,13 @@ public class NetworkedCounterManager implements Runnable {
     }
 
     public void run() {
-        boolean finished = false;
-        while (!finished) {
+        while (true) {
             synchronized(this) {
-                // By setting the finished flag here, we ensure that counters get
-                // flushed when execution ends.
-                if (stop) finished = true;
-
                 for (NetworkedCounter counter : counters.values()) {
                     counter.flush();
                 }
+
+                if (stop) break;
             }
 
             try {
