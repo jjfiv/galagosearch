@@ -19,7 +19,7 @@ public class OrderedCombiner<T> implements ReaderSource<T> {
     Order<T> order;
     public Step processor;
     boolean closeOnExit;
-    static int defaultBufferSize = 10000;
+    static int defaultBufferSize = 1000;
     boolean initialized = false;
     ReaderSource<T> source = null;
     T last = null;
