@@ -266,7 +266,7 @@ public class Main {
     }
 
     public static void usage() {
-        System.err.println("ireval: ");
+        System.err.println("galago eval <args>: ");
         System.err.println(
                 "   There are two ways to use this program.  First, you can evaluate a single ranking: ");
         System.err.println("      java -jar ireval.jar TREC-Ranking-File TREC-Judgments-File");
