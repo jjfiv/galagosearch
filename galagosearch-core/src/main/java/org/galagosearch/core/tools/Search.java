@@ -37,6 +37,8 @@ public class Search {
     }
 
     public static class SearchResult {
+        public Node query;
+        public Node transformedQuery;
         public List<SearchResultItem> items;
     }
 
@@ -77,9 +79,12 @@ public class Search {
 
     public SearchResult runQuery(String query, int startAt, int count, boolean summarize) throws Exception {
         Node tree = parseQuery(query, new Parameters());
-        ScoredDocument[] results = retrieval.runQuery(tree, startAt + count);
+        Node transformed = retrieval.transformQuery(tree);
+        ScoredDocument[] results = retrieval.runQuery(transformed, startAt + count);
         SearchResult result = new SearchResult();
         Set<String> queryTerms = StructuredQuery.findQueryTerms(tree);
+        result.query = tree;
+        result.transformedQuery = transformed;
         result.items = new ArrayList();
 
         for (int i = startAt; i < Math.min(startAt + count, results.length); i++) {
