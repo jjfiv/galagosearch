@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -883,7 +884,6 @@ public class JobExecutor {
                     instanceCount = 1;
                 }
                 stage.instanceCount = instanceCount;
-                System.err.println(stage.getName() + " " + instanceCount);
             }
         }
     }
@@ -950,12 +950,14 @@ public class JobExecutor {
         // reference to the parent class.
         String temporaryStorage;
         StageExecutor executor;
+        Date startDate;
 
         public JobExecutionStatus(HashMap<String, StageGroupDescription> stages,
                 String temporaryStorage, StageExecutor executor, String masterURL) {
             this.stages = stages;
             this.temporaryStorage = temporaryStorage;
             this.executor = executor;
+            this.startDate = new Date();
 
             for (StageGroupDescription description : stages.values()) {
                 // build a list of dependencies from pipe inputs to stage names
@@ -1006,6 +1008,31 @@ public class JobExecutor {
             }
 
             return result;
+        }
+
+        /**
+         * Returns the start date for this job.
+         */
+
+        public Date getStartDate() {
+            return startDate;
+        }
+
+        /**
+         * Returns the total amount of free memory in this JVM.
+         */
+
+        public long getFreeMemory() {
+            return Runtime.getRuntime().freeMemory();
+        }
+
+        /**
+         * Returns the maximum amount of memory that can be used by this
+         * Java virtual machine.
+         */
+
+        public long getMaxMemory() {
+            return Runtime.getRuntime().maxMemory();
         }
 
         public void run() throws InterruptedException, ExecutionException {
