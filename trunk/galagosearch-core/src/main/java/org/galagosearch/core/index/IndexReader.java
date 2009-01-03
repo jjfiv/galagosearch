@@ -48,7 +48,6 @@ public class IndexReader {
     long vocabularyOffset;
     long manifestOffset;
     long footerOffset;
-    // compressed reads aren't yet supported
     boolean isCompressed;
     
     private static class VocabularyBlock {
