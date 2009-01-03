@@ -83,7 +83,7 @@ public class Search {
         result.items = new ArrayList();
 
         for (int i = startAt; i < Math.min(startAt + count, results.length); i++) {
-            String identifier = retrieval.getDocument(results[i].document);
+            String identifier = retrieval.getDocumentName(results[i].document);
             Document document = getDocument(identifier);
             SearchResultItem item = new SearchResultItem();
 
