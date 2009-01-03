@@ -1,11 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+// BSD License (http://www.galagosearch.org/license)
 
 package org.galagosearch.core.retrieval.traversal;
 
-import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
 import java.util.ArrayList;
 import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.query.Node;
