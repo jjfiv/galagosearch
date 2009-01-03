@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import org.galagosearch.core.types.NumberedDocumentData;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
@@ -29,11 +30,13 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     int lastFooterWidth = 0;
     int lastDocument = -1;
     ArrayList<Integer> footers;
+    Counter documentsWritten = null;
 
     public DocumentNameWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
         String filename = parameters.getXML().get("filename");
         footers = new ArrayList<Integer>();
         output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
+        documentsWritten = parameters.getCounter("Documents Written");
     }
 
     public void flush() throws IOException {
@@ -71,6 +74,8 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
                 putName(documentName, 0, 0);
             }
         }
+
+        if (documentsWritten != null) documentsWritten.increment();
     }
 
     public void putName(String header, int footer, int footerWidth) throws IOException {
