@@ -17,6 +17,7 @@ import org.galagosearch.core.parse.DocumentSource;
 import org.galagosearch.core.parse.ExtentExtractor;
 import org.galagosearch.core.parse.ExtentsNumberer;
 import org.galagosearch.core.parse.LinkExtractor;
+import org.galagosearch.core.parse.Porter2Stemmer;
 import org.galagosearch.core.parse.PositionPostingsNumberer;
 import org.galagosearch.core.parse.PostingsPositionExtractor;
 import org.galagosearch.core.parse.TagTokenizer;
@@ -51,12 +52,15 @@ import org.galagosearch.tupleflow.types.XMLFragment;
  */
 public class BuildIndex {
     String indexPath;
+    boolean stemming;
 
     public BuildIndex() {
+        this.stemming = false;
     }
 
     public BuildIndex(String indexPath) {
         this.indexPath = indexPath;
+        this.stemming = true;
     }
 
     public Stage getSplitStage(String[] inputs) throws IOException {
@@ -109,6 +113,11 @@ public class BuildIndex {
         stage.add(new StageConnectionPoint(
                 ConnectionPointType.Output,
                 "documentData", new DocumentData.IdentifierOrder()));
+        if (stemming) {
+            stage.add(new StageConnectionPoint(
+                ConnectionPointType.Output,
+                "stemmedPostings", new DocumentWordPosition.DocumentWordPositionOrder()));
+        }
 
         stage.add(new InputStep("splits"));
         stage.add(new Step(UniversalParser.class));
@@ -128,6 +137,16 @@ public class BuildIndex {
         multi.groups.add(text);
         multi.groups.add(extents);
         multi.groups.add(documentData);
+
+        if (stemming) {
+            ArrayList<Step> stemmedSteps = new ArrayList<Step>();
+            stemmedSteps.add(new Step(Porter2Stemmer.class));
+            stemmedSteps.add(new Step(PostingsPositionExtractor.class));
+            stemmedSteps.add(Utility.getSorter(new DocumentWordPosition.DocumentWordPositionOrder()));
+            stemmedSteps.add(new OutputStep("numberedPostings"));
+            multi.groups.add(stemmedSteps);
+        }
+
         stage.add(multi);
         return stage;
     }
@@ -179,15 +198,15 @@ public class BuildIndex {
         return stage;
     }
 
-    public Stage getWritePostingsStage() {
-        Stage stage = new Stage("writePostings");
+    public Stage getWritePostingsStage(String stageName, String inputName, String indexName) {
+        Stage stage = new Stage(stageName);
 
         stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input, "numberedPostings",
+                ConnectionPointType.Input, inputName,
                 new NumberWordPosition.WordDocumentPositionOrder()));
-        stage.add(new InputStep("numberedPostings"));
+        stage.add(new InputStep(inputName));
         Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "parts" + File.separator + "postings");
+        p.add("filename", indexPath + File.separator + "parts" + File.separator + indexName);
         stage.add(new Step(PositionIndexWriter.class, p));
         return stage;
     }
@@ -282,23 +301,23 @@ public class BuildIndex {
         return stage;
     }
 
-    public Stage getNumberPostingsStage() {
-        Stage stage = new Stage("numberPostings");
+    public Stage getNumberPostingsStage(String stageName, String inputName, String outputName) {
+        Stage stage = new Stage(stageName);
 
         stage.add(new StageConnectionPoint(
                 ConnectionPointType.Input,
-                "postings", new DocumentWordPosition.DocumentWordPositionOrder()));
+                inputName, new DocumentWordPosition.DocumentWordPositionOrder()));
         stage.add(new StageConnectionPoint(
                 ConnectionPointType.Input,
                 "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
         stage.add(new StageConnectionPoint(
                 ConnectionPointType.Output,
-                "numberedPostings", new NumberWordPosition.WordDocumentPositionOrder()));
+                outputName, new NumberWordPosition.WordDocumentPositionOrder()));
 
-        stage.add(new InputStep("postings"));
+        stage.add(new InputStep(inputName));
         stage.add(new Step(PositionPostingsNumberer.class));
         stage.add(Utility.getSorter(new NumberWordPosition.WordDocumentPositionOrder()));
-        stage.add(new OutputStep("numberedPostings"));
+        stage.add(new OutputStep(outputName));
 
         return stage;
     }
@@ -324,19 +343,22 @@ public class BuildIndex {
         return stage;
     }
 
-    public Job getIndexJob(String indexDirectory, String[] indexInputs) throws IOException {
+    public Job getIndexJob(String indexDirectory, String[] indexInputs,
+                           boolean extractAnchors, boolean useStemming) throws IOException {
         Job job = new Job();
         this.indexPath = indexDirectory;
+        this.stemming = useStemming;
+        assert extractAnchors == false;
 
         job.add(getSplitStage(indexInputs));
         job.add(getParsePostingsStage());
-        job.add(getWritePostingsStage());
+        job.add(getWritePostingsStage("writePostings", "numberedPostings", "postings"));
         job.add(getWriteManifestStage());
         job.add(getWriteExtentsStage());
         job.add(getWriteDocumentNamesStage());
         job.add(getWriteDocumentLengthsStage());
         job.add(getNumberDocumentsStage());
-        job.add(getNumberPostingsStage());
+        job.add(getNumberPostingsStage("numberPostings", "postings", "numberedPostings"));
         job.add(getNumberExtentsStage());
 
         job.connect("inputSplit", "parsePostings", ConnectionAssignmentType.Each);
@@ -349,6 +371,17 @@ public class BuildIndex {
         job.connect("parsePostings", "numberExtents", ConnectionAssignmentType.Each);
         job.connect("numberExtents", "writeExtents", ConnectionAssignmentType.Combined);
         job.connect("numberPostings", "writePostings", ConnectionAssignmentType.Combined);
+
+        if (stemming) {
+            job.add(getNumberPostingsStage("numberStemmedPostings",
+                                           "stemmedPostings",
+                                           "numberedStemmedPostings"));
+            job.add(getWritePostingsStage("writeStemmedPostings",
+                                          "numberedStemmedPostings",
+                                          "stemmedPostings"));
+            job.connect("parsePostings", "numberStemmedPostings", ConnectionAssignmentType.Each);
+            job.connect("numberStemmedPostings", "writeStemmedPostings", ConnectionAssignmentType.Combined);
+        }
 
         return job;
     }

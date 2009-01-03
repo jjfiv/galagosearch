@@ -66,7 +66,7 @@ public class BuildIndexTest extends TestCase {
     public void testGetWritePostingsStage() {
         BuildIndex BuildIndex = new BuildIndex();
         Job job = new Job();
-        job.add(BuildIndex.getWritePostingsStage());
+        job.add(BuildIndex.getWritePostingsStage("postings", "input", "index"));
         ErrorStore store = new ErrorStore();
 
         Verification.verify(job, store);
@@ -135,7 +135,7 @@ public class BuildIndexTest extends TestCase {
      */
     public void testGetIndexJob() throws IOException {
         BuildIndex BuildIndex = new BuildIndex();
-        Job job = BuildIndex.getIndexJob("one", new String[] {"/"});
+        Job job = BuildIndex.getIndexJob("one", new String[] {"/"}, false, false);
         ErrorStore store = new ErrorStore();
 
         Verification.verify(job, store);

@@ -91,7 +91,7 @@ public class App {
         System.out.println("<index>:  The directory path of the index to produce.");
         System.out.println();
         System.out.println("Flags:");
-        System.out.println("  --anchors={true|false}:  Selects whether to collect anchor text ");
+        System.out.println("  --links={true|false}:    Selects whether to collect anchor text ");
         System.out.println("                           [default=true]");
         System.out.println("  --stemming={true|false}: Selects whether to build stemmed inverted ");
         System.out.println("                           lists in addition to non-stemmed ones.");
@@ -99,9 +99,9 @@ public class App {
     }
 
     private static void handleBuild(String[] args) throws Exception {
-        // TODO: handle --anchors and --stemming flags
+        // TODO: handle --links and --stemming flags
         BuildIndex build = new BuildIndex();
-        Job job = build.getIndexJob(args[1], Utility.subarray(args, 2));
+        Job job = build.getIndexJob(args[1], Utility.subarray(args, 2), false, false);
         ErrorStore store = new ErrorStore();
         JobExecutor.runLocally(job, store);
         if (store.hasStatements()) {
