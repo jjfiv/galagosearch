@@ -91,6 +91,8 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
     private static int reduceInterval = 100 * 1000;
     private static int combineBufferSize = 100 * 1000;
     private static int defaultObjectLimit = 50 * 1000 * 1000;
+    private Counter filesWritten = null;
+    private Counter sorterCombineSteps;
 
     public Sorter(Order<T> order) {
         this(defaultObjectLimit, order, null, null);
@@ -147,6 +149,9 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
         this.temporaryFiles = new ArrayList<File>();
         this.lessThanCompare = order.lessThan();
 
+        this.filesWritten = parameters.getCounter("Sorter Files Written");
+        this.sorterCombineSteps = parameters.getCounter("Sorter Combine Steps");
+
         requestMemoryWarnings();
     }
 
@@ -193,7 +198,6 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
             flushRequested = true;
             final Sorter f = this;
 
-            logger.info("Launching a flush thread: " + this.hashCode());
             Thread t = new Thread() {
                 @Override
                 public void run() {
@@ -338,11 +342,10 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
         reduce();
         assert objects.size() == 0;
 
-        logger.info("Write start");
         FileOrderedWriter<T> writer = getTemporaryWriter();
         combineRuns(writer);
         writer.close();
-        logger.info("Write complete");
+        if (filesWritten != null) filesWritten.increment();
 
         flushRequested = false;
     }
@@ -448,8 +451,6 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
             return;
         }
         while (temporaryFiles.size() > fileLimit) {
-            logger.info("Starting thinning combine: (" + temporaryFiles.size() + " files)");
-
             // sort all the files so that small ones come first, since those
             // are the ones we want to combine together.
             Collections.sort(temporaryFiles, new Comparator<File>() {
@@ -488,7 +489,6 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
 
             writer.close();
             temporaryFileSet.clear();
-            logger.info("Finished thinning combine: (" + temporaryFiles.size() + " files)");
         }
 
         combineStep(temporaryFiles, processor);
@@ -496,6 +496,8 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
     }
 
     private synchronized void combineStep(List<File> files, Processor<T> output) throws FileNotFoundException, IOException {
+        if (sorterCombineSteps != null) sorterCombineSteps.increment();
+
         ArrayList<String> filenames = new ArrayList<String>();
 
         for (File f : files) {

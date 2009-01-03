@@ -130,9 +130,6 @@ public class OrderedCombiner<T> implements ReaderSource<T> {
         if (inputs.length == 0) {
             return;
         }
-        Logger logger = Logger.getLogger(this.getClass().toString());
-        logger.info("Start combine");
-
         source = order.orderedCombiner(Arrays.asList(inputs), false);
 
         try {
@@ -148,6 +145,5 @@ public class OrderedCombiner<T> implements ReaderSource<T> {
         }
 
         close();
-        logger.info("Combine complete");
     }
 }
