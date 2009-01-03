@@ -3,6 +3,7 @@
 package org.galagosearch.core.tools;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import org.galagosearch.core.index.DocumentLengthsWriter;
 import org.galagosearch.core.index.DocumentNameWriter;
@@ -32,7 +33,6 @@ import org.galagosearch.core.types.NumberedValuedExtent;
 import org.galagosearch.tupleflow.NullSource;
 import org.galagosearch.tupleflow.Order;
 import org.galagosearch.tupleflow.Parameters;
-import org.galagosearch.tupleflow.Sorter;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ConnectionAssignmentType;
 import org.galagosearch.tupleflow.execution.ConnectionPointType;
@@ -59,13 +59,24 @@ public class BuildIndex {
         this.indexPath = indexPath;
     }
 
-    public Stage getSplitStage(String fileName) {
+    public Stage getSplitStage(String[] inputs) throws IOException {
         Stage stage = new Stage("inputSplit");
         stage.add(new StageConnectionPoint(ConnectionPointType.Output, "splits",
                                            new DocumentSplit.FileNameStartKeyOrder()));
 
         Parameters p = new Parameters();
-        p.add("filename", fileName);
+        for (String input : inputs) {
+            File inputFile = new File(input);
+            
+            if (inputFile.isFile()) {
+                p.add("filename", input);
+            } else if (inputFile.isDirectory()) {
+                p.add("directory", input);
+            } else {
+                throw new IOException("Couldn't find file/directory: " + input);
+            }
+        }
+
         stage.add(new Step(DocumentSource.class, p));
         stage.add(Utility.getSorter(new DocumentSplit.FileNameStartKeyOrder()));
         stage.add(new OutputStep("splits"));
@@ -313,11 +324,11 @@ public class BuildIndex {
         return stage;
     }
 
-    public Job getIndexJob(String inputName, String indexDirectory) {
+    public Job getIndexJob(String indexDirectory, String[] indexInputs) throws IOException {
         Job job = new Job();
         this.indexPath = indexDirectory;
 
-        job.add(getSplitStage(inputName));
+        job.add(getSplitStage(indexInputs));
         job.add(getParsePostingsStage());
         job.add(getWritePostingsStage());
         job.add(getWriteManifestStage());
