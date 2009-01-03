@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import org.galagosearch.core.types.NumberedDocumentData;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
@@ -25,11 +26,13 @@ import org.galagosearch.tupleflow.execution.Verification;
 public class DocumentLengthsWriter implements Processor<NumberedDocumentData> {
     DataOutputStream output;
     int document = 0;
+    Counter documentsWritten = null;
 
     /** Creates a new instance of DocumentLengthsWriter */
     public DocumentLengthsWriter(TupleFlowParameters parameters) throws FileNotFoundException {
         String filename = parameters.getXML().get("filename");
         output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
+        documentsWritten = parameters.getCounter("Documents Written");
     }
 
     public void close() throws IOException {
@@ -46,6 +49,7 @@ public class DocumentLengthsWriter implements Processor<NumberedDocumentData> {
 
         output.writeInt(object.textLength);
         document++;
+        if (documentsWritten != null) documentsWritten.increment();
     }
 
     public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
