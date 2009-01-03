@@ -2,6 +2,7 @@
 
 package org.galagosearch.core.tools;
 
+import java.io.IOException;
 import junit.framework.TestCase;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.execution.Job;
@@ -20,10 +21,10 @@ public class BuildIndexTest extends TestCase {
         /**
      * Test of getSplitStage method, of class BuildIndex.
      */
-    public void testGetSplitStage() {
+    public void testGetSplitStage() throws IOException {
         BuildIndex BuildIndex = new BuildIndex();
         Job job = new Job();
-        job.add(BuildIndex.getSplitStage("fake-filename"));
+        job.add(BuildIndex.getSplitStage(new String[] {"/"}));
         ErrorStore store = new ErrorStore();
 
         Verification.verify(job, store);
@@ -132,9 +133,9 @@ public class BuildIndexTest extends TestCase {
     /**
      * Test of getIndexJob method, of class BuildIndex.
      */
-    public void testGetIndexJob() {
+    public void testGetIndexJob() throws IOException {
         BuildIndex BuildIndex = new BuildIndex();
-        Job job = BuildIndex.getIndexJob("one", "two");
+        Job job = BuildIndex.getIndexJob("one", new String[] {"/"});
         ErrorStore store = new ErrorStore();
 
         Verification.verify(job, store);

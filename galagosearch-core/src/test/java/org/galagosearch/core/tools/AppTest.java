@@ -2,6 +2,7 @@
 
 package org.galagosearch.core.tools;
 
+import java.io.IOException;
 import junit.framework.TestCase;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.execution.Job;
@@ -17,8 +18,8 @@ public class AppTest extends TestCase {
         super(testName);
     }
 
-    public void testUsage() {
-        Job job = App.getDocumentConverter("in", "out");
+    public void testUsage() throws IOException {
+        Job job = App.getDocumentConverter("in", new String[] {"/"});
         ErrorStore store = new ErrorStore();
 
         Verification.verify(job, store);
