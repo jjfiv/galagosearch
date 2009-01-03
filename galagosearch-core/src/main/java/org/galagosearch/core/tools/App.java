@@ -332,7 +332,9 @@ public class App {
 
         String command = args[0];
 
-        if (command.equals("batch-search")) {
+        if (command.equals("help") && args.length > 1) {
+            commandHelp(args[1]);
+        } else if (command.equals("batch-search")) {
             handleBatchSearch(args);
         } else if (command.equals("build")) {
             handleBuild(args);
