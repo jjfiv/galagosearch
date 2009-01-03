@@ -13,6 +13,8 @@ import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
+import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -68,7 +70,21 @@ public class StructuredRetrieval extends Retrieval {
         
         return iterator;
     }
-    
+
+    public Node transformQuery(Node queryTree) throws Exception {
+        queryTree = StructuredQuery.copy(new WeightConversionTraversal(), queryTree);
+        queryTree = StructuredQuery.copy(new ImplicitFeatureCastTraversal(this), queryTree);
+        return queryTree;
+    }
+
+    /**
+     * Evaluates a query.
+     *
+     * @param queryTree A query tree that has been already transformed with StructuredRetrieval.transformQuery.
+     * @param requested The number of documents to retrieve, at most.
+     * @return
+     * @throws java.lang.Exception
+     */
     public ScoredDocument[] runQuery(Node queryTree, int requested) throws Exception {
         // construct the query iterators
         ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
