@@ -23,15 +23,16 @@ public class StructuredRetrieval extends Retrieval {
     StructuredIndex index;
     FeatureFactory featureFactory;
 
-    /**
-     * Creates a new instance of StructuredRetrieval
-     */
-    public StructuredRetrieval(String filename) throws FileNotFoundException, IOException {
-        index = new StructuredIndex(filename);
+    public StructuredRetrieval(StructuredIndex index) {
+        this.index = index;
         Parameters featureParameters = new Parameters();
         featureParameters.add("collectionLength", Long.toString(index.getCollectionLength()));
         featureParameters.add("documentCount", Long.toString(index.getDocumentCount()));
         featureFactory = new FeatureFactory(featureParameters);
+    }
+
+    public StructuredRetrieval(String filename) throws FileNotFoundException, IOException {
+        this(new StructuredIndex(filename));
     }
 
     public ScoredDocument[] getArrayResults(PriorityQueue<ScoredDocument> scores) {
@@ -95,40 +96,11 @@ public class StructuredRetrieval extends Retrieval {
         return getArrayResults(queue);
     }
 
-    public String getDocument(int document) {
-        return index.getDocument(document);
+    public String getDocumentName(int document) {
+        return index.getDocumentName(document);
     }
 
     public void close() throws IOException {
         index.close();
-    }
-
-    public static void main(String[] args) throws Exception {
-        // read in parameters
-        Parameters parameters = new Parameters(args);
-        List<Parameters.Value> queries = parameters.list("query");
-
-        // open index
-        StructuredRetrieval retrieval = new StructuredRetrieval(parameters.get("index"));
-
-        // record results requested
-        int requested = (int) parameters.get("count", 1000);
-
-        // for each query, run it, get the results, look up the docnos, print in TREC format
-        for (Parameters.Value query : queries) {
-            String queryText = query.get("text");
-            Node queryTree = StructuredQuery.parse(queryText);
-
-            ScoredDocument[] results = retrieval.runQuery(queryTree, requested);
-
-            for (int i = 0; i < results.length; i++) {
-                String document = retrieval.getDocument(results[i].document);
-                double score = results[i].score;
-                int rank = i + 1;
-
-                System.out.format("%s Q0 %s %s %10.8f galago\n", query.get("number"),
-                                  document, rank, score);
-            }
-        }
     }
 }

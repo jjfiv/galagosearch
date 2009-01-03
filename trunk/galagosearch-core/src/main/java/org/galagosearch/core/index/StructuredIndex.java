@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.galagosearch.core.index.IndexReader;
 
 /**
  *
@@ -27,7 +26,7 @@ public class StructuredIndex {
 
     HashMap<String, String> defaultIndexOperators = new HashMap<String, String>();
     HashSet<String> knownIndexOperators = new HashSet<String>();
-        
+
     public StructuredIndex(String filename) throws IOException {
         manifest = new Parameters();
         manifest.parse(filename + File.separator + "manifest");
@@ -180,8 +179,7 @@ public class StructuredIndex {
         return documentLengths.getLength(document);
     }
 
-    public String getDocument(int document) {
+    public String getDocumentName(int document) {
         return documentNames.get(document);
     }
-
 }

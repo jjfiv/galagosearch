@@ -13,7 +13,7 @@ import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
  * @author trevor
  */
 public abstract class Retrieval {
-    public abstract String getDocument(int document) throws IOException;
+    public abstract String getDocumentName(int document) throws IOException;
     public abstract ScoredDocument[] runQuery(Node query, int requested) throws Exception;
     public abstract void close() throws IOException;
     

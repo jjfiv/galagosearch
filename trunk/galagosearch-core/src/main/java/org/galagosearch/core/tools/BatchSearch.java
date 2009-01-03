@@ -61,7 +61,7 @@ public class BatchSearch {
             ScoredDocument[] results = retrieval.runQuery(queryRoot, requested);
 
             for (int i = 0; i < results.length; i++) {
-                String document = retrieval.getDocument(results[i].document);
+                String document = retrieval.getDocumentName(results[i].document);
                 double score = results[i].score;
                 int rank = i + 1;
 
