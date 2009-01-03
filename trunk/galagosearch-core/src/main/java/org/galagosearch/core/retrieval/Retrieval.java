@@ -14,6 +14,11 @@ import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
  */
 public abstract class Retrieval {
     public abstract String getDocumentName(int document) throws IOException;
+    /**
+     * Transforms the query into a more complete representation that can
+     * be directly executed.
+     */
+    public abstract Node transformQuery(Node query) throws Exception;
     public abstract ScoredDocument[] runQuery(Node query, int requested) throws Exception;
     public abstract void close() throws IOException;
     
