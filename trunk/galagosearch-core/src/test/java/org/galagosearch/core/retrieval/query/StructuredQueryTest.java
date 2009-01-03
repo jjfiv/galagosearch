@@ -105,22 +105,4 @@ public class StructuredQueryTest extends TestCase {
                 "#combine( #smoothlm( #text:a() #field:b() ) #smoothlm( #text:a() #extentor( #field:b() #field:c() ) ) )",
                 result.toString());
     }
-    
-    public void testIndriPoundNRewrite() {
-        String query = "#3()";
-        Node result = StructuredQuery.parse(query);
-        assertEquals("#od:3()", result.toString());
-    }
-    
-    public void testIndriOdNRewrite() {
-        String query = "#od3()";
-        Node result = StructuredQuery.parse(query);
-        assertEquals("#od:3()", result.toString());
-    }
-    
-    public void testIndriUwNRewrite() {
-        String query = "#uw5()";
-        Node result = StructuredQuery.parse(query);
-        assertEquals("#uw:5()", result.toString());
-    }
 }

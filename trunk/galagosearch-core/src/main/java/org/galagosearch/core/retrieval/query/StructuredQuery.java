@@ -128,7 +128,6 @@ public class StructuredQuery {
         ArrayList<Node> children = parseArguments(operator.substring(firstParen + 1, endOperator),
                                                   offset + firstParen + 1);
         Node result = new Node(operatorName, parameters, children, offset);
-        result = performCompatibilityRewrites(result);
         return result;
     }
 
@@ -352,43 +351,5 @@ public class StructuredQuery {
         }
 
         return queryTerms;
-    }
-
-    /**
-     * Looks at the current node and attempts to rewrite Indri-style
-     * operators in the Galago format.  It can rewrite three types of expressions:
-     * <ul>
-     *  <li>#<i>n</i> changes to #od:</i>n</i></li>
-     *  <li>#od<i>n</i> changes to #od:<i>n</i></li>
-     *  <li>#uw<i>n</i> changes to #uw:<i>n</i></li>
-     * </ul>
-     * 
-     * @param result
-     * @return
-     */
-    public static Node performCompatibilityRewrites(Node result) { 
-        String operator = result.getOperator();
-        
-        if (operator.length() == 0)
-            return result;
-       
-        if (Character.isDigit(operator.codePointAt(0))) {
-            // this is a #n node, which is an ordered window node
-            return new Node("od", operator, result.getInternalNodes(), result.getPosition());
-        } else if (operator.startsWith("od") &&
-                   operator.length() > 2 &&
-                   Character.isDigit(operator.codePointAt(2))) {
-            // this is a #od3() node
-            return new Node("od", operator.substring(2),
-                    result.getInternalNodes(), result.getPosition());
-        } else if (operator.startsWith("uw") &&
-                   operator.length() > 2 &&
-                   Character.isDigit(operator.codePointAt(2))) {
-            // this is a #uw3 node
-            return new Node("uw", operator.substring(2),
-                    result.getInternalNodes(), result.getPosition());
-        }
-        
-        return result;
     }
 }
