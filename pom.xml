@@ -17,6 +17,12 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    <mailingLists>
+      <mailingList>
+        <name>Galago Users</name>
+        <archive>http://groups.google.com/group/galagosearch-users</archive>
+      </mailingList>
+    </mailingLists>
     <scm>
         <connection>scm:svn:http://galagosearch.googlecode.com/svn/trunk/</connection>
         <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/trunk/</developerConnection>
