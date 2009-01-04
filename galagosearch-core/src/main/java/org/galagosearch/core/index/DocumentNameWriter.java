@@ -13,6 +13,7 @@ import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorHandler;
 
 /**
@@ -44,8 +45,9 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
             return;
         }
 
-        output.writeInt(lastHeader.getBytes().length);
-        output.write(lastHeader.getBytes());
+        byte[] headerBytes = Utility.makeBytes(lastHeader);
+        output.writeInt(headerBytes.length);
+        output.write(headerBytes);
         output.writeInt(lastFooterWidth);
         output.writeInt(footers.size());
 

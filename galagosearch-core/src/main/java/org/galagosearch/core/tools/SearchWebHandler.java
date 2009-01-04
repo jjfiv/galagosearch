@@ -76,6 +76,7 @@ public class SearchWebHandler extends AbstractHandler {
     }
 
     public void handleDocument(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        request.getParameterMap();
         String identifier = request.getParameter("identifier");
         Document document = search.getDocument(identifier);
         response.setContentType("text/html; charset=UTF-8");
@@ -150,9 +151,9 @@ public class SearchWebHandler extends AbstractHandler {
             writer.append(String.format("<a href=\"document?identifier=%s\">%s</a><br/>" +
                                         "<div id=\"summary\">%s</div>\n" +
                                         "<div id=\"meta\">%s - %s</div>\n",
-                                        scrub(item.identifier),
+                                        item.identifier,
                                         scrub(item.displayTitle),
-                                        getEscapedString(item.summary),
+                                        item.summary,
                                         scrub(item.identifier),
                                         scrub(item.url)));
             writer.append("</div>\n");

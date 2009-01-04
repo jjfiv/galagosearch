@@ -93,6 +93,14 @@ public class StructuredQueryTest extends TestCase {
                 result.toString());
     }
 
+    public void testFieldWindow() {
+        String query = "#1(a b).c";
+        Node result = StructuredQuery.parse(query);
+        assertEquals(
+                "#inside( #ordered:1( #text:a() #text:b() ) #field:c() )",
+                result.toString());
+    }
+
     public void testFieldCombinationParseCommas() {
         String query = "a.b,c";
         Node result = StructuredQuery.parse(query);
