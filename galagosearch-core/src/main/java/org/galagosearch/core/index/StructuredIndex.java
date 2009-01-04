@@ -94,6 +94,16 @@ public class StructuredIndex {
         return partReader;
     }
 
+    /**
+     * Tests to see if a named index part exists.
+     * 
+     * @param partName The name of the index part to check.
+     * @return true, if this index has a part called partName, or false otherwise.
+     */
+    public boolean containsPart(String partName) {
+        return parts.containsKey(partName);
+    }
+
     void initializeIndexOperators() {
         for (Entry<String, StructuredIndexPartReader> entry : parts.entrySet()) {
             String partName = entry.getKey();
@@ -144,6 +154,9 @@ public class StructuredIndex {
         StructuredIndexPartReader part = getIndexPart(node);
         if (part != null) {
             result = part.getIterator(node);
+            if (result == null) {
+                result = new NullExtentIterator();
+            }
         }
         return result;
     }

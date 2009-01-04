@@ -325,6 +325,7 @@ public class App {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException, Exception {
+        args = new String[] { "search", "/tmp/wiki.sm", "/Users/trevor/Desktop/wiki-small.corpus" };
         if (args.length < 1) {
             usage();
             return;

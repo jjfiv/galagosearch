@@ -5,7 +5,6 @@ package org.galagosearch.core.retrieval.structured;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.PriorityQueue;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.retrieval.query.Node;
@@ -13,7 +12,9 @@ import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
+import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -72,6 +73,8 @@ public class StructuredRetrieval extends Retrieval {
     }
 
     public Node transformQuery(Node queryTree) throws Exception {
+        queryTree = StructuredQuery.copy(new AddCombineTraversal(), queryTree);
+        queryTree = StructuredQuery.copy(new TextFieldRewriteTraversal(index), queryTree);
         queryTree = StructuredQuery.copy(new WeightConversionTraversal(), queryTree);
         queryTree = StructuredQuery.copy(new ImplicitFeatureCastTraversal(this), queryTree);
         return queryTree;

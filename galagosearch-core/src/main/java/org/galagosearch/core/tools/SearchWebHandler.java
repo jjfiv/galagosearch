@@ -4,6 +4,7 @@ package org.galagosearch.core.tools;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -59,13 +60,28 @@ public class SearchWebHandler extends AbstractHandler {
         this.search = search;
     }
 
+    public String getEscapedString(String text) {
+        StringBuilder builder = new StringBuilder();
+        
+        for (int i = 0; i < text.length(); ++i) {
+            char c = text.charAt(i);
+            if (c >= 128) {
+                builder.append("&#" + (int)c + ";");
+            } else {
+                builder.append(c);
+            }
+        }
+
+        return builder.toString();
+    }
+
     public void handleDocument(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String identifier = request.getParameter("identifier");
         Document document = search.getDocument(identifier);
-        response.setContentType("text/html");
+        response.setContentType("text/html; charset=UTF-8");
 
         PrintWriter writer = response.getWriter();
-        writer.append(document.text);
+        writer.write(getEscapedString(document.text));
         writer.close();
     }
 
@@ -85,28 +101,30 @@ public class SearchWebHandler extends AbstractHandler {
             String title = document.metadata.get("title");
             String url = document.metadata.get("url");
 
-            if (title == null) title = "";
-            if (url == null) url = "";
             if (snippet == null) snippet = "";
 
             response.setContentType("text/xml");
             writer.append("<response>\n");
             writer.append(String.format("<snippet>%s</snippet>\n", snippet));
             writer.append(String.format("<identifier>%s</identifier>\n", identifier));
-            writer.append(String.format("<title>%s</title>\n", URLEncoder.encode(title, "UTF-8")));
-            writer.append(String.format("<url>%s</url>\n", URLEncoder.encode(url, "UTF-8")));
+            writer.append(String.format("<title>%s</title>\n", scrub(title)));
+            writer.append(String.format("<url>%s</url>\n", scrub(url)));
             writer.append("</response>");
             writer.close();
         }
     }
 
+    private String scrub(String s) throws UnsupportedEncodingException {
+        if (s == null) return s;
+        return s.replace("<", "&gt;")
+                .replace(">", "&lt;")
+                .replace("&", "&amp;");
+    }
+
     public void handleSearch(HttpServletRequest request, HttpServletResponse response) throws Exception {
         SearchResult result = performSearch(request);
         response.setContentType("text/html");
-        String displayQuery = request.getParameter("q")
-                                    .replace("<", "&gt;")
-                                    .replace(">", "&lt;")
-                                    .replace("&", "&amp;");
+        String displayQuery = scrub(request.getParameter("q"));
         String encodedQuery = URLEncoder.encode(request.getParameter("q"), "UTF-8");
 
         PrintWriter writer = response.getWriter();
@@ -132,15 +150,15 @@ public class SearchWebHandler extends AbstractHandler {
             writer.append(String.format("<a href=\"document?identifier=%s\">%s</a><br/>" +
                                         "<div id=\"summary\">%s</div>\n" +
                                         "<div id=\"meta\">%s - %s</div>\n",
-                                        URLEncoder.encode(item.identifier, "UTF-8"),
-                                        URLEncoder.encode(item.displayTitle, "UTF-8"),
-                                        URLEncoder.encode(item.summary, "UTF-8"),
-                                        URLEncoder.encode(item.identifier, "UTF-8"),
-                                        URLEncoder.encode(item.url, "UTF-8")));
+                                        scrub(item.identifier),
+                                        scrub(item.displayTitle),
+                                        getEscapedString(item.summary),
+                                        scrub(item.identifier),
+                                        scrub(item.url)));
             writer.append("</div>\n");
         }
 
-        String startAtString = request.getParameter("startAt");
+        String startAtString = request.getParameter("start");
         String countString = request.getParameter("n");
         int startAt = 0;
         int count = 10;
@@ -153,13 +171,18 @@ public class SearchWebHandler extends AbstractHandler {
         }
 
         writer.append("<center>\n");
-        if(startAt != 0) {
-            writer.append(String.format("<a href=\"search?q=%s&start=%d&n=%d>Previous</a>",
+        if (startAt != 0) {
+            writer.append(String.format("<a href=\"search?q=%s&start=%d&n=%d\">Previous</a>",
                                         encodedQuery, Math.max(startAt-count,0), count));
+            if (result.items.size() >= count) {
+                writer.append(" | ");
+            }
         }
 
-        writer.append(String.format("<a href=\"search?q=%s&start=%d&n=%d\">Next</a>",
-                                    encodedQuery, startAt+count, count));
+        if (result.items.size() >= count) {
+            writer.append(String.format("<a href=\"search?q=%s&start=%d&n=%d\">Next</a>",
+                                        encodedQuery, startAt+count, count));
+        }
         writer.append("</center>");
         writer.append("</body>");
         writer.append("</html>");
@@ -240,7 +263,7 @@ public class SearchWebHandler extends AbstractHandler {
         writer.append("<center><br/><br/><div id=\"box\">" +
                       "<a href=\"http://www.galagosearch.org\">" +
                       "<img src=\"http://www.galagosearch.org/galago.png\"/></a><br/>\n");
-        writer.append("<form action=\"search\"><input name\"q\" size=\"40\">" +
+        writer.append("<form action=\"search\"><input name=\"q\" size=\"40\">" +
                       "<input value=\"Search\" type=\"submit\" /></form><br/><br/>");
         writer.append("</div></center></body></html>\n");
         writer.close();
@@ -276,7 +299,7 @@ public class SearchWebHandler extends AbstractHandler {
         String startAtString = request.getParameter("start");
         String countString = request.getParameter("n");
         int startAt = (startAtString == null) ? 0 : Integer.parseInt(startAtString);
-        int resultCount = (countString == null) ? 0 : Integer.parseInt(countString);
+        int resultCount = (countString == null) ? 10 : Integer.parseInt(countString);
         SearchResult result = search.runQuery(query, startAt, resultCount, true);
         return result;
     }

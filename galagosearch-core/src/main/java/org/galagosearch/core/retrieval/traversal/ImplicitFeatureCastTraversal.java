@@ -28,7 +28,7 @@ public class ImplicitFeatureCastTraversal implements Traversal {
         this.retrieval = retrieval;
     }
     
-    public Node createSmoothingNode(Node child) {
+    Node createSmoothingNode(Node child) {
         ArrayList<Node> data = new ArrayList<Node>();
         data.add(child);
         return new Node("feature", "dirichlet", data, child.getPosition());
@@ -44,10 +44,11 @@ public class ImplicitFeatureCastTraversal implements Traversal {
     public void beforeNode(Node node) throws Exception {
     }
 
-    public Node afterNode(Node node, ArrayList<Node> children) throws Exception {
+    public Node afterNode(Node node) throws Exception {
         ArrayList<Node> newChildren = new ArrayList<Node>();
         NodeType nodeType = retrieval.getNodeType(node);
         if (nodeType == null) return node;
+        ArrayList<Node> children = node.getInternalNodes();
         // Given that we're going to pass children.size() + 1 parameters to
         // this constructor, what types should those parameters have?
         Class[] types = nodeType.getParameterTypes(children.size() + 1);
@@ -59,7 +60,7 @@ public class ImplicitFeatureCastTraversal implements Traversal {
             // we've got a CountIterator here, we'll perform a conversion step.
             if (ScoreIterator.class.isAssignableFrom(types[i]) &&
                 isCountNode(children.get(i-1))) {
-                Node feature = createSmoothingNode(node);
+                Node feature = createSmoothingNode(child);
                 newChildren.add(feature);
             } else {
                 newChildren.add(child);

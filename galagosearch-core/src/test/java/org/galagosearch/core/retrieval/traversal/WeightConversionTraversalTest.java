@@ -25,7 +25,7 @@ public class WeightConversionTraversalTest extends TestCase {
         Node root = new Node("bignode", internalNodes);
         
         WeightConversionTraversal traversal = new WeightConversionTraversal();
-        Node result = traversal.afterNode(root, internalNodes);
+        Node result = traversal.afterNode(root);
         assertEquals(root, result);
     }
 
@@ -42,7 +42,7 @@ public class WeightConversionTraversalTest extends TestCase {
         Node expected = new Node("wsyn", expectedInternal);
         
         WeightConversionTraversal traversal = new WeightConversionTraversal();
-        Node result = traversal.afterNode(root, internalNodes);
+        Node result = traversal.afterNode(root);
         assertEquals(expected, result);
     }
 }
