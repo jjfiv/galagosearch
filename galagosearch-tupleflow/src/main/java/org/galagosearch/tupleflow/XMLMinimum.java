@@ -11,8 +11,8 @@ import org.galagosearch.tupleflow.types.XMLFragment;
  * @author trevor
  */
 
-@InputClass(className="org.galagosearch.core.types.XMLFragment")
-@OutputClass(className="org.galagosearch.core.types.XMLFragment", order={"+nodePath"})
+@InputClass(className="org.galagosearch.tupleflow.types.XMLFragment")
+@OutputClass(className="org.galagosearch.tupleflow.types.XMLFragment", order={"+nodePath"})
 @Verified
 public class XMLMinimum extends StandardStep<XMLFragment, XMLFragment> {
     double minimum = 0;
