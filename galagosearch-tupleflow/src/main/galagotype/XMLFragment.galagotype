@@ -1,4 +1,4 @@
-package org.galagosearch.core.types;
+package org.galagosearch.tupleflow.types;
 
 type XMLFragment {
     String nodePath;
