@@ -1,5 +1,5 @@
 
-package org.galagosearch.core.types;
+package org.galagosearch.tupleflow.types;
 
 type FileName {
     String filename;
