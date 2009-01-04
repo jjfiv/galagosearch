@@ -66,6 +66,31 @@ public class Parameters implements Serializable {
         }
 
         /**
+         * Creates the map if it is currently null.
+         */
+        private void ensureMap() {
+            if (_map == null) {
+                _map = new HashMap<String, List<Value>>();
+            }
+        }
+
+        /**
+         * Ensures that the map exists.  Adds a values array to
+         * the map if there isn't one already.  Returns the values
+         * array corresponding to this key.
+         */
+        private List<Value> ensureKey(String key) {
+            ensureMap();
+            List<Value> values = new ArrayList<Value>();
+            if (!_map.containsKey(key)) {
+                _map.put(key, values);
+            } else {
+                values = _map.get(key);
+            }
+            return values;
+        }
+
+        /**
          * Add a new child value object.  This is similar to adding a 
          * child XML element at this point, but without actually putting any
          * data in that element yet.
@@ -74,15 +99,8 @@ public class Parameters implements Serializable {
          * @return A new empty child Value object.
          */
         public Value add(String key) {
-            if (_map == null) {
-                _map = new HashMap<String, List<Value>>();
-            }
-            if (!_map.containsKey(key)) {
-                _map.put(key, new ArrayList<Value>());
-            }
             Value result = new Value();
-            _map.get(key).add(result);
-
+            ensureKey(key).add(result);
             return result;
         }
 
@@ -100,13 +118,7 @@ public class Parameters implements Serializable {
                 }
                 subValue.add(subKey, values);
             } else {
-                if (_map == null) {
-                    _map = new HashMap<String, List<Value>>();
-                }
-                if (!_map.containsKey(key)) {
-                    _map.put(key, new ArrayList<Value>());
-                }
-                _map.get(key).addAll(values);
+                ensureKey(key).addAll(values);
             }
         }
 
@@ -125,9 +137,28 @@ public class Parameters implements Serializable {
             add(key, valueList);
         }
 
-        public void setString(CharSequence value) {
-            if (null == _map) {
-                _string = value;
+        public void set(CharSequence value) {
+            _map = null;
+            _string = value;
+        }
+
+        public void set(String key, List<Value> values) {
+            if (key.contains("/")) {
+                String fields[] = key.split("/", 2);
+                String subKey = fields[1];
+                String rootKey = fields[0];
+                Value subValue = null;
+
+                if (!containsKey(rootKey)) {
+                    subValue = add(rootKey);
+                } else {
+                    subValue = list(rootKey).get(0);
+                }
+                subValue.add(subKey, values);
+            } else {
+                List<Value> current = ensureKey(key);
+                current.clear();
+                current.addAll(values);
             }
         }
 
@@ -309,10 +340,12 @@ public class Parameters implements Serializable {
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
             // if there are no variables in there, store as a String
-            if (writer.isStatic()) {
-                current.setString(writer.toString());
-            } else {
-                current.setString(writer);            // make a new sequence
+            if (current.isEmpty()) {
+                if (writer.isStatic()) {
+                    current.set(writer.toString());
+                } else {
+                    current.set(writer);            // make a new sequence
+                }
             }
             writer = new CharSequenceBuffer();
             contexts.pop();
@@ -459,8 +492,6 @@ public class Parameters implements Serializable {
             return def;
         }
     }
-
-
     
     /**
      * Gets the value for key.  If key is not found, returns the
@@ -552,12 +583,30 @@ public class Parameters implements Serializable {
         }
     }
 
+    @Override
+    public Parameters clone() {
+        Parameters p = new Parameters();
+        p.copy(this);
+        return p;
+    }
+
     public void add(String key, List<Value> values) {
         _data.add(key, values);
     }
 
     public void add(String key, String value) {
         _data.add(key, value);
+    }
+
+    public void set(String key, List<Value> values) {
+        _data.set(key, values);
+    }
+
+    public void set(String key, String value) {
+        Value stringValue = new Value();
+        stringValue.set(value);
+        List<Value> values = Collections.singletonList(stringValue);
+        _data.set(key, values);
     }
 
     public List<Value> list(String key) {
