@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+// BSD License (http://www.galagosearch.org/license)
 
 package org.galagosearch.core.retrieval.traversal;
 
@@ -19,7 +16,8 @@ public class WeightConversionTraversal implements Traversal {
         // do nothing
     }
 
-    public Node afterNode(Node node, ArrayList<Node> children) throws Exception {
+    public Node afterNode(Node node) throws Exception {
+        ArrayList<Node> children = node.getInternalNodes();
         if (node.getOperator().equals("wsyn") || node.getOperator().equals("weight")) {
             // first, verify that the appropriate children are weights
             if (children.size() % 2 == 1) {

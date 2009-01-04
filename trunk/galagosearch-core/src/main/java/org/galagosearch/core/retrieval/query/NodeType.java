@@ -43,6 +43,7 @@ public class NodeType {
     public Class[] getParameterTypes(int length) throws Exception {
         Class[] inputs = getInputs();
         if (inputs == null) return new Class[0];
+        if (inputs.length == 0) return new Class[0];
         if (inputs[inputs.length-1].isArray()) {
             if (length < inputs.length-1) {
                 // Not enough parameters.

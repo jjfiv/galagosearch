@@ -24,8 +24,9 @@ public class StructuredQuery {
      * before any of its children (pre-order), while traversal.afterNode method
      * will be called on the parent after all of its children (post-order).
      *
-     * The afterNode method should return a new copy of the node, using the
-     * provided array of children nodes.
+     * The afterNode method will be called with a new copy of the original
+     * node, with the children replaced by new copies.  afterNode can either
+     * return its parameter or a modified node.
      */
     public static Node copy(Traversal traversal, Node tree) throws Exception {
         ArrayList<Node> children = new ArrayList<Node>();
@@ -36,7 +37,9 @@ public class StructuredQuery {
             children.add(child);
         }
 
-        return traversal.afterNode(tree, children);
+        Node newNode = new Node(tree.getOperator(), tree.getParameters(),
+                children, tree.getPosition());
+        return traversal.afterNode(newNode);
     }
 
     /**
@@ -50,11 +53,10 @@ public class StructuredQuery {
      */
     public static void walk(Traversal traversal, Node tree) throws Exception {
         traversal.beforeNode(tree);
-
         for (Node n : tree.getInternalNodes()) {
             walk(traversal, n);
         }
-        traversal.afterNode(tree, null);
+        traversal.afterNode(tree);
     }
 
     /**
@@ -332,7 +334,9 @@ public class StructuredQuery {
     public static Node parse(String query) {
         ArrayList<Node> arguments = parseArguments(query, 0);
 
-        if (arguments.size() == 1) {
+        if (query.length() == 0) {
+            return new Node("text", "");
+        } else if (arguments.size() == 1) {
             return arguments.get(0);
         } else {
             return new Node("combine", arguments, 0);

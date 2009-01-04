@@ -16,8 +16,9 @@ import org.galagosearch.core.retrieval.query.Traversal;
  * @author trevor
  */
 public class IndriWindowCompatibilityTraversal implements Traversal {
-    public Node afterNode(Node original, ArrayList<Node> children) {
+    public Node afterNode(Node original) {
         String operator = original.getOperator();
+        ArrayList<Node> children = original.getInternalNodes();
 
         if (operator.length() == 0) {
             return original;

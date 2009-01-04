@@ -31,10 +31,9 @@ public class StructuredRetrievalTest extends TestCase {
         super(testName);
     }
 
-    @Override
-    public void setUp() throws FileNotFoundException, IOException {
+    public static File makeIndex() throws FileNotFoundException, IOException {
         // make a spot for the index
-        tempPath = File.createTempFile("galago-test-index", null);
+        File tempPath = File.createTempFile("galago-test-index", null);
         tempPath.delete();
         tempPath.mkdir();
         
@@ -114,6 +113,12 @@ public class StructuredRetrievalTest extends TestCase {
         mainParameters.add("collectionLength", "10000");
 
         mainParameters.write(tempPath + File.separator + "manifest");
+        return tempPath;
+    }
+
+    @Override
+    public void setUp() throws IOException {
+        this.tempPath = makeIndex();
     }
 
     @Override
@@ -125,15 +130,15 @@ public class StructuredRetrievalTest extends TestCase {
         StructuredRetrieval retrieval = new StructuredRetrieval(tempPath.toString());
         String name;
 
-        name = retrieval.getDocument(1);
+        name = retrieval.getDocumentName(1);
         assertEquals("DOC1", name);
-        name = retrieval.getDocument(2);
+        name = retrieval.getDocumentName(2);
         assertEquals("DOC2", name);
-        name = retrieval.getDocument(3);
+        name = retrieval.getDocumentName(3);
         assertEquals("DOC3", name);
-        name = retrieval.getDocument(4);
+        name = retrieval.getDocumentName(4);
         assertEquals("DOC4", name);
-        name = retrieval.getDocument(5);
+        name = retrieval.getDocumentName(5);
         assertEquals("DOC5", name);
     }
 
