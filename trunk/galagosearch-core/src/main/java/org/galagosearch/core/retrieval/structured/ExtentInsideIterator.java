@@ -37,11 +37,4 @@ public class ExtentInsideIterator extends ExtentConjunctionIterator {
             }
         }
     }
-
-    @Override
-    public void reset() throws IOException {
-        innerIterator.reset();
-        outerIterator.reset();
-        findDocument();
-    }
 }

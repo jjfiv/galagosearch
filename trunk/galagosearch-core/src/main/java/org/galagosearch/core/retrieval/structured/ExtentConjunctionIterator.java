@@ -74,6 +74,7 @@ public abstract class ExtentConjunctionIterator extends ExtentIterator {
             iterator.reset();
         }
 
+        done = false;
         findDocument();
     }
 }

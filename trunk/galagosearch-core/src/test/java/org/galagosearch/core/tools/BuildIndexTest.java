@@ -18,13 +18,24 @@ public class BuildIndexTest extends TestCase {
         super(testName);
     }
 
+    public void testCollectionLengthStage() throws IOException {
+        BuildIndex buildIndex = new BuildIndex();
+        Job job = new Job();
+        job.add(buildIndex.getCollectionLengthStage());
+        ErrorStore store = new ErrorStore();
+
+        Verification.verify(job, store);
+        assertEquals(0, store.getErrors().size());
+        assertEquals(0, store.getWarnings().size());
+    }
+
         /**
      * Test of getSplitStage method, of class BuildIndex.
      */
     public void testGetSplitStage() throws IOException {
-        BuildIndex BuildIndex = new BuildIndex();
+        BuildIndex buildIndex = new BuildIndex();
         Job job = new Job();
-        job.add(BuildIndex.getSplitStage(new String[] {"/"}));
+        job.add(buildIndex.getSplitStage(new String[] {"/"}));
         ErrorStore store = new ErrorStore();
 
         Verification.verify(job, store);

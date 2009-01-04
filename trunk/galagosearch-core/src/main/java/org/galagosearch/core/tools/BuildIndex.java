@@ -11,6 +11,7 @@ import org.galagosearch.core.index.ExtentIndexWriter;
 import org.galagosearch.core.index.ExtentValueIndexWriter;
 import org.galagosearch.core.index.ManifestWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
+import org.galagosearch.core.parse.CollectionLengthCounter;
 import org.galagosearch.core.parse.DocumentDataExtractor;
 import org.galagosearch.core.parse.DocumentDataNumberer;
 import org.galagosearch.core.parse.DocumentSource;
@@ -34,6 +35,7 @@ import org.galagosearch.core.types.NumberedValuedExtent;
 import org.galagosearch.tupleflow.NullSource;
 import org.galagosearch.tupleflow.Order;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.StreamCombiner;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ConnectionAssignmentType;
 import org.galagosearch.tupleflow.execution.ConnectionPointType;
@@ -181,6 +183,24 @@ public class BuildIndex {
         return stage;
     }
 
+    public Stage getCollectionLengthStage() {
+        Stage stage = new Stage("collectionLength");
+
+        stage.add(new StageConnectionPoint(
+                  ConnectionPointType.Input, "documentData",
+                  new DocumentData.IdentifierOrder()));
+        stage.add(new StageConnectionPoint(
+                  ConnectionPointType.Output, "collectionLength",
+                  new XMLFragment.NodePathOrder()));
+
+        stage.add(new InputStep("documentData"));
+        stage.add(new Step(CollectionLengthCounter.class));
+        stage.add(Utility.getSorter(new XMLFragment.NodePathOrder()));
+        stage.add(new OutputStep("collectionLength"));
+
+        return stage;
+    }
+
     public Stage getLinkCombineStage() {
         Stage stage = new Stage("linkCombine");
 
@@ -239,17 +259,16 @@ public class BuildIndex {
     }
 
     /**
-     * For right now, this just dumps out an empty XML file.
+     * Write out document count and collection length information.
      */
     public Stage getWriteManifestStage() {
-        // FIXME: Eventually need to add in collection length information to the manifest,
-        //   along with stemmer data, etc.
         Stage stage = new Stage("writeManifest");
 
+        stage.add(new StageConnectionPoint(ConnectionPointType.Input,
+                                           "collectionLength",
+                                           new XMLFragment.NodePathOrder()));
+        stage.add(new InputStep("collectionLength"));
         Parameters p = new Parameters();
-        p.add("class", XMLFragment.class.getName());
-        stage.add(new Step(NullSource.class, p));
-        p = new Parameters();
         p.add("filename", indexPath + File.separator + "manifest");
         stage.add(new Step(ManifestWriter.class, p));
         return stage;
@@ -360,6 +379,7 @@ public class BuildIndex {
         job.add(getNumberDocumentsStage());
         job.add(getNumberPostingsStage("numberPostings", "postings", "numberedPostings"));
         job.add(getNumberExtentsStage());
+        job.add(getCollectionLengthStage());
 
         job.connect("inputSplit", "parsePostings", ConnectionAssignmentType.Each);
         job.connect("parsePostings", "numberDocuments", ConnectionAssignmentType.Combined);
@@ -371,6 +391,8 @@ public class BuildIndex {
         job.connect("parsePostings", "numberExtents", ConnectionAssignmentType.Each);
         job.connect("numberExtents", "writeExtents", ConnectionAssignmentType.Combined);
         job.connect("numberPostings", "writePostings", ConnectionAssignmentType.Combined);
+        job.connect("parsePostings", "collectionLength", ConnectionAssignmentType.Combined);
+        job.connect("collectionLength", "writeManifest", ConnectionAssignmentType.Combined);
 
         if (stemming) {
             job.add(getNumberPostingsStage("numberStemmedPostings",
