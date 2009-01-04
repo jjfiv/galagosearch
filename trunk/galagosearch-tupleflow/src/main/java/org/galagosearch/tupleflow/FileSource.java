@@ -12,7 +12,7 @@ import org.galagosearch.tupleflow.types.FileName;
  *
  * @author trevor
  */
-@OutputClass(className = "org.galagosearch.core.types.FileName", order = {"+filename"})
+@OutputClass(className = "org.galagosearch.tupleflow.types.FileName", order = {"+filename"})
 public class FileSource implements ExNihiloSource<FileName> {
     TupleFlowParameters parameters;
     public Processor<FileName> processor;
