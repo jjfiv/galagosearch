@@ -16,9 +16,6 @@ import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
  * #combine(dog).  This transformation automatically adds the #feature:dirichlet
  * operator.
  * 
- * Someday it'd be great to make this very clean so that it works well with
- * user-generated operators, but for now we'll go with a simple implementation.
- * 
  * @author trevor
  */
 public class ImplicitFeatureCastTraversal implements Traversal {
