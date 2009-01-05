@@ -118,6 +118,8 @@
                     </program>
                   </programs>
                   <extraJvmArguments>-Xms256m -Xmx256m</extraJvmArguments>
+                  <repositoryName>lib</repositoryName>
+                  <repositoryLayout>flat</repositoryLayout>
                 </configuration>
              </plugin>
             <plugin>
