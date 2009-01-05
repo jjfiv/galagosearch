@@ -2,6 +2,11 @@
 Galago is distributed under the BSD license.  See the LICENSE file for details.
 For more information about Galago, check out the docs directory.
 
+If you have downloaded the source, see BUILD for information on how to build and
+run the code.  If you downloaded the binary version, use these commands to get started:
+        Unix: ./bin/galago help
+        Windows: .\bin\galago.bat help
+
 The main Java projects are:
 	galagosearch-core:  The Galago structured search engine code
 	galagosearch-tupleflow:  TupleFlow, Galago's distributed computation framework
@@ -24,4 +29,10 @@ Galago makes use of some great open-source code:
 	Maven (http://maven.apache.org)
 	JUnit (http://www.junit.org)
 	xmlenc (http://xmlenc.sourceforge.net/)
+
+Websites and other contact information:
+	http://www.galagosearch.org
+	http://www.search-engines-book.com (Textbook website, sample collections)
+	http://galagosearch.googlecode.com (Source repository, Issue tracking)
+	http://groups.google.com/group/galagosearch-users (Mailing List)
 
