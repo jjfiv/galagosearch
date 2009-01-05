@@ -1,16 +1,9 @@
-/*
- * ComplexQueryTest.java
- * JUnit based test
- *
- * Created on August 10, 2007, 8:40 PM
- */
+// BSD License (http://www.galagosearch.org/license)
+
 package org.galagosearch.core.retrieval.query;
 
-import org.galagosearch.core.retrieval.query.StructuredQuery;
-import org.galagosearch.core.retrieval.query.Node;
 import junit.framework.*;
 import java.util.ArrayList;
-import org.galagosearch.core.retrieval.query.Traversal;
 
 /**
  *
@@ -97,7 +90,15 @@ public class StructuredQueryTest extends TestCase {
         String query = "#1(a b).c";
         Node result = StructuredQuery.parse(query);
         assertEquals(
-                "#inside( #ordered:1( #text:a() #text:b() ) #field:c() )",
+                "#inside( #1( #text:a() #text:b() ) #field:c() )",
+                result.toString());
+    }
+
+    public void testFieldSmoothWindow() {
+        String query = "#1(a b).(c)";
+        Node result = StructuredQuery.parse(query);
+        assertEquals(
+                "#smoothinside( #1( #text:a() #text:b() ) #field:c() )",
                 result.toString());
     }
 
@@ -113,7 +114,7 @@ public class StructuredQueryTest extends TestCase {
         String query = "a.(b) a.(b,c)";
         Node result = StructuredQuery.parse(query);
         assertEquals(
-                "#combine( #smoothlm( #text:a() #field:b() ) #smoothlm( #text:a() #extentor( #field:b() #field:c() ) ) )",
+                "#combine( #smoothinside( #text:a() #field:b() ) #smoothinside( #text:a() #extentor( #field:b() #field:c() ) ) )",
                 result.toString());
     }
 }

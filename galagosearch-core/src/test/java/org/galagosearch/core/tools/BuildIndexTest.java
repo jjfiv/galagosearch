@@ -67,8 +67,7 @@ public class BuildIndexTest extends TestCase {
         ErrorStore store = new ErrorStore();
 
         Verification.verify(job, store);
-        assertEquals(0, store.getErrors().size());
-        assertEquals(0, store.getWarnings().size());
+        assertEquals("", store.toString());
     }
 
     /**
@@ -145,13 +144,40 @@ public class BuildIndexTest extends TestCase {
      * Test of getIndexJob method, of class BuildIndex.
      */
     public void testGetIndexJob() throws IOException {
-        BuildIndex BuildIndex = new BuildIndex();
-        Job job = BuildIndex.getIndexJob("one", new String[] {"/"}, false, false);
+        BuildIndex buildIndex = new BuildIndex();
+        Job job = buildIndex.getIndexJob("one", new String[] {"/"}, false, false);
         ErrorStore store = new ErrorStore();
 
         Verification.verify(job, store);
         assertEquals("", store.toString());
-        assertEquals(0, store.getErrors().size());
-        assertEquals(0, store.getWarnings().size());
+    }
+
+    public void testJobWithStemming() throws IOException {
+        BuildIndex buildIndex = new BuildIndex();
+
+        Job job = buildIndex.getIndexJob("one", new String[] {"/"}, false, true);
+        ErrorStore store = new ErrorStore();
+
+        Verification.verify(job, store);
+        assertEquals("", store.toString());
+    }
+
+
+    public void testJobWithLinks() throws IOException {
+        BuildIndex buildIndex = new BuildIndex();        
+        Job job = buildIndex.getIndexJob("one", new String[] {"/"}, true, false);
+        ErrorStore store = new ErrorStore();
+
+        Verification.verify(job, store);
+        assertEquals("", store.toString());
+    }
+
+    public void testJobWithLinksAndStemming() throws IOException {
+        BuildIndex buildIndex = new BuildIndex();
+        Job job = buildIndex.getIndexJob("one", new String[] {"/"}, true, true);
+        ErrorStore store = new ErrorStore();
+
+        Verification.verify(job, store);
+        assertEquals("", store.toString());
     }
 }

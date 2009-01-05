@@ -3,6 +3,7 @@ package org.galagosearch.core.retrieval.query;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -159,11 +160,11 @@ public class StructuredQuery {
     }
 
     /**
-     * Find the end of an operator.  We assume that query.charAt(start)
+     * <p>Find the end of an operator.  We assume that query.charAt(start)
      * is a pound sign.  We skip forward in the query looking for
      * the end of the operator by looking at parentheses; we know we're
      * done when the parentheses are balanced and we've seen at least
-     * one open parenthesis.  This method skips over escaped regions.
+     * one open parenthesis.  This method skips over escaped regions.</p>
      */
     public static int findOperatorEnd(String query, int start) {
         int i = start;
@@ -185,7 +186,7 @@ public class StructuredQuery {
         return i;
     }
 
-    public static int findTermEnd(String query, int start) {
+    public static int findTextEnd(String query, int start) {
         int i = start;
 
         for (; i < query.length(); i++) {
@@ -268,34 +269,35 @@ public class StructuredQuery {
         // step 1, split at periods
         ArrayList<String> chunks = splitStringRespectingEscapes(query, '.');
         
-        // step 2, decode the chunks
+        // step 2, decode each chunk.  The first chunk is the term text,
+        // while all remaining chunks describe fields.
         Node result = new Node("text", decodeEscapes(chunks.get(0)), offset);
-
-        for (int i = 1; i < chunks.size(); i++) {
-            ArrayList<Node> children = new ArrayList<Node>();
-            children.add(result);
-            String fieldText = chunks.get(i);
-            boolean isSmoothingField = false;
-
-            if (fieldText.startsWith("(") && fieldText.endsWith(")")) {
-                isSmoothingField = true;
-                fieldText = fieldText.substring(1, fieldText.length() - 1);
-            }
-
-            ArrayList<String> fieldNames = splitStringRespectingEscapes(fieldText, ',');
-            Node fieldNode = fieldOrNode(fieldNames, offset);
-            children.add(fieldNode);
-            
-            if (isSmoothingField) {
-                result = new Node("smoothlm", children, offset);
-            } else {
-                result = new Node("inside", children, offset);
-            }
-        }
+        result = parseFields(result, chunks.subList(1, chunks.size()), offset);
 
         return result;
     }
 
+    public static int findOperatorExpressionEnd(String query, int offset) {
+        // this is an operator, so scan for balanced parentheses,
+        // not including escaped regions
+        int end = findOperatorEnd(query, offset);
+        int textEnd = findTextEnd(query, end);
+
+        if (end != textEnd && query.charAt(end) == '.')
+            return textEnd;
+
+        return end;
+    }
+
+    /**
+     * Parses arguments to an operator.  This method can also be used to parse
+     * the elements of a query, since terms in a query are implicitly in a #combine
+     * operator.
+     * 
+     * @param query The query, or a substring of it, that contains argument text.
+     * @param offset The offset into the full query string (offset == 0 if query is the full query).
+     * @return a List of Nodes, which represent the query.
+     */
     public static ArrayList<Node> parseArguments(String query, int offset) {
         ArrayList<Node> arguments = new ArrayList<Node>();
         int start = 0;
@@ -307,14 +309,11 @@ public class StructuredQuery {
 
             if (!Character.isWhitespace(current)) {
                 if (current == '#') {
-                    // this is an operator, so scan for balanced parentheses,
-                    // not including escaped regions
-                    int end = findOperatorEnd(query, i);
-                    Node child = parseOperator(query.substring(i, end), offset + i);
+                    Node child = parseOperatorExpression(query, i, offset);
                     arguments.add(child);
-                    i = end;
+                    i = findOperatorExpressionEnd(query, i);
                 } else {
-                    int end = findTermEnd(query, i);
+                    int end = findTextEnd(query, i);
                     Node child = parseTerm(query.substring(i, end), offset + i);
                     arguments.add(child);
                     i = end;
@@ -355,5 +354,42 @@ public class StructuredQuery {
         }
 
         return queryTerms;
+    }
+
+    private static Node parseFields(Node result, List<String> chunks, int offset) {
+        for (int i = 0; i < chunks.size(); i++) {
+            ArrayList<Node> children = new ArrayList<Node>();
+            children.add(result);
+            String fieldText = chunks.get(i);
+            boolean isSmoothingField = false;
+            if (fieldText.startsWith("(") && fieldText.endsWith(")")) {
+                isSmoothingField = true;
+                fieldText = fieldText.substring(1, fieldText.length() - 1);
+            }
+            ArrayList<String> fieldNames = splitStringRespectingEscapes(fieldText, ',');
+            Node fieldNode = fieldOrNode(fieldNames, offset);
+            children.add(fieldNode);
+            if (isSmoothingField) {
+                result = new Node("smoothinside", children, offset);
+            } else {
+                result = new Node("inside", children, offset);
+            }
+        }
+        return result;
+    }
+
+    private static Node parseOperatorExpression(String query, int i, int offset) {
+        // this is an operator, so scan for balanced parentheses,
+        // not including escaped regions
+        int end = findOperatorEnd(query, i);
+        Node child = parseOperator(query.substring(i, end), offset + i);
+        // operators may end with a field expression, so parse that too:
+        int textEnd = findTextEnd(query, end);
+        if (textEnd != end && query.charAt(end) == '.') {
+            String remainingText = query.substring(end + 1, textEnd);
+            ArrayList<String> chunks = splitStringRespectingEscapes(remainingText, '.');
+            child = parseFields(child, chunks, end);
+        }
+        return child;
     }
 }
