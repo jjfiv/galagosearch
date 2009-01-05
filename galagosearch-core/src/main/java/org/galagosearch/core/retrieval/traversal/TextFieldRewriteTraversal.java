@@ -40,10 +40,11 @@ public class TextFieldRewriteTraversal implements Traversal {
     private Node stemmedNode(Node original) {
         Parameters parameters = original.getParameters().clone();
         parameters.add("part", "stemmedPostings");
-        String term = parameters.getAsDefault("term", "");
+        String term = parameters.get("default");
         stemmer.setCurrent(term);
+        stemmer.stem();
         String stemmed = stemmer.getCurrent();
-        parameters.set("term", stemmed);
+        parameters.set("default", stemmed);
         return new Node("extents", parameters, original.getInternalNodes(), original.getPosition());
     }
 
