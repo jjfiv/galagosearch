@@ -23,12 +23,23 @@
         <archive>http://groups.google.com/group/galagosearch-users</archive>
       </mailingList>
     </mailingLists>
+    <issueManagement>
+      <system>Google Code</system>
+      <url>http://code.google.com/p/galagosearch/issues/list</url>
+    </issueManagement>
     <scm>
         <connection>scm:svn:http://galagosearch.googlecode.com/svn/trunk/</connection>
         <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/trunk/</developerConnection>
         <tag>HEAD</tag>
         <url>http://galagosearch.googlecode.com/svn/trunk/</url>
-    </scm> 
+    </scm>
+    <distributionManagement>
+        <site>
+            <id>galagosearch.website</id>
+            <name>Galago Website</name>
+            <url>scp://www.galagosearch.org/domains/galagosearch.org/web/public/</url>
+        </site>
+    </distributionManagement>
     <modules>
         <module>galagosearch-core</module>
         <module>galagosearch-tupleflow</module>
