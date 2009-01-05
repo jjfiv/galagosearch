@@ -11,18 +11,22 @@ import org.galagosearch.core.index.ExtentIndexWriter;
 import org.galagosearch.core.index.ExtentValueIndexWriter;
 import org.galagosearch.core.index.ManifestWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
+import org.galagosearch.core.parse.AdditionalTextCombiner;
+import org.galagosearch.core.parse.AnchorTextCreator;
 import org.galagosearch.core.parse.CollectionLengthCounter;
 import org.galagosearch.core.parse.DocumentDataExtractor;
 import org.galagosearch.core.parse.DocumentDataNumberer;
 import org.galagosearch.core.parse.DocumentSource;
 import org.galagosearch.core.parse.ExtentExtractor;
 import org.galagosearch.core.parse.ExtentsNumberer;
+import org.galagosearch.core.parse.LinkCombiner;
 import org.galagosearch.core.parse.LinkExtractor;
 import org.galagosearch.core.parse.Porter2Stemmer;
 import org.galagosearch.core.parse.PositionPostingsNumberer;
 import org.galagosearch.core.parse.PostingsPositionExtractor;
 import org.galagosearch.core.parse.TagTokenizer;
 import org.galagosearch.core.parse.UniversalParser;
+import org.galagosearch.core.types.AdditionalDocumentText;
 import org.galagosearch.core.types.DocumentData;
 import org.galagosearch.core.types.DocumentExtent;
 import org.galagosearch.core.types.DocumentSplit;
@@ -55,14 +59,17 @@ import org.galagosearch.tupleflow.types.XMLFragment;
 public class BuildIndex {
     String indexPath;
     boolean stemming;
+    boolean useLinks;
 
     public BuildIndex() {
         this.stemming = false;
+        this.useLinks = false;
     }
 
     public BuildIndex(String indexPath) {
         this.indexPath = indexPath;
         this.stemming = true;
+        this.useLinks = true;
     }
 
     public Stage getSplitStage(String[] inputs) throws IOException {
@@ -120,9 +127,19 @@ public class BuildIndex {
                 ConnectionPointType.Output,
                 "stemmedPostings", new DocumentWordPosition.DocumentWordPositionOrder()));
         }
+        if (useLinks) {
+            stage.add(new StageConnectionPoint(
+                ConnectionPointType.Input,
+                "anchorText", new AdditionalDocumentText.IdentifierOrder()));
+        }
 
         stage.add(new InputStep("splits"));
         stage.add(new Step(UniversalParser.class));
+        if (useLinks) {
+            Parameters p = new Parameters();
+            p.add("textSource", "anchorText");
+            stage.add(new Step(AdditionalTextCombiner.class, p));
+        }
         stage.add(new Step(TagTokenizer.class));
 
         MultiStep multi = new MultiStep();
@@ -145,7 +162,7 @@ public class BuildIndex {
             stemmedSteps.add(new Step(Porter2Stemmer.class));
             stemmedSteps.add(new Step(PostingsPositionExtractor.class));
             stemmedSteps.add(Utility.getSorter(new DocumentWordPosition.DocumentWordPositionOrder()));
-            stemmedSteps.add(new OutputStep("numberedPostings"));
+            stemmedSteps.add(new OutputStep("stemmedPostings"));
             multi.groups.add(stemmedSteps);
         }
 
@@ -164,7 +181,7 @@ public class BuildIndex {
                 "links", new ExtractedLink.DestUrlOrder()));
         stage.add(new StageConnectionPoint(
                 ConnectionPointType.Output,
-                "documentData", new DocumentData.UrlOrder()));
+                "documentUrls", new DocumentData.UrlOrder()));
 
         stage.add(new InputStep("splits"));
         stage.add(new Step(UniversalParser.class));
@@ -174,11 +191,33 @@ public class BuildIndex {
         ArrayList<Step> links =
                 getExtractionSteps("links", LinkExtractor.class, new ExtractedLink.DestUrlOrder());
         ArrayList<Step> data =
-                getExtractionSteps("documentData", DocumentDataExtractor.class, new DocumentData.UrlOrder());
+                getExtractionSteps("documentUrls", DocumentDataExtractor.class,
+                                   new DocumentData.UrlOrder());
 
         multi.groups.add(links);
         multi.groups.add(data);
         stage.add(multi);
+
+        return stage;
+    }
+
+    public Stage getLinkCombineStage() {
+        Stage stage = new Stage("linkCombine");
+
+        stage.add(new StageConnectionPoint(ConnectionPointType.Input, "documentUrls",
+                                           new DocumentData.UrlOrder()));
+        stage.add(new StageConnectionPoint(ConnectionPointType.Input, "links",
+                                           new ExtractedLink.DestUrlOrder()));
+        stage.add(new StageConnectionPoint(ConnectionPointType.Output, "anchorText",
+                                           new AdditionalDocumentText.IdentifierOrder()));
+
+        Parameters p = new Parameters();
+        p.add("documentDatas", "documentUrls");
+        p.add("extractedLinks", "links");
+        stage.add(new Step(LinkCombiner.class, p));
+        stage.add(new Step(AnchorTextCreator.class));
+        stage.add(Utility.getSorter(new AdditionalDocumentText.IdentifierOrder()));
+        stage.add(new OutputStep("anchorText"));
 
         return stage;
     }
@@ -197,23 +236,6 @@ public class BuildIndex {
         stage.add(new Step(CollectionLengthCounter.class));
         stage.add(Utility.getSorter(new XMLFragment.NodePathOrder()));
         stage.add(new OutputStep("collectionLength"));
-
-        return stage;
-    }
-
-    public Stage getLinkCombineStage() {
-        Stage stage = new Stage("linkCombine");
-
-        // FIXME: linkCombine stage
-        /*
-        Parameters p = new Parameters();
-        p.add("documentNames", "documentURLs");
-        p.add("extractedLinks", "extractedLinks");
-        stage.add(new Step(LinkCombiner.class, p));
-        stage.add(new Step(AnchorTextDocumentCreator.class));
-
-        MultiStep multi = new MultiStep();
-        stage.add(multi); */
 
         return stage;
     }
@@ -367,7 +389,7 @@ public class BuildIndex {
         Job job = new Job();
         this.indexPath = indexDirectory;
         this.stemming = useStemming;
-        assert extractAnchors == false;
+        this.useLinks = extractAnchors;
 
         job.add(getSplitStage(indexInputs));
         job.add(getParsePostingsStage());
@@ -394,6 +416,15 @@ public class BuildIndex {
         job.connect("parsePostings", "collectionLength", ConnectionAssignmentType.Combined);
         job.connect("collectionLength", "writeManifest", ConnectionAssignmentType.Combined);
 
+        if (useLinks) {
+            job.add(getParseLinksStage());
+            job.add(getLinkCombineStage());
+
+            job.connect("inputSplit", "parseLinks", ConnectionAssignmentType.Each);
+            job.connect("parseLinks", "linkCombine", ConnectionAssignmentType.Each);
+            job.connect("linkCombine", "parsePostings", ConnectionAssignmentType.Each);
+        }
+
         if (stemming) {
             job.add(getNumberPostingsStage("numberStemmedPostings",
                                            "stemmedPostings",
@@ -402,6 +433,7 @@ public class BuildIndex {
                                           "numberedStemmedPostings",
                                           "stemmedPostings"));
             job.connect("parsePostings", "numberStemmedPostings", ConnectionAssignmentType.Each);
+            job.connect("numberDocuments", "numberStemmedPostings", ConnectionAssignmentType.Combined);
             job.connect("numberStemmedPostings", "writeStemmedPostings", ConnectionAssignmentType.Combined);
         }
 

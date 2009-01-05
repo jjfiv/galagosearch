@@ -30,8 +30,11 @@ public class LinkCombiner implements ExNihiloSource<IdentifiedLink>, IdentifiedL
 
     @SuppressWarnings("unchecked")
     public LinkCombiner(TupleFlowParameters parameters) throws IOException {
-        extractedLinks = parameters.getTypeReader("extractedLinks");
-        documentDatas = parameters.getTypeReader("documentDatas");
+        String extractedLinksName = parameters.getXML().get("extractedLinks");
+        String documentDatasName = parameters.getXML().get("documentDatas");
+
+        extractedLinks = parameters.getTypeReader(extractedLinksName);
+        documentDatas = parameters.getTypeReader(documentDatasName);
     }
 
     public void setProcessor(Step processor) throws IncompatibleProcessorException {
@@ -81,7 +84,15 @@ public class LinkCombiner implements ExNihiloSource<IdentifiedLink>, IdentifiedL
     }
 
     public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
-        Verification.verifyTypeReader("extractedLinks", ExtractedLink.class, parameters, handler);
-        Verification.verifyTypeReader("documentData", DocumentData.class, parameters, handler);
+        if (!Verification.requireParameters(new String[] { "extractedLinks", "documentDatas" },
+                                            parameters.getXML(), handler)) {
+            return;
+        }
+
+        String extractedLinksName = parameters.getXML().get("extractedLinks");
+        String documentDatasName = parameters.getXML().get("documentDatas");
+
+        Verification.verifyTypeReader(extractedLinksName, ExtractedLink.class, parameters, handler);
+        Verification.verifyTypeReader(documentDatasName, DocumentData.class, parameters, handler);
     }
 }

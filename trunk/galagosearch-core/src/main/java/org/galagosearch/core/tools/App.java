@@ -4,6 +4,7 @@ package org.galagosearch.core.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import org.galagosearch.core.index.StructuredIndex;
@@ -92,16 +93,31 @@ public class App {
         System.out.println();
         System.out.println("Flags:");
         System.out.println("  --links={true|false}:    Selects whether to collect anchor text ");
-        System.out.println("                           [default=true]");
+        System.out.println("                           [default=false]");
         System.out.println("  --stemming={true|false}: Selects whether to build stemmed inverted ");
         System.out.println("                           lists in addition to non-stemmed ones.");
         System.out.println("                           [default=true]");
     }
 
     private static void handleBuild(String[] args) throws Exception {
-        // TODO: handle --links and --stemming flags
+        // handle --links and --stemming flags
+        ArrayList<String> documentFiles = new ArrayList<String>();
+        ArrayList<String> flags = new ArrayList<String>();
+        for (String arg : Utility.subarray(args, 2)) {
+            if (arg.startsWith("--")) {
+                flags.add(arg);
+            } else {
+                documentFiles.add(arg);
+            }
+        }
+
+        Parameters p = new Parameters(flags.toArray(new String[0]));
+        boolean useLinks = p.get("links", false);
+        boolean stemming = p.get("stemming", true);
+        String[] docs = documentFiles.toArray(new String[0]);
+
         BuildIndex build = new BuildIndex();
-        Job job = build.getIndexJob(args[1], Utility.subarray(args, 2), false, false);
+        Job job = build.getIndexJob(args[1], docs, useLinks, stemming);
         ErrorStore store = new ErrorStore();
         JobExecutor.runLocally(job, store);
         if (store.hasStatements()) {
@@ -325,7 +341,6 @@ public class App {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException, Exception {
-        args = new String[] { "search", "/tmp/wiki.sm.index", "/Users/trevor/Desktop/wiki-small.corpus" };
         if (args.length < 1) {
             usage();
             return;
