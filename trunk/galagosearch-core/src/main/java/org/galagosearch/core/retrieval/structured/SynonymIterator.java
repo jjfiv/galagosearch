@@ -22,16 +22,14 @@ public class SynonymIterator extends ExtentDisjunctionIterator {
         // get all the iteators that point to this document
         ArrayList<ExtentIterator> useable = new ArrayList<ExtentIterator>();
         while (iterators.size() > 0 && iterators.peek().document() == document) {
-            useable.add(iterators.
-                                                                                            poll());
+            useable.add(iterators.poll());
         }
         useable.add(iter);
 
         // make a priority queue of these ExtentArrayIterators
         PriorityQueue<ExtentArrayIterator> arrayIterators = new PriorityQueue<ExtentArrayIterator>();
         for (ExtentIterator iterator : useable) {
-            arrayIterators.offer(new ExtentArrayIterator(
-                                                                     iterator.extents()));
+            arrayIterators.offer(new ExtentArrayIterator(iterator.extents()));
         }
         while (arrayIterators.size() > 0) {
             ExtentArrayIterator top = arrayIterators.poll();
