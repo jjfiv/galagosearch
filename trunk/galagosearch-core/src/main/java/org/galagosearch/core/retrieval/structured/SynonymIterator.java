@@ -3,13 +3,14 @@ package org.galagosearch.core.retrieval.structured;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
+import org.galagosearch.tupleflow.Parameters;
 
 /**
  *
  * @author trevor
  */
 public class SynonymIterator extends ExtentDisjunctionIterator {
-    public SynonymIterator(ExtentIterator[] iterators) {
+    public SynonymIterator(Parameters parameters, ExtentIterator[] iterators) {
         super(iterators);
         loadExtents();
     }

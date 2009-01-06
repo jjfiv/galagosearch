@@ -133,6 +133,16 @@ public class SearchWebHandler extends AbstractHandler {
         writer.append("<head>\n");
         writer.append(String.format("<title>%s - Galago Search</title>\n", displayQuery));
         writeStyle(writer);
+        writer.append("<script type=\"text/javascript\">\n");
+        writer.append("function toggleDebug() {\n");
+        writer.append("   var object = document.getElementById('debug');\n");
+        writer.append("   if (object.style.display != 'block') {\n");
+        writer.append("     object.style.display = 'block';\n");
+        writer.append("  } else {\n");
+        writer.append("     object.style.display = 'none';\n");
+        writer.append("  }\n");
+        writer.append("}\n");
+        writer.append("</script>\n");
         writer.append("</head>\n<body>\n");
 
         writer.append("<div id=\"header\">\n");
@@ -145,6 +155,16 @@ public class SearchWebHandler extends AbstractHandler {
         writer.append("</tr>");
         writer.append("</table>\n");
         writer.append("</div>\n");
+
+        writer.append("<center>[<a href=\"#\" onClick=\"toggleDebug(); return false;\">debug</a>]</center>");
+        writer.append("<div id=\"debug\">");
+        writer.append("<table>");
+        writer.append(String.format("<tr><td>%s</td><td>%s</td></tr>",
+                      "Parsed Query", result.query.toString()));
+        writer.append(String.format("<tr><td>%s</td><td>%s</td></tr>",
+                      "Transformed Query", result.transformedQuery.toString()));
+        writer.append("</table>");
+        writer.append("</div>");
 
         for (SearchResultItem item : result.items) {
             writer.append("<div id=\"result\">\n");
@@ -249,6 +269,7 @@ public class SearchWebHandler extends AbstractHandler {
         writer.write("#result { padding: 10px 5px; max-width: 550px; }\n");
         writer.write("#meta { font-size: small; color: rgb(60, 100, 60); }\n");
         writer.write("#summary { font-size: small; }\n");
+        writer.write("#debug { display: none; }\n");
         writer.write("</style>");
     }
 
