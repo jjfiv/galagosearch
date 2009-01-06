@@ -152,7 +152,7 @@ public class SearchWebHandler extends AbstractHandler {
                                         "<div id=\"summary\">%s</div>\n" +
                                         "<div id=\"meta\">%s - %s</div>\n",
                                         item.identifier,
-                                        scrub(item.displayTitle),
+                                        item.displayTitle,
                                         item.summary,
                                         scrub(item.identifier),
                                         scrub(item.url)));
