@@ -10,6 +10,7 @@ import org.galagosearch.core.retrieval.structured.SynonymIterator;
 import java.io.IOException;
 import junit.framework.*;
 import org.galagosearch.core.util.ExtentArray;
+import org.galagosearch.tupleflow.Parameters;
 
 /**
  *
@@ -27,7 +28,7 @@ public class SynonymIteratorTest extends TestCase {
         FakeExtentIterator two = new FakeExtentIterator(dataTwo);
         FakeExtentIterator[] iters = { one, two };
 
-        SynonymIterator instance = new SynonymIterator(iters);
+        SynonymIterator instance = new SynonymIterator(new Parameters(), iters);
         ExtentArray array = instance.extents();
 
         assertFalse(instance.isDone());
@@ -54,7 +55,7 @@ public class SynonymIteratorTest extends TestCase {
         FakeExtentIterator two = new FakeExtentIterator(dataTwo);
         FakeExtentIterator[] iters = { one, two };
 
-        SynonymIterator instance = new SynonymIterator(iters);
+        SynonymIterator instance = new SynonymIterator(new Parameters(), iters);
         ExtentArray array = instance.extents();
 
         assertFalse(instance.isDone());

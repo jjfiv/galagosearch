@@ -260,6 +260,7 @@ public class SearchWebHandler extends AbstractHandler {
     public void writeStyle(PrintWriter writer) {
         writer.write("<style type=\"text/css\">\n");
         writer.write("body { font-family: Helvetica, sans-serif; }\n");
+        writer.write("img { border-style: none; }\n");
         writer.write("#box { border: 1px solid #ccc; margin: 100px auto; width: 500px;" +
                      "background: rgb(210, 233, 217); }\n");
         writer.write("#box a { font-size: small; text-decoration: none; }\n");

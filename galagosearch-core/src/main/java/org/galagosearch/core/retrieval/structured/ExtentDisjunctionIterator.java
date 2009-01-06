@@ -16,23 +16,25 @@ import org.galagosearch.core.util.ExtentArray;
  * @author trevor
  */
 public abstract class ExtentDisjunctionIterator extends ExtentIterator {
+    protected ExtentIterator[] original;
     protected PriorityQueue<ExtentIterator> iterators;
     protected int document;
     protected ExtentArray extents;
 
     public ExtentDisjunctionIterator(ExtentIterator[] iterators) {
+        this.original = iterators;
         this.iterators = new PriorityQueue<ExtentIterator>(iterators.length);
 
-        for (ExtentIterator iterator : iterators) {
+        this.extents = new ExtentArray();
+        this.document = 0;
+
+        for (ExtentIterator iterator : original) {
             if (!iterator.isDone()) {
                 this.iterators.add(iterator);
             }
         }
-
-        this.extents = new ExtentArray();
-        this.document = 0;
     }
-
+    
     public abstract void loadExtents();
 
     public void nextDocument() throws IOException {
@@ -69,8 +71,12 @@ public abstract class ExtentDisjunctionIterator extends ExtentIterator {
     }
 
     public void reset() throws IOException {
-        for (ExtentIterator iterator : iterators) {
+        iterators.clear();
+        for (ExtentIterator iterator : original) {
             iterator.reset();
+            if (!iterator.isDone()) {
+                iterators.add(iterator);
+            }
         }
 
         loadExtents();
