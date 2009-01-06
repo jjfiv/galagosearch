@@ -97,7 +97,11 @@ public class Search {
             item.displayTitle = identifier;
 
             if (document.metadata.containsKey("title")) {
-                item.displayTitle = generator.highlight(document.metadata.get("title"), queryTerms);
+                item.displayTitle = document.metadata.get("title");
+            }
+
+            if (item.displayTitle != null) {
+                item.displayTitle = generator.highlight(item.displayTitle, queryTerms);
             }
 
             if (document.metadata.containsKey("url")) {
