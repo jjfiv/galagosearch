@@ -190,13 +190,15 @@ public class App {
 
     private static void handleSearch(String[] args) throws Exception, IOException {
         String indexPath = args[1];
-        String corpusPath = args[2];
 
         Retrieval retrieval = Retrieval.instance(indexPath);
         DocumentStore store = null;
         if (args.length > 2) {
-            DocumentIndexReader docReader = new DocumentIndexReader(corpusPath);
-            store = new DocumentIndexStore(docReader);
+            ArrayList<DocumentIndexReader> readers = new ArrayList<DocumentIndexReader>();
+            for (int i = 2; i < args.length; ++i) {
+                readers.add(new DocumentIndexReader(args[i]));
+            }
+            store = new DocumentIndexStore(readers);
         } else {
             store = new NullStore();
         }

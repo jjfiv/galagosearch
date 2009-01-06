@@ -3,25 +3,41 @@
 package org.galagosearch.core.store;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.parse.DocumentIndexReader;
 
 /**
- *
+ * <p>A DocumentStore that reads document data from corpus files.</p>
+ * A DocumentIndexStore checks the corpus files sequentially until
+ * it finds a matching document.</p>
  * @author trevor
  */
 public class DocumentIndexStore implements DocumentStore {
-    DocumentIndexReader reader;
+    List<DocumentIndexReader> readers;
 
     public DocumentIndexStore(DocumentIndexReader reader) {
-        this.reader = reader;
+        this(Collections.singletonList(reader));
+    }
+
+    public DocumentIndexStore(List<DocumentIndexReader> readers) {
+        this.readers = readers;
     }
 
     public Document get(String identifier) throws IOException {
-        return reader.getDocument(identifier);
+        for (DocumentIndexReader reader : readers) {
+            Document document = reader.getDocument(identifier);
+            if (document != null) {
+                return document;
+            }
+        }
+        return null;
     }
 
     public void close() throws IOException {
-        reader.close();
+        for (DocumentIndexReader reader : readers) {
+            reader.close();
+        }
     }
 }
