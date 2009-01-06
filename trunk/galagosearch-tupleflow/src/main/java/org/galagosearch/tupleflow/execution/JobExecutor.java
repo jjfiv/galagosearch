@@ -993,6 +993,10 @@ public class JobExecutor {
             public List<Exception> getExceptions() { return Collections.EMPTY_LIST; }
         }
 
+        public synchronized boolean isComplete() {
+            return stages.size() == completedStages.size();
+        }
+
         public synchronized Map<String, StageExecutionStatus> getStageStatus() {
             Map<String, StageExecutionStatus> result = new TreeMap();
 
@@ -1183,8 +1187,9 @@ public class JobExecutor {
         String masterURL = String.format("http://%s:%d", address.getHostAddress(), port);
         JobExecutionStatus status = new JobExecutionStatus(stages, temporaryStorage, executor, masterURL);
         MasterWebHandler handler = new MasterWebHandler(status);
-        server.addHandler(new MasterWebHandler(status));
+        server.addHandler(handler);
         status.run();
+        handler.waitForFinalPage();
         server.removeHandler(handler);
     }
 

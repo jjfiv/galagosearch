@@ -5,7 +5,6 @@ package org.galagosearch.tupleflow.execution;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,6 +24,12 @@ import org.mortbay.jetty.handler.AbstractHandler;
 public class MasterWebHandler extends AbstractHandler {
     JobExecutionStatus status;
     Map<CounterName, AggregateCounter> counters = new TreeMap<CounterName, AggregateCounter>();
+
+    /**
+     * Time, in milliseconds, of the last page load.  Can be 0 if the page has never been
+     * loaded, or if the page was loaded since the job completed.
+     */
+    long lastPageLoad = 0;
 
     public static class CounterName implements Comparable<CounterName> {
         String counterName;
@@ -86,6 +91,40 @@ public class MasterWebHandler extends AbstractHandler {
         this.status = status;
     }
 
+    public synchronized void setLastPageLoad(long value) {
+        lastPageLoad = value;
+    }
+
+    public synchronized long getLastPageLoad() {
+        return lastPageLoad;
+    }
+
+    /**
+     * <p>Waits a bit longer for someone to load a final status page.</p>
+     *
+     * <p>This method should be called immediately after a job is complete.
+     * If the page was loaded recently and the job wasn't complete, this
+     * method will wait up to 15 seconds for the browser to load the indexing
+     * complete page, which has no auto-refresh logic.  This avoids the
+     * ugly experience of showing a "cannot connect to server" error in the
+     * browser after indexing completes.</p>
+     */
+    public void waitForFinalPage() {
+        synchronized(this) {
+            // If someone loaded a page within the last 15 seconds, we'll
+            // wait a little bit more for a final refresh.  We'll get
+            // signaled by the final load.
+            long timeDelta = System.currentTimeMillis() - getLastPageLoad();
+            if (timeDelta <= 15 * 1000) {
+                try {
+                    this.wait(15 * 1000);
+                } catch (InterruptedException e) {
+                    // do nothing
+                }
+            }
+        }        
+    }
+
     public synchronized void handleSetCounter(
             HttpServletRequest request,
             HttpServletResponse response) throws IOException {
@@ -130,9 +169,13 @@ public class MasterWebHandler extends AbstractHandler {
         response.setContentType("text/html");
 
         Map<String, StageExecutionStatus> stagesStatus = status.getStageStatus();
-
+        boolean isComplete = status.isComplete();
+        setLastPageLoad(System.currentTimeMillis());
+        
         writer.append("<html>");
-        handleRefresh(request, writer);
+        if (!isComplete) {
+            handleRefresh(request, writer);
+        }
         writer.append("<head>\n");
         writer.append("<style type=\"text/css\">\n");
 
@@ -153,13 +196,17 @@ public class MasterWebHandler extends AbstractHandler {
 
         // The first table contains format information:
         writer.append("<table>");
-        writer.append(String.format("<tr><td>Start</td><td>%s</td></tr>\n", status.getStartDate().toString()));
+        writer.append(String.format("<tr><td>Start</td><td>%s</td></tr>\n",
+                status.getStartDate().toString()));
         writer.append(String.format("<tr><td>Elapsed</td><td>%s</td></tr>\n",
                 getElapsed(status.getStartDate())));
         writer.append(String.format("<tr><td>Max memory</td><td>%dM</td></tr>\n",
                 status.getMaxMemory()/1048576));
         writer.append(String.format("<tr><td>Free memory</td><td>%dM</td></tr>\n",
                 status.getFreeMemory()/1048576));
+        if (isComplete) {
+            writer.append("<tr><td><b>Indexing Complete</b></td><td></td></tr>");
+        }
         writer.append("</table>");
         // Two-column table, stage data on left, counters on right
         writer.append("<table><tr><td>\n");
@@ -212,6 +259,11 @@ public class MasterWebHandler extends AbstractHandler {
         writer.append("</body>");
         writer.append("</html>");
         writer.close();
+
+        if (isComplete) {
+            setLastPageLoad(0);
+            notifyAll();
+        }
     }
     
     public synchronized void handle(
