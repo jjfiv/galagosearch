@@ -11,10 +11,16 @@ Introduction
 Getting Started
 
   * Download Galago: {http://code.google.com/p/galagosearch/downloads/list}
+
       * Get a binary version (one that ends with 'bin.zip' or 'bin.tar.gz')
+
       * Unpack it somewhere convenient on your machine
+
   * Download the Wiki Small collection {http://www.search-engines-book.com/collections/}
+
       * Get the 'corpus' version, not the 'tar.gz' version.
+
+  []
 
   All commands that you need to type appear in boxes like this:   
   
