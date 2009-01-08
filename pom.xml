@@ -12,8 +12,8 @@
     </description>
     <licenses>
         <license>
-            <name>BSD licence</name>
-            <url>http://www.galagosearch.org/license</url>
+            <name>BSD license</name>
+            <url>http://www.galagosearch.org/license-raw.html</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -33,13 +33,19 @@
         <tag>HEAD</tag>
         <url>http://galagosearch.googlecode.com/svn/trunk/</url>
     </scm>
-    <distributionManagement>
-        <site>
-            <id>galagosearch.website</id>
-            <name>Galago Website</name>
-            <url>scp://www.galagosearch.org/domains/galagosearch.org/web/public/</url>
-        </site>
-    </distributionManagement>
+    <developers>
+        <developer>
+            <id>trevor</id>
+            <name>Trevor Strohman</name>
+            <email>strohman@cs.umass.edu</email>
+            <url>http://ciir.cs.umass.edu/~strohman</url>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>-8</timezone>   
+        </developer>
+    </developers>
     <modules>
         <module>galagosearch-core</module>
         <module>galagosearch-tupleflow</module>
