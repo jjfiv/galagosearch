@@ -33,12 +33,34 @@ public class Utility {
      * @return a Step object that can be added to a TupleFlow Stage.
      */
     public static Step getSorter(Order sortOrder) {
+        return getSorter(sortOrder, null);
+    }
+
+    /**
+     * Builds a Sorter step with a reducer that can be added to a TupleFlow stage.
+     *
+     * @param sortOrder An order object representing how and what to sort.
+     * @param reducerClass The class of a reducer object that can reduce this data.
+     * @return a Step object that can be added to a TupleFlow Stage.
+     */
+
+    public static Step getSorter(Order sortOrder, Class reducerClass) {
         Parameters p = new Parameters();
         p.add("class", sortOrder.getOrderedClass().getName());
         p.add("order", Utility.join(sortOrder.getOrderSpec()));
+        if (reducerClass != null) {
+            try {
+                reducerClass.asSubclass(Reducer.class);
+            } catch (ClassCastException e) {
+                throw new IllegalArgumentException("getSorter called with a reducerClass argument " +
+                                                   "which is not actually a reducer: " +
+                                                   reducerClass.getName());
+            }
+            p.add("reducer", reducerClass.getName());
+        }
         return new Step(Sorter.class, p);
     }
-    
+
     /**
      * Finds a free port to listen on.  Useful for starting up internal web servers.
      * (copied from chaoticjava.com)
