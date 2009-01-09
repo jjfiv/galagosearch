@@ -545,9 +545,7 @@ public class Verification {
                                    "@InputClass annotation with the class name '" + inputClassName +
                                    "' which couldn't be found.");
                 }
-            } else if (inputClass != null) {
-                inputClassName = inputClass.getName();
-            } else if (inputClass == null) {
+            } else {
                 try {
                     Method getInputClass = clazz.getDeclaredMethod("getInputClass",
                                                                    TupleFlowParameters.class);
