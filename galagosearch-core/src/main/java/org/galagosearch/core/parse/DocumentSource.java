@@ -72,7 +72,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
         IndexReader reader = new IndexReader(fileName);
         VocabularyReader vocabulary = reader.getVocabulary();
         List<TermSlot> slots = vocabulary.getSlots();
-        int pieces = Math.max(1, (int) (fileLength / chunkSize));
+        int pieces = Math.max(2, (int) (fileLength / chunkSize));
         ArrayList<byte[]> keys = new ArrayList<byte[]>();
 
         for (int i = 1; i < pieces; ++i) {

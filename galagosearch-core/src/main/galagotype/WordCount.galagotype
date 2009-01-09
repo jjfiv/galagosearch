@@ -6,4 +6,5 @@ type WordCount {
     long documents;
     
     order: +word;
+    order: +count;
 }
