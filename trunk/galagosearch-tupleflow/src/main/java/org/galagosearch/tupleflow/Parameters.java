@@ -197,6 +197,10 @@ public class Parameters implements Serializable {
             String[] fields = key.split("/", 2);
             key = fields[0];
 
+            if (_map == null) {
+                return Collections.emptyList();
+            }
+            
             // get the appropriate list from the map
             List<Value> list = _map.get(key);
 
