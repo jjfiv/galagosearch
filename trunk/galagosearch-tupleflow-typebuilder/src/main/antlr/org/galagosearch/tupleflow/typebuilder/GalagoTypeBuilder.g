@@ -72,3 +72,4 @@ type_def returns [ TypeSpecification spec ] :
 ID  :   ('a'..'z'|'A'..'Z')+ ;
 NEWLINE:'\r'? '\n' {skip();} ;
 WS  :   (' '|'\t')+ {skip();} ;
+COMMENT : '/' '/' (~('\n'|'\r'))* {skip();} ;
