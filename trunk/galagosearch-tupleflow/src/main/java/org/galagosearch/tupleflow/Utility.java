@@ -153,6 +153,37 @@ public class Utility {
     }
 
     /**
+     * <p>Splits args into an array of flags and an array of parameters.</p>
+     * 
+     * <p>This method assumes that args is an array of strings, where some of those
+     * strings are flags (they start with '-') and the others are non-flag arguments.
+     * This splits those into two arrays so they can be processed separately.</p>
+     *
+     * @param args
+     * @return An array of length 2, where the first element is an array of flags
+     *         and the second is an array of arguments. 
+     */
+
+    public static String[][] filterFlags(String[] args) {
+        ArrayList<String> flags = new ArrayList<String>();
+        ArrayList<String> nonFlags = new ArrayList<String>();
+
+        for (String arg : args) {
+            if (arg.startsWith("-")) {
+                flags.add(arg);
+            } else {
+                nonFlags.add(arg);
+            }
+        }
+
+        String[][] twoArrays = new String[2][];
+        twoArrays[0] = flags.toArray(new String[0]);
+        twoArrays[1] = nonFlags.toArray(new String[0]);
+
+        return twoArrays;
+    }
+
+    /**
      * For an array master, returns
      * an array containing the last master.length-index elements.
      */
