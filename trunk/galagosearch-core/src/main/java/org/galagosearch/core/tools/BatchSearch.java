@@ -1,8 +1,9 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.tools;
 
-import org.galagosearch.core.retrieval.*;
 import java.util.List;
+import org.galagosearch.core.retrieval.Retrieval;
+import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
@@ -46,8 +47,7 @@ public class BatchSearch {
         List<Parameters.Value> queries = parameters.list("query");
 
         // open index
-        // BUGBUG: need to make this generalized
-        Retrieval retrieval = Retrieval.instance(parameters.get("index"));
+        Retrieval retrieval = Retrieval.instance(parameters.get("index"), parameters);
 
         // record results requested
         int requested = (int) parameters.get("count", 1000);

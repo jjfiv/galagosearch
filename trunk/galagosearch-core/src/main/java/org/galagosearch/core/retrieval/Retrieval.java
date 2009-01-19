@@ -5,6 +5,7 @@ package org.galagosearch.core.retrieval;
 import java.io.IOException;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.tupleflow.Parameters;
 
 /**
  * <p>This is a base class for all kinds of retrieval classes.  Historically this was
@@ -22,7 +23,7 @@ public abstract class Retrieval {
     public abstract ScoredDocument[] runQuery(Node query, int requested) throws Exception;
     public abstract void close() throws IOException;
     
-    static public Retrieval instance(String indexPath) throws IOException {
-        return new StructuredRetrieval(indexPath);
+    static public Retrieval instance(String indexPath, Parameters parameters) throws IOException {
+        return new StructuredRetrieval(indexPath, parameters);
     }
 }

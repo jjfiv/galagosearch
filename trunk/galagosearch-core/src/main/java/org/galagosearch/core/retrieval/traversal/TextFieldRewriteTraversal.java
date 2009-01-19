@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
+import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.tupleflow.Parameters;
 import org.tartarus.snowball.ext.englishStemmer;
 
@@ -21,8 +22,8 @@ public class TextFieldRewriteTraversal implements Traversal {
     private StructuredIndex index;
     private englishStemmer stemmer;
 
-    public TextFieldRewriteTraversal(StructuredIndex index) {
-        this.index = index;
+    public TextFieldRewriteTraversal(Parameters parameters, StructuredRetrieval retrieval) {
+        this.index = retrieval.getIndex();
         this.stemmer = new englishStemmer();
     }
 

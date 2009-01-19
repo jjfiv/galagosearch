@@ -11,6 +11,7 @@ import org.galagosearch.core.retrieval.StructuredRetrievalTest;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.tupleflow.Parameters;
 
 /**
  *
@@ -35,10 +36,10 @@ public class ImplicitFeatureCastTraversalTest extends TestCase {
 
     public void testTraversal() throws Exception {
         StructuredIndex index = new StructuredIndex(indexPath.getAbsolutePath());
-        StructuredRetrieval retrieval = new StructuredRetrieval(index);
-        ImplicitFeatureCastTraversal traversal = new ImplicitFeatureCastTraversal(retrieval);
+        StructuredRetrieval retrieval = new StructuredRetrieval(index, new Parameters());
+        ImplicitFeatureCastTraversal traversal = new ImplicitFeatureCastTraversal(new Parameters(), retrieval);
         Node tree = StructuredQuery.parse("#combine(cat dog.title)");
-        // TODO: fix this test
-        //Node result = StructuredQuery.copy(traversal, tree);
+        // Just a smoke test for now, verifies that no exceptions are thrown
+        Node result = StructuredQuery.copy(traversal, tree);
     }
 }
