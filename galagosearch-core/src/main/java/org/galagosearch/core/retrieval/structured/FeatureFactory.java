@@ -3,15 +3,67 @@ package org.galagosearch.core.retrieval.structured;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.query.Traversal;
+import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
+import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
+import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
+import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
+import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
 import org.galagosearch.core.scoring.DirichletScorer;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Parameters.Value;
 
 /**
+ * <p>Uses user-provided information to build iterators for retrieval.</p>
+ *
+ * <p>With no added parameters, this class constructs the basic set of operators
+ * in the Galago query language; things like #combine, #inside, and #syn.  However,
+ * if you build more operators or traversals, you'll want to provide some
+ * parameters to FeatureFactory so it knows where to find your code.</p>
+ *
+ * <p>If you want to add an operator, try this:</p>
+ * <pre>
+ *    &gt;operators&lt;
+ *        &gt;operator&lt;
+ *            &gt;name&lt;myoperator&gt;/name&lt;
+ *            &gt;class&lt;org.myorganization.MyOperatorIterator&gt;/class&lt;
+ *            &gt;parameters&lt;
+ *                &gt;weight&lt;0.5&gt;/weight&lt;
+ *            &gt;/parameters&lt;
+ *        &gt;/operator&lt;
+ *    &gt;/operators&lt;
+ * </pre>
+ *
+ * <p>Once configured like this, you can access your operator in queries as
+ * #myoperator().  Galago will instantiate your operator using the class
+ * <tt>org.myorganization.MyOperatorIterator</tt>, and it will pass in the
+ * argument <tt>weight=0.5</tt> to your operator's parameters object.  Note that
+ * the constructor of your operator must start with a Parameters object, and
+ * the remaining parameters must be StructuredIterators.  Look at the implementations
+ * of the built-in operators for examples.</p>
+ *
+ * <p>If you want to add some query traversals, try this:</p>
+ *
+ * <pre>
+ *    &gt;traversals&lt;
+ *        &gt;traversal&lt;
+ *            &gt;class&lt;org.myorganization.MyTraversal&gt;/class&lt;
+ *            &gt;order&lt;after&gt;/order&lt;
+ *        &gt;/traversal&lt;
+ *    &gt;/traversals&lt;
+ * </pre>
+ *
+ * <p>The <tt>order</tt> tag specifies that this traversal should run after
+ * all the default traversals.  You could also specify <tt>before</tt> or
+ * <tt>instead</tt>.  Order matters in this list of traversals.  The top
+ * traversal will be executed first, and the bottom traversal will be executed
+ * last.</p>
  *
  * @author trevor
  */
@@ -31,21 +83,102 @@ public class FeatureFactory {
     static String[][] sFeatureLookup = {
         {DirichletScorer.class.getName(), "dirichlet"}
     };
-    HashMap<String, String> featureLookup;
-    HashMap<String, String> operatorLookup;
+    static String[] sTraversalList = {
+        AddCombineTraversal.class.getName(),
+        WeightConversionTraversal.class.getName(),
+        IndriWindowCompatibilityTraversal.class.getName(),
+        TextFieldRewriteTraversal.class.getName(),
+        ImplicitFeatureCastTraversal.class.getName()
+    };
+
+    static class OperatorSpec {
+        public String className;
+        public Parameters parameters = new Parameters();
+    }
+
+    static class TraversalSpec {
+        public String className;
+        public Parameters parameters = new Parameters();
+    }
+
+    HashMap<String, OperatorSpec> featureLookup;
+    HashMap<String, OperatorSpec> operatorLookup;
+    List<String> traversals;
+
     Parameters parameters;
 
     public FeatureFactory(Parameters parameters) {
-        operatorLookup = new HashMap<String, String>();
-        featureLookup = new HashMap<String, String>();
+        operatorLookup = new HashMap<String, OperatorSpec>();
+        featureLookup = new HashMap<String, OperatorSpec>();
         this.parameters = parameters;
         
         for (String[] item : sFeatureLookup) {
-            featureLookup.put(item[1], item[0]);
+            OperatorSpec operator = new OperatorSpec();
+            operator.className = item[0];
+            String operatorName = item[1];
+            featureLookup.put(operatorName, operator);
         }
 
         for (String[] item : sOperatorLookup) {
-            operatorLookup.put(item[1], item[0]);
+            OperatorSpec operator = new OperatorSpec();
+            operator.className = item[0];
+            String operatorName = item[1];
+            operatorLookup.put(operatorName, operator);
+        }
+
+        ArrayList<String> afterTraversals = new ArrayList<String>();
+        ArrayList<String> beforeTraversals = new ArrayList<String>();
+        ArrayList<String> insteadTraversals = new ArrayList<String>();
+
+        for (Value value : parameters.list("traversals/traversal")) {
+            String className = value.get("class");
+            String order = value.get("order", "after");
+            List<Value> params = value.list("parameters");
+            if (className == null) {
+                throw new RuntimeException("class is required in traversal declarations.");
+            }
+
+            TraversalSpec spec = new TraversalSpec();
+            spec.className = className;
+            if (params != null && params.size() > 0) {
+                spec.parameters.copy(new Parameters(params.get(0)));
+            }
+
+            if (order.equals("before")) {
+                beforeTraversals.add(className);
+            } else if (order.equals("after")) {
+                afterTraversals.add(className);
+            } else if (order.equals("instead")) {
+                insteadTraversals.add(className);
+            } else {
+                throw new RuntimeException("order must be one of {before,after,instead}");
+            }
+        }
+
+        // If the user doesn't want to replace the current pipeline, add in that pipeline
+        if (insteadTraversals.size() == 0) {
+            for (String className : sTraversalList) {
+                insteadTraversals.add(className);
+            }
+        }
+
+        traversals = new ArrayList<String>();
+        traversals.addAll(beforeTraversals);
+        traversals.addAll(insteadTraversals);
+        traversals.addAll(afterTraversals);
+
+        for (Value value : parameters.list("operators/operator")) {
+            String className = value.get("class");
+            String operatorName = value.get("name");
+            List<Value> params = value.list("parameters");
+            OperatorSpec spec = new OperatorSpec();
+
+            if (params != null && params.size() > 0) {
+                spec.parameters.copy(new Parameters(params.get(0)));
+            }
+
+            spec.className = className;
+            operatorLookup.put(operatorName, spec);
         }
     }
 
@@ -55,13 +188,13 @@ public class FeatureFactory {
         if (operator.equals("feature")) {
             return getFeatureClassName(node.getParameters());
         }
-        String className = operatorLookup.get(operator);
+        OperatorSpec operatorType = operatorLookup.get(operator);
 
-        if (className == null) {
+        if (operatorType == null) {
             throw new IllegalArgumentException(
                     "Unknown operator name: #" + operator);
         }
-        return className;
+        return operatorType.className;
     }
 
     public String getFeatureClassName(Parameters parameters) throws Exception {
@@ -76,13 +209,13 @@ public class FeatureFactory {
                     "Didn't find 'class', 'name', or 'default' parameter in this feature description.");
         }
 
-        String className = featureLookup.get(name);
+        OperatorSpec operatorType = featureLookup.get(name);
 
-        if (className == null) {
+        if (operatorType == null) {
             throw new Exception("Couldn't find a class for the feature named " + name + ".");
         }
 
-        return className;
+        return operatorType.className;
     }
 
     @SuppressWarnings("unchecked")
@@ -222,5 +355,21 @@ public class FeatureFactory {
             }
         }
         return (StructuredIterator) constructor.newInstance(args);
+    }
+
+    public List<Traversal> getTraversals(StructuredRetrieval retrieval)
+            throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
+                   IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        ArrayList<Traversal> result = new ArrayList<Traversal>();
+        for (String className : traversals) {
+            Class<? extends Traversal> traversalClass =
+                    (Class<? extends Traversal>) Class.forName(className);
+            Constructor<? extends Traversal> constructor =
+                    traversalClass.getConstructor(StructuredRetrieval.class);
+            Traversal traversal = constructor.newInstance(retrieval);
+            result.add(traversal);
+        }
+
+        return result;
     }
 }

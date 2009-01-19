@@ -8,6 +8,7 @@ import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.structured.CountIterator;
 import org.galagosearch.core.retrieval.structured.ScoreIterator;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.tupleflow.Parameters;
 
 /**
  * For many kinds of queries, it may be preferable to not have to type
@@ -21,7 +22,7 @@ import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 public class ImplicitFeatureCastTraversal implements Traversal {
     StructuredRetrieval retrieval;
 
-    public ImplicitFeatureCastTraversal(StructuredRetrieval retrieval) {
+    public ImplicitFeatureCastTraversal(Parameters parameters, StructuredRetrieval retrieval) {
         this.retrieval = retrieval;
     }
     

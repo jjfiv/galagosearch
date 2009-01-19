@@ -101,20 +101,14 @@ public class App {
 
     private static void handleBuild(String[] args) throws Exception {
         // handle --links and --stemming flags
-        ArrayList<String> documentFiles = new ArrayList<String>();
-        ArrayList<String> flags = new ArrayList<String>();
-        for (String arg : Utility.subarray(args, 2)) {
-            if (arg.startsWith("--")) {
-                flags.add(arg);
-            } else {
-                documentFiles.add(arg);
-            }
-        }
+        String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
 
-        Parameters p = new Parameters(flags.toArray(new String[0]));
+        String[] flags = filtered[0];
+        String[] docs = filtered[1];
+
+        Parameters p = new Parameters(flags);
         boolean useLinks = p.get("links", false);
         boolean stemming = p.get("stemming", true);
-        String[] docs = documentFiles.toArray(new String[0]);
 
         BuildIndex build = new BuildIndex();
         Job job = build.getIndexJob(args[1], docs, useLinks, stemming);
@@ -188,26 +182,45 @@ public class App {
         BatchSearch.main(Utility.subarray(args, 1));
     }
 
-    private static void handleSearch(String[] args) throws Exception, IOException {
-        String indexPath = args[1];
-
-        Retrieval retrieval = Retrieval.instance(indexPath);
-        DocumentStore store = null;
-        if (args.length > 2) {
-            ArrayList<DocumentIndexReader> readers = new ArrayList<DocumentIndexReader>();
-            for (int i = 2; i < args.length; ++i) {
-                readers.add(new DocumentIndexReader(args[i]));
-            }
-            store = new DocumentIndexStore(readers);
-        } else {
-            store = new NullStore();
-        }
+    private static void handleSearch(Retrieval retrieval, DocumentStore store) throws Exception {
         Search search = new Search(retrieval, store);
         int port = Utility.getFreePort();
         Server server = new Server(port);
         server.addHandler(new SearchWebHandler(search));
         server.start();
         System.out.println("Server: http://localhost:" + port);
+    }
+
+    private static DocumentStore getDocumentStore(String[] corpusFiles) throws IOException {
+        DocumentStore store = null;
+        if (corpusFiles.length > 0) {
+            ArrayList<DocumentIndexReader> readers = new ArrayList<DocumentIndexReader>();
+            for (int i = 0; i < corpusFiles.length; ++i) {
+                readers.add(new DocumentIndexReader(corpusFiles[i]));
+            }
+            store = new DocumentIndexStore(readers);
+        } else {
+            store = new NullStore();
+        }
+        return store;
+    }
+
+    private static void handleSearch(String[] args) throws Exception {
+        String indexPath = args[1];
+        String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
+        String[] flags = filtered[0];
+        String[] corpusFiles = filtered[1];
+
+        // Any flag marked '--parameters' marks a parameters file.
+        // We trim that part of the flag off so that the Parameters object will
+        // load it as a parameters file.
+        for (int i = 0; i < flags.length; ++i) {
+            flags[i] = flags[i].replace("--parameters=", "");
+        }
+
+        Parameters p = new Parameters(flags);
+        Retrieval retrieval = Retrieval.instance(indexPath, p);
+        handleSearch(retrieval, getDocumentStore(corpusFiles));
     }
 
     public static void handleEval(String[] args) throws IOException {
@@ -325,11 +338,17 @@ public class App {
             System.out.println("          arc (Heritrix), trectext, trecweb and corpus files.");
             System.out.println("          Files may be gzip compressed (.gz).");
         } else if (command.equals("search")) {
-            System.out.println("galago search <index> <corpus>");
+            System.out.println("galago search [--parameters=<filename>] <index> <corpus>+");
             System.out.println();
             System.out.println("  Starts a web interface for searching an index interactively.");
             System.out.println("  The URL to use in your web browser will appear in the command ");
             System.out.println("  output.  Cancel the process (Control-C) to quit.");
+            System.out.println();
+            System.out.println("  If you specify a parameters file, you can direct Galago to load ");
+            System.out.println("  extra operators or traversals from your own jar files.  See ");
+            System.out.println("  the documentation for ");
+            System.out.println("  org.galagosearch.core.retrieval.structured.FeatureFactory for more");
+            System.out.println("  information.");
         } else if (command.equals("all")) {
             String[] commands = { "batch-search", "build", "doc", "dump-connection", "dump-corpus",
                                   "dump-index", "dump-keys", "eval", "make-corpus", "search" };
