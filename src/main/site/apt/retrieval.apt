@@ -1,5 +1,135 @@
  ---
  Retrieval
  ---
+      
+Query language
 
-Coming soon.
+ Every search engine supports some kind of query language, but Galago takes the
+ query language concept a bit further than most.  In Galago, the query language defines
+ the ranking function.  In other systems you might consider changing the ranking code
+ to get a desired result, but in Galago you usually just change the query.
+                            
+ Let's start by looking at the same query written many different ways.
+
++---+
+dog cat
+#combine( #text:dog() #text:cat() )
+#combine( #feature:dirichlet( #counts:term=dog,part=extents() ) #feature:dirichlet(#counts:term=cat,part=extents()) )
++---+
+                         
+ All of these queries are identical in Galago.  The top query is in the form that a user
+ might type.  The query parser parses that as a combination (#combine) of two pieces of text,
+ dog and cat.  That version still has some ambiguity, so Galago makes the query more explicit.
+
+ In the last version, we see that the query is a combination of evidence between two terms.
+ The text <<<#counts:term=dog,part=extents()>>> tells us that Galago should fetch an
+ inverted list of counts for the term called <<<dog>>> from an index part called <<<extents>>>.
+ The <<<#feature:dirichlet>>> operator tells us that this <<<dog>>> term should be
+ scored using a Dirichlet-smoothed language model.  The scores from both terms are combined
+ together using the #combine operator.
+           
+* Syntax          
+                           
+ In the Galago query language, everything is an operator.  An operator looks like this:
++---+
+#operator:key1=value1,key2=value2( #parameter1() #parameter2() )
++---+
+
+ Each operator has a name, optionally followed by a colon.  After the colon comes the parameters
+ section, which is a list of key/value pairs.  If the key is omitted, the key is assumed to be
+ "default".  Within the parentheses we find a list of child operators.  The operator acts on
+ results from its child operators.
+ 
+ Every Galago query has an internal form made entirely of operators written in this syntax.
+ However, writing a lot of pound signs is tedious.  Therefore, the Galago language borrows
+ some shorthand conventions from the INQUERY and Indri languages, as in this table:
+ 
+ *-------------------*-------------------*-----------------------------------------------*
+ * Simple term       | <<<dog>>>         | <<<#text:dog()>>>                             |
+ *-------------------*-------------------*-----------------------------------------------*
+ * Field restriction | <<<dog.title>>>   | <<<#inside( #text:dog() #field:title() )>>>   |
+ *-------------------*-------------------*-----------------------------------------------*
+ * Field smoothing   | <<<dog.(title)>>> | <<<#smoothlm( #text:dog() #field:title() )>>> |
+ *-------------------*-------------------*-----------------------------------------------*
+ * Weighting         | <<<#weight( 1.5 dog 2.0 cat )>>> | <<<#combine( #scale:1.5( #text:dog() ) #scale:2.0( #text:cat() ) ) |
+ *-------------------*-------------------*-----------------------------------------------*
+        
+ Note that as of this writing, field smoothing isn't supported (the system doesn't know
+ what #smoothlm is).
+ 
+* Standard operators
+  
+  * #combine
+  * #weight
+  * #inside
+  * #ordered
+  * #unordered
+  * #syn
+  * #filter
+  * #scale
+  * #feature
+  
+  Currently unsupported:
+  
+  * #wsyn
+  * #smoothlm
+
+Traversals
+
+ Since the Galago query language defines the ranking function, you will often need to change
+ the query that Galago parses from an end user.  For instance, if the user types <<<white house>>>,
+ you might want to emphasize term proximity in the document, like this:
+ 
++---+
+#combine( #ordered:1(white house) white house )
++---+
+
+ Traversals let you do this.  Traversals are objects that can make a copy of a parsed Galago query.
+ Most Traversals change the query in some way during the copy.  In this example, the user would have
+ typed <<<white house>>>, which the parser would parse as <<<#text:dog() #text:cat()>>>.  That query
+ would actually be stored internally as a tree of Nodes.  A Traversal then visits the nodes of the tree
+ and constructs a new query tree.
+ 
+ Galago already uses five traversals on every query executed:
+ 
+ * AddCombineTraversal
+ * WeightConversionTraversal
+ * IndriWindowCompatibilityTraversal
+ * TextFieldRewriteTraversal
+ * ImplicitFeatureCastTraversal
+
+All of these traversals work together to support Indri/INQUERY query language shortcuts.  These are
+simple traversals, but you can build much more complicated traversals, including traversals that run
+extra queries to determine how to modify the query (like pseudo-relevance feedback).
+                 
+Once you have written a traversal you want to use, you can install it in the configuration file,
+as in the following example.  This traversal will be run after all the built-in traversals.
+The order parameter can be set to <<<before>>>, <<<after>>>, or <<<instead>>>.  Using the instead
+parameter removes all the default traversals from the system.
+
++----+
+<config>
+	<transformations>
+		<transformation>
+			<class>org.something.somethingelse.MyTraversal</class>
+			<order>after</order>
+		</transformation>
+	</transformations>
+</config>  
++----+
+                 
+Custom operators
+
+ Galago comes with a small set of operators, but you can add your own.  
+ 
++----+
+ 	<operators>
+ 		<operator>
+ 			<name></name>
+ 			<class></class>
+ 			<parameters>
+ 				...
+ 			</parameters>
+ 		</operator>
+ 	</operator>
++----+

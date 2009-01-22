@@ -14,6 +14,9 @@ Overview
  The retrieval system supports a variant of the Indri query language, but redesigned to be
  more flexible.  You can add your own query operators without recompiling the core libraries;
  just put your new operator in the classpath and reference it in a query.
+ 
+ Galago is written in Java and works on any system with a JDK version 1.5 or later.
+ It has been tested on Windows, Mac OS X and Linux.
 
 * Getting Started
 
