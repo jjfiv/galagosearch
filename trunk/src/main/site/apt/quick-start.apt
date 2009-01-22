@@ -166,7 +166,7 @@ bin/galago batch-search --index=/tmp/wiki.small.index --count=100 /tmp/queries
 +---+
                             
    Since those results are batch results, you can use a traditional retrieval evaluation
-   tool like {{http://trec.nist.gov/trec_eval/}trec_eval} to evaluate your results.
+   tool like {{{http://trec.nist.gov/trec_eval/}trec_eval}} to evaluate your results.
    Galago has an evaluation tool built-in that computes most major metrics plus 
    significance tests.
    
