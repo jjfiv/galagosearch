@@ -48,7 +48,7 @@ Building an Index
 % bin/galago build /tmp/wiki-small.index /tmp/wiki-small.corpus
 +---+
 
-  When you type this command, a little bit out output should appear about Jetty.  The last line
+  When you type this command, a little bit of output should appear about Jetty.  The last line
   will be "Status: http://localhost:00000", where 00000 is some other number.  Copy this URL
   into a web browser.
   
@@ -139,6 +139,43 @@ bin/galago dump-connection /tmp/tupleflow00000/parsePostings-stemmedPostings/0/0
    This data looks a lot like the data in the stemmedPostings file.  In fact, this is a fraction
    of that data.  Galago combines all the temporary files in parsePostings-stemmedPostings to
    create the stemmedPostings index.
+   
+Batch experiments
+
+   This is really just an aside, but if you're used to using information retrieval research
+   you might be wondering how to do experiments.  The galago tool has two commands that will
+   help you.  The first is batch-search:
+   
++---+
+bin/galago batch-search --index=/tmp/wiki.small.index --count=100 /tmp/queries
++---+
+
+   This command runs all the queries stored in /tmp/queries and prints TREC-style output
+   to the screen.  The count parameter tells Galago to return no more than 100 results
+   per query.  The queries file is formatted just like an Indri query file, if you've used
+   that:
+   
++---+
+<parameters>
+  <query>
+    <number>QUERY-0001</number>
+    <text>this is my query</text>
+  </query>
+  ...
+</parameters>
++---+
+                            
+   Since those results are batch results, you can use a traditional retrieval evaluation
+   tool like {{http://trec.nist.gov/trec_eval/}trec_eval} to evaluate your results.
+   Galago has an evaluation tool built-in that computes most major metrics plus 
+   significance tests.
+   
++---+
+bin/galago eval /tmp/query.output /tmp/wiki.query.judgments
++---+
+
+   The previous command evaluates the query output from a batch-search command against
+   human judgments for those queries.  The judgments file also needs to be in TREC format.                                                            
    
 Conclusion
 
