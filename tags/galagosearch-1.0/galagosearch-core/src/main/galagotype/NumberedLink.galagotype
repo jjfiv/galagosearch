@@ -1,0 +1,9 @@
+package org.galagosearch.core.types;
+
+type NumberedLink {
+    long source;
+    long destination;
+    
+    order: +source;
+    order: +destination;
+}
