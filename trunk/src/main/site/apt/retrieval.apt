@@ -133,15 +133,15 @@ Traversals
  
  Galago already uses five traversals on every query executed:
  
- * AddCombineTraversal
+  * AddCombineTraversal
+ 
+  * WeightConversionTraversal
 
- * WeightConversionTraversal
+  * IndriWindowCompatibilityTraversal
 
- * IndriWindowCompatibilityTraversal
+  * TextFieldRewriteTraversal
 
- * TextFieldRewriteTraversal
-
- * ImplicitFeatureCastTraversal
+  * ImplicitFeatureCastTraversal
                                        
 
  All of these traversals work together to support Indri/INQUERY query language shortcuts.  These are
