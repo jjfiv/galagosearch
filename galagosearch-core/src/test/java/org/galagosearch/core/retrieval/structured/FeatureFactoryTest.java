@@ -8,6 +8,7 @@ import org.galagosearch.core.retrieval.structured.NullExtentIterator;
 import org.galagosearch.core.retrieval.structured.OrderedWindowIterator;
 import org.galagosearch.core.retrieval.structured.SynonymIterator;
 import java.util.ArrayList;
+import java.util.List;
 import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
@@ -113,5 +114,48 @@ public class FeatureFactoryTest extends TestCase {
         iterators.add(new NullExtentIterator());
         StructuredIterator iterator = f.getIterator(new Node("od", "5"), iterators);
         assertEquals(OrderedWindowIterator.class.getName(), iterator.getClass().getName());
+    }
+
+    public void testGetClassNameConfig() throws Exception {
+        String config = "" +
+            "<parameters>\n" +
+            "    <operators>\n" +
+            "        <operator>\n" +
+            "            <class>b</class>\n" +
+            "            <name>a</name>\n" +
+            "        </operator>\n" +
+            "    </operators>\n" +
+            "</parameters>";
+        Parameters p = new Parameters(config.getBytes("UTF-8"));
+        FeatureFactory f = new FeatureFactory(p);
+
+        assertEquals("b", f.getClassName(new Node("a", new ArrayList())));
+    }
+
+    public void testGetTraversalNames() throws Exception {
+        String config = "" +
+            "<parameters>\n" +
+            "    <traversals>\n" +
+            "        <traversal>\n" +
+            "            <class>b</class>\n" +
+            "            <order>after</order>\n" +
+            "        </traversal>\n" +
+            "        <traversal>\n" +
+            "            <class>a</class>\n" +
+            "            <order>before</order>\n" +
+            "        </traversal>\n" +
+            "        <traversal>\n" +
+            "            <class>c</class>\n" +
+            "            <order>before</order>\n" +
+            "        </traversal>\n" +
+            "    </traversals>\n" +
+            "</parameters>";
+        Parameters p = new Parameters(config.getBytes("UTF-8"));
+        FeatureFactory f = new FeatureFactory(p);
+        List<String> traversalNames = f.getTraversalNames();
+
+        assertEquals("a", traversalNames.get(0));
+        assertEquals("c", traversalNames.get(1));
+        assertEquals("b", traversalNames.get(traversalNames.size()-1));
     }
 }

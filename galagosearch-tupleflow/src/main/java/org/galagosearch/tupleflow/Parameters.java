@@ -614,7 +614,11 @@ public class Parameters implements Serializable {
     }
 
     public List<Value> list(String key) {
-        return _data.list(key);
+        if (_data != null && _data.containsKey(key)) {
+            return _data.list(key);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     public List<String> stringList(String key) {
