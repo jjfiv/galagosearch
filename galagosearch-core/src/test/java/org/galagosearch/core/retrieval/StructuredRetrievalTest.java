@@ -127,7 +127,7 @@ public class StructuredRetrievalTest extends TestCase {
     }
 
     public void testDocuments() throws FileNotFoundException, IOException {
-        StructuredRetrieval retrieval = new StructuredRetrieval(tempPath.toString());
+        StructuredRetrieval retrieval = new StructuredRetrieval(tempPath.toString(), new Parameters());
         String name;
 
         name = retrieval.getDocumentName(1);
@@ -143,7 +143,7 @@ public class StructuredRetrievalTest extends TestCase {
     }
 
     public void testSimple() throws FileNotFoundException, IOException, Exception {
-        StructuredRetrieval retrieval = new StructuredRetrieval(tempPath.toString());
+        StructuredRetrieval retrieval = new StructuredRetrieval(tempPath.toString(), new Parameters());
 
         Node aTerm = new Node("counts", "a");
         ArrayList<Node> aChild = new ArrayList<Node>();

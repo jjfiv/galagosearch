@@ -22,21 +22,21 @@ public class IndriWindowCompatibilityTraversalTest extends TestCase {
     public void testIndriPoundNRewrite() throws Exception {
         String query = "#3()";
         Node result = StructuredQuery.parse(query);
-        Node transformed = StructuredQuery.copy(new IndriWindowCompatibilityTraversal(), result);
+        Node transformed = StructuredQuery.copy(new IndriWindowCompatibilityTraversal(null, null), result);
         assertEquals("#od:3()", transformed.toString());
     }
 
     public void testIndriOdNRewrite() throws Exception {
         String query = "#od3()";
         Node result = StructuredQuery.parse(query);
-        Node transformed = StructuredQuery.copy(new IndriWindowCompatibilityTraversal(), result);
+        Node transformed = StructuredQuery.copy(new IndriWindowCompatibilityTraversal(null, null), result);
         assertEquals("#od:3()", transformed.toString());
     }
 
     public void testIndriUwNRewrite() throws Exception {
         String query = "#uw5()";
         Node result = StructuredQuery.parse(query);
-        Node transformed = StructuredQuery.copy(new IndriWindowCompatibilityTraversal(), result);
+        Node transformed = StructuredQuery.copy(new IndriWindowCompatibilityTraversal(null, null), result);
         assertEquals("#uw:5()", transformed.toString());
     }
 }
