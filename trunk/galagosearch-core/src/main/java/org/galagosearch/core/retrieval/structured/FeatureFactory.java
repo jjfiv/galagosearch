@@ -357,6 +357,10 @@ public class FeatureFactory {
         return (StructuredIterator) constructor.newInstance(args);
     }
 
+    public List<String> getTraversalNames() {
+        return traversals;
+    }
+
     public List<Traversal> getTraversals(StructuredRetrieval retrieval)
             throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
                    IllegalAccessException, IllegalArgumentException, InvocationTargetException {
