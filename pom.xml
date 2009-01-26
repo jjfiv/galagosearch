@@ -4,7 +4,7 @@
     <groupId>org.galagosearch</groupId>
     <artifactId>galagosearch</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <name>galagosearch</name>
     <url>http://www.galagosearch.org</url>
     <description>
@@ -28,10 +28,10 @@
       <url>http://code.google.com/p/galagosearch/issues/list</url>
     </issueManagement>
     <scm>
-        <connection>scm:svn:http://galagosearch.googlecode.com/svn/trunk/</connection>
-        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/trunk/</developerConnection>
+        <connection>scm:svn:http://galagosearch.googlecode.com/svn/tags/galagosearch-1.0</connection>
+        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/tags/galagosearch-1.0</developerConnection>
         <tag>HEAD</tag>
-        <url>http://galagosearch.googlecode.com/svn/trunk/</url>
+        <url>http://galagosearch.googlecode.com/svn/tags/galagosearch-1.0</url>
     </scm>
     <developers>
         <developer>
@@ -50,7 +50,7 @@
         <module>galagosearch-core</module>
         <module>galagosearch-tupleflow</module>
         <module>galagosearch-tupleflow-typebuilder</module>
-  </modules>
+    </modules>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -75,6 +75,7 @@
                     <target>1.5</target>
                 </configuration>
             </plugin>
+		<!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -95,6 +96,7 @@
                  </execution>
                </executions>
             </plugin>
+		-->
     </plugins>
     </build>
  </project>

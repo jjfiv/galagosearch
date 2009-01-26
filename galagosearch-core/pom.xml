@@ -1,11 +1,16 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+      <groupId>org.galagosearch</groupId>
+      <artifactId>galagosearch</artifactId>
+      <version>1.0</version>
+    </parent>
 
     <groupId>org.galagosearch</groupId>
     <artifactId>galagosearch-core</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <name>galagosearch-core</name>
     <url>http://www.galagosearch.org</url>
     <description>Galago is a toolkit for experimenting with search engines and text processing.</description>
@@ -17,10 +22,10 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:svn:http://galagosearch.googlecode.com/svn/trunk/</connection>
-        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/trunk/</developerConnection>
+        <connection>scm:svn:http://galagosearch.googlecode.com/svn/tags/galagosearch-1.0</connection>
+        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/tags/galagosearch-1.0</developerConnection>
         <tag>HEAD</tag>
-        <url>http://galagosearch.googlecode.com/svn/trunk/</url>
+        <url>http://galagosearch.googlecode.com/svn/tags/galagosearch-1.0</url>
     </scm>
     <reporting>
         <plugins>
@@ -53,11 +58,6 @@
         <dependency>
             <groupId>org.galagosearch</groupId>
             <artifactId>galagosearch-tupleflow</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.galagosearch</groupId>
-            <artifactId>galagosearch-tupleflow-typebuilder</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
