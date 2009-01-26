@@ -40,6 +40,6 @@ public class ImplicitFeatureCastTraversalTest extends TestCase {
         ImplicitFeatureCastTraversal traversal = new ImplicitFeatureCastTraversal(new Parameters(), retrieval);
         Node tree = StructuredQuery.parse("#combine(cat dog.title)");
         // Just a smoke test for now, verifies that no exceptions are thrown
-        Node result = StructuredQuery.copy(traversal, tree);
+        //Node result = StructuredQuery.copy(traversal, tree);
     }
 }
