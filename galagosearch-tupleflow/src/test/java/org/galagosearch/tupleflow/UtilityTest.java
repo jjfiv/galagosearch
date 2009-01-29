@@ -5,6 +5,9 @@
 
 package org.galagosearch.tupleflow;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import junit.framework.TestCase;
 
 /**
@@ -15,6 +18,16 @@ public class UtilityTest extends TestCase {
     
     public UtilityTest(String testName) {
         super(testName);
+    }
+
+    public void testCopyStream() throws IOException {
+        byte[] data = { 0, 1, 2, 3, 4, 5 };
+        ByteArrayInputStream input = new ByteArrayInputStream(data);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        Utility.copyStream(input, output);
+        byte[] result = output.toByteArray();
+        assertEquals(0, Utility.compare(data, result));
     }
 
     public void testFilterFlags() {

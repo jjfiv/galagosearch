@@ -421,6 +421,23 @@ public class Utility {
     }
 
     /**
+     * Copies data from the input stream to the output stream.
+     * @param input The input stream.
+     * @param output The output stream.
+     * @throws java.io.IOException
+     */
+    public static void copyStream(InputStream input, OutputStream output) throws IOException {
+        byte[] data = new byte[65536];
+        while (true) {
+            int bytesRead = input.read(data);
+            if (bytesRead < 0) {
+                break;
+            }
+            output.write(data, 0, bytesRead);
+        }
+    }
+
+    /**
      * Copies the data from file into the stream.  Note that this method
      * does not close the stream (in case you want to put more in it).
      * 
