@@ -32,6 +32,12 @@ public class IndexReaderSplitParserTest extends TestCase {
         super(testName);
     }
     
+    @Override
+    public void tearDown() {
+        if (temporaryName.length() != 0)
+            new File(temporaryName).delete();
+    }
+
     public void buildIndex() throws FileNotFoundException, IOException {
         File temporary = Utility.createTemporary();
 
