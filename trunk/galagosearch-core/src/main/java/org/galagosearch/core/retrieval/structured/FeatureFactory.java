@@ -103,7 +103,7 @@ public class FeatureFactory {
 
     HashMap<String, OperatorSpec> featureLookup;
     HashMap<String, OperatorSpec> operatorLookup;
-    List<String> traversals;
+    List<TraversalSpec> traversals;
 
     Parameters parameters;
 
@@ -126,9 +126,9 @@ public class FeatureFactory {
             operatorLookup.put(operatorName, operator);
         }
 
-        ArrayList<String> afterTraversals = new ArrayList<String>();
-        ArrayList<String> beforeTraversals = new ArrayList<String>();
-        ArrayList<String> insteadTraversals = new ArrayList<String>();
+        ArrayList<TraversalSpec> afterTraversals = new ArrayList<TraversalSpec>();
+        ArrayList<TraversalSpec> beforeTraversals = new ArrayList<TraversalSpec>();
+        ArrayList<TraversalSpec> insteadTraversals = new ArrayList<TraversalSpec>();
 
         for (Value value : parameters.list("traversals/traversal")) {
             String className = value.get("class");
@@ -145,11 +145,11 @@ public class FeatureFactory {
             }
 
             if (order.equals("before")) {
-                beforeTraversals.add(className);
+                beforeTraversals.add(spec);
             } else if (order.equals("after")) {
-                afterTraversals.add(className);
+                afterTraversals.add(spec);
             } else if (order.equals("instead")) {
-                insteadTraversals.add(className);
+                insteadTraversals.add(spec);
             } else {
                 throw new RuntimeException("order must be one of {before,after,instead}");
             }
@@ -158,11 +158,14 @@ public class FeatureFactory {
         // If the user doesn't want to replace the current pipeline, add in that pipeline
         if (insteadTraversals.size() == 0) {
             for (String className : sTraversalList) {
-                insteadTraversals.add(className);
+                TraversalSpec spec = new TraversalSpec();
+                spec.className = className;
+                spec.parameters = new Parameters();
+                insteadTraversals.add(spec);
             }
         }
 
-        traversals = new ArrayList<String>();
+        traversals = new ArrayList<TraversalSpec>();
         traversals.addAll(beforeTraversals);
         traversals.addAll(insteadTraversals);
         traversals.addAll(afterTraversals);
@@ -358,19 +361,23 @@ public class FeatureFactory {
     }
 
     public List<String> getTraversalNames() {
-        return traversals;
+        ArrayList<String> result = new ArrayList<String>();
+        for (TraversalSpec spec : traversals) {
+            result.add(spec.className);
+        }
+        return result;
     }
 
     public List<Traversal> getTraversals(StructuredRetrieval retrieval)
             throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
                    IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         ArrayList<Traversal> result = new ArrayList<Traversal>();
-        for (String className : traversals) {
+        for (TraversalSpec spec : traversals) {
             Class<? extends Traversal> traversalClass =
-                    (Class<? extends Traversal>) Class.forName(className);
+                    (Class<? extends Traversal>) Class.forName(spec.className);
             Constructor<? extends Traversal> constructor =
-                    traversalClass.getConstructor(StructuredRetrieval.class);
-            Traversal traversal = constructor.newInstance(retrieval);
+                    traversalClass.getConstructor(Parameters.class, StructuredRetrieval.class);
+            Traversal traversal = constructor.newInstance(spec.parameters, retrieval);
             result.add(traversal);
         }
 
