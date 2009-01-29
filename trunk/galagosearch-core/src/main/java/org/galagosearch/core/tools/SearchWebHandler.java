@@ -3,6 +3,8 @@
 package org.galagosearch.core.tools;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -16,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.tools.Search.SearchResult;
 import org.galagosearch.core.tools.Search.SearchResultItem;
+import org.galagosearch.tupleflow.Utility;
 import org.mortbay.jetty.handler.AbstractHandler;
 import org.znerd.xmlenc.XMLOutputter;
 
@@ -122,6 +125,18 @@ public class SearchWebHandler extends AbstractHandler {
                 .replace("&", "&amp;");
     }
 
+    public void retrieveImage(OutputStream output) throws IOException {
+        InputStream image = getClass().getResourceAsStream("/images/galago.png");
+        Utility.copyStream(image, output);
+        output.close();
+    }
+
+    public void handleImage(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        OutputStream output = response.getOutputStream();
+        response.setContentType("image/png");
+        retrieveImage(output);
+    }
+
     public void handleSearch(HttpServletRequest request, HttpServletResponse response) throws Exception {
         SearchResult result = performSearch(request);
         response.setContentType("text/html");
@@ -148,7 +163,7 @@ public class SearchWebHandler extends AbstractHandler {
         writer.append("<div id=\"header\">\n");
         writer.append("<table><tr>");
         writer.append("<td><a href=\"http://www.galagosearch.org\">" +
-                      "<img src=\"http://www.galagosearch.org/galago.png\"></a></td>");
+                      "<img src=\"/images/galago.png\"></a></td>");
         writer.append("<td><br/><form action=\"search\">" +
                       String.format("<input name=\"q\" size=\"40\" value=\"%s\" />", displayQuery) +
                       "<input value=\"Search\" type=\"submit\" /></form></td>");
@@ -285,7 +300,7 @@ public class SearchWebHandler extends AbstractHandler {
         writer.append("<body>");
         writer.append("<center><br/><br/><div id=\"box\">" +
                       "<a href=\"http://www.galagosearch.org\">" +
-                      "<img src=\"http://www.galagosearch.org/galago.png\"/></a><br/>\n");
+                      "<img src=\"/images/galago.png\"/></a><br/>\n");
         writer.append("<form action=\"search\"><input name=\"q\" size=\"40\">" +
                       "<input value=\"Search\" type=\"submit\" /></form><br/><br/>");
         writer.append("</div></center></body></html>\n");
@@ -312,6 +327,8 @@ public class SearchWebHandler extends AbstractHandler {
             }
         } else if (request.getPathInfo().equals("/snippet")) {
             handleSnippet(request, response);
+        } else if (request.getPathInfo().startsWith("/images")) {
+            handleImage(request, response);
         } else {
             handleMainPage(request, response);
         }
