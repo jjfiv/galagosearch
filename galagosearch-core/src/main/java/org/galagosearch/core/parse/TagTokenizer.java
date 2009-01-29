@@ -61,6 +61,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         public int start;
         public int end;
 
+        @Override
         public String toString() {
             return String.format("%d,%d", start, end);
         }
