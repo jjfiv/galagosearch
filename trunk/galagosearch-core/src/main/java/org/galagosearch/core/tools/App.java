@@ -100,6 +100,11 @@ public class App {
     }
 
     private static void handleBuild(String[] args) throws Exception {
+        if (args.length <= 1) {
+            commandHelpBuild();
+            return;
+        }
+
         // handle --links and --stemming flags
         String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
 
@@ -120,6 +125,11 @@ public class App {
     }
 
     private static void handleDoc(String[] args) throws IOException {
+        if (args.length <= 2) {
+            commandHelp(args[0]);
+            return;
+        }
+
         String indexPath = args[1];
         String identifier = args[2];
         DocumentIndexReader reader = new DocumentIndexReader(indexPath);
@@ -128,6 +138,11 @@ public class App {
     }
 
     private static void handleDumpIndex(String[] args) throws IOException {
+        if (args.length <= 1) {
+            commandHelp(args[0]);
+            return;
+        }
+
         StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
         IndexIterator iterator = reader.getIterator();
         do {
@@ -136,6 +151,11 @@ public class App {
     }
 
     private static void handleDumpCorpus(String[] args) throws IOException {
+        if (args.length <= 1) {
+            commandHelp(args[0]);
+            return;
+        }
+
         DocumentIndexReader reader = new DocumentIndexReader(args[1]);
         DocumentIndexReader.Iterator iterator = reader.getIterator();
         while (!iterator.isDone()) {
@@ -152,6 +172,11 @@ public class App {
     }
 
     private static void handleDumpConnection(String[] args) throws IOException {
+        if (args.length <= 1) {
+            commandHelp(args[0]);
+            return;
+        }
+
         FileOrderedReader reader = new FileOrderedReader(args[1]);
         Object o;
         while ((o = reader.read()) != null) {
@@ -160,6 +185,11 @@ public class App {
     }
 
     private static void handleDumpKeys(String[] args) throws IOException {
+        if (args.length <= 1) {
+            commandHelp(args[0]);
+            return;
+        }
+
         IndexReader reader = new IndexReader(args[1]);
         IndexReader.Iterator iterator = reader.getIterator();
         while (!iterator.isDone()) {
@@ -170,6 +200,11 @@ public class App {
     }
 
     private static void handleMakeCorpus(String[] args) throws Exception {
+        if (args.length <= 2) {
+            commandHelp(args[0]);
+            return;
+        }
+
         Job job = getDocumentConverter(args[1], Utility.subarray(args, 2));
         ErrorStore store = new ErrorStore();
         JobExecutor.runLocally(job, store);
@@ -179,6 +214,11 @@ public class App {
     }
 
     private static void handleBatchSearch(String[] args) throws Exception {
+        if (args.length <= 1) {
+            commandHelpBatchSearch();
+            return;
+        }
+
         BatchSearch.main(Utility.subarray(args, 1));
     }
 
@@ -206,6 +246,11 @@ public class App {
     }
 
     private static void handleSearch(String[] args) throws Exception {
+        if (args.length <= 1) {
+            commandHelp("search");
+            return;
+        }
+
         String indexPath = args[1];
         String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
         String[] flags = filtered[0];
