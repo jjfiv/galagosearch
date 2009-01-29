@@ -117,7 +117,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
                 fileType = "corpus";
             } else {
                 // Eventually it'd be nice to do more format detection here.
-                throw new IOException("Couldn't determine file type for: " + fileName);
+                System.err.println("Skipping: " + fileName);
             }
         }
         
