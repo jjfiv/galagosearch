@@ -3,11 +3,12 @@ package org.galagosearch.core.parse;
 
 import java.util.Map.Entry;
 import java.util.Map;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  * This class represents a tag in a XML/HTML document.
  * 
- * A tag has a name, an optional set of attributes, a beginning position and an
+ * A tag has a tagName, an optional set of attributes, a beginning position and an
  * end position.  The positions are in terms of tokens, so if begin = 5, that means
  * the open tag is between token 5 and token 6.
  * 
@@ -17,16 +18,48 @@ public class Tag implements Comparable<Tag> {
     /**
      * Constructs a tag.
      * 
-     * @param name The name of the tag.
+     * @param tagName The tagName of the tag.
      * @param attributes Attributes of the tag.
      * @param begin Location of the start tag within the document, in tokens.
      * @param end Location of the end tag within the document, in tokens.
      */
     public Tag(String name, Map<String, String> attributes, int begin, int end) {
-        this.name = name;
+        this.name = truncateName(name);
         this.attributes = attributes;
         this.begin = begin;
         this.end = end;
+    }
+
+    /**
+     * Truncates the tag name to be less than 256 bytes long in UTF-8
+     * encoding.  IndexWriter is unable to write tag names that are
+     * longer than that.
+     * 
+     * @param tagName
+     * @return
+     */
+
+    protected String truncateName(String tagName) {
+        // Most tag names have fewer than 32 characters.  If they're in
+        // that range, there's no chance that the UTF-8 expansion will be
+        // larger than 256 bytes, so we quit early.
+        if (tagName.length() > 32) {
+            // Here we convert the string to UTF-8 to check the actual
+            // byte length.
+            while (Utility.makeBytes(tagName).length >= 256) {
+                // There's no way a tag with more than 256 chars can be small
+                // enough to pass, so we trim those characters right away.
+                if (tagName.length() > 256) {
+                    tagName = tagName.substring(0, 256);
+                } else {
+                    // We want to keep as much of the tag as possible, so
+                    // we strip one character at a time.
+                    tagName = tagName.substring(0, tagName.length()-1);
+                }
+            }
+        }
+
+        return tagName;
     }
 
     /**
