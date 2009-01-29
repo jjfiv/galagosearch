@@ -21,14 +21,27 @@ import org.galagosearch.tupleflow.Utility;
  * @author trevor
  */
 public class IndexWriterTest extends TestCase {
+    File temporary;
+    
     public IndexWriterTest(String testName) {
         super(testName);
+    }
+
+    @Override
+    public void setUp() {
+        temporary = null;
+    }
+
+    @Override
+    public void tearDown() {
+        if (temporary != null)
+            temporary.delete();
     }
     
     public void testSingleKeyValue() throws IOException {
         Parameters parameters = new Parameters();
         parameters.add("blockSize", Long.toString(64));
-        File temporary = Utility.createTemporary();
+        temporary = Utility.createTemporary();
         IndexWriter writer = new IndexWriter(temporary.getAbsolutePath(), parameters);
         writer.add(new GenericElement("key", "value"));
         writer.close();
@@ -43,7 +56,7 @@ public class IndexWriterTest extends TestCase {
     public void testSeek() throws IOException {
         Parameters parameters = new Parameters();
         parameters.add("blockSize", Long.toString(64));
-        File temporary = Utility.createTemporary();
+        temporary = Utility.createTemporary();
         IndexWriter writer = new IndexWriter(temporary.getAbsolutePath(), parameters);
         writer.add(new GenericElement("key", "value"));
         writer.add(new GenericElement("more", "value2"));
@@ -74,14 +87,14 @@ public class IndexWriterTest extends TestCase {
         iterator.skipTo(new byte[] { (byte) 'z' });
         assertTrue(iterator.isDone());
 
-        reader.close();  
+        reader.close();
     }
     
     public void testSingleCompressedKeyValue() throws IOException {
         Parameters parameters = new Parameters();
         parameters.add("blockSize", Long.toString(64));
         parameters.add("isCompressed", "true");
-        File temporary = Utility.createTemporary();
+        temporary = Utility.createTemporary();
         IndexWriter writer = new IndexWriter(temporary.getAbsolutePath(), parameters);
         writer.add(new GenericElement("key", "value"));
         writer.close();
@@ -96,7 +109,7 @@ public class IndexWriterTest extends TestCase {
     public void testSimpleWrite() throws FileNotFoundException, IOException {
         Parameters parameters = new Parameters();
         parameters.add("blockSize", Long.toString(64));
-        File temporary = Utility.createTemporary();
+        temporary = Utility.createTemporary();
         IndexWriter writer = new IndexWriter(temporary.getAbsolutePath(), parameters);
 
         for (int i = 0; i < 1000; ++i) {
@@ -122,7 +135,7 @@ public class IndexWriterTest extends TestCase {
         Parameters parameters = new Parameters();
         parameters.add("blockSize", Long.toString(64));
         parameters.add("isCompressed", "true");
-        File temporary = Utility.createTemporary();
+        temporary = Utility.createTemporary();
         IndexWriter writer = new IndexWriter(temporary.getAbsolutePath(), parameters);
 
         for (int i = 0; i < 1000; ++i) {
