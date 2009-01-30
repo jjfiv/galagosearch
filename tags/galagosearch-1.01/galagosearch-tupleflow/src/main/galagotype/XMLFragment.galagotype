@@ -1,0 +1,8 @@
+package org.galagosearch.tupleflow.types;
+
+type XMLFragment {
+    String nodePath;
+    String innerText;
+    
+    order: +nodePath;
+}
