@@ -3,13 +3,13 @@
   <parent>
     <groupId>org.galagosearch</groupId>
     <artifactId>galagosearch</artifactId>
-    <version>1.01</version>
+    <version>1.02-SNAPSHOT</version>
   </parent>
 
   <groupId>org.galagosearch</groupId>
   <artifactId>galagosearch-tupleflow</artifactId>
   <packaging>jar</packaging>
-  <version>1.01</version>
+  <version>1.02-SNAPSHOT</version>
   <name>galagosearch-tupleflow</name>
   <url>http://www.galagosearch.org</url>
   <description>TupleFlow is the distributed computation layer of Galago.</description>
@@ -21,9 +21,9 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:svn:http://galagosearch.googlecode.com/svn/tags/galagosearch-1.01</connection>
-        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/tags/galagosearch-1.01</developerConnection>
-        <url>http://galagosearch.googlecode.com/svn/tags/galagosearch-1.01</url>
+        <connection>scm:svn:http://galagosearch.googlecode.com/svn/trunk/</connection>
+        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/trunk/</developerConnection>
+        <url>http://galagosearch.googlecode.com/svn/trunk/</url>
     </scm>
     <dependencies>
         <dependency>
