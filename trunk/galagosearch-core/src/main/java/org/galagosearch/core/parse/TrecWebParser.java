@@ -85,7 +85,7 @@ public class TrecWebParser implements DocumentStreamParser {
                 break;
             }
             buffer.append(line);
-            buffer.append(' ');
+            buffer.append('\n');
         }
 
         Document result = new Document(identifier, buffer.toString());
