@@ -73,7 +73,7 @@ public class TrecTextParser implements DocumentStreamParser {
                     inTag = -1;
 
                     buffer.append(line);
-                    buffer.append(' ');
+                    buffer.append('\n');
                 } else if (inTag < 0) {
                     for (int i = 0; i < startTags.length; i++) {
                         if (line.startsWith(startTags[i])) {
@@ -86,7 +86,7 @@ public class TrecTextParser implements DocumentStreamParser {
 
             if (inTag >= 0) {
                 buffer.append(line);
-                buffer.append(' ');
+                buffer.append('\n');
             }
         }
 
