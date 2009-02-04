@@ -1,5 +1,7 @@
 package org.galagosearch.tupleflow.execution;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -39,12 +41,16 @@ public class NetworkedCounter implements Counter {
                                            url, URLEncoder.encode(counterName, "UTF-8"),
                                            URLEncoder.encode(stageName, "UTF-8"),
                                            URLEncoder.encode(instance, "UTF-8"), count);
-            URLConnection connection = new URL(fullUrl).openConnection();
-            connection.connect();
-            connection.getInputStream().close();
-            connection.getOutputStream().close();
+            connectUrl(fullUrl);
             lastFlushCount = count;
         } catch (Exception e) {
         }
+    }
+
+    public void connectUrl(String url) throws MalformedURLException, IOException {
+        URLConnection connection = new URL(url).openConnection();
+        connection.connect();
+        connection.getInputStream().close();
+        connection.getOutputStream().close();
     }
 }
