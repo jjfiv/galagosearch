@@ -34,20 +34,20 @@ import org.galagosearch.tupleflow.execution.Verified;
 @InputClass(className = "org.galagosearch.core.parse.Document")
 @OutputClass(className = "org.galagosearch.core.parse.Document")
 public class TagTokenizer implements Source<Document>, Processor<Document> {
-    private static final boolean[] splits;
-    private static HashSet<String> ignoredTags;
+    protected static final boolean[] splits;
+    protected static HashSet<String> ignoredTags;
     public Processor<Document> processor = new NullProcessor(Document.class);
-    private StringPooler pooler = new StringPooler();
-    private String ignoreUntil;
+    protected StringPooler pooler = new StringPooler();
+    protected String ignoreUntil;
     
 
     static {
         splits = buildSplits();
         ignoredTags = buildIgnoredTags();
     }
-    private String text;
-    private int position;
-    private int lastSplit;
+    protected String text;
+    protected int position;
+    protected int lastSplit;
     ArrayList<String> tokens;
     HashMap<String, ArrayList<BeginTag>> openTags;
     ArrayList<ClosedTag> closedTags;
@@ -67,7 +67,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         }
     }
 
-    private enum StringStatus {
+    protected enum StringStatus {
         Clean,
         NeedsSimpleFix,
         NeedsComplexFix,
@@ -85,7 +85,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         tokenPositions = new ArrayList<Pair>();
     }
 
-    private static boolean[] buildSplits() {
+    protected static boolean[] buildSplits() {
         boolean[] localSplits = new boolean[257];
 
         for (int i = 0; i < localSplits.length; i++) {
@@ -109,7 +109,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         return localSplits;
     }
 
-    private static HashSet<String> buildIgnoredTags() {
+    protected static HashSet<String> buildIgnoredTags() {
         HashSet<String> tags = new HashSet<String>();
         tags.add("style");
         tags.add("script");
@@ -167,7 +167,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         }
     }
 
-    private void skipComment() {
+    protected void skipComment() {
         if (text.substring(position).startsWith("<!--")) {
             position = text.indexOf("-->", position + 1);
 
@@ -183,7 +183,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         }
     }
 
-    private void skipProcessingInstruction() {
+    protected void skipProcessingInstruction() {
         position = text.indexOf("?>", position + 1);
 
         if (position < 0) {
@@ -191,7 +191,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         }
     }
 
-    private void parseEndTag() {
+    protected void parseEndTag() {
         // 1. read name (skipping the </ part)
         int i;
 
@@ -216,7 +216,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         position = i;
     }
 
-    private void closeTag(final String tagName) {
+    protected void closeTag(final String tagName) {
         if (!openTags.containsKey(tagName)) {
             return;
         }
@@ -233,7 +233,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         }
     }
 
-    private int indexOfNonSpace(int start) {
+    protected int indexOfNonSpace(int start) {
         if (start < 0) {
             return Integer.MIN_VALUE;
         }
@@ -247,7 +247,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         return Integer.MIN_VALUE;
     }
 
-    private int indexOfEndAttribute(int start, int tagEnd) {
+    protected int indexOfEndAttribute(int start, int tagEnd) {
         if (start < 0) {
             return Integer.MIN_VALUE;        // attribute ends at the first non-quoted space, or
         // the first '>'.
@@ -275,7 +275,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         return Integer.MIN_VALUE;
     }
 
-    private int indexOfSpace(int start) {
+    protected int indexOfSpace(int start) {
         if (start < 0) {
             return Integer.MIN_VALUE;
         }
@@ -289,7 +289,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         return Integer.MIN_VALUE;
     }
 
-    private int indexOfEquals(int start, int end) {
+    protected int indexOfEquals(int start, int end) {
         if (start < 0) {
             return Integer.MIN_VALUE;
         }
@@ -303,7 +303,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         return Integer.MIN_VALUE;
     }
 
-    private void parseBeginTag() {
+    protected void parseBeginTag() {
         // 1. read the name, skipping the '<'
         int i;
 
@@ -407,11 +407,11 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         position = i;
     }
 
-    private void endParsing() {
+    protected void endParsing() {
         position = text.length();
     }
 
-    private void onSplit() {
+    protected void onSplit() {
         if (position - lastSplit > 1) {
             int start = lastSplit + 1;
             String token = text.substring(start, position);
@@ -451,7 +451,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
      * @param start  The starting byte offset of the token in the document text.
      * @param end    The ending byte offset of the token in the document text.
      */
-    private void addToken(final String token, int start, int end) {
+    protected void addToken(final String token, int start, int end) {
         final int maxTokenLength = 100;
         // zero length tokens aren't interesting
         if (token.length() <= 0) {
@@ -467,7 +467,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         tokenPositions.add(new Pair(start, end));
     }
 
-    private String tokenComplexFix(String token) {
+    protected String tokenComplexFix(String token) {
         token = tokenSimpleFix(token);
         token = token.toLowerCase();
 
@@ -491,7 +491,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
      * @param start
      * @param end
      */
-    private void tokenAcronymProcessing(String token, int start, int end) {
+    protected void tokenAcronymProcessing(String token, int start, int end) {
         token = tokenComplexFix(token);
 
         // remove start and ending periods
@@ -548,7 +548,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
      * @param token
      * @return
      */
-    private String tokenSimpleFix(String token) {
+    protected String tokenSimpleFix(String token) {
         char[] chars = token.toCharArray();
         int j = 0;
 
@@ -585,7 +585,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
      * @param token
      * @return
      */
-    private StringStatus checkTokenStatus(final String token) {
+    protected StringStatus checkTokenStatus(final String token) {
         StringStatus status = StringStatus.Clean;
         char[] chars = token.toCharArray();
 
@@ -614,7 +614,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         return status;
     }
 
-    private void onStartBracket() {
+    protected void onStartBracket() {
         if (position + 1 < text.length()) {
             char c = text.charAt(position + 1);
 
@@ -638,7 +638,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
      * Translates tags from the internal ClosedTag format to the
      * Tag type.
      */
-    private ArrayList<Tag> coalesceTags() {
+    protected ArrayList<Tag> coalesceTags() {
         ArrayList<Tag> result = new ArrayList();
 
         // close all open tags
