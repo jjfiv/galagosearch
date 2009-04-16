@@ -57,6 +57,7 @@ public class BatchSearch {
             // parse the query
             String queryText = query.get("text");
             Node queryRoot = parseQuery(queryText, parameters);
+            queryRoot = retrieval.transformQuery(queryRoot);
 
             ScoredDocument[] results = retrieval.runQuery(queryRoot, requested);
 
