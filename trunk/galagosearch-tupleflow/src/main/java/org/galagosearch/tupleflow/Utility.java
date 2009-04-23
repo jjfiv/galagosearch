@@ -2,6 +2,7 @@
 package org.galagosearch.tupleflow;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -11,7 +12,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.security.MessageDigest;
@@ -485,6 +485,18 @@ public class Utility {
 
         stream.close();
         output.close();
+    }
+
+    /**
+     * Copies the data from the string s to the file.
+     * 
+     * @param s
+     * @param file
+     * @throws java.io.IOException
+     */
+    public static void copyStringToFile(String s, File file) throws IOException {
+        InputStream stream = new ByteArrayInputStream(Utility.makeBytes(s));
+        Utility.copyStreamToFile(stream, file);
     }
 
     public static void calculateMessageDigest(File file, MessageDigest instance) throws IOException {
