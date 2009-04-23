@@ -1,0 +1,9 @@
+
+package org.galagosearch.core.types;
+
+type DocumentProbability {
+    String document;
+    double probability;
+
+    order: +document;
+}
