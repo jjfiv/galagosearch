@@ -4,13 +4,13 @@
     <parent>
       <groupId>org.galagosearch</groupId>
       <artifactId>galagosearch</artifactId>
-      <version>1.02</version>
+      <version>1.02-SNAPSHOT</version>
     </parent>
 
     <groupId>org.galagosearch</groupId>
     <artifactId>galagosearch-core</artifactId>
     <packaging>jar</packaging>
-    <version>1.02</version>
+    <version>1.02-SNAPSHOT</version>
     <name>galagosearch-core</name>
     <url>http://www.galagosearch.org</url>
     <description>Galago is a toolkit for experimenting with search engines and text processing.</description>
@@ -22,9 +22,9 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:svn:http://galagosearch.googlecode.com/svn/tags/galagosearch-1.02</connection>
-        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/tags/galagosearch-1.02</developerConnection>
-        <url>http://galagosearch.googlecode.com/svn/tags/galagosearch-1.02</url>
+        <connection>scm:svn:http://galagosearch.googlecode.com/svn/trunk/</connection>
+        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/trunk/</developerConnection>
+        <url>http://galagosearch.googlecode.com/svn/trunk/</url>
     </scm>
     <reporting>
         <plugins>

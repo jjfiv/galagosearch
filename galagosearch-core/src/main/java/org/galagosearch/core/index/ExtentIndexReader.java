@@ -81,7 +81,6 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
 
             options = stream.readInt();
             documentCount = stream.readInt();
-            document = 0;
             termDocs = 0;
             done = false;
 
