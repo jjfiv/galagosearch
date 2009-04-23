@@ -4,7 +4,7 @@
     <groupId>org.galagosearch</groupId>
     <artifactId>galagosearch</artifactId>
     <packaging>pom</packaging>
-    <version>1.02</version>
+    <version>1.03-SNAPSHOT</version>
     <name>galagosearch</name>
     <url>http://www.galagosearch.org</url>
     <description>
@@ -28,9 +28,9 @@
       <url>http://code.google.com/p/galagosearch/issues/list</url>
     </issueManagement>
     <scm>
-        <connection>scm:svn:http://galagosearch.googlecode.com/svn/tags/galagosearch-1.02</connection>
-        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/tags/galagosearch-1.02</developerConnection>
-        <url>http://galagosearch.googlecode.com/svn/tags/galagosearch-1.02</url>
+        <connection>scm:svn:http://galagosearch.googlecode.com/svn/trunk/</connection>
+        <developerConnection>scm:svn:https://galagosearch.googlecode.com/svn/trunk/</developerConnection>
+        <url>http://galagosearch.googlecode.com/svn/trunk/</url>
     </scm>
     <developers>
         <developer>
