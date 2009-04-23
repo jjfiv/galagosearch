@@ -140,7 +140,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             nextDocument();
             if (!isDone()) return true;
             if (iterator.nextKey()) {
-                load();
+                reset();
                 return true;
             }
             return false;
