@@ -75,7 +75,7 @@
                 </configuration>
             </plugin>
             <plugin>
-		<inherited>false</inherited>
+		        <inherited>false</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
@@ -84,6 +84,13 @@
                         <descriptor>src/main/assembly/bin.xml</descriptor>
                     </descriptors>
                     <tarLongFileMode>gnu</tarLongFileMode>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <goals>assembly:single</goals>
                 </configuration>
             </plugin>
         </plugins>
