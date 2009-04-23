@@ -1193,7 +1193,7 @@ public class JobExecutor {
         server.removeHandler(handler);
     }
 
-    public static boolean runLocally(Job job, ErrorStore store) throws IOException,
+    public static boolean runLocally(Job job, ErrorStore store, boolean keepOutput) throws IOException,
             InterruptedException, ExecutionException, Exception {
         StageExecutor executor = StageExecutorFactory.newInstance("local", new String[] {});
         File tempFile = Utility.createTemporary();
@@ -1217,7 +1217,11 @@ public class JobExecutor {
             server.stop();
             executor.shutdown();
         }
-        
+
+        if (!keepOutput) {
+            Utility.deleteDirectory(tempFile);
+        }
+
         return !store.hasStatements();
     }
 
