@@ -1,6 +1,8 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.tools;
 
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.List;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.ScoredDocument;
@@ -14,14 +16,6 @@ import org.galagosearch.tupleflow.Parameters;
  * @author trevor
  */
 public class BatchSearch {
-    public static Parameters.Value getSmoothing(Parameters parameters) {
-        if (parameters.containsKey("smoothing")) {
-            return parameters.list("smoothing").get(0);
-        }
-
-        return null;
-    }
-
     public static Node parseQuery(String query, Parameters parameters) {
         String queryType = parameters.get("queryType", "complex");
 
@@ -41,7 +35,7 @@ public class BatchSearch {
         return String.format("%10.8f", score);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void run(String[] args, PrintStream out) throws Exception {
         // read in parameters
         Parameters parameters = new Parameters(args);
         List<Parameters.Value> queries = parameters.list("query");
@@ -66,9 +60,13 @@ public class BatchSearch {
                 double score = results[i].score;
                 int rank = i + 1;
 
-                System.out.format("%s Q0 %s %d %s galago\n", query.get("number"), document, rank,
-                                  formatScore(score));
+                out.format("%s Q0 %s %d %s galago\n", query.get("number"), document, rank,
+                           formatScore(score));
             }
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+        run(args, System.out);
     }
 }

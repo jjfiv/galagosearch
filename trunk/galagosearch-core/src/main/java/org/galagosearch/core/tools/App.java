@@ -4,6 +4,8 @@ package org.galagosearch.core.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -43,63 +45,69 @@ import org.mortbay.jetty.Server;
  * @author trevor
  */
 public class App {
-    private static void commandHelpBatchSearch() {
-        System.out.println("galago batch-search <args>");
-        System.out.println();
-        System.out.println("  Runs a batch of queries against an index and produces TREC-formatted");
-        System.out.println("  output.  The output can be used with retrieval evaluation tools like");
-        System.out.println("  galago eval (org.galagosearch.core.eval).");
-        System.out.println();
-        System.out.println("  Sample invocation:");
-        System.out.println("     galago batch-search --index=/tmp/myindex --count=200 /tmp/queries");
-        System.out.println();
-        System.out.println("  Args:");
-        System.out.println("     --index=path_to_your_index");
-        System.out.println("     --count : Number of results to return for each query, default=1000");
-        System.out.println();
-        System.out.println("  Query file format:");
-        System.out.println("    The query file is an XML file containing a set of queries.  Each query");
-        System.out.println("    has text tag, which contains the text of the query, and a number tag, ");
-        System.out.println("    which uniquely identifies the query in the output.");
-        System.out.println();
-        System.out.println("  Example query file:");
-        System.out.println("  <parameters>");
-        System.out.println("     <query>");
-        System.out.println("        <number>CACM-408</number>");
-        System.out.println("        <text>#combine(my query)</text>");
-        System.out.println("     </query>");
-        System.out.println("     <query>");
-        System.out.println("        <number>WIKI-410</number>");
-        System.out.println("        <text>#combine(another query)</text>");
-        System.out.println("     </query>");
-        System.out.println("  </parameters>");
+    private PrintStream output;
+
+    public App(PrintStream out) {
+        output = out;
     }
 
-    private static void commandHelpBuild() {
-        System.out.println("galago build [flags] <index> (<input>)+");
-        System.out.println();
-        System.out.println("  Builds a Galago StructuredIndex with TupleFlow, using one thread ");
-        System.out.println("  for each CPU core on your computer.  While some debugging output ");
-        System.out.println("  will be displayed on the screen, most of the status information will");
-        System.out.println("  appear on a web page.  A URL should appear in the command output ");
-        System.out.println("  that will direct you to the status page.");
-        System.out.println();
-
-        System.out.println("<input>:  Can be either a file or directory, and as many can be");
-        System.out.println("          specified as you like.  Galago can read html, xml, txt, ");
-        System.out.println("          arc (Heritrix), trectext, trecweb and corpus files.");
-        System.out.println("          Files may be gzip compressed (.gz).");
-        System.out.println("<index>:  The directory path of the index to produce.");
-        System.out.println();
-        System.out.println("Flags:");
-        System.out.println("  --links={true|false}:    Selects whether to collect anchor text ");
-        System.out.println("                           [default=false]");
-        System.out.println("  --stemming={true|false}: Selects whether to build stemmed inverted ");
-        System.out.println("                           lists in addition to non-stemmed ones.");
-        System.out.println("                           [default=true]");
+    private void commandHelpBatchSearch() {
+        output.println("galago batch-search <args>");
+        output.println();
+        output.println("  Runs a batch of queries against an index and produces TREC-formatted");
+        output.println("  output.  The output can be used with retrieval evaluation tools like");
+        output.println("  galago eval (org.galagosearch.core.eval).");
+        output.println();
+        output.println("  Sample invocation:");
+        output.println("     galago batch-search --index=/tmp/myindex --count=200 /tmp/queries");
+        output.println();
+        output.println("  Args:");
+        output.println("     --index=path_to_your_index");
+        output.println("     --count : Number of results to return for each query, default=1000");
+        output.println();
+        output.println("  Query file format:");
+        output.println("    The query file is an XML file containing a set of queries.  Each query");
+        output.println("    has text tag, which contains the text of the query, and a number tag, ");
+        output.println("    which uniquely identifies the query in the output.");
+        output.println();
+        output.println("  Example query file:");
+        output.println("  <parameters>");
+        output.println("     <query>");
+        output.println("        <number>CACM-408</number>");
+        output.println("        <text>#combine(my query)</text>");
+        output.println("     </query>");
+        output.println("     <query>");
+        output.println("        <number>WIKI-410</number>");
+        output.println("        <text>#combine(another query)</text>");
+        output.println("     </query>");
+        output.println("  </parameters>");
     }
 
-    private static void handleBuild(String[] args) throws Exception {
+    private void commandHelpBuild() {
+        output.println("galago build [flags] <index> (<input>)+");
+        output.println();
+        output.println("  Builds a Galago StructuredIndex with TupleFlow, using one thread ");
+        output.println("  for each CPU core on your computer.  While some debugging output ");
+        output.println("  will be displayed on the screen, most of the status information will");
+        output.println("  appear on a web page.  A URL should appear in the command output ");
+        output.println("  that will direct you to the status page.");
+        output.println();
+
+        output.println("<input>:  Can be either a file or directory, and as many can be");
+        output.println("          specified as you like.  Galago can read html, xml, txt, ");
+        output.println("          arc (Heritrix), trectext, trecweb and corpus files.");
+        output.println("          Files may be gzip compressed (.gz).");
+        output.println("<index>:  The directory path of the index to produce.");
+        output.println();
+        output.println("Flags:");
+        output.println("  --links={true|false}:    Selects whether to collect anchor text ");
+        output.println("                           [default=false]");
+        output.println("  --stemming={true|false}: Selects whether to build stemmed inverted ");
+        output.println("                           lists in addition to non-stemmed ones.");
+        output.println("                           [default=true]");
+    }
+
+    private void handleBuild(String[] args) throws Exception {
         if (args.length <= 1) {
             commandHelpBuild();
             return;
@@ -114,17 +122,18 @@ public class App {
         Parameters p = new Parameters(flags);
         boolean useLinks = p.get("links", false);
         boolean stemming = p.get("stemming", true);
+        boolean keepOutput = p.get("keepOutput", false);
 
         BuildIndex build = new BuildIndex();
         Job job = build.getIndexJob(args[1], docs, useLinks, stemming);
         ErrorStore store = new ErrorStore();
-        JobExecutor.runLocally(job, store);
+        JobExecutor.runLocally(job, store, keepOutput);
         if (store.hasStatements()) {
-            System.out.println(store.toString());
+            output.println(store.toString());
         }
     }
 
-    private static void handleDoc(String[] args) throws IOException {
+    private void handleDoc(String[] args) throws IOException {
         if (args.length <= 2) {
             commandHelp(args[0]);
             return;
@@ -134,10 +143,10 @@ public class App {
         String identifier = args[2];
         DocumentIndexReader reader = new DocumentIndexReader(indexPath);
         Document document = reader.getDocument(identifier);
-        System.out.println(document.text);
+        output.println(document.text);
     }
 
-    private static void handleDumpIndex(String[] args) throws IOException {
+    private void handleDumpIndex(String[] args) throws IOException {
         if (args.length <= 1) {
             commandHelp(args[0]);
             return;
@@ -146,11 +155,11 @@ public class App {
         StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
         IndexIterator iterator = reader.getIterator();
         do {
-            System.out.println(iterator.getRecordString());
+            output.println(iterator.getRecordString());
         } while (iterator.nextRecord());
     }
 
-    private static void handleDumpCorpus(String[] args) throws IOException {
+    private void handleDumpCorpus(String[] args) throws IOException {
         if (args.length <= 1) {
             commandHelp(args[0]);
             return;
@@ -159,19 +168,19 @@ public class App {
         DocumentIndexReader reader = new DocumentIndexReader(args[1]);
         DocumentIndexReader.Iterator iterator = reader.getIterator();
         while (!iterator.isDone()) {
-            System.out.println("#IDENTIFIER: " + iterator.getKey());
+            output.println("#IDENTIFIER: " + iterator.getKey());
             Document document = iterator.getDocument();
-            System.out.println("#METADATA");
+            output.println("#METADATA");
             for (Entry<String, String> entry : document.metadata.entrySet()) {
-                System.out.println(entry.getKey() + "," + entry.getValue());
+                output.println(entry.getKey() + "," + entry.getValue());
             }
-            System.out.println("#TEXT");
-            System.out.println(document.text);
+            output.println("#TEXT");
+            output.println(document.text);
             iterator.nextDocument();
         }
     }
 
-    private static void handleDumpConnection(String[] args) throws IOException {
+    private void handleDumpConnection(String[] args) throws IOException {
         if (args.length <= 1) {
             commandHelp(args[0]);
             return;
@@ -180,11 +189,11 @@ public class App {
         FileOrderedReader reader = new FileOrderedReader(args[1]);
         Object o;
         while ((o = reader.read()) != null) {
-            System.out.println(o);
+            output.println(o);
         }
     }
 
-    private static void handleDumpKeys(String[] args) throws IOException {
+    private void handleDumpKeys(String[] args) throws IOException {
         if (args.length <= 1) {
             commandHelp(args[0]);
             return;
@@ -193,13 +202,13 @@ public class App {
         IndexReader reader = new IndexReader(args[1]);
         IndexReader.Iterator iterator = reader.getIterator();
         while (!iterator.isDone()) {
-            System.out.println(iterator.getKey());
+            output.println(iterator.getKey());
             iterator.getValueString();
             iterator.nextKey();
         }
     }
 
-    private static void handleMakeCorpus(String[] args) throws Exception {
+    private void handleMakeCorpus(String[] args) throws Exception {
         if (args.length <= 2) {
             commandHelp(args[0]);
             return;
@@ -207,31 +216,31 @@ public class App {
 
         Job job = getDocumentConverter(args[1], Utility.subarray(args, 2));
         ErrorStore store = new ErrorStore();
-        JobExecutor.runLocally(job, store);
+        JobExecutor.runLocally(job, store, false);
         if (store.hasStatements()) {
-            System.out.println(store.toString());
+            output.println(store.toString());
         }
     }
 
-    private static void handleBatchSearch(String[] args) throws Exception {
+    private void handleBatchSearch(String[] args) throws Exception {
         if (args.length <= 1) {
             commandHelpBatchSearch();
             return;
         }
 
-        BatchSearch.main(Utility.subarray(args, 1));
+        BatchSearch.run(Utility.subarray(args, 1), output);
     }
 
-    private static void handleSearch(Retrieval retrieval, DocumentStore store) throws Exception {
+    private void handleSearch(Retrieval retrieval, DocumentStore store) throws Exception {
         Search search = new Search(retrieval, store);
         int port = Utility.getFreePort();
         Server server = new Server(port);
         server.addHandler(new SearchWebHandler(search));
         server.start();
-        System.out.println("Server: http://localhost:" + port);
+        output.println("Server: http://localhost:" + port);
     }
 
-    private static DocumentStore getDocumentStore(String[] corpusFiles) throws IOException {
+    private DocumentStore getDocumentStore(String[] corpusFiles) throws IOException {
         DocumentStore store = null;
         if (corpusFiles.length > 0) {
             ArrayList<DocumentIndexReader> readers = new ArrayList<DocumentIndexReader>();
@@ -245,7 +254,7 @@ public class App {
         return store;
     }
 
-    private static void handleSearch(String[] args) throws Exception {
+    private void handleSearch(String[] args) throws Exception {
         if (args.length <= 1) {
             commandHelp("search");
             return;
@@ -314,99 +323,99 @@ public class App {
         return job;
     }
 
-    public static void usage() {
-        System.out.println("Type 'galago help <command>' to get more help about any command,");
-        System.out.println("   or 'galago help all' to see all the documentation at once.");
-        System.out.println();
+    public void usage() {
+        output.println("Type 'galago help <command>' to get more help about any command,");
+        output.println("   or 'galago help all' to see all the documentation at once.");
+        output.println();
         
-        System.out.println("Popular commands:");
-        System.out.println("   build");
-        System.out.println("   search");
-        System.out.println("   batch-search");
-        System.out.println();
+        output.println("Popular commands:");
+        output.println("   build");
+        output.println("   search");
+        output.println("   batch-search");
+        output.println();
 
-        System.out.println("All commands:");
-        System.out.println("   batch-search");
-        System.out.println("   build");
-        System.out.println("   doc");
-        System.out.println("   dump-connection");
-        System.out.println("   dump-corpus");
-        System.out.println("   dump-index");
-        System.out.println("   dump-keys");
-        System.out.println("   eval");
-        System.out.println("   make-corpus");
-        System.out.println("   search");
+        output.println("All commands:");
+        output.println("   batch-search");
+        output.println("   build");
+        output.println("   doc");
+        output.println("   dump-connection");
+        output.println("   dump-corpus");
+        output.println("   dump-index");
+        output.println("   dump-keys");
+        output.println("   eval");
+        output.println("   make-corpus");
+        output.println("   search");
     }
 
-    public static void commandHelp(String command) throws IOException {
+    public void commandHelp(String command) throws IOException {
         if (command.equals("batch-search")) {
             commandHelpBatchSearch();
         } else if (command.equals("build")) {
             commandHelpBuild();
         } else if (command.equals("doc")) {
-            System.out.println("galago doc <corpus> <identifier>");
-            System.out.println();
-            System.out.println("  Prints the full text of the document named by <identifier>.");
-            System.out.println("  The document is retrieved from a Corpus file named <corpus>.");
+            output.println("galago doc <corpus> <identifier>");
+            output.println();
+            output.println("  Prints the full text of the document named by <identifier>.");
+            output.println("  The document is retrieved from a Corpus file named <corpus>.");
         } else if (command.equals("dump-connection")) {
-            System.out.println("galago dump-connection <connection-file>");
-            System.out.println();
-            System.out.println("  Dumps tuples from a Galago TupleFlow connection file in ");
-            System.out.println("  CSV format.  This can be useful for debugging strange problems ");
-            System.out.println("  in a TupleFlow execution.");
+            output.println("galago dump-connection <connection-file>");
+            output.println();
+            output.println("  Dumps tuples from a Galago TupleFlow connection file in ");
+            output.println("  CSV format.  This can be useful for debugging strange problems ");
+            output.println("  in a TupleFlow execution.");
         } else if (command.equals("dump-corpus")) {
-            System.out.println("galago dump-corpus <corpus>");
-            System.out.println();
-            System.out.println("  Dumps all documents from a corpus file to stdout.");
+            output.println("galago dump-corpus <corpus>");
+            output.println();
+            output.println("  Dumps all documents from a corpus file to stdout.");
         } else if (command.equals("dump-index")) {
-            System.out.println("galago dump-index <index-part>");
-            System.out.println();
-            System.out.println("  Dumps inverted list data from any index file in a StructuredIndex");
-            System.out.println("  (That is, any index that has a readerClass that's a subclass of ");
-            System.out.println("  StructuredIndexPartReader).  Output is in CSV format.");
+            output.println("galago dump-index <index-part>");
+            output.println();
+            output.println("  Dumps inverted list data from any index file in a StructuredIndex");
+            output.println("  (That is, any index that has a readerClass that's a subclass of ");
+            output.println("  StructuredIndexPartReader).  Output is in CSV format.");
         } else if (command.equals("dump-keys")) {
-            System.out.println("galago dump-keys <indexwriter-file>");
-            System.out.println();
-            System.out.println("  Dumps all keys from any file created by IndexWriter.  This includes");
-            System.out.println("  corpus files and all index files built by Galago.");
+            output.println("galago dump-keys <indexwriter-file>");
+            output.println();
+            output.println("  Dumps all keys from any file created by IndexWriter.  This includes");
+            output.println("  corpus files and all index files built by Galago.");
         } else if (command.equals("eval")) {
             org.galagosearch.core.eval.Main.main(new String[] {});
         } else if (command.equals("make-corpus")) {
-            System.out.println("galago make-corpus <corpus> (<input>)+");
-            System.out.println();
-            System.out.println("  Copies documents from input files into a corpus file.  A corpus");
-            System.out.println("  file is required to use any of the document lookup features in ");
-            System.out.println("  Galago, like printing snippets of search results.");
-            System.out.println();
-            System.out.println("<input>:  Can be either a file or directory, and as many can be");
-            System.out.println("          specified as you like.  Galago can read html, xml, txt, ");
-            System.out.println("          arc (Heritrix), trectext, trecweb and corpus files.");
-            System.out.println("          Files may be gzip compressed (.gz).");
+            output.println("galago make-corpus <corpus> (<input>)+");
+            output.println();
+            output.println("  Copies documents from input files into a corpus file.  A corpus");
+            output.println("  file is required to use any of the document lookup features in ");
+            output.println("  Galago, like printing snippets of search results.");
+            output.println();
+            output.println("<input>:  Can be either a file or directory, and as many can be");
+            output.println("          specified as you like.  Galago can read html, xml, txt, ");
+            output.println("          arc (Heritrix), trectext, trecweb and corpus files.");
+            output.println("          Files may be gzip compressed (.gz).");
         } else if (command.equals("search")) {
-            System.out.println("galago search [--parameters=<filename>] <index> <corpus>+");
-            System.out.println();
-            System.out.println("  Starts a web interface for searching an index interactively.");
-            System.out.println("  The URL to use in your web browser will appear in the command ");
-            System.out.println("  output.  Cancel the process (Control-C) to quit.");
-            System.out.println();
-            System.out.println("  If you specify a parameters file, you can direct Galago to load ");
-            System.out.println("  extra operators or traversals from your own jar files.  See ");
-            System.out.println("  the documentation for ");
-            System.out.println("  org.galagosearch.core.retrieval.structured.FeatureFactory for more");
-            System.out.println("  information.");
+            output.println("galago search [--parameters=<filename>] <index> <corpus>+");
+            output.println();
+            output.println("  Starts a web interface for searching an index interactively.");
+            output.println("  The URL to use in your web browser will appear in the command ");
+            output.println("  output.  Cancel the process (Control-C) to quit.");
+            output.println();
+            output.println("  If you specify a parameters file, you can direct Galago to load ");
+            output.println("  extra operators or traversals from your own jar files.  See ");
+            output.println("  the documentation for ");
+            output.println("  org.galagosearch.core.retrieval.structured.FeatureFactory for more");
+            output.println("  information.");
         } else if (command.equals("all")) {
             String[] commands = { "batch-search", "build", "doc", "dump-connection", "dump-corpus",
                                   "dump-index", "dump-keys", "eval", "make-corpus", "search" };
             for (String c : commands) {
                 commandHelp(c);
-                System.out.println();
+                output.println();
             }
         } else {
             usage();
         }
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException, Exception {
+    public void run(String[] args) throws Exception {
         if (args.length < 1) {
             usage();
             return;
@@ -437,5 +446,9 @@ public class App {
         } else {
             usage();
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+        new App(System.out).run(args);
     }
 }
