@@ -30,12 +30,8 @@ public class DirichletScorer extends ScoringFunctionIterator {
                 count += iterator.count();
                 iterator.nextDocument();
             }
-
-            if (count > 0) {
-                background = (double)count / (double)collectionLength;
-            } else {
-                background = 0.5 / (double)collectionLength;
-            }
+            
+            background = (double)count / (double)collectionLength;
             iterator.reset();
         }
     }
