@@ -278,7 +278,7 @@ public class App {
     }
 
     public static void handleEval(String[] args) throws IOException {
-        org.galagosearch.core.eval.Main.main(args);
+        org.galagosearch.core.eval.Main.internalMain(Utility.subarray(args, 1));
     }
 
     public static Job getDocumentConverter(String outputCorpus, String[] inputs) throws IOException {
@@ -443,6 +443,8 @@ public class App {
             handleMakeCorpus(args);
         } else if (command.equals("search")) {
             handleSearch(args);
+        } else if (command.equals("eval")) {
+            handleEval(args);
         } else {
             usage();
         }

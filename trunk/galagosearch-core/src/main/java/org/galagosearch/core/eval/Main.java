@@ -352,26 +352,30 @@ public class Main {
         System.exit(-1);
     }
 
+    public static void internalMain(String[] args) throws IOException {
+        if (args.length >= 3) {
+            TreeMap<String, ArrayList<Document>> baselineRanking = loadRanking(args[0]);
+            TreeMap<String, ArrayList<Document>> treatmentRanking = loadRanking(args[1]);
+            TreeMap<String, ArrayList<Judgment>> judgments = loadJudgments(args[2]);
+
+            SetRetrievalEvaluator baseline = create(baselineRanking, judgments);
+            SetRetrievalEvaluator treatment = create(treatmentRanking, judgments);
+
+            comparisonEvaluation(baseline, treatment, args.length >= 4);
+        } else if (args.length == 2) {
+            TreeMap<String, ArrayList<Document>> ranking = loadRanking(args[0]);
+            TreeMap<String, ArrayList<Judgment>> judgments = loadJudgments(args[1]);
+
+            SetRetrievalEvaluator setEvaluator = create(ranking, judgments);
+            singleEvaluation(setEvaluator);
+        } else {
+            usage();
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         try {
-            if (args.length >= 3) {
-                TreeMap<String, ArrayList<Document>> baselineRanking = loadRanking(args[0]);
-                TreeMap<String, ArrayList<Document>> treatmentRanking = loadRanking(args[1]);
-                TreeMap<String, ArrayList<Judgment>> judgments = loadJudgments(args[2]);
-
-                SetRetrievalEvaluator baseline = create(baselineRanking, judgments);
-                SetRetrievalEvaluator treatment = create(treatmentRanking, judgments);
-
-                comparisonEvaluation(baseline, treatment, args.length >= 4);
-            } else if (args.length == 2) {
-                TreeMap<String, ArrayList<Document>> ranking = loadRanking(args[0]);
-                TreeMap<String, ArrayList<Judgment>> judgments = loadJudgments(args[1]);
-
-                SetRetrievalEvaluator setEvaluator = create(ranking, judgments);
-                singleEvaluation(setEvaluator);
-            } else {
-                usage();
-            }
+            internalMain(args);
         } catch (Exception e) {
             e.printStackTrace();
             usage();
