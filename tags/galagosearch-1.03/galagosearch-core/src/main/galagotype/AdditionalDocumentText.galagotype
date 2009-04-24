@@ -1,0 +1,10 @@
+
+package org.galagosearch.core.types;
+
+type AdditionalDocumentText {
+    String identifier;
+    String text;
+
+    order: ;
+    order: +identifier;
+};

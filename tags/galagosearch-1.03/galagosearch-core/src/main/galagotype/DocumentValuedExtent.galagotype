@@ -1,0 +1,13 @@
+
+package org.galagosearch.core.types;
+
+type DocumentValuedExtent {
+    String extentName;
+    String identifier;
+    int begin;
+    int end;
+    long value;
+
+    order: +identifier;
+}
+
