@@ -16,6 +16,7 @@ public class SynonymIterator extends ExtentDisjunctionIterator {
     }
 
     public void loadExtents() {
+        if (iterators.size() == 0) return;
         ExtentIterator iter = iterators.poll();
         document = iter.document();
 
