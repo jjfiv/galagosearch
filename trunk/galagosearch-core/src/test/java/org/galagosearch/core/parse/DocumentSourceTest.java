@@ -56,5 +56,6 @@ public class DocumentSourceTest extends TestCase {
 
         source.run();
         assertEquals(0, processor.splits.size());
+        tempFile.delete();
     }
 }
