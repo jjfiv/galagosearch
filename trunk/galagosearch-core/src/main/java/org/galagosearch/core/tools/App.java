@@ -107,16 +107,21 @@ public class App {
     }
 
     private void handleBuild(String[] args) throws Exception {
-        if (args.length <= 1) {
+        // Remove 'build' from the command.
+        args = Utility.subarray(args, 1);
+
+        if (args.length <= 0) {
             commandHelpBuild();
             return;
         }
 
         // handle --links and --stemming flags
-        String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
+        String[][] filtered = Utility.filterFlags(args);
 
         String[] flags = filtered[0];
-        String[] docs = filtered[1];
+        String[] nonFlags = filtered[1];
+        String indexName = nonFlags[0];
+        String[] docs = Utility.subarray(nonFlags, 1);
 
         Parameters p = new Parameters(flags);
         boolean useLinks = p.get("links", false);
@@ -124,7 +129,7 @@ public class App {
         boolean keepOutput = p.get("keepOutput", false);
 
         BuildIndex build = new BuildIndex();
-        Job job = build.getIndexJob(args[1], docs, useLinks, stemming);
+        Job job = build.getIndexJob(indexName, docs, useLinks, stemming);
         ErrorStore store = new ErrorStore();
         JobExecutor.runLocally(job, store, keepOutput);
         if (store.hasStatements()) {
