@@ -118,6 +118,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
             } else {
                 // Eventually it'd be nice to do more format detection here.
                 System.err.println("Skipping: " + fileName);
+                return;
             }
         }
         
