@@ -7,6 +7,7 @@ package org.galagosearch.tupleflow;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import junit.framework.TestCase;
 
@@ -48,5 +49,23 @@ public class UtilityTest extends TestCase {
 
         assertEquals(1, nonFlags.length);
         assertEquals("notflag", nonFlags[0]);
+    }
+
+    public void testMakeParentDirectories() throws IOException {
+        // This gives us a usable temporary path.
+        File f = Utility.createTemporary();
+
+        String parent = f.getParent() + File.separator +
+                        Utility.join(new String[]{"bbb", "b", "c", "d"}, File.separator);
+        String path = parent + File.separator + "e";
+        Utility.makeParentDirectories(path);
+
+        // The parent directory should exist
+        assertTrue(new File(parent).isDirectory());
+        // but the file itself should not exist.
+        assertFalse(new File(path).exists());
+
+        Utility.deleteDirectory(new File(f.getParent() + File.separator + "bbb"));
+        f.delete();
     }
 }

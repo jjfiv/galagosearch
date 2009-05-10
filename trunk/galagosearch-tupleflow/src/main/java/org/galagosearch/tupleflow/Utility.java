@@ -27,6 +27,21 @@ import org.galagosearch.tupleflow.execution.Step;
  */
 public class Utility {
     /**
+     * <p>If the parent directories for this file don't exist, this function creates them.</p>
+     *
+     * <p>Often we want to create a file, but we don't yet know if the parent path has been
+     * created yet.  Call this function immediately before opening a file for writing to
+     * make sure those directories have been created.</p>
+     *
+     * @param filename A filename that will soon be opened for writing.
+     */
+    public static void makeParentDirectories(String filename) {
+        File parent = new File(filename).getParentFile();
+        if (parent != null) {
+            parent.mkdirs();
+        }
+    }
+    /**
      * Builds a simple Sorter step that can be added to a TupleFlow stage.
      *
      * @param sortOrder An order object representing how and what to sort.
