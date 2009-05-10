@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.parse.Document;
@@ -277,8 +276,8 @@ public class App {
         handleSearch(retrieval, getDocumentStore(corpusFiles));
     }
 
-    public static void handleEval(String[] args) throws IOException {
-        org.galagosearch.core.eval.Main.internalMain(Utility.subarray(args, 1));
+    public void handleEval(String[] args) throws IOException {
+        org.galagosearch.core.eval.Main.internalMain(Utility.subarray(args, 1), output);
     }
 
     public static Job getDocumentConverter(String outputCorpus, String[] inputs) throws IOException {
@@ -379,7 +378,7 @@ public class App {
             output.println("  Dumps all keys from any file created by IndexWriter.  This includes");
             output.println("  corpus files and all index files built by Galago.");
         } else if (command.equals("eval")) {
-            org.galagosearch.core.eval.Main.main(new String[] {});
+            org.galagosearch.core.eval.Main.usage(output);
         } else if (command.equals("make-corpus")) {
             output.println("galago make-corpus <corpus> (<input>)+");
             output.println();

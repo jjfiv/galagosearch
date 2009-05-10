@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -151,7 +152,7 @@ public class Main {
      * the ranking file, and the second argument is the judgments
      * file, both in standard TREC format.
      */
-    public static void singleEvaluation(SetRetrievalEvaluator setEvaluator) {
+    public static void singleEvaluation(SetRetrievalEvaluator setEvaluator, PrintStream output) {
         String formatString = "%2$-16s%1$3s ";
 
         // print trec_eval relational-style output
@@ -159,23 +160,23 @@ public class Main {
             String query = evaluator.queryName();
 
             // counts
-            System.out.format(formatString + "%3$d\n", query, "num_ret", evaluator.
+            output.format(formatString + "%3$d\n", query, "num_ret", evaluator.
                               retrievedDocuments().size());
-            System.out.format(formatString + "%3$d\n", query, "num_rel", evaluator.relevantDocuments().
+            output.format(formatString + "%3$d\n", query, "num_rel", evaluator.relevantDocuments().
                               size());
-            System.out.format(formatString + "%3$d\n", query, "num_rel_ret", evaluator.
+            output.format(formatString + "%3$d\n", query, "num_rel_ret", evaluator.
                               relevantRetrievedDocuments().size());
 
             // aggregate measures
-            System.out.format(formatString + "%3$6.4f\n", query, "map", evaluator.averagePrecision());
-            System.out.format(formatString + "%3$6.4f\n", query, "ndcg", evaluator.
+            output.format(formatString + "%3$6.4f\n", query, "map", evaluator.averagePrecision());
+            output.format(formatString + "%3$6.4f\n", query, "ndcg", evaluator.
                               normalizedDiscountedCumulativeGain());
-            System.out.format(formatString + "%3$6.4f\n", query, "ndcg15", evaluator.
+            output.format(formatString + "%3$6.4f\n", query, "ndcg15", evaluator.
                               normalizedDiscountedCumulativeGain(15));
-            System.out.format(formatString + "%3$6.4f\n", query, "R-prec", evaluator.rPrecision());
-            System.out.format(formatString + "%3$6.4f\n", query, "bpref",
+            output.format(formatString + "%3$6.4f\n", query, "R-prec", evaluator.rPrecision());
+            output.format(formatString + "%3$6.4f\n", query, "bpref",
                               evaluator.binaryPreference());
-            System.out.format(formatString + "%3$6.4f\n", query, "recip_rank", evaluator.
+            output.format(formatString + "%3$6.4f\n", query, "recip_rank", evaluator.
                               reciprocalRank());
 
             // precision at fixed points
@@ -183,27 +184,27 @@ public class Main {
 
             for (int i = 0; i < fixedPoints.length; i++) {
                 int point = fixedPoints[i];
-                System.out.format(formatString + "%3$6.4f\n", query, "P" + point, evaluator.
+                output.format(formatString + "%3$6.4f\n", query, "P" + point, evaluator.
                                   precision(fixedPoints[i]));
             }
         }
 
         // print summary data
-        System.out.format(formatString + "%3$d\n", "all", "num_ret", setEvaluator.numberRetrieved());
-        System.out.format(formatString + "%3$d\n", "all", "num_rel", setEvaluator.numberRelevant());
-        System.out.format(formatString + "%3$d\n", "all", "num_rel_ret", setEvaluator.
+        output.format(formatString + "%3$d\n", "all", "num_ret", setEvaluator.numberRetrieved());
+        output.format(formatString + "%3$d\n", "all", "num_rel", setEvaluator.numberRelevant());
+        output.format(formatString + "%3$d\n", "all", "num_rel_ret", setEvaluator.
                           numberRelevantRetrieved());
 
-        System.out.format(formatString + "%3$6.4f\n", "all", "map", setEvaluator.
+        output.format(formatString + "%3$6.4f\n", "all", "map", setEvaluator.
                           meanAveragePrecision());
-        System.out.format(formatString + "%3$6.4f\n", "all", "ndcg", setEvaluator.
+        output.format(formatString + "%3$6.4f\n", "all", "ndcg", setEvaluator.
                           meanNormalizedDiscountedCumulativeGain());
-        System.out.format(formatString + "%3$6.4f\n", "all", "ndcg15", setEvaluator.
+        output.format(formatString + "%3$6.4f\n", "all", "ndcg15", setEvaluator.
                           meanNormalizedDiscountedCumulativeGain(15));
-        System.out.format(formatString + "%3$6.4f\n", "all", "R-prec", setEvaluator.meanRPrecision());
-        System.out.format(formatString + "%3$6.4f\n", "all", "bpref", setEvaluator.
+        output.format(formatString + "%3$6.4f\n", "all", "R-prec", setEvaluator.meanRPrecision());
+        output.format(formatString + "%3$6.4f\n", "all", "bpref", setEvaluator.
                           meanBinaryPreference());
-        System.out.format(formatString + "%3$6.4f\n", "all", "recip_rank", setEvaluator.
+        output.format(formatString + "%3$6.4f\n", "all", "recip_rank", setEvaluator.
                           meanReciprocalRank());
 
         // precision at fixed points
@@ -211,7 +212,7 @@ public class Main {
 
         for (int i = 0; i < fixedPoints.length; i++) {
             int point = fixedPoints[i];
-            System.out.format(formatString + "%3$6.4f\n", "all", "P" + point, setEvaluator.
+            output.format(formatString + "%3$6.4f\n", "all", "P" + point, setEvaluator.
                               meanPrecision(fixedPoints[i]));
         }
     }
@@ -219,7 +220,10 @@ public class Main {
     /**
      * Compares two ranked lists with statistical tests on most major metrics.
      */
-    public static void comparisonEvaluation(SetRetrievalEvaluator baseline, SetRetrievalEvaluator treatment, boolean useRandomized) {
+    public static void comparisonEvaluation(SetRetrievalEvaluator baseline,
+                                            SetRetrievalEvaluator treatment,
+                                            boolean useRandomized,
+                                            PrintStream output) {
         String[] metrics = {"averagePrecision", "ndcg", "ndcg15", "bpref", "P10", "P20"};
         String formatString = "%1$-20s%2$-20s%3$6.4f\n";
         String integerFormatString = "%1$-20s%2$-20s%3$d\n";
@@ -231,128 +235,128 @@ public class Main {
             SetRetrievalComparator comparator = new SetRetrievalComparator(baselineMetric,
                                                                            treatmentMetric);
 
-            System.out.format(formatString, metric, "baseline", comparator.meanBaselineMetric());
-            System.out.format(formatString, metric, "treatment", comparator.meanTreatmentMetric());
+            output.format(formatString, metric, "baseline", comparator.meanBaselineMetric());
+            output.format(formatString, metric, "treatment", comparator.meanTreatmentMetric());
 
-            System.out.format(integerFormatString, metric, "basebetter", comparator.
+            output.format(integerFormatString, metric, "basebetter", comparator.
                               countBaselineBetter());
-            System.out.format(integerFormatString, metric, "treatbetter", comparator.
+            output.format(integerFormatString, metric, "treatbetter", comparator.
                               countTreatmentBetter());
-            System.out.format(integerFormatString, metric, "equal", comparator.countEqual());
+            output.format(integerFormatString, metric, "equal", comparator.countEqual());
 
-            System.out.format(formatString, metric, "ttest", comparator.pairedTTest());
-            System.out.format(formatString, metric, "signtest", comparator.signTest());
+            output.format(formatString, metric, "ttest", comparator.pairedTTest());
+            output.format(formatString, metric, "signtest", comparator.signTest());
             if (useRandomized) {
-                System.out.format(formatString, metric, "randomized", comparator.
+                output.format(formatString, metric, "randomized", comparator.
                                                  randomizedTest());
             }
-            System.out.format(formatString, metric, "h-ttest-0.05", comparator.supportedHypothesis(
+            output.format(formatString, metric, "h-ttest-0.05", comparator.supportedHypothesis(
                               "ttest", 0.05));
-            System.out.format(formatString, metric, "h-signtest-0.05", comparator.
+            output.format(formatString, metric, "h-signtest-0.05", comparator.
                               supportedHypothesis("sign", 0.05));
             if (useRandomized) {
-                System.out.format(formatString, metric, "h-randomized-0.05",
+                output.format(formatString, metric, "h-randomized-0.05",
                                                  comparator.supportedHypothesis("randomized", 0.05));
             }
-            System.out.format(formatString, metric, "h-ttest-0.01", comparator.supportedHypothesis(
+            output.format(formatString, metric, "h-ttest-0.01", comparator.supportedHypothesis(
                               "ttest", 0.01));
-            System.out.format(formatString, metric, "h-signtest-0.01", comparator.
+            output.format(formatString, metric, "h-signtest-0.01", comparator.
                               supportedHypothesis("sign", 0.01));
             if (useRandomized) {
-                System.out.format(formatString, metric, "h-randomized-0.01",
+                output.format(formatString, metric, "h-randomized-0.01",
                                                  comparator.supportedHypothesis("randomized", 0.01));
             }
         }
     }
 
-    public static void usage() {
-        System.err.println("galago eval <args>: ");
-        System.err.println(
+    public static void usage(PrintStream output) {
+        output.println("galago eval <args>: ");
+        output.println(
                 "   There are two ways to use this program.  First, you can evaluate a single ranking: ");
-        System.err.println("      java -jar ireval.jar TREC-Ranking-File TREC-Judgments-File");
-        System.err.println("   or, you can use it to compare two rankings with statistical tests: ");
-        System.err.println(
-                "      java -jar ireval.jar TREC-Baseline-Ranking-File TREC-Improved-Ranking-File TREC-Judgments-File");
-        System.err.println("   you can also include randomized tests (these take a bit longer): ");
-        System.err.println(
-                "      java -jar ireval.jar TREC-Baseline-Ranking-File TREC-Treatment-Ranking-File TREC-Judgments-File randomized");
-        System.err.println();
-        System.err.println("Single evaluation:");
-        System.err.println(
+        output.println("      galago eval TREC-Ranking-File TREC-Judgments-File");
+        output.println("   or, you can use it to compare two rankings with statistical tests: ");
+        output.println(
+                "      galago eval TREC-Baseline-Ranking-File TREC-Improved-Ranking-File TREC-Judgments-File");
+        output.println("   you can also include randomized tests (these take a bit longer): ");
+        output.println(
+                "      galago eval TREC-Baseline-Ranking-File TREC-Treatment-Ranking-File TREC-Judgments-File randomized");
+        output.println();
+        output.println("Single evaluation:");
+        output.println(
                 "   The first column is the query number, or 'all' for a mean of the metric over all queries.");
-        System.err.println(
+        output.println(
                 "   The second column is the metric, which is one of:                                        ");
-        System.err.println(
+        output.println(
                 "       num_ret        Number of retrieved documents                                         ");
-        System.err.println(
+        output.println(
                 "       num_rel        Number of relevant documents listed in the judgments file             ");
-        System.err.println(
+        output.println(
                 "       num_rel_ret    Number of relevant retrieved documents                                ");
-        System.err.println(
+        output.println(
                 "       map            Mean average precision                                                ");
-        System.err.println(
+        output.println(
                 "       bpref          Bpref (binary preference)                                             ");
-        System.err.println(
+        output.println(
                 "       ndcg           Normalized Discounted Cumulative Gain, computed over all documents    ");
-        System.err.println(
+        output.println(
                 "       ndcg15         Normalized Discounted Cumulative Gain, 15 document cutoff             ");
-        System.err.println(
+        output.println(
                 "       Pn             Precision, n document cutoff                                          ");
-        System.err.println(
+        output.println(
                 "       R-prec         R-Precision                                                           ");
-        System.err.println(
+        output.println(
                 "       recip_rank     Reciprocal Rank (precision at first relevant document)                ");
-        System.err.println(
+        output.println(
                 "   The third column is the metric value.                                                    ");
-        System.err.println();
-        System.err.println("Compared evaluation: ");
-        System.err.println("   The first column is the metric (e.g. averagePrecision, ndcg, etc.)");
-        System.err.println(
+        output.println();
+        output.println("Compared evaluation: ");
+        output.println("   The first column is the metric (e.g. averagePrecision, ndcg, etc.)");
+        output.println(
                 "   The second column is the test/formula used:                                               ");
-        System.err.println(
+        output.println(
                 "       baseline       The baseline mean (mean of the metric over all baseline queries)       ");
-        System.err.println(
+        output.println(
                 "       treatment      The \'improved\' mean (mean of the metric over all treatment queries)  ");
-        System.err.println(
+        output.println(
                 "       basebetter     Number of queries where the baseline outperforms the treatment.        ");
-        System.err.println(
+        output.println(
                 "       treatbetter    Number of queries where the treatment outperforms the baseline.        ");
-        System.err.println(
+        output.println(
                 "       equal          Number of queries where the treatment and baseline perform identically.");
-        System.err.println("       ttest          P-value of a paired t-test.");
-        System.err.println(
+        output.println(
+                "       ttest          P-value of a paired t-test.");
+        output.println(
                 "       signtest       P-value of the Fisher sign test.                                       ");
-        System.err.println(
+        output.println(
                 "       randomized      P-value of a randomized test.                                          ");
 
-        System.err.println(
+        output.println(
                 "   The second column also includes difference tests.  In these tests, the null hypothesis is ");
-        System.err.println(
+        output.println(
                 "     that the mean of the treatment is at least k times the mean of the baseline.  We run the");
-        System.err.println(
+        output.println(
                 "     same tests as before, but we artificially improve the baseline values by a factor of k. ");
 
-        System.err.println(
-                "       h-ttest-0.5    Largest value of k such that the ttest has a p-value of less than 0.5. ");
-        System.err.println(
-                "       h-signtest-0.5 Largest value of k such that the sign test has a p-value of less than 0.5. ");
-        System.err.println(
-                "       h-randomized-0.5 Largest value of k such that the randomized test has a p-value of less than 0.5. ");
+        output.println(
+                "       h-ttest-0.05    Largest value of k such that the ttest has a p-value of less than 0.5. ");
+        output.println(
+                "       h-signtest-0.05 Largest value of k such that the sign test has a p-value of less than 0.5. ");
+        output.println(
+                "       h-randomized-0.05 Largest value of k such that the randomized test has a p-value of less than 0.5. ");
 
-        System.err.println(
-                "       h-ttest-0.1    Largest value of k such that the ttest has a p-value of less than 0.1. ");
-        System.err.println(
-                "       h-signtest-0.1 Largest value of k such that the sign test has a p-value of less than 0.1. ");
-        System.err.println(
-                "       h-randomized-0.1 Largest value of k such that the randomized test has a p-value of less than 0.1. ");
-        System.err.println();
+        output.println(
+                "       h-ttest-0.01    Largest value of k such that the ttest has a p-value of less than 0.1. ");
+        output.println(
+                "       h-signtest-0.01 Largest value of k such that the sign test has a p-value of less than 0.1. ");
+        output.println(
+                "       h-randomized-0.01 Largest value of k such that the randomized test has a p-value of less than 0.1. ");
+        output.println();
 
-        System.err.println("  The third column is the value of the test.");
-
-        System.exit(-1);
+        output.println(
+                "  The third column is the value of the test.");
     }
 
-    public static void internalMain(String[] args) throws IOException {
+    public static void internalMain(String[] args, PrintStream output) throws IOException {
         if (args.length >= 3) {
             TreeMap<String, ArrayList<Document>> baselineRanking = loadRanking(args[0]);
             TreeMap<String, ArrayList<Document>> treatmentRanking = loadRanking(args[1]);
@@ -360,25 +364,26 @@ public class Main {
 
             SetRetrievalEvaluator baseline = create(baselineRanking, judgments);
             SetRetrievalEvaluator treatment = create(treatmentRanking, judgments);
+            boolean useRandomized = args.length >= 4;
 
-            comparisonEvaluation(baseline, treatment, args.length >= 4);
+            comparisonEvaluation(baseline, treatment, useRandomized, output);
         } else if (args.length == 2) {
             TreeMap<String, ArrayList<Document>> ranking = loadRanking(args[0]);
             TreeMap<String, ArrayList<Judgment>> judgments = loadJudgments(args[1]);
 
             SetRetrievalEvaluator setEvaluator = create(ranking, judgments);
-            singleEvaluation(setEvaluator);
+            singleEvaluation(setEvaluator, output);
         } else {
-            usage();
+            usage(output);
         }
     }
 
     public static void main(String[] args) throws IOException {
         try {
-            internalMain(args);
+            internalMain(args, System.out);
         } catch (Exception e) {
             e.printStackTrace();
-            usage();
+            usage(System.out);
         }
     }
 }
