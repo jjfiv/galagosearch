@@ -56,7 +56,10 @@ public class IndexWriter {
     public IndexWriter(String outputFilename, Parameters parameters)
             throws FileNotFoundException, IOException {
         // Create the parent directory:
-        new File(outputFilename).getParentFile().mkdirs();
+        File parentFile = new File(outputFilename).getParentFile();
+        if (parentFile != null) {
+            parentFile.mkdirs();
+        }
 
         blockSize = (int) parameters.get("blockSize", 32768);
         isCompressed = parameters.get("isCompressed", false);
