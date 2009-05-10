@@ -55,12 +55,7 @@ public class IndexWriter {
      */
     public IndexWriter(String outputFilename, Parameters parameters)
             throws FileNotFoundException, IOException {
-        // Create the parent directory:
-        File parentFile = new File(outputFilename).getParentFile();
-        if (parentFile != null) {
-            parentFile.mkdirs();
-        }
-
+        Utility.makeParentDirectories(outputFilename);
         blockSize = (int) parameters.get("blockSize", 32768);
         isCompressed = parameters.get("isCompressed", false);
         output = new DataOutputStream(new BufferedOutputStream(
@@ -73,6 +68,7 @@ public class IndexWriter {
     
     public IndexWriter(String outputFilename)
             throws FileNotFoundException, IOException {
+        Utility.makeParentDirectories(outputFilename);
         output = new DataOutputStream(new BufferedOutputStream(
                                       new FileOutputStream(outputFilename)));
         vocabulary = new VocabularyWriter();
