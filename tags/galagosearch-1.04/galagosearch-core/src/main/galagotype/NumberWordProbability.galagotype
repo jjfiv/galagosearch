@@ -1,0 +1,11 @@
+package org.galagosearch.core.types;
+
+type NumberWordProbability {
+    int number;
+    bytes word;
+    double probability;
+               
+    order: +number +word;
+    order: +number;
+    order: +word;
+}

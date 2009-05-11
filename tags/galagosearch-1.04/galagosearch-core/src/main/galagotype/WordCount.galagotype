@@ -1,0 +1,10 @@
+package org.galagosearch.core.types;
+
+type WordCount {
+    String word;
+    long count;
+    long documents;
+    
+    order: +word;
+    order: +count;
+}
