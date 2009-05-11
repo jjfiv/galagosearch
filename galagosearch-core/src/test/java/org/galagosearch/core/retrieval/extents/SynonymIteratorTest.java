@@ -21,15 +21,6 @@ public class SynonymIteratorTest extends TestCase {
         super(testName);
     }
 
-    public void testNoData() throws IOException {
-        int[][] dataOne = {};
-        FakeExtentIterator one = new FakeExtentIterator(dataOne);
-        FakeExtentIterator[] iters = { one };
-
-        SynonymIterator instance = new SynonymIterator(new Parameters(), iters);
-        assertTrue(instance.isDone());
-    }
-
     public void testTwoDocuments() throws IOException {
         int[][] dataOne = {{1, 3}};
         int[][] dataTwo = {{2, 4}};

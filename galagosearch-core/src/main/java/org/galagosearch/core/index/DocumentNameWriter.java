@@ -4,7 +4,6 @@ package org.galagosearch.core.index;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,7 +36,6 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     public DocumentNameWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
         String filename = parameters.getXML().get("filename");
         footers = new ArrayList<Integer>();
-        Utility.makeParentDirectories(filename);
         output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
         documentsWritten = parameters.getCounter("Documents Written");
     }

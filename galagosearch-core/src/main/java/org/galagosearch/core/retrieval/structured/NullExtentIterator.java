@@ -18,14 +18,17 @@ public class NullExtentIterator extends ExtentIterator {
     }
 
     public ExtentArray extents() {
+        assert false : "This method should never be called.";
         return array;
     }
 
     public int document() {
+        assert false : "This method should never be called.";
         return Integer.MAX_VALUE;
     }
 
     public int count() {
+        assert false : "This method should never be called.";
         return 0;
     }
 
