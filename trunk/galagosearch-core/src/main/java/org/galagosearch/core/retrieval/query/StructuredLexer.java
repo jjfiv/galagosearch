@@ -8,7 +8,13 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
+ * A simple lexer for structured queries.
  *
+ * Recognizes a few special tokens: [#, (, ), :, =, .] Also
+ * recognizes two kinds of quoted strings; "a b c" and
+ * @@/a b c/.  The first kind is tokenized into individual tokens,
+ * while the second form treats 'a b c' as a single token.
+ * 
  * @author trevor
  */
 public class StructuredLexer {
