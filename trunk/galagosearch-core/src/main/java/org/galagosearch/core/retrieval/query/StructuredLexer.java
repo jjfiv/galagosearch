@@ -5,7 +5,7 @@ package org.galagosearch.core.retrieval.query;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Stack;
 
 /**
  * A simple lexer for structured queries.
@@ -18,6 +18,59 @@ import java.util.List;
  * @author trevor
  */
 public class StructuredLexer {
+    public static class TokenStream {
+        private ArrayList<Token> tokens;
+        private Stack<Integer> marks;
+        private int index;
+
+        public TokenStream(ArrayList<Token> tokens) {
+            this.tokens = tokens;
+            this.index = 0;
+            marks = new Stack<Integer>();
+        }
+
+        public Token current() {
+            if (hasCurrent()) {
+                return tokens.get(index);
+            }
+            return null;
+        }
+
+        public boolean currentEquals(String s) {
+            if (hasCurrent()) {
+                return current().text.equals(s);
+            }
+            return false;
+        }
+
+        public boolean hasCurrent() {
+            return index < tokens.size();
+        }
+
+        public boolean next() {
+            index++;
+            return hasCurrent();
+        }
+
+        public void pushMark() {
+            marks.push(index);
+        }
+
+        public void popMark() {
+            marks.pop();
+        }
+
+        public void rewindToMark() {
+            index = marks.peek();
+            marks.pop();
+        }
+
+        void resetMark() {
+            popMark();
+            pushMark();
+        }
+    }
+
     public static class Token {
         public Token(String text, int position) {
             this.text = text;
@@ -63,7 +116,7 @@ public class StructuredLexer {
         tokens.add(new Token("\"", offset+j));
     }
 
-    public static List<Token> tokens(String query) throws IOException {
+    public static ArrayList<Token> tokens(String query) throws IOException {
         ArrayList<Token> tokens = new ArrayList<Token>();
         HashSet<Character> tokenCharacters = new HashSet<Character>();
         tokenCharacters.add('#');
@@ -72,6 +125,7 @@ public class StructuredLexer {
         tokenCharacters.add('=');
         tokenCharacters.add(')');
         tokenCharacters.add('(');
+        tokenCharacters.add(',');
         int start = 0;
 
         for (int i = 0; i < query.length(); ++i) {
@@ -93,7 +147,6 @@ public class StructuredLexer {
                             throw new IOException("Lex failure: No end found to '@' escape sequence.");
                         }
 
-                        tokens.add(new Token("@", i));
                         tokens.add(new Token(query.substring(i+2, endChar), i));
                         i = endChar;
                     } else {

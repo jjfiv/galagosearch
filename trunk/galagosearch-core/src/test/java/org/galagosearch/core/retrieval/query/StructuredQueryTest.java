@@ -2,7 +2,7 @@
 
 package org.galagosearch.core.retrieval.query;
 
-import junit.framework.*;
+import junit.framework.TestCase;
 import java.util.ArrayList;
 
 /**
@@ -62,6 +62,30 @@ public class StructuredQueryTest extends TestCase {
         StructuredQuery.walk(traversal, tree);
     }
 
+    public void testText() {
+        String query = "hello";
+        Node result = StructuredQuery.parse(query);
+        assertEquals("#text:hello()", result.toString());
+    }
+
+    public void testTextOperator() {
+        String query = "#text:hello()";
+        Node result = StructuredQuery.parse(query);
+        assertEquals("#text:hello()", result.toString());
+    }
+
+    public void testSimpleCombine() {
+        String query = "#combine( hello )";
+        Node result = StructuredQuery.parse(query);
+        assertEquals("#combine( #text:hello() )", result.toString());
+    }
+
+    public void testSimpleTextCombine() {
+        String query = "#combine( #text:hello() )";
+        Node result = StructuredQuery.parse(query);
+        assertEquals("#combine( #text:hello() )", result.toString());
+    }
+
     public void testSimpleParse() {
         String query = "#combine( #feature:bm25(a) b )";
         Node tree = createQuery();
@@ -116,5 +140,11 @@ public class StructuredQueryTest extends TestCase {
         assertEquals(
                 "#combine( #smoothinside( #text:a() #field:b() ) #smoothinside( #text:a() #extentor( #field:b() #field:c() ) ) )",
                 result.toString());
+    }
+
+    public void testQuotes() {
+        String query = "\"a b c\"";
+        Node result = StructuredQuery.parse(query);
+        assertEquals("#quote( #text:a() #text:b() #text:c() )", result.toString());
     }
 }

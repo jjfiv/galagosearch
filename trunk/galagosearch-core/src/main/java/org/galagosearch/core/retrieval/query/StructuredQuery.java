@@ -1,10 +1,13 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.query;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import org.galagosearch.core.retrieval.query.StructuredLexer.TokenStream;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -60,280 +63,185 @@ public class StructuredQuery {
         traversal.afterNode(tree);
     }
 
-    /**
-     * Splits an input string, which may include escapes,
-     * into chunks based on a delimiter character.  It does not split
-     * on delimiters that appear in escaped regions.
-     */
-    public static ArrayList<String> splitOn(String text, char delimiter) {
-        int start = 0;
-        ArrayList<String> result = new ArrayList<String>();
+    public static Parameters parseParameters(TokenStream tokens) {
+        Parameters parameters = new Parameters();
+        assert tokens.currentEquals(":");
 
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
+        while (tokens.currentEquals(":")) {
+            tokens.next();
+            String key = tokens.current().text;
+            tokens.next();
 
-            if (c == '@') {
-                i = StructuredQuery.findEscapedEnd(text, i);
-            } else if (c == delimiter) {
-                result.add(text.substring(start, i));
-                start = i + 1;
+            if (tokens.currentEquals("=")) {
+                tokens.next();
+
+                if (tokens.hasCurrent()) {
+                    String value = tokens.current().text;
+                    parameters.add(key, value);
+                    tokens.next();
+                }
+            } else {
+                parameters.add("default", key);
             }
         }
 
-        if (start != text.length()) {
-            result.add(text.substring(start));
-        }
-
-        return result;
+        return parameters;
     }
 
-    /**
-     * <p>Parses an operator from the string query.  This method assumes that
-     * operator is a pound sign ('#') followed by some text, followed by an open 
-     * parentheses.  Parsing stops at the parenthesis.</p>
-     *
-     * <p>Note that parsing starts at index 0, not at "offset".  The offset is used purely
-     * for giving parse error information, and represents the offset of the operator string
-     * in the larger query string.</p>
-     */
-    public static Node parseOperator(String operator, int offset) {
-        assert operator.charAt(0) == '#';
-        int firstParen = operator.indexOf('(');
+    public static Node parseOperator(TokenStream tokens) {
+        int position = tokens.current().position;
+        assert tokens.currentEquals("#");
+        tokens.next();
 
-        if (firstParen < 0) {
-            return new Node("unknown", new ArrayList<Node>(), offset);
-        }
-
-        String operatorText = operator.substring(0, firstParen);
-        ArrayList<String> operatorParts = splitOn(operatorText.substring(1), ':');
-
-        String operatorName = operatorParts.get(0);
+        String operatorName = tokens.current().text;
+        tokens.next();
         Parameters parameters = new Parameters();
 
-        for (String part : operatorParts.subList(1, operatorParts.size())) {
-            ArrayList<String> keyValue = splitOn(part, '=');
-
-            if (keyValue.size() == 1) {
-                parameters.add("default", decodeEscapes(part));
-            } else if (keyValue.size() > 1) {
-                String key = keyValue.get(0);
-                String value = keyValue.get(1);
-                parameters.add(decodeEscapes(key), decodeEscapes(value));
-            }
+        if (tokens.currentEquals(":")) {
+            parameters = parseParameters(tokens);
         }
 
-        int endOperator = operator.length();
-
-        if (operator.charAt(operator.length() - 1) == ')') {
-            endOperator--;
+        if (tokens.currentEquals("(")) {
+            tokens.next();
         }
 
-        ArrayList<Node> children = parseArguments(operator.substring(firstParen + 1, endOperator),
-                                                  offset + firstParen + 1);
-        Node result = new Node(operatorName, parameters, children, offset);
-        return result;
-    }
-
-    /**
-     * Find the end of an escaped query region.
-     * We assume that query.charAt(start) == '@'.  The
-     * next charater is the boundary symbol for the escaped text.
-     * We move forward in the string until we see the boundary symbol again.
-     * If the escaped region isn't well formed (that is, there is no 
-     * initial boundary symbol, or we only see the boundary symbol once),
-     * query.length() is returned.
-     */
-    public static int findEscapedEnd(String query, int start) {
-        assert query.charAt(start) == '@';
-
-        // guard against the error case
-        if (query.length() < start + 2) {
-            return query.length();
-        }
-        char doneChar = query.charAt(start + 1);
-        int result = query.indexOf(doneChar, start + 2);
-
-        if (result < 0) {
-            return query.length();
-        }
-        return result;
-    }
-
-    /**
-     * <p>Find the end of an operator.  We assume that query.charAt(start)
-     * is a pound sign.  We skip forward in the query looking for
-     * the end of the operator by looking at parentheses; we know we're
-     * done when the parentheses are balanced and we've seen at least
-     * one open parenthesis.  This method skips over escaped regions.</p>
-     */
-    public static int findOperatorEnd(String query, int start) {
-        int i = start;
-        int open = 0;
-        int closed = 0;
-
-        for (; i < query.length() && (open != closed || open == 0); i++) {
-            char current = query.charAt(i);
-
-            if (current == '(') {
-                open++;
-            } else if (current == ')') {
-                closed++;
-            } else if (current == '@') {
-                i = findEscapedEnd(query, i);
-            }
-        }
-
-        return i;
-    }
-
-    public static int findTextEnd(String query, int start) {
-        int i = start;
-
-        for (; i < query.length(); i++) {
-            char current = query.charAt(i);
-
-            if (Character.isWhitespace(current)) {
-                break;
-            } else if (current == '@') {
-                i = findEscapedEnd(query, i);
-            }
-        }
-
-        return i;
-    }
-
-    public static String decodeEscapes(String escapedString) {
-        StringBuilder builder = new StringBuilder();
-        char escapeChar = ' ';
-        boolean inEscape = false;
-
-        for (int i = 0; i < escapedString.length(); i++) {
-            char current = escapedString.charAt(i);
-
-            if (!inEscape && current == '@' && i + 1 < escapedString.length()) {
-                escapeChar = escapedString.charAt(i + 1);
-                inEscape = true;
-                i += 1;
-            } else if (inEscape && current == escapeChar) {
-                inEscape = false;
-            } else {
-                builder.append(escapedString.charAt(i));
-            }
-        }
-
-        return builder.toString();
-    }
-
-    public static ArrayList<String> splitStringRespectingEscapes(String query, char split) {
-        ArrayList<String> chunks = new ArrayList<String>();
-        int start = 0;
-
-        for (int i = 0; i < query.length(); i++) {
-            char current = query.charAt(i);
-
-            if (current == split) {
-                chunks.add(query.substring(start, i));
-                start = i + 1;
-            } else if (current == '@') {
-                i = findEscapedEnd(query, i);
-            }
-        }
-
-        if (start < query.length() || query.length() == 0) {
-            chunks.add(query.substring(start));
-        }
-
-        return chunks;
-    }
-    
-    public static Node fieldOrNode(ArrayList<String> fieldNames, int offset) {
-        assert fieldNames.size() > 0 : "Can't make an or node with no fields";
-        Node result;
+        ArrayList<Node> arguments = parseArgumentList(tokens);
         
-        if (fieldNames.size() == 1) {
-            result = new Node("field", fieldNames.get(0), offset);
+        if (tokens.currentEquals(")")) {
+            tokens.next();
+        }
+
+        return new Node(operatorName, parameters, arguments, position);
+    }
+
+    public static Node parseQuotedTerms(TokenStream tokens) {
+        assert tokens.currentEquals("\"");
+        ArrayList<Node> children = new ArrayList<Node>();
+        int position = tokens.current().position;
+        tokens.next();
+
+        while (!tokens.currentEquals("\"") && tokens.hasCurrent()) {
+            children.add(parseTerm(tokens));
+        }
+
+        if (tokens.currentEquals("\"")) {
+            tokens.next();
+        }
+
+        return new Node("quote", children, position);
+    }
+
+    public static Node parseTerm(TokenStream tokens) {
+        if (tokens.currentEquals("\"")) {
+            return parseQuotedTerms(tokens);
         } else {
-            ArrayList<Node> children = new ArrayList<Node>();
-            
-            for (int i = 0; i < fieldNames.size(); ++i) {
-                children.add(new Node("field", fieldNames.get(i), offset));
-            }
-            
-            result = new Node("extentor", children, offset);
+            Node node = new Node("text", tokens.current().text, tokens.current().position);
+            tokens.next();
+            return node;
         }
-        
-        return result;
     }
 
-    public static Node parseTerm(String query, int offset) {
-        // step 1, split at periods
-        ArrayList<String> chunks = splitStringRespectingEscapes(query, '.');
-        
-        // step 2, decode each chunk.  The first chunk is the term text,
-        // while all remaining chunks describe fields.
-        Node result = new Node("text", decodeEscapes(chunks.get(0)), offset);
-        result = parseFields(result, chunks.subList(1, chunks.size()), offset);
-
-        return result;
+    public static Node parseUnrestricted(TokenStream tokens) {
+        if (tokens.currentEquals("#")) {
+            return parseOperator(tokens);
+        } else {
+            return parseTerm(tokens);
+        }
     }
 
-    public static int findOperatorExpressionEnd(String query, int offset) {
-        // this is an operator, so scan for balanced parentheses,
-        // not including escaped regions
-        int end = findOperatorEnd(query, offset);
-        int textEnd = findTextEnd(query, end);
-
-        if (end != textEnd && query.charAt(end) == '.')
-            return textEnd;
-
-        return end;
+    public static ArrayList<Node> parseFieldList(TokenStream tokens) {
+        ArrayList<Node> nodes = new ArrayList<Node>();
+        Node field = new Node("field", tokens.current().text, tokens.current().position);
+        nodes.add(field);
+        tokens.next();
+        while (tokens.currentEquals(",")) {
+            tokens.next();
+            field = new Node("field", tokens.current().text, tokens.current().position);
+            nodes.add(field);
+            tokens.next();
+        }
+        return nodes;
     }
 
-    /**
-     * Parses arguments to an operator.  This method can also be used to parse
-     * the elements of a query, since terms in a query are implicitly in a #combine
-     * operator.
-     * 
-     * @param query The query, or a substring of it, that contains argument text.
-     * @param offset The offset into the full query string (offset == 0 if query is the full query).
-     * @return a List of Nodes, which represent the query.
-     */
-    public static ArrayList<Node> parseArguments(String query, int offset) {
+    public static Node nodeWithOptionalExtentOr(String operator, Node child, ArrayList<Node> orFields) {
+        Node second = null;
+        if (orFields.size() == 1) {
+            second = orFields.get(0);
+        } else {
+            second = new Node("extentor", orFields);
+        }
+        ArrayList<Node> children = new ArrayList<Node>();
+        children.add(child);
+        children.add(second);
+        return new Node(operator, children);
+    }
+
+    public static Node parseRestricted(TokenStream tokens) {
+        Node node = parseUnrestricted(tokens);
+
+        tokens.pushMark();
+        while (tokens.hasCurrent() && tokens.currentEquals(".")) {
+            tokens.next();
+
+            if (tokens.currentEquals("(")) {
+                // Not a restriction
+                break;
+            } else {
+                ArrayList<Node> restrictNodes = parseFieldList(tokens);
+                node = nodeWithOptionalExtentOr("inside", node, restrictNodes);
+                // We successfully parsed this, so move the rewind marker
+                tokens.resetMark();
+            }
+        }
+
+        tokens.rewindToMark();
+        return node;
+    }
+
+    public static Node parseArgument(TokenStream tokens) {
+        Node node = parseRestricted(tokens);
+
+        if (tokens.currentEquals(".")) {
+            tokens.next();
+            assert tokens.currentEquals("(");
+            tokens.next();
+
+            ArrayList<Node> smoothingNodes = parseFieldList(tokens);
+            assert tokens.currentEquals(")");
+            tokens.next();
+
+            node = nodeWithOptionalExtentOr("smoothinside", node, smoothingNodes);
+        }
+
+        return node;
+    }
+
+    public static ArrayList<Node> parseArgumentList(TokenStream tokens) {
         ArrayList<Node> arguments = new ArrayList<Node>();
-        int start = 0;
-        boolean inElement = false;
-
-        // scan the string, looking for tokens.  Tokens are either operators (#\w+(...)), words, or escaped.
-        for (int i = 0; i < query.length(); i++) {
-            char current = query.charAt(i);
-
-            if (!Character.isWhitespace(current)) {
-                if (current == '#') {
-                    Node child = parseOperatorExpression(query, i, offset);
-                    arguments.add(child);
-                    i = findOperatorExpressionEnd(query, i);
-                } else {
-                    int end = findTextEnd(query, i);
-                    Node child = parseTerm(query.substring(i, end), offset + i);
-                    arguments.add(child);
-                    i = end;
-                }
+        while (tokens.hasCurrent()) {
+            if (tokens.current().text.equals(")")) {
+                break;
+            } else {
+                arguments.add(parseArgument(tokens));
             }
         }
-
-        // we're at the end of the string
-        if (inElement) {
-            Node child = new Node("text", query.substring(start), offset + start);
-            arguments.add(child);
-        }
-
         return arguments;
     }
 
     public static Node parse(String query) {
-        ArrayList<Node> arguments = parseArguments(query, 0);
+        StructuredLexer lexer = new StructuredLexer();
+        ArrayList<StructuredLexer.Token> tokens;
+        try {
+            tokens = lexer.tokens(query);
+        } catch(Exception e) {
+            // TODO: fix this
+            e.printStackTrace();
+            return new Node("text", "");
+        }
+        TokenStream stream = new TokenStream(tokens);
+        ArrayList<Node> arguments = parseArgumentList(stream);
 
-        if (query.length() == 0) {
+        if (arguments.size() == 0) {
             return new Node("text", "");
         } else if (arguments.size() == 1) {
             return arguments.get(0);
@@ -354,42 +262,5 @@ public class StructuredQuery {
         }
 
         return queryTerms;
-    }
-
-    private static Node parseFields(Node result, List<String> chunks, int offset) {
-        for (int i = 0; i < chunks.size(); i++) {
-            ArrayList<Node> children = new ArrayList<Node>();
-            children.add(result);
-            String fieldText = chunks.get(i);
-            boolean isSmoothingField = false;
-            if (fieldText.startsWith("(") && fieldText.endsWith(")")) {
-                isSmoothingField = true;
-                fieldText = fieldText.substring(1, fieldText.length() - 1);
-            }
-            ArrayList<String> fieldNames = splitStringRespectingEscapes(fieldText, ',');
-            Node fieldNode = fieldOrNode(fieldNames, offset);
-            children.add(fieldNode);
-            if (isSmoothingField) {
-                result = new Node("smoothinside", children, offset);
-            } else {
-                result = new Node("inside", children, offset);
-            }
-        }
-        return result;
-    }
-
-    private static Node parseOperatorExpression(String query, int i, int offset) {
-        // this is an operator, so scan for balanced parentheses,
-        // not including escaped regions
-        int end = findOperatorEnd(query, i);
-        Node child = parseOperator(query.substring(i, end), offset + i);
-        // operators may end with a field expression, so parse that too:
-        int textEnd = findTextEnd(query, end);
-        if (textEnd != end && query.charAt(end) == '.') {
-            String remainingText = query.substring(end + 1, textEnd);
-            ArrayList<String> chunks = splitStringRespectingEscapes(remainingText, '.');
-            child = parseFields(child, chunks, end);
-        }
-        return child;
     }
 }
