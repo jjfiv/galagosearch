@@ -49,6 +49,7 @@ public class Search {
         public String url;
         public Map<String, String> metadata;
         public String summary;
+        public double score;
     }
 
     public String getSummary(Document document, Set<String> query) throws IOException {
@@ -113,6 +114,7 @@ public class Search {
             }
 
             item.metadata = document.metadata;
+            item.score = results[i].score;
             result.items.add(item);
         }
 

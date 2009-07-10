@@ -185,12 +185,13 @@ public class SearchWebHandler extends AbstractHandler {
             writer.append("<div id=\"result\">\n");
             writer.append(String.format("<a href=\"document?identifier=%s\">%s</a><br/>" +
                                         "<div id=\"summary\">%s</div>\n" +
-                                        "<div id=\"meta\">%s - %s</div>\n",
+                                        "<div id=\"meta\">%s - %s - %.2f</div>\n",
                                         item.identifier,
                                         item.displayTitle,
                                         item.summary,
                                         scrub(item.identifier),
-                                        scrub(item.url)));
+                                        scrub(item.url),
+                                        item.score));
             writer.append("</div>\n");
         }
 
@@ -256,6 +257,9 @@ public class SearchWebHandler extends AbstractHandler {
             outputter.startTag("rank");
             outputter.pcdata("" + item.rank);
             outputter.endTag();
+
+            outputter.startTag("score");
+            outputter.pcdata(Double.toString(item.score));
             
             outputter.startTag("metadata");
             for (Entry<String, String> entry : item.metadata.entrySet()) {
