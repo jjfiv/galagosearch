@@ -121,10 +121,6 @@ public class StructuredLexerTest extends TestCase {
         Iterator<Token> iterator = tokens.iterator();
 
         Token t = iterator.next();
-        assertEquals("@", t.text);
-        assertEquals(0, t.position);
-
-        t = iterator.next();
         assertEquals("b c d", t.text);
         assertEquals(0, t.position);
     }

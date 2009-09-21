@@ -64,7 +64,7 @@ public class AppTest extends TestCase {
                 "<query><number>5</number><text>nothing</text></query>\n" +
                 "<query><number>9</number><text>sample</text></query>\n" +
                 "<query><number>10</number><text>nothing sample</text></query>\n" +
-                "<query><number>14</number><text>#combine(1(this is) sample)</text></query>\n" +
+                "<query><number>14</number><text>#combine(#1(this is) sample)</text></query>\n" +
                 "</parameters>\n";
             queryFile = Utility.createTemporary();
             Utility.copyStringToFile(queries, queryFile);
@@ -83,8 +83,8 @@ public class AppTest extends TestCase {
                                     "9 Q0 55 2 -1.38695908 galago\n" +
                                     "10 Q0 59 1 -4.16021585 galago\n" +
                                     "10 Q0 55 2 -4.16287565 galago\n" +
-                                    "14 Q0 59 1 -6.93480253 galago\n" +
-                                    "14 Q0 55 2 -6.93879223 galago\n";
+                                    "14 Q0 55 1 -3.46440935 galago\n" +
+                                    "14 Q0 59 2 -3.46706867 galago\n";
             assertEquals(expectedScores, output);
 
             // Verify dump-keys works
