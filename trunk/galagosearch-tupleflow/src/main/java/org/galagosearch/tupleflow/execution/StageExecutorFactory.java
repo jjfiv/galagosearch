@@ -6,8 +6,10 @@ import org.galagosearch.tupleflow.Utility;
 import java.util.Arrays;
 
 /**
+ * Allows users to select some particular executor
+ * Defaults to local executor
  *
- * @author trevor
+ * @author trevor,sjh
  */
 public class StageExecutorFactory {
     public static StageExecutor newInstance(String name, String... args) {
@@ -27,12 +29,15 @@ public class StageExecutorFactory {
             } catch (Exception e) {
                 return null;
             }
-        } else if (name.startsWith("thread") || name.startsWith("local")) {
+        //} else if (name.startsWith("thread") || name.startsWith("local")) {
+        } else if (name.startsWith("thread")) {
             return new ThreadedStageExecutor();
         } else if (name.startsWith("ssh")) {
             return new SSHStageExecutor(args[0], Arrays.asList(Utility.subarray(args, 1)));
         } else if (name.equals("remotedebug")) {
             return new LocalRemoteStageExecutor();
+        } else if (name.startsWith("drmaa")) {
+            return new DRMAAStageExecutor(args);
         } else {
             return new LocalStageExecutor();
         }

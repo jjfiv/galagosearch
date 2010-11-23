@@ -1193,36 +1193,83 @@ public class JobExecutor {
         server.removeHandler(handler);
     }
 
+    
+    
     public static boolean runLocally(Job job, ErrorStore store, boolean keepOutput) throws IOException,
-            InterruptedException, ExecutionException, Exception {
-        StageExecutor executor = StageExecutorFactory.newInstance("local", new String[] {});
-        File tempFile = Utility.createTemporary();
-        tempFile.delete();
-        tempFile.mkdir();
-        
-        JobExecutor jobExecutor = new JobExecutor(job, tempFile.getAbsolutePath(), store);
-        jobExecutor.prepare();
+    InterruptedException, ExecutionException, Exception {
+      File tempFolder = Utility.createGalagoTempDir();
+      return runLocally(job, store, keepOutput, "local", tempFolder);
+    }
 
-        if (store.hasStatements()) {
-            return false;
+    public static boolean runLocally(Job job, ErrorStore store, boolean keepOutput, String mode) throws IOException,
+    InterruptedException, ExecutionException, Exception {
+      File tempFolder = Utility.createGalagoTempDir();
+      return runLocally(job, store, keepOutput, mode, tempFolder);
+    }
+
+    public static boolean runLocally(Job job, ErrorStore store, boolean keepOutput, String mode, File tempFolder) throws IOException,
+    InterruptedException, ExecutionException, Exception {
+      int outputmode;
+      if (keepOutput) {
+        outputmode = 0;
+      } else {
+        outputmode = 2;
+      }
+
+      return runLocally(job, store, outputmode, mode, tempFolder);
+    }
+
+    public static boolean runLocally(Job job, ErrorStore store, int deleteOutput, String mode, File tempFolder) throws IOException,
+    InterruptedException, ExecutionException, Exception {
+
+      String[] params = new String[] {};
+
+      // CIIR Cluster parameters:
+      if(mode.equals("drmaa")){
+        // First get the hostname
+        InetAddress local = InetAddress.getLocalHost();
+        String hostname = local.getHostName();
+        if (hostname.contains("swarm")) {
+          params = new String[] {"-ns=-q long.q -l long=TRUE"};
+        } else if (hostname.contains("sydney")) {
+          params = new String[] {"-ns=-q std.q -pe thread.std 2"};
+        } else {
+          params = new String[0];
         }
+      }
 
-        int port = Utility.getFreePort();
-        Server server = new Server(port);
-        server.start();
-        System.out.println("Status: http://localhost:" + port);
-        try {
-            jobExecutor.runWithServer(executor, server);
-        } finally {
-            server.stop();
-            executor.shutdown();
-        }
+      StageExecutor executor = StageExecutorFactory.newInstance(mode, params);        
 
-        if (!keepOutput) {
-            Utility.deleteDirectory(tempFile);
-        }
+      JobExecutor jobExecutor = new JobExecutor(job, tempFolder.getAbsolutePath(), store);
+      jobExecutor.prepare();
 
-        return !store.hasStatements();
+      if (store.hasStatements()) {
+        return false;
+      }
+
+      int port = Utility.getFreePort();
+      Server server = new Server(port);
+      server.start();
+      System.out.println("Status: http://localhost:" + port);
+      try {
+        jobExecutor.runWithServer(executor, server);
+      } finally {
+        server.stop();
+        executor.shutdown();
+      }
+
+      if (deleteOutput == 1){
+        // we want to keep the jobs dir -- helps verify what has been done
+        // may want to specify other folders to keep
+        HashSet<String> omissions = new HashSet();
+        omissions.add("jobs");
+        Utility.partialDeleteDirectory(tempFolder, omissions);
+
+      } else if (deleteOutput == 2) {
+        Utility.deleteDirectory(tempFolder);
+      }
+
+      return !store.hasStatements();
     }
 
     public static void main(String[] args) throws ParserConfigurationException, SAXException,

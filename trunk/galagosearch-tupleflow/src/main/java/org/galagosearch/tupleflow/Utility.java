@@ -17,6 +17,7 @@ import java.net.ServerSocket;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 import org.galagosearch.tupleflow.execution.Step;
 
@@ -351,7 +352,41 @@ public class Utility {
 
         directory.delete();
     }
+    
+    public static void partialDeleteDirectory(File directory, Set<String> omissions) throws IOException {
+        for (File sub : directory.listFiles()) {
+          if(omissions.contains(sub.getName())){
+            // don't delete this file
+          } else if (sub.isDirectory()) {
+                deleteDirectory(sub);
+            } else {
+                sub.delete();
+            }
+        }
+        if(directory.listFiles().length == 0){
+          directory.delete();
+        }
+    }
 
+    public static File createGalagoTempDir() throws IOException{
+      return createGalagoTempDir("");
+    }
+      
+    public static File createGalagoTempDir(String path) throws IOException{
+        File galagoTemp =  null;
+        if (path.length() > 0){
+          galagoTemp = new File(path);
+        } else {
+          galagoTemp = Utility.createTemporary();         
+        }
+
+        makeParentDirectories(galagoTemp.getAbsolutePath());
+        galagoTemp.delete();
+        galagoTemp.mkdir();
+
+        return galagoTemp;
+    }
+    
     public static File createTemporary() throws IOException {
         return createTemporary(1024 * 1024 * 1024);
     }

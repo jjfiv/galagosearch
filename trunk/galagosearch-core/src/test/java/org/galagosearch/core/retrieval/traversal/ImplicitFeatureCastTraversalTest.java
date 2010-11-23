@@ -12,6 +12,7 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  *
@@ -30,8 +31,8 @@ public class ImplicitFeatureCastTraversalTest extends TestCase {
     }
 
     @Override
-    public void tearDown() {
-        indexPath.delete();
+    public void tearDown() throws IOException{
+        Utility.deleteDirectory(indexPath);
     }
 
     public void testTraversal() throws Exception {
