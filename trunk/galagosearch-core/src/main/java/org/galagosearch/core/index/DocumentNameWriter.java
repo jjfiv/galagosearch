@@ -9,100 +9,82 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+
+import org.galagosearch.core.types.DataMapItem;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Processor;
+import org.galagosearch.tupleflow.Sorter;
 import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorHandler;
 
 /**
- * Writes a list of document names to a binary file.
- * This class assumes that a document name is a string that contains at least
- * one hyphen ('-') followed entirely by numbers.  All TREC document names
- * follow this convention, e.g.:  WTX-B01-0001.
+ * 
+ * Writes a mapping from document names to document numbers
+ * 
+ * Does not assume that the data is sorted
+ *  - as data would need to be sorted into both key and value order
+ *  - instead this class takes care of the re-sorting
  *
- * @author Trevor Strohman
+ * @author sjh
  */
 @InputClass(className = "org.galagosearch.core.types.NumberedDocumentData")
 public class DocumentNameWriter implements Processor<NumberedDocumentData> {
-    String lastHeader = null;
-    DataOutputStream output;
-    int lastFooterWidth = 0;
-    int lastDocument = -1;
-    ArrayList<Integer> footers;
-    Counter documentsWritten = null;
+  Sorter<DataMapItem> sorterFL;
+  Sorter<DataMapItem> sorterRL;
+  
+  NumberedDocumentData last = null;
+  Counter documentNamesWritten = null;
 
-    public DocumentNameWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
-        String filename = parameters.getXML().get("filename");
-        footers = new ArrayList<Integer>();
-        Utility.makeParentDirectories(filename);
-        output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
-        documentsWritten = parameters.getCounter("Documents Written");
+  public DocumentNameWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
+    //writer = new BulkTreeWriter(parameters);
+    documentNamesWritten = parameters.getCounter("Document Names Written");
+    // make a folder
+    File folder = new File(parameters.getXML().get("filename"));
+    if(!folder.isDirectory()){
+      folder.delete();
+      folder.mkdir();
     }
+    
+    DataMapWriter writerFL = new DataMapWriter(folder, "fl");
+    DataMapWriter writerRL = new DataMapWriter(folder, "rl");
+    
+    sorterFL = new Sorter<DataMapItem>(new DataMapItem.KeyOrder());
+    sorterRL = new Sorter<DataMapItem>(new DataMapItem.KeyOrder());
+    sorterFL.processor = writerFL;
+    sorterRL.processor = writerRL;
+      
+  }
 
-    public void flush() throws IOException {
-        if (footers.size() == 0) {
-            return;
-        }
+  public void process(NumberedDocumentData ndd) throws IOException {
+     if(last == null) last = ndd;
 
-        byte[] headerBytes = Utility.makeBytes(lastHeader);
-        output.writeInt(headerBytes.length);
-        output.write(headerBytes);
-        output.writeInt(lastFooterWidth);
-        output.writeInt(footers.size());
+    assert last.number <= ndd.number;
+    assert last.identifier != null;
+   
+    byte[] docnum = Utility.makeBytes(ndd.number);
+    byte[] docname = Utility.makeBytes(ndd.identifier);
+    
+    DataMapItem btiFL = new DataMapItem(docnum, docname);
+    sorterFL.process(btiFL);
 
-        for (int footerValue : footers) {
-            output.writeInt(footerValue);
-        }
+    DataMapItem btiRL = new DataMapItem(docname, docnum);
+    sorterRL.process(btiRL);
+
+    if (documentNamesWritten != null) documentNamesWritten.increment();
+  }
+
+  public void close() throws IOException {
+    sorterFL.close();
+    sorterRL.close();
+  }
+
+  public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
+    if (!parameters.getXML().containsKey("filename")) {
+      handler.addError("DocumentNameWriter requires an 'filename' parameter.");
+      return;
     }
-
-    public void process(NumberedDocumentData numberedDocumentData) throws IOException {
-        assert numberedDocumentData.number - 1 == lastDocument;
-        lastDocument = numberedDocumentData.number;
-
-        String documentName = numberedDocumentData.identifier;
-        int lastDash = documentName.lastIndexOf("-");
-
-        if (lastDash == -1) {
-            putName(documentName, 0, 0);
-        } else {
-            String header = documentName.substring(0, lastDash);
-            String footer = documentName.substring(lastDash + 1);
-
-            try {
-                int footerValue = Integer.parseInt(footer);
-                putName(header, footerValue, footer.length());
-            } catch (NumberFormatException e) {
-                putName(documentName, 0, 0);
-            }
-        }
-
-        if (documentsWritten != null) documentsWritten.increment();
-    }
-
-    public void putName(String header, int footer, int footerWidth) throws IOException {
-        if (header.equals(lastHeader) && footerWidth == lastFooterWidth) {
-            footers.add(footer);
-        } else {
-            flush();
-            lastHeader = header;
-            footers = new ArrayList<Integer>();
-            footers.add(footer);
-            lastFooterWidth = footerWidth;
-        }
-    }
-
-    public void close() throws IOException {
-        flush();
-        output.close();
-    }
-
-    public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
-        if (!parameters.getXML().containsKey("filename")) {
-            handler.addError("DocumentNameWriter requires an 'filename' parameter.");
-            return;
-        }
-    }
+  }
 }

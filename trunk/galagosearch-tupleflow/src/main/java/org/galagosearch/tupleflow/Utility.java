@@ -3,6 +3,9 @@ package org.galagosearch.tupleflow;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -152,6 +155,13 @@ public class Utility {
         return null;
     }
 
+    /*
+     * Functions to translate:
+     *  - strings to bytes
+     *  - bytes to strings
+     *  - integers to bytes
+     *  - bytes to integers
+     */
     public static String makeString(byte[] word) {
         try {
             return new String(word, "UTF-8");
@@ -166,6 +176,28 @@ public class Utility {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF-8 is not supported by your Java Virtual Machine.");
         }
+    }
+    
+    public static byte[] makeBytes(int value){
+      try{
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        DataOutputStream wrapper = new DataOutputStream(stream);
+        wrapper.writeInt(value);
+        return stream.toByteArray();
+      } catch(IOException e) {
+          throw new RuntimeException("Unexpected issues converting an int to bytes!");
+      }
+    }
+    
+    public static int makeInt(byte[] value){
+      try{
+        ByteArrayInputStream stream = new ByteArrayInputStream(value);
+        DataInputStream wrapper = new DataInputStream(stream);
+        int i = wrapper.readInt();
+        return i ;
+      } catch(IOException e) {
+          throw new RuntimeException("Unexpected issues converting an int to bytes!");
+      }
     }
 
     /**

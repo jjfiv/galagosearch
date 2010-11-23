@@ -118,7 +118,7 @@ public class StructuredRetrieval extends Retrieval {
         return getArrayResults(queue);
     }
 
-    public String getDocumentName(int document) {
+    public String getDocumentName(int document) throws IOException {
         return index.getDocumentName(document);
     }
 

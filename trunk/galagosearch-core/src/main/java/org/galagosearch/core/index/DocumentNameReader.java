@@ -1,116 +1,110 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.index;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
+
+import org.galagosearch.core.types.DataMapItem;
+import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Utility;
+
 /**
- * Reads a binary file of document names produced by DocumentNameWriter.
- * The names are loaded into RAM for quick access.
- *
- * @author trevor
+ * Reads a binary file of document names produced by DocumentNameWriter2.
+ * BulkTrees are used 
+ * 
+ * 
+ * Reverse lookup is provided 
+ * 
+ * @author sjh
  */
 public class DocumentNameReader {
-    private static class NameSlot {
-        public String prefix;
-        public int offset;
-        public int footerWidth;
-        public int[] footers;
+
+  DataMapReader inputFl;
+  DataMapReader inputRl;
+
+  /** Creates a new instance of DocumentNameReader */
+  public DocumentNameReader(String folder) throws IOException {
+    inputFl = new DataMapReader(folder, "fl", true);
+    inputRl = new DataMapReader(folder, "rl", false);
+  }
+
+  // gets the document name of the internal id index.
+  public String get(int index) throws IOException {
+    DataMapItem dmi = inputFl.get(Utility.makeBytes(index));
+    if (dmi == null) {
+      throw new IOException("Unknown Document Number " + index);
+    }
+    return Utility.makeString(dmi.value);
+  }
+
+  // gets the document id for some document name
+  public int getDocumentId(String documentName) throws IOException {
+    byte[] value = new byte[0];
+    value = Utility.makeBytes(documentName);
+    DataMapItem dmi = inputRl.get(value);
+    if (dmi == null) {
+      throw new IOException("Unknown Document Name " + documentName);
     }
 
-    ArrayList<NameSlot> slots;
-    int documentCount;
-    
-    /** Creates a new instance of DocumentNameReader */
-    public DocumentNameReader(String filename) throws IOException {
-        FileInputStream f = new FileInputStream(filename);
-        DataInputStream input = new DataInputStream(new BufferedInputStream(f));
-        slots = new ArrayList();
-        read(input);
-        input.close();
-    }
-    
-    private String getInSlot(NameSlot slot, int footerIndex) {
-        int footer = slot.footers[footerIndex-slot.offset];
-        String prefix = slot.prefix;
-        String documentName;
-        
-        if(slot.footerWidth == 0) {
-            documentName = slot.prefix;
-        } else {
-            String format = "%s-%0" + slot.footerWidth + "d";
-            documentName = String.format(format, prefix, footer);
-        }
-        
-        return documentName;
-    }
-    
-    public String get(int index) {
-        assert index >= 0;
-        assert index < documentCount;
-        
-        if(index >= documentCount) 
-            return "unknown";
-        
-        if(index < 0)
-            return "unknown";
-        
-        int big = slots.size()-1;
-        int small = 0;
-        
-        while(big-small > 1) {
-            int middle = small + (big-small)/2;
-            
-            if(slots.get(middle).offset >= index)
-                big = middle;
-            else
-                small = middle;
-        }
+    return Utility.makeInt(dmi.value);
+  }
 
-        NameSlot one = slots.get(small);
-        NameSlot two = slots.get(big);
-        String result = "";
-        
-        if (two.offset <= index)
-            result = getInSlot(two, index);
-        else
-            result = getInSlot(one, index);
-        
-        return result;
-    }
+  
+  public NumberedDocumentDataIterator getNumberOrderIterator() throws IOException {
+    return new Iterator(inputFl, true);
+  }
+  public NumberedDocumentDataIterator getNameOrderIterator() throws IOException {
+    return new Iterator(inputRl, false);
+  }
+
+  public class Iterator extends NumberedDocumentDataIterator{
     
-    public void read(DataInputStream input) throws IOException {
-        int offset = 0;
-        
-        // open a file
-        while(input.available() > 0) {
-            // read the prefix
-            int prefixLength = input.readInt();
-            byte[] prefixData = new byte[prefixLength];
-            input.read(prefixData);
-            
-            // read the footers
-            int footerWidth = input.readInt();
-            int footerCount = input.readInt();
-            NameSlot slot = new NameSlot();
-            
-            slot.footerWidth = footerWidth;
-            slot.offset = offset;
-            slot.prefix = Utility.makeString(prefixData);
-            slot.footers = new int[footerCount];
-            
-            for(int i=0; i<footerCount; i++) {
-                slot.footers[i] = input.readInt();
-            }
-            
-            slots.add(slot);
-            offset += slot.footers.length;
-        }
-        
-        documentCount = offset;
+    boolean forwardLookup;
+    DataMapReader input;
+    DataMapReader.Iterator iterator;
+    DataMapItem current;
+
+    public Iterator(DataMapReader input, boolean forwardLookup) throws IOException {
+      this.forwardLookup = forwardLookup;
+      this.input = input;
+      reset();
     }
+
+    public void reset() throws IOException {
+      iterator = input.getIterator();
+      current = iterator.getItem();
+    }
+
+    public String getRecordString() {
+      if(forwardLookup){
+        return Utility.makeInt(current.key) + ", " + Utility.makeString(current.value);
+      } else {
+        return Utility.makeInt(current.value) + ", " + Utility.makeString(current.key);
+      }      
+    }
+
+    public boolean nextRecord() throws IOException {
+      if (iterator.nextRecord()) {
+        current = iterator.getItem();
+        return true;
+      }
+      return false;
+    }
+
+    public NumberedDocumentData getDocumentData() throws IOException {
+      if(forwardLookup){
+        return new NumberedDocumentData(Utility.makeString(current.value), "", Utility.makeInt(current.key), 0);
+      } else {
+        return new NumberedDocumentData(Utility.makeString(current.key), "", Utility.makeInt(current.value), 0);
+      }      
+    }
+
+    public String getKey() {
+      if(forwardLookup){
+        return Integer.toString(Utility.makeInt(current.key));
+      } else {
+        return Utility.makeString(current.key);
+      }
+    }
+  }
 }

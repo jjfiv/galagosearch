@@ -192,7 +192,11 @@ public class StructuredIndex {
         return documentLengths.getLength(document);
     }
 
-    public String getDocumentName(int document) {
-        return documentNames.get(document);
-    }
+    public String getDocumentName(int document) throws IOException {
+      return documentNames.get(document);
+  }
+    
+    public int getDocumentNumber(String document) throws IOException {
+      return documentNames.getDocumentId(document);
+  }
 }
