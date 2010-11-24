@@ -16,7 +16,7 @@ import org.galagosearch.tupleflow.execution.Verified;
  * @author trevor
  */
 @Verified
-@InputClass(className = "org.galagosearch.core.parse.Document")
+//Input class may be Document or some thing pretending to be a document...
 @OutputClass(className = "org.galagosearch.core.types.ExtractedLink")
 public class LinkExtractor extends StandardStep<Document, ExtractedLink> {
     private boolean acceptLocalLinks;
@@ -116,11 +116,7 @@ public class LinkExtractor extends StandardStep<Document, ExtractedLink> {
         }
     }
 
-    public Class<Document> getInputClass() {
-        return Document.class;
-    }
-
-    public Class<ExtractedLink> getOutputClass() {
-        return ExtractedLink.class;
+    public static String getInputClass(TupleFlowParameters params){
+      return params.getXML().get("class", "org.galagosearch.core.parse.Document");
     }
 }

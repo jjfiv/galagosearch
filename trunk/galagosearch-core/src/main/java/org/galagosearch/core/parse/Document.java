@@ -24,4 +24,8 @@ public class Document implements Serializable {
 
     public List<String> terms;
     public List<Tag> tags;
+    
+    public int fileId;
+    public int totalFileCount;
+
 }

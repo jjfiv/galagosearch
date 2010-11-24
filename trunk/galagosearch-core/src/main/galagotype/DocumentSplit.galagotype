@@ -7,7 +7,11 @@ type DocumentSplit {
     boolean isCompressed;
     bytes startKey;
     bytes endKey;
+    int fileId;
+	int totalFileCount;
+    
 
     order: ;
     order: +fileName +startKey;
+	order: +fileId;
 };
