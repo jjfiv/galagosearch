@@ -7,6 +7,7 @@ import org.galagosearch.tupleflow.OutputClass;
 import org.galagosearch.tupleflow.StandardStep;
 import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.TypeReader;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorHandler;
 import org.galagosearch.tupleflow.execution.Verification;
 import org.galagosearch.core.types.DocumentWordPosition;
@@ -17,30 +18,40 @@ import org.galagosearch.core.types.NumberedDocumentData;
 
 /**
  *
- * @author trevor
+ * @author sjh
  */
 @InputClass(className = "org.galagosearch.core.types.DocumentWordPosition")
 @OutputClass(className = "org.galagosearch.core.types.NumberWordPosition")
 public class PositionPostingsNumberer extends StandardStep<DocumentWordPosition, NumberWordPosition>
         implements DocumentWordPosition.Processor, NumberWordPosition.Source {
-    HashMap<String, Integer> documentNumbers = new HashMap();
 
+    TypeReader<NumberedDocumentData> reader;
+    NumberedDocumentData currentNDD;
+    
     public void process(DocumentWordPosition object) throws IOException {
-        assert documentNumbers.get(object.document) != null : "" + object.document +
-                " has no name, even with " + documentNumbers.size() + " doc names.";
+      assert Utility.compare(currentNDD.identifier, object.document) <= 0 : 
+        "PositionPostingNumberer is getting postings in the wrong order somehow.";
+      
+      while((currentNDD != null) &&
+          (Utility.compare(currentNDD.identifier, object.document) < 0 )){
+        currentNDD = reader.read();
+      }
+      
+      if((currentNDD != null) &&
+        (Utility.compare(currentNDD.identifier, object.document) == 0)){
         processor.process(
-                new NumberWordPosition(documentNumbers.get(object.document),
-                                       object.word,
-                                       object.position));
+            new NumberWordPosition(currentNDD.number,
+                object.word,
+                object.position));
+      } else {
+        throw new IOException("Ran out of Document Numbers or Found Unknown Document");
+      }
+      
     }
-
+    
     public PositionPostingsNumberer(TupleFlowParameters parameters) throws IOException {
-        TypeReader<NumberedDocumentData> reader = parameters.getTypeReader("numberedDocumentData");
-        NumberedDocumentData ndd;
-
-        while ((ndd = reader.read()) != null) {
-            documentNumbers.put(ndd.identifier, ndd.number);
-        }
+      reader = parameters.getTypeReader("numberedDocumentData");
+      currentNDD = reader.read();
     }
 
     public Class<DocumentWordPosition> getInputClass() {

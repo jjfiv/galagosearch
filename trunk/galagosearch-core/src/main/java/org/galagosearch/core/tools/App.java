@@ -1,5 +1,4 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.tools;
 
 import java.io.File;
@@ -47,6 +46,7 @@ import org.mortbay.jetty.Server;
  * @author trevor, sjh, irmarc
  */
 public class App {
+
   private PrintStream output;
 
   public App(PrintStream out) {
@@ -86,7 +86,7 @@ public class App {
   }
 
   private void commandHelpBuild() {
-    output.println("galago build [flags] <index> (<input>)+");
+    output.println("galago build[-fast] [flags] <index> (<input>)+");
     output.println();
     output.println("  Builds a Galago StructuredIndex with TupleFlow, using one thread ");
     output.println("  for each CPU core on your computer.  While some debugging output ");
@@ -127,31 +127,52 @@ public class App {
   }
 
   private void handleBuild(String[] args) throws Exception {
-    // Remove 'build' from the command.
-    args = Utility.subarray(args, 1);
-
-    if (args.length <= 0) {
+    if (args.length < 3) { // build index input
       commandHelpBuild();
       return;
     }
 
-    // handle --links and --stemming flags
     String[][] filtered = Utility.filterFlags(args);
 
     String[] flags = filtered[0];
     String[] nonFlags = filtered[1];
-    String indexName = nonFlags[0];
-    String[] docs = Utility.subarray(nonFlags, 1);
+    String indexName = nonFlags[1];
+    String[] docs = Utility.subarray(nonFlags, 2);
 
     Parameters p = new Parameters(flags);
-    boolean useLinks = p.get("links", false);
-    boolean stemming = p.get("stemming", true);
-    boolean keepOutput = p.get("keepOutput", false);
+    p.add("indexPath", indexName);
+    for (String doc : docs) {
+      p.add("inputPaths", doc);
+    }
 
-    BuildIndex build = new BuildIndex();
-    Job job = build.getIndexJob(indexName, docs, useLinks, stemming);
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
+    int deleteOutput = Integer.parseInt(p.get("deleteOutput", "2"));
+    int hash = (int) p.get("distrib", 0);
+    String mode = p.get("mode", "local");
+    String tempFolderPath = p.get("galagoTemp", "");
+    File tempFolder = Utility.createGalagoTempDir(tempFolderPath);
+
+    Job job;
+    if (nonFlags[0].contains("fast")) {
+      BuildFastIndex build = new BuildFastIndex();
+      job = build.getIndexJob(p);
+    } else {
+      BuildIndex build = new BuildIndex();
+      job = build.getIndexJob(p);
+    }
+
+    if (printJob) {
+      System.out.println(job.toString());
+      return;
+    }
+
     ErrorStore store = new ErrorStore();
-    JobExecutor.runLocally(job, store, keepOutput);
+
+    if (hash > 0) {
+      job.properties.put("hashCount", Integer.toString(hash));
+    }
+
+    JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
     if (store.hasStatements()) {
       output.println(store.toString());
     }
@@ -166,12 +187,12 @@ public class App {
     String indexPath = args[1];
     String identifier = args[2];
     DocumentReader reader;
-    if(CorpusReader.isCorpus(indexPath)){
+    if (CorpusReader.isCorpus(indexPath)) {
       reader = new CorpusReader(indexPath);
     } else {
       reader = new DocumentIndexReader(indexPath);
     }
-    
+
     Document document = reader.getDocument(identifier);
     output.println(document.text);
   }
@@ -196,7 +217,7 @@ public class App {
     }
 
     DocumentReader reader;
-    if(CorpusReader.isCorpus(args[1])){
+    if (CorpusReader.isCorpus(args[1])) {
       reader = new CorpusReader(args[1]);
     } else {
       reader = new DocumentIndexReader(args[1]);
@@ -263,7 +284,7 @@ public class App {
       p.add("inputPaths", doc);
     }
 
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));    
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
     int deleteOutput = Integer.parseInt(p.get("deleteOutput", "2"));
     int hash = (int) p.get("distrib", 0);
     String mode = p.get("mode", "local");
@@ -312,7 +333,7 @@ public class App {
     if (corpusFiles.length > 0) {
       ArrayList<DocumentReader> readers = new ArrayList<DocumentReader>();
       for (int i = 0; i < corpusFiles.length; ++i) {
-        if(CorpusReader.isCorpus(corpusFiles[i])){
+        if (CorpusReader.isCorpus(corpusFiles[i])) {
           readers.add(new CorpusReader(corpusFiles[i]));
         } else {
           readers.add(new DocumentIndexReader(corpusFiles[i]));
@@ -366,6 +387,7 @@ public class App {
     output.println("All commands:");
     output.println("   batch-search");
     output.println("   build");
+    output.println("   build-fast");
     output.println("   doc");
     output.println("   dump-connection");
     output.println("   dump-corpus");
@@ -381,6 +403,8 @@ public class App {
     if (command.equals("batch-search")) {
       commandHelpBatchSearch();
     } else if (command.equals("build")) {
+      commandHelpBuild();
+    } else if (command.equals("build-fast")) {
       commandHelpBuild();
     } else if (command.startsWith("pagerank")) {
       PageRankApp.commandHelpPageRank();
@@ -456,8 +480,8 @@ public class App {
       output.println("  org.galagosearch.core.retrieval.structured.FeatureFactory for more");
       output.println("  information.");
     } else if (command.equals("all")) {
-      String[] commands = { "batch-search", "build", "doc", "dump-connection", "dump-corpus",
-          "dump-index", "dump-keys", "eval", "make-corpus", "search" };
+      String[] commands = {"batch-search", "build", "doc", "dump-connection", "dump-corpus",
+        "dump-index", "dump-keys", "eval", "make-corpus", "search"};
       for (String c : commands) {
         commandHelp(c);
         output.println();
@@ -480,6 +504,8 @@ public class App {
     } else if (command.equals("batch-search")) {
       handleBatchSearch(args);
     } else if (command.equals("build")) {
+      handleBuild(args);
+    } else if (command.equals("build-fast")) {
       handleBuild(args);
     } else if (command.equals("doc")) {
       handleDoc(args);

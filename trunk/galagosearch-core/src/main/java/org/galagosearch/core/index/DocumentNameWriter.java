@@ -45,7 +45,7 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     File folder = new File(parameters.getXML().get("filename"));
     if(!folder.isDirectory()){
       folder.delete();
-      folder.mkdir();
+      folder.mkdirs();
     }
     
     DataMapWriter writerFL = new DataMapWriter(folder, "fl");

@@ -11,6 +11,7 @@ import org.galagosearch.tupleflow.execution.Verification;
 import org.galagosearch.tupleflow.types.XMLFragment;
 import java.io.File;
 import java.io.IOException;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  *    
@@ -38,14 +39,8 @@ public class ManifestWriter implements Processor<XMLFragment> {
     }
 
     public void close() throws IOException {
-        File f = new File(filename);
-        String parent = f.getParent();
-
-        // make parent directories
-        if (parent != null) {
-            new File(parent).mkdirs();
-        }
-        result.write(filename);
+      Utility.makeParentDirectories(filename);
+      result.write(filename);
     }
 
     public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
