@@ -82,9 +82,9 @@ public class BuildIndex {
             File inputFile = new File(input);
             
             if (inputFile.isFile()) {
-                p.add("filename", input);
+                p.add("filename", inputFile.getAbsolutePath());
             } else if (inputFile.isDirectory()) {
-                p.add("directory", input);
+                p.add("directory", inputFile.getAbsolutePath());
             } else {
                 throw new IOException("Couldn't find file/directory: " + input);
             }

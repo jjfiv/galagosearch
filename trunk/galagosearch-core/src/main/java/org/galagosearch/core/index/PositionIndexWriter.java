@@ -32,7 +32,7 @@ public class PositionIndexWriter implements
             documents = new BackedCompressedByteBuffer();
             counts = new BackedCompressedByteBuffer();
             positions = new BackedCompressedByteBuffer();
-            header = new BackedCompressedByteBuffer();
+            header = new CompressedByteBuffer();
         }
 
         public void close() throws IOException {
@@ -113,7 +113,7 @@ public class PositionIndexWriter implements
         private int documentCount;
         private int totalPositionCount;
         public byte[] word;
-        public BackedCompressedByteBuffer header;
+        public CompressedByteBuffer header;
         public BackedCompressedByteBuffer documents;
         public BackedCompressedByteBuffer counts;
         public BackedCompressedByteBuffer positions;

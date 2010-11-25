@@ -17,6 +17,7 @@ import org.galagosearch.core.index.IndexWriter;
 import org.galagosearch.core.index.GenericElement;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.tupleflow.FakeParameters;
+import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.core.types.DocumentSplit;
 
@@ -25,94 +26,102 @@ import org.galagosearch.core.types.DocumentSplit;
  * @author trevor
  */
 public class IndexReaderSplitParserTest extends TestCase {
-    Document document;
-    String temporaryName;
-    
-    public IndexReaderSplitParserTest(String testName) {
-        super(testName);
-    }
-    
-    @Override
-    public void tearDown() {
-        if (temporaryName.length() != 0)
-            new File(temporaryName).delete();
-    }
+  Document document;
+  String temporaryName = "";
 
-    public void buildIndex() throws FileNotFoundException, IOException {
-        File temporary = Utility.createTemporary();
+  public IndexReaderSplitParserTest(String testName) {
+    super(testName);
+  }
 
-        // Build an encoded document:
-        document = new Document();
-        document.identifier = "doc-identifier";
-        document.text = "This is the text part.";
-        document.metadata.put("Key", "Value");
-        document.metadata.put("Something", "Else");
-        
-        Parameters parameters = new Parameters();
-        parameters.add("filename", temporary.getAbsolutePath());
-        DocumentIndexWriter writer = new DocumentIndexWriter(new FakeParameters(parameters));
-        writer.process(document);
-        writer.close();
-    
-        temporaryName = temporary.getAbsolutePath();
-        assertTrue(IndexReader.isIndexFile(temporaryName));
-    }
-    
-    /**
-     * Test of nextDocument method, of class IndexReaderSplitParser.
-     */
-    public void testNextDocument() throws Exception {
-        buildIndex();
-        
-        DocumentSplit split = new DocumentSplit();
-        split.fileName = temporaryName;
-        split.fileType = "corpus";
-        split.startKey = new byte[0];
-        split.endKey = new byte[0];
-        
-        // Open up the file:
-        IndexReaderSplitParser parser = new IndexReaderSplitParser(split);
-        
-        // Check the document:
-        Document actual = parser.nextDocument();
-        assertNotNull(actual);
-        assertEquals(document.identifier, actual.identifier);
-        assertEquals(document.text, actual.text);
-        assertEquals(2, actual.metadata.size());
-        assertNotNull(document.metadata.get("Key"));
-        assertNotNull(document.metadata.get("Something"));
-        assertEquals("Value", document.metadata.get("Key"));
-        assertEquals("Else", document.metadata.get("Something"));
-        
-        // Make sure there aren't any left:
-        assertNull(parser.nextDocument());
-    }
-    
-    public void testStartKey() throws FileNotFoundException, IOException {
-        buildIndex();
-              
-        DocumentSplit split = new DocumentSplit();
-        split.fileName = temporaryName;
-        split.fileType = "corpus";
-        split.startKey = new byte[] { (byte) 'z' };
-        split.endKey = new byte[0];
-        
-        // Open up the file:
-        IndexReaderSplitParser parser = new IndexReaderSplitParser(split);
-        assertNull(parser.nextDocument());
-    }
+  @Override
+  public void tearDown() {
+    if (temporaryName.length() != 0)
+      try {
+        Utility.deleteDirectory(new File(temporaryName));
+      } catch (IOException e) {
+        System.err.println("Unable to delete the temp folder");
+      }
+  }
 
-    public void testEndKey() throws FileNotFoundException, IOException {
-        buildIndex();
-              
-        DocumentSplit split = new DocumentSplit();
-        split.fileName = temporaryName;
-        split.fileType = "corpus";
-        split.startKey = new byte[0];
-        split.endKey = new byte[] { (byte) 'a' };
-        
-        // Open up the file:
-        IndexReaderSplitParser parser = new IndexReaderSplitParser(split);
-        assertNull(parser.nextDocument());
-    }
+  public void buildIndex() throws FileNotFoundException, IOException, IncompatibleProcessorException {
+    File temporary = Utility.createTemporary();
+    temporary.delete();
+    temporary.mkdirs();
+    
+    // Build an encoded document:
+    document = new Document();
+    document.identifier = "doc-identifier";
+    document.text = "This is the text part.";
+    document.metadata.put("Key", "Value");
+    document.metadata.put("Something", "Else");
+
+    Parameters parameters = new Parameters();
+    parameters.add("filename", temporary.getAbsolutePath());
+
+    CorpusDocumentWriter writer = new CorpusDocumentWriter(new FakeParameters(parameters));
+    writer.setProcessor( new CorpusIndexWriter(new FakeParameters(parameters)));
+    writer.process(document);
+    writer.close();
+
+    temporaryName = temporary.getAbsolutePath();
+    //assertTrue(IndexReader.isIndexFile(temporaryName));
+  }
+
+  /**
+   * Test of nextDocument method, of class IndexReaderSplitParser.
+   */
+  public void testNextDocument() throws Exception {
+    buildIndex();
+
+    DocumentSplit split = new DocumentSplit();
+    split.fileName = temporaryName;
+    split.fileType = "corpus";
+    split.startKey = new byte[0];
+    split.endKey = new byte[0];
+
+    // Open up the file:
+    IndexReaderSplitParser parser = new IndexReaderSplitParser(split);
+
+    // Check the document:
+    Document actual = parser.nextDocument();
+    assertNotNull(actual);
+    assertEquals(document.identifier, actual.identifier);
+    assertEquals(document.text, actual.text);
+    assertEquals(2, actual.metadata.size());
+    assertNotNull(document.metadata.get("Key"));
+    assertNotNull(document.metadata.get("Something"));
+    assertEquals("Value", document.metadata.get("Key"));
+    assertEquals("Else", document.metadata.get("Something"));
+
+    // Make sure there aren't any left:
+    assertNull(parser.nextDocument());
+  }
+
+  public void testStartKey() throws FileNotFoundException, IOException, IncompatibleProcessorException {
+    buildIndex();
+
+    DocumentSplit split = new DocumentSplit();
+    split.fileName = temporaryName;
+    split.fileType = "corpus";
+    split.startKey = new byte[] { (byte) 'z' };
+    split.endKey = new byte[0];
+
+    // Open up the file:
+    IndexReaderSplitParser parser = new IndexReaderSplitParser(split);
+    assertNull(parser.nextDocument());
+  }
+
+  public void testEndKey() throws FileNotFoundException, IOException, IncompatibleProcessorException {
+    buildIndex();
+
+    DocumentSplit split = new DocumentSplit();
+    split.fileName = temporaryName;
+    split.fileType = "corpus";
+    split.startKey = new byte[0];
+    split.endKey = new byte[] { (byte) 'a' };
+
+    // Open up the file:
+    IndexReaderSplitParser parser = new IndexReaderSplitParser(split);
+    assertNull(parser.nextDocument());
+  }
 }

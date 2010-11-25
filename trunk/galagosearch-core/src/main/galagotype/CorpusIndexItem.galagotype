@@ -1,0 +1,10 @@
+package org.galagosearch.core.types;
+
+type CorpusIndexItem {
+    String identifier;
+    String filename;
+    long offset;
+
+    order: +identifier;
+};
+

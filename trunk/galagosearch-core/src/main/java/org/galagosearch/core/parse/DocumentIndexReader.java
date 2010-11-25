@@ -13,7 +13,7 @@ import org.galagosearch.tupleflow.VByteInput;
  *
  * @author trevor
  */
-public class DocumentIndexReader {
+public class DocumentIndexReader implements DocumentReader {
     IndexReader reader;
 
     public DocumentIndexReader(String fileName) throws FileNotFoundException, IOException {
@@ -28,8 +28,8 @@ public class DocumentIndexReader {
         reader.close();
     }
 
-    public Iterator getIterator() throws IOException {
-        return new Iterator(reader.getIterator());
+    public DocumentReader.DocumentIterator getIterator() throws IOException {
+      return new Iterator(reader.getIterator());
     }
 
     public Document getDocument(String key) throws IOException {
@@ -38,7 +38,8 @@ public class DocumentIndexReader {
         return new Iterator(iterator).getDocument();
     }
 
-    public class Iterator {
+
+    public class Iterator implements DocumentReader.DocumentIterator {
         IndexReader.Iterator iterator;
 
         Iterator(IndexReader.Iterator iterator) throws IOException {

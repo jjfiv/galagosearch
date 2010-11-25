@@ -81,9 +81,11 @@ public class DataMapWriter implements Processor<DataMapItem> {
   }
 
   private void flushIndex() throws IOException{
-    indexBuffer.add(fileOffset);
-    indexBuffer.add(blockKey.length);
-    indexBuffer.addBytes(blockKey);
+    if(blockKey != null){
+      indexBuffer.add(fileOffset);
+      indexBuffer.add(blockKey.length);
+      indexBuffer.addBytes(blockKey);
+    }
 
     fileOffset = outputBuffer.length();
   }

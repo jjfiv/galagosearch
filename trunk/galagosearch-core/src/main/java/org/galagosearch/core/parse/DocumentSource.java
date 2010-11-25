@@ -1,11 +1,16 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.parse;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
+
 import org.galagosearch.core.index.VocabularyReader;
 import org.galagosearch.core.index.VocabularyReader.TermSlot;
 import org.galagosearch.core.index.IndexReader;
@@ -14,6 +19,7 @@ import org.galagosearch.tupleflow.FileSource;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.Linkage;
 import org.galagosearch.tupleflow.OutputClass;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.Step;
@@ -30,16 +36,15 @@ import org.galagosearch.core.types.DocumentSplit;
  * 
  * @author trevor
  */
-
 @Verified
 @OutputClass(className = "org.galagosearch.core.types.DocumentSplit")
 public class DocumentSource implements ExNihiloSource<DocumentSplit> {
-  public Processor processor;
+
+  public Processor<DocumentSplit> processor;
   TupleFlowParameters parameters;
   int fileId = 0;
   int totalFileCount = 0;
-
-  boolean emitSplits;  
+  boolean emitSplits;
 
   public DocumentSource(TupleFlowParameters parameters) {
     this.parameters = parameters;
@@ -56,27 +61,47 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
     // If the last chunk of the filename is gz, we'll ignore it.
     // The second-to-last bit is the type extension (but only if
     // there are at least three parts to the name).
-    if (fields[fields.length-1].equals("gz")) {
+    if (fields[fields.length - 1].equals("gz")) {
       if (fields.length > 2) {
-        return fields[fields.length-2];
+        return fields[fields.length - 2];
+      } else {
+        return "";
+      }
+    }
+
+    // Do the same thing w/ bz2 as above (MAC)
+    if (fields[fields.length - 1].equals("bz2")) {
+      if (fields.length > 2) {
+        return fields[fields.length - 2];
       } else {
         return "";
       }
     }
 
     // No 'gz' extension, so just return the last part.
-    return fields[fields.length-1];
+    return fields[fields.length - 1];
   }
 
   private void processCorpusFile(String fileName, String fileType) throws IOException {
-    // If this is a big file, we'll split it into roughly 100MB pieces.
-    long fileLength = new File(fileName).length();
+    
+    // we want to divde the corpus up into ~100MB chunks
     long chunkSize = 100 * 1024 * 1024;
+    long corpusSize = 0L;
+
+    if (CorpusReader.isCorpus(fileName)) {
+      File folder = new File(fileName).getParentFile();
+      for (File f : folder.listFiles()) {
+        corpusSize += f.length();
+      }
+    } else { // must be a corpus file.
+      corpusSize = new File(fileName).length();
+    }
+
 
     IndexReader reader = new IndexReader(fileName);
     VocabularyReader vocabulary = reader.getVocabulary();
     List<TermSlot> slots = vocabulary.getSlots();
-    int pieces = Math.max(2, (int) (fileLength / chunkSize));
+    int pieces = Math.max(2, (int) (corpusSize / chunkSize));
     ArrayList<byte[]> keys = new ArrayList<byte[]>();
 
     for (int i = 1; i < pieces; ++i) {
@@ -95,31 +120,69 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
       if (i < pieces - 1) {
         lastKey = keys.get(i);
       }
-      DocumentSplit split = new DocumentSplit(fileName, fileType, false, firstKey, lastKey, fileId, totalFileCount);
-      fileId++;
-      if(emitSplits)
-        processor.process(split);
+
+      if (Utility.compare(firstKey, lastKey) != 0) {
+        DocumentSplit split = new DocumentSplit(fileName, fileType, false, firstKey, lastKey, fileId, totalFileCount);
+        fileId++;
+        if (emitSplits) {
+          processor.process(split);
+        }
+      }
     }
   }
 
   private void processFile(String fileName) throws IOException {
     // First, try to detect what kind of file this is:
-    boolean isCompressed = fileName.endsWith(".gz");
+    boolean isCompressed = (fileName.endsWith(".gz") || fileName.endsWith(".bz2"));
     String fileType = null;
 
     // We'll try to detect by extension first, so we don't have to open the file
     String extension = getExtension(fileName);
-    if (extension.equals("corpus") ||
-        extension.equals("trecweb") ||
-        extension.equals("trectext") ||
-        extension.equals("arc") ||
-        extension.equals("txt") ||
-        extension.equals("html") ||
-        extension.equals("xml")) {
+
+    /**
+     * This is a list file, meaning we need to iterate over its contents to
+     * retrieve the file list. 
+     *
+     * Assumptions: Each line in this file should be a filename, NOT a directory.
+     *              List file is either uncompressed or compressed using gzip ONLY.
+     */
+    if (extension.equals("list")) {
+      BufferedReader br;
+      if (fileName.endsWith("gz")) {
+        br = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fileName))));
+      } else {
+        br = new BufferedReader(new FileReader(fileName));
+      }
+
+      while (br.ready()) {
+        String entry = br.readLine().trim();
+        if (entry.length() == 0) {
+          continue;
+        }
+        processFile(entry);
+      }
+      br.close();
+      return; // No more to do here -- this file is now "processed"
+    }
+
+
+    if (extension.equals("corpus")
+            || extension.equals("trecweb")
+            || extension.equals("trectext")
+            || extension.equals("twitter")
+            || extension.equals("warc")
+            || extension.equals("arc")
+            || extension.equals("txt")
+            || extension.equals("html")
+            || extension.equals("xml")) {
       fileType = extension;
     } else {
       // Oh well, we need to autodetect the file type.
-      if (IndexReader.isIndexFile(fileName)) {
+      if (fileName.endsWith(".cds.z") || fileName.endsWith(".cds")) {
+        // do nothing: file is a corpus document store
+        return;
+      } else if (IndexReader.isIndexFile(fileName)) {
+        // perhaps the user has renamed the corpus index
         fileType = "corpus";
       } else {
         // Eventually it'd be nice to do more format detection here.
@@ -129,9 +192,17 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
     }
 
     if (fileType.equals("corpus")) {
-      processCorpusFile(fileName, fileType);            
+      processCorpusFile(fileName, fileType);
     } else {
       processSplit(fileName, fileType, isCompressed);
+    }
+  }
+
+  private void processSplit(String fileName, String fileType, boolean isCompressed) throws IOException {
+    DocumentSplit split = new DocumentSplit(fileName, fileType, isCompressed, new byte[0], new byte[0], fileId, totalFileCount);
+    fileId++;
+    if (emitSplits) {
+      processor.process(split);
     }
   }
 
@@ -170,7 +241,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
     // we now have an accurate count of emitted files / splits
     totalFileCount = fileId;
     fileId = 0; // reset to enumerate splits
-    
+
     // now process each file
     emitSplits = true;
     if (parameters.getXML().containsKey("directory")) {
@@ -197,12 +268,5 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
 
   public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
     FileSource.verify(parameters, handler);
-  }
-
-  private void processSplit(String fileName, String fileType, boolean isCompressed) throws IOException {
-    DocumentSplit split = new DocumentSplit(fileName, fileType, isCompressed, new byte[0], new byte[0], fileId, totalFileCount);
-    fileId++;
-    if(emitSplits)
-      processor.process(split);
   }
 }

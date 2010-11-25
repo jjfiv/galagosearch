@@ -5,8 +5,9 @@ package org.galagosearch.core.store;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
 import org.galagosearch.core.parse.Document;
-import org.galagosearch.core.parse.DocumentIndexReader;
+import org.galagosearch.core.parse.DocumentReader;
 
 /**
  * <p>A DocumentStore that reads document data from corpus files.</p>
@@ -15,18 +16,18 @@ import org.galagosearch.core.parse.DocumentIndexReader;
  * @author trevor
  */
 public class DocumentIndexStore implements DocumentStore {
-    List<DocumentIndexReader> readers;
+    List<DocumentReader> readers;
 
-    public DocumentIndexStore(DocumentIndexReader reader) {
+    public DocumentIndexStore(DocumentReader reader) {
         this(Collections.singletonList(reader));
     }
 
-    public DocumentIndexStore(List<DocumentIndexReader> readers) {
+    public DocumentIndexStore(List<DocumentReader> readers) {
         this.readers = readers;
     }
 
     public Document get(String identifier) throws IOException {
-        for (DocumentIndexReader reader : readers) {
+        for (DocumentReader reader : readers) {
             Document document = reader.getDocument(identifier);
             if (document != null) {
                 return document;
@@ -36,7 +37,7 @@ public class DocumentIndexStore implements DocumentStore {
     }
 
     public void close() throws IOException {
-        for (DocumentIndexReader reader : readers) {
+        for (DocumentReader reader : readers) {
             reader.close();
         }
     }

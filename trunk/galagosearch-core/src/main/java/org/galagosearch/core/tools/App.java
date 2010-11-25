@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.pagerank.program.PageRankApp;
+import org.galagosearch.core.parse.CorpusReader;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.parse.DocumentIndexReader;
 import org.galagosearch.core.parse.DocumentIndexWriter;
@@ -19,6 +20,7 @@ import org.galagosearch.core.parse.DocumentToKeyValuePair;
 import org.galagosearch.core.parse.KeyValuePairToDocument;
 import org.galagosearch.core.parse.UniversalParser;
 import org.galagosearch.core.index.IndexReader;
+import org.galagosearch.core.parse.DocumentReader;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.core.store.DocumentIndexStore;
@@ -163,7 +165,13 @@ public class App {
 
     String indexPath = args[1];
     String identifier = args[2];
-    DocumentIndexReader reader = new DocumentIndexReader(indexPath);
+    DocumentReader reader;
+    if(CorpusReader.isCorpus(indexPath)){
+      reader = new CorpusReader(indexPath);
+    } else {
+      reader = new DocumentIndexReader(indexPath);
+    }
+    
     Document document = reader.getDocument(identifier);
     output.println(document.text);
   }
@@ -187,8 +195,14 @@ public class App {
       return;
     }
 
-    DocumentIndexReader reader = new DocumentIndexReader(args[1]);
-    DocumentIndexReader.Iterator iterator = reader.getIterator();
+    DocumentReader reader;
+    if(CorpusReader.isCorpus(args[1])){
+      reader = new CorpusReader(args[1]);
+    } else {
+      reader = new DocumentIndexReader(args[1]);
+    }
+    DocumentReader.DocumentIterator iterator = reader.getIterator();
+
     while (!iterator.isDone()) {
       output.println("#IDENTIFIER: " + iterator.getKey());
       Document document = iterator.getDocument();
@@ -236,9 +250,40 @@ public class App {
       return;
     }
 
-    Job job = getDocumentConverter(args[1], Utility.subarray(args, 2));
+    String[][] filtered = Utility.filterFlags(args);
+
+    String[] flags = filtered[0];
+    String[] nonFlags = filtered[1];
+    String outputCorpus = nonFlags[1];
+    String[] docs = Utility.subarray(nonFlags, 2);
+
+    Parameters p = new Parameters(flags);
+    p.add("corpusPath", outputCorpus);
+    for (String doc : docs) {
+      p.add("inputPaths", doc);
+    }
+
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));    
+    int deleteOutput = Integer.parseInt(p.get("deleteOutput", "2"));
+    int hash = (int) p.get("distrib", 0);
+    String mode = p.get("mode", "local");
+    String tempFolderPath = p.get("galagoTemp", "");
+    File tempFolder = Utility.createGalagoTempDir(tempFolderPath);
+
+    MakeCorpus mc = new MakeCorpus();
+    Job job = mc.getMakeCorpusJob(p);
+
+    if (printJob) {
+      System.out.println(job.toString());
+      return;
+    }
+
+    if (hash > 0) {
+      job.properties.put("hashCount", Integer.toString(hash));
+    }
+
     ErrorStore store = new ErrorStore();
-    JobExecutor.runLocally(job, store, false);
+    JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
     if (store.hasStatements()) {
       output.println(store.toString());
     }
@@ -265,9 +310,13 @@ public class App {
   private DocumentStore getDocumentStore(String[] corpusFiles) throws IOException {
     DocumentStore store = null;
     if (corpusFiles.length > 0) {
-      ArrayList<DocumentIndexReader> readers = new ArrayList<DocumentIndexReader>();
+      ArrayList<DocumentReader> readers = new ArrayList<DocumentReader>();
       for (int i = 0; i < corpusFiles.length; ++i) {
-        readers.add(new DocumentIndexReader(corpusFiles[i]));
+        if(CorpusReader.isCorpus(corpusFiles[i])){
+          readers.add(new CorpusReader(corpusFiles[i]));
+        } else {
+          readers.add(new DocumentIndexReader(corpusFiles[i]));
+        }
       }
       store = new DocumentIndexStore(readers);
     } else {
@@ -301,48 +350,6 @@ public class App {
 
   public void handleEval(String[] args) throws IOException {
     org.galagosearch.core.eval.Main.internalMain(Utility.subarray(args, 1), output);
-  }
-
-  public static Job getDocumentConverter(String outputCorpus, String[] inputs) throws IOException {
-    Job job = new Job();
-
-    Stage stage = new Stage("split");
-    stage.add(new StageConnectionPoint(ConnectionPointType.Output, "docs",
-        new KeyValuePair.KeyOrder()));
-    Parameters p = new Parameters();
-    for (String input : inputs) {
-      File inputFile = new File(input);
-
-      if (inputFile.isFile()) {
-        p.add("filename", input);
-      } else if (inputFile.isDirectory()) {
-        p.add("directory", input);
-      } else {
-        throw new IOException("Couldn't find file/directory: " + input);
-      }
-    }
-
-    stage.add(new Step(DocumentSource.class, p));
-    p = new Parameters();
-    p.add("identifier", "stripped");
-    stage.add(new Step(UniversalParser.class, p));
-    stage.add(new Step(DocumentToKeyValuePair.class));
-    stage.add(Utility.getSorter(new KeyValuePair.KeyOrder()));
-    stage.add(new OutputStep("docs"));
-    job.add(stage);
-
-    stage = new Stage("docwrite");
-    stage.add(new StageConnectionPoint(ConnectionPointType.Input, "docs",
-        new KeyValuePair.KeyOrder()));
-    stage.add(new InputStep("docs"));
-    stage.add(new Step(KeyValuePairToDocument.class));
-    p = new Parameters();
-    p.add("filename", outputCorpus);
-    stage.add(new Step(DocumentIndexWriter.class, p));
-
-    job.add(stage);
-    job.connect("split", "docwrite", ConnectionAssignmentType.Combined);
-    return job;
   }
 
   public void usage() {
@@ -406,16 +413,36 @@ public class App {
     } else if (command.equals("eval")) {
       org.galagosearch.core.eval.Main.usage(output);
     } else if (command.equals("make-corpus")) {
-      output.println("galago make-corpus <corpus> (<input>)+");
+      output.println("galago make-corpus [flags]+ <corpus> (<input>)+");
       output.println();
       output.println("  Copies documents from input files into a corpus file.  A corpus");
-      output.println("  file is required to use any of the document lookup features in ");
+      output.println("  structure is required to use any of the document lookup features in ");
       output.println("  Galago, like printing snippets of search results.");
+      output.println();
+      output.println("<corpus>: Newly constructed corpus output directory");
       output.println();
       output.println("<input>:  Can be either a file or directory, and as many can be");
       output.println("          specified as you like.  Galago can read html, xml, txt, ");
       output.println("          arc (Heritrix), trectext, trecweb and corpus files.");
       output.println("          Files may be gzip compressed (.gz).");
+      output.println();
+      output.println("  --corpusFormat={folder|file}: Selects which format of corpus to produce.");
+      output.println("                           File is a single file corpus. Folder is a folder of data files with an index.");
+      output.println("                           The folder structure can be produce in a parallel manner.");
+      output.println("                           [default=folder]");
+      output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
+      output.println("                           [default=false]");
+      output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
+      output.println("                           [default=local]");
+      output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");
+      output.println("                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]");
+      output.println("  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete");
+      output.println("                           0 --> keep all data");
+      output.println("                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)");
+      output.println("                           2 --> delete entire temp directory");
+      output.println("                           [default=0]");
+      output.println("  --distrib={int > 1}:     Selects the number of simultaneous jobs to create");
+      output.println("                           [default = 10]");
     } else if (command.equals("search")) {
       output.println("galago search [--parameters=<filename>] <index> <corpus>+");
       output.println();

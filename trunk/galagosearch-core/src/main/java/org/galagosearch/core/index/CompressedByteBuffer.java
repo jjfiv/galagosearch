@@ -3,18 +3,30 @@ package org.galagosearch.core.index;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 /**
  * Stores lists of integers in vbyte compressed form.  This
  * is useful for buffering data that will be stored
  * compressed on disk.
+ * 
+ * [sjh: all removed code has been commented out - nothing was deleted]
+ * 
+ * @author trevor + modified by sjh
+ * 
  */
 public class CompressedByteBuffer {
-    byte[] values;
+    //byte[] values;
+    ArrayList<Byte> values;
     int position;
-
+    
     public CompressedByteBuffer() {
-        clear();
+      clear();
+    }
+    
+    public CompressedByteBuffer(int resetSize) {
+      clear();
+      values.ensureCapacity(resetSize);
     }
 
     /**
@@ -23,15 +35,19 @@ public class CompressedByteBuffer {
      *
      * @param value The byte value to add.
      */
-    public void addRaw(int value) {
-        if (position >= values.length) {
-            byte[] nValues = new byte[values.length * 2];
-            System.arraycopy(values, 0, nValues, 0, values.length);
-            values = nValues;
-        }
+    public void addRaw(int value) { 
+      values.add( (byte) value );
+      position += 1;
+      /*
+      if (position >= values.length) {
+        byte[] nValues = new byte[values.length * 2];
+        System.arraycopy(values, 0, nValues, 0, values.length);
+        values = nValues;
+      }
 
-        values[position] = (byte) value;
-        position += 1;
+      values[position] = (byte) value;
+      position += 1;
+      */
     }
 
     /** 
@@ -78,13 +94,17 @@ public class CompressedByteBuffer {
      * @param other The buffer to copy.
      */
     public void add(CompressedByteBuffer other) {
-        int totalLength = other.length() + length();
-        byte[] newValues = new byte[totalLength];
+      values.addAll(other.values);
+      position += other.length();
+
+      /* int totalLength = other.length() + length();
+         byte[] newValues = new byte[totalLength];
 
         System.arraycopy(values, 0, newValues, 0, position);
         System.arraycopy(other.values, 0, newValues, position, other.position);
         values = newValues;
         position = totalLength;
+       */
     }
 
     /** 
@@ -92,8 +112,9 @@ public class CompressedByteBuffer {
      * length to zero.
      */
     public void clear() {
-        values = new byte[16];
-        position = 0;
+      values = new ArrayList();
+      //values = new byte [1 * 1024 * 1024 ]; // ~1 MB
+      position = 0;
     }
 
     /**
@@ -103,7 +124,14 @@ public class CompressedByteBuffer {
      * true data length.
      */
     public byte[] getBytes() {
-        return values;
+      byte[] data = new byte[ values.size() ];
+      int i = 0;
+      for(Byte b : values){
+        data[i] = b;
+        i++;
+      }
+      return data;
+      //return values;
     }
 
     /** 
@@ -117,7 +145,11 @@ public class CompressedByteBuffer {
      * Writes the contents of this buffer to a stream.
      */
     public void write(OutputStream stream) throws IOException {
-        stream.write(values, 0, position);
+      for(Byte b : values){
+        stream.write( b );
+      }
+      //stream.write(getBytes(), 0, position);
+      //stream.write(values, 0, position);
     }
 }
 

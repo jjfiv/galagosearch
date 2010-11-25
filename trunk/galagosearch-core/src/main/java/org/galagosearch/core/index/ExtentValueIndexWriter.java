@@ -56,7 +56,7 @@ public class ExtentValueIndexWriter implements NumberedValuedExtent.ExtentNameNu
         lastWord = wordBytes;
     }
 
-    public void processNumber(long document) {
+    public void processNumber(long document) throws IOException {
         invertedList.addDocument(document);
     }
 
