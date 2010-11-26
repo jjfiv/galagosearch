@@ -91,7 +91,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
             return currentDocument;
         }
 
-        public String currentTerm() {
+        public String getKey() {
             return iterator.getKey();
         }
 

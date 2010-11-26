@@ -13,6 +13,7 @@ import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.CountIterator;
+import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 import org.galagosearch.core.retrieval.structured.ExtentIterator;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.core.util.ExtentArray;
@@ -32,7 +33,7 @@ import org.galagosearch.tupleflow.VByteInput;
  * @author trevor
  */
 public class PositionIndexReader implements StructuredIndexPartReader {
-    public class Iterator extends ExtentIterator implements IndexIterator {
+    public class Iterator extends ExtentIndexIterator {
         int documentCount;
         int totalPositionCount;
         VByteInput documents;
@@ -124,7 +125,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             return iterator.getValueLength();
         }
 
-        public String getCurrentTerm() throws IOException {
+        public String getKey() throws IOException {
             return iterator.getKey();
         }
 

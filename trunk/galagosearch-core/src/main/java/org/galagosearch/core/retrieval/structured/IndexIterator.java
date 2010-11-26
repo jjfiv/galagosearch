@@ -15,4 +15,5 @@ import java.io.IOException;
 public interface IndexIterator extends StructuredIterator {
     String getRecordString();
     boolean nextRecord() throws IOException;
+    String getKey() throws IOException;
 }

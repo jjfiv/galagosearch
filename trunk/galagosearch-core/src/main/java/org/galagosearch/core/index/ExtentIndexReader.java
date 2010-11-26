@@ -18,7 +18,7 @@ import org.galagosearch.tupleflow.VByteInput;
  * @author trevor
  */
 public class ExtentIndexReader implements StructuredIndexPartReader {
-    public class Iterator extends ExtentIterator implements IndexIterator {
+    public class Iterator extends ExtentIndexIterator {
         IndexReader.Iterator iterator;
         DataInput stream;
         int documentCount;
@@ -113,6 +113,10 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
 
                 extents.add(document, begin, end, value);
             }
+        }
+
+        public String getKey(){
+          return iterator.getKey();
         }
 
         public int document() {

@@ -199,4 +199,29 @@ public class StructuredIndex {
     public int getDocumentNumber(String document) throws IOException {
       return documentNames.getDocumentId(document);
   }
+
+  public NumberedDocumentDataIterator getDocumentLengthsIterator(){
+    return documentLengths.getIterator();
+  }
+
+  public NumberedDocumentDataIterator getDocumentNamesIterator() throws IOException{
+    return documentNames.getNumberOrderIterator();
+  }
+
+  public Parameters getManifest(){
+    return manifest.clone();
+  }
+
+  public IndexIterator getPartIterator(String part) throws IOException {
+    return (IndexIterator) parts.get(part).getIterator();
+  }
+
+  public ExtentIndexIterator getExtentIterator(String part) throws IOException {
+    IndexIterator i = parts.get(part).getIterator();
+    if (i instanceof ExtentIndexIterator) {
+      return (ExtentIndexIterator) i;
+    }
+    throw new RuntimeException("part " + part + " does not have offer an Extent Index Iterator");
+  }
+
 }

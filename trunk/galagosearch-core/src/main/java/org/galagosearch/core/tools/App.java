@@ -3,40 +3,30 @@ package org.galagosearch.core.tools;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Map.Entry;
+import org.galagosearch.core.index.DocumentLengthsReader;
+import org.galagosearch.core.index.DocumentNameReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.pagerank.program.PageRankApp;
 import org.galagosearch.core.parse.CorpusReader;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.parse.DocumentIndexReader;
-import org.galagosearch.core.parse.DocumentIndexWriter;
-import org.galagosearch.core.parse.DocumentSource;
-import org.galagosearch.core.parse.DocumentToKeyValuePair;
-import org.galagosearch.core.parse.KeyValuePairToDocument;
-import org.galagosearch.core.parse.UniversalParser;
 import org.galagosearch.core.index.IndexReader;
+import org.galagosearch.core.mergeindex.parallel.MergeParallelIndexShards;
 import org.galagosearch.core.parse.DocumentReader;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
+import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.core.store.DocumentIndexStore;
 import org.galagosearch.core.store.DocumentStore;
 import org.galagosearch.core.store.NullStore;
 import org.galagosearch.tupleflow.Parameters;
-import org.galagosearch.tupleflow.execution.ConnectionPointType;
-import org.galagosearch.tupleflow.execution.InputStep;
 import org.galagosearch.tupleflow.execution.Job;
-import org.galagosearch.tupleflow.execution.OutputStep;
-import org.galagosearch.tupleflow.execution.Stage;
-import org.galagosearch.tupleflow.execution.StageConnectionPoint;
-import org.galagosearch.tupleflow.execution.Step;
-import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.tupleflow.FileOrderedReader;
 import org.galagosearch.tupleflow.Utility;
-import org.galagosearch.tupleflow.execution.ConnectionAssignmentType;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.execution.JobExecutor;
 import org.mortbay.jetty.Server;
@@ -264,6 +254,31 @@ public class App {
       iterator.nextKey();
     }
   }
+  private void handleDumpLengths(String[] args) throws IOException {
+    if (args.length <= 1) {
+      commandHelp(args[0]);
+      return;
+    }
+
+    DocumentLengthsReader reader = new DocumentLengthsReader(args[1]);
+    NumberedDocumentDataIterator iterator = reader.getIterator();
+    do {
+      output.println(iterator.getRecordString());
+    } while (iterator.nextRecord());
+  }
+
+  private void handleDumpNames(String[] args) throws IOException {
+    if (args.length <= 1) {
+      commandHelp(args[0]);
+      return;
+    }
+
+    DocumentNameReader reader = new DocumentNameReader(args[1]);
+    NumberedDocumentDataIterator iterator = reader.getNumberOrderIterator();
+    do {
+      output.println(iterator.getRecordString());
+    } while (iterator.nextRecord());
+  }
 
   private void handleMakeCorpus(String[] args) throws Exception {
     if (args.length <= 2) {
@@ -304,6 +319,58 @@ public class App {
     }
 
     ErrorStore store = new ErrorStore();
+    JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
+    if (store.hasStatements()) {
+      output.println(store.toString());
+    }
+  }
+
+  private void handleMergeIndexes(String[] args) throws Exception {
+    // Remove 'merge-index' from the command.
+    args = Utility.subarray(args, 1);
+
+    if (args.length <= 0) {
+      commandHelp("merge-index");
+      return;
+    }
+
+    // handle --links and --stemming flags
+    String[][] filtered = Utility.filterFlags(args);
+
+    String[] flags = filtered[0];
+    String[] nonFlags = filtered[1];
+    String newIndex = nonFlags[0];
+    String[] oldIndexes = Utility.subarray(nonFlags, 1);
+
+    Parameters p = new Parameters(flags);
+    p.set("outputIndex", newIndex);
+    for (String input : oldIndexes) {
+      p.add("inputIndexes", input);
+    }
+
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
+    int deleteOutput = (int) p.get("deleteOutput", 2);
+    int hash = (int) p.get("distrib", 0); // doesn't really matter in this case.
+    String mode = p.get("mode", "local");
+    String tempFolderPath = p.get("galagoTemp", "");
+    File tempFolder = Utility.createGalagoTempDir(tempFolderPath);
+    p.set("galagoTemp", tempFolder.getAbsolutePath());
+
+    MergeParallelIndexShards merger = new MergeParallelIndexShards();
+    Job job = merger.getJob(p);
+
+    if (printJob) {
+      System.out.println(job.toString());
+      return;
+    }
+
+    ErrorStore store = new ErrorStore();
+
+    if (hash > 0) // all other numbers don't make any sense
+    {
+      job.properties.put("hashCount", Integer.toString(hash));
+    }
+
     JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
     if (store.hasStatements()) {
       output.println(store.toString());
@@ -393,8 +460,11 @@ public class App {
     output.println("   dump-corpus");
     output.println("   dump-index");
     output.println("   dump-keys");
+    output.println("   dump-lengths");
+    output.println("   dump-names");
     output.println("   eval");
     output.println("   make-corpus");
+    output.println("   merge-index");
     output.println("   pagerank");
     output.println("   search");
   }
@@ -434,6 +504,16 @@ public class App {
       output.println();
       output.println("  Dumps all keys from any file created by IndexWriter.  This includes");
       output.println("  corpus files and all index files built by Galago.");
+    } else if (command.equals("dump-lengths")) {
+      output.println("galago dump-lengths <document-lengths-file>");
+      output.println();
+      output.println("  Dumps all lengths from a length file created by DocumentLengthsWriter.");
+      output.println("  This is only for the documentLengths file produced by a Galago indexing job.");
+    } else if (command.equals("dump-names")) {
+      output.println("galago dump-names <document-names-folder>");
+      output.println();
+      output.println("  Dumps all names from a names folder created by DocumentNamesWriter2.");
+      output.println("  This is only for the documentNames folder produced by a Galago indexing job.");
     } else if (command.equals("eval")) {
       org.galagosearch.core.eval.Main.usage(output);
     } else if (command.equals("make-corpus")) {
@@ -454,6 +534,29 @@ public class App {
       output.println("                           File is a single file corpus. Folder is a folder of data files with an index.");
       output.println("                           The folder structure can be produce in a parallel manner.");
       output.println("                           [default=folder]");
+      output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
+      output.println("                           [default=false]");
+      output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
+      output.println("                           [default=local]");
+      output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");
+      output.println("                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]");
+      output.println("  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete");
+      output.println("                           0 --> keep all data");
+      output.println("                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)");
+      output.println("                           2 --> delete entire temp directory");
+      output.println("                           [default=0]");
+      output.println("  --distrib={int > 1}:     Selects the number of simultaneous jobs to create");
+      output.println("                           [default = 10]");
+    } else if (command.equals("merge-index")) {
+      output.println("galago merge-index [<flags>+] <output> (<input>)+");
+      output.println();
+      output.println("  Merges 2 or more indexes. Assumes that the document numberings");
+      output.println("  are non-unique. So all documents are assigned new internal numbers.");
+      output.println();
+      output.println("<output>:  Directory to be created that contains the merged index");
+      output.println();
+      output.println("<input>:  Directory containing an index to be merged ");
+      output.println();
       output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
       output.println("                           [default=false]");
       output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
@@ -517,8 +620,14 @@ public class App {
       handleDumpIndex(args);
     } else if (command.equals("dump-keys")) {
       handleDumpKeys(args);
+    } else if (command.equals("dump-lengths")) {
+      handleDumpLengths(args);
+    } else if (command.equals("dump-names")) {
+      handleDumpNames(args);
     } else if (command.equals("make-corpus")) {
       handleMakeCorpus(args);
+    } else if (command.equals("merge-index")) {
+      handleMergeIndexes(args);
     } else if (command.equals("pagerank")) {
       PageRankApp.main(args);
     } else if (command.equals("search")) {

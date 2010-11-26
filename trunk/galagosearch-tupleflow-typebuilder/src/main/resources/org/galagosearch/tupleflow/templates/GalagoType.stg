@@ -576,6 +576,7 @@ public static class TupleShredder implements Processor {
         <order.rleFields:{f|if(last == null || Utility.compare(last.<f.name>, object.<f.name>) != 0 || processAll) { processor.process<f.capsName>(object.<f.name>); processAll = true; }}; separator="\n">
         <order.deltaFields:{f|processor.process<f.capsName>(object.<f.name>);}; separator="\n">
         processor.processTuple(<order.unorderedFields:{f|object.<f.name>}; separator=", ">);                                         
+        last = object;
     }
                   
     public Class\<<typeName>\> getInputClass() {

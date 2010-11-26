@@ -106,7 +106,7 @@ public class SparseFloatListReaderTest extends TestCase {
     public void testIterator() throws Exception {
         SparseFloatListReader instance = new SparseFloatListReader(tempPath.toString());
         SparseFloatListReader.Iterator iter = instance.getIterator();
-        String term = iter.currentTerm();
+        String term = iter.getKey();
 
         assertEquals(term, "a");
         assertFalse(iter.isDone());
@@ -120,7 +120,7 @@ public class SparseFloatListReaderTest extends TestCase {
         }
 
         assertTrue(iter.nextTerm());
-        term = iter.currentTerm();
+        term = iter.getKey();
         assertEquals(term, "b");
         assertFalse(iter.isDone());
 
