@@ -116,6 +116,49 @@ public class App {
     output.println("                           [default = 10]");
   }
 
+    private void commandHelpNgram() {
+    output.println("galago ngram[-se] [flags] <index> (<input>)+");
+    output.println();
+    output.println("  Builds a Galago StructuredIndex ngram part file with TupleFlow, using");
+    output.println("  one thread for each CPU core on your computer.  While some debugging output ");
+    output.println("  will be displayed on the screen, most of the status information will");
+    output.println("  appear on a web page.  A URL should appear in the command output ");
+    output.println("  that will direct you to the status page.");
+    output.println();
+    output.println("  ngram-se will produce an identical ngram index in a space efficient manner.");
+    output.println("  Space efficiency is gained by reading through the corpus twice.");
+    output.println();
+
+    output.println("<input>:  Can be either a file or directory, and as many can be");
+    output.println("          specified as you like.  Galago can read html, xml, txt, ");
+    output.println("          arc (Heritrix), trectext, trecweb and corpus files.");
+    output.println("          Files may be gzip compressed (.gz).");
+    output.println("<index>:  The directory path of the existing index (over the same corpus).");
+    output.println();
+    output.println("Flags:");
+    output.println("  --n={int >= 2}:          Selects the value of n (any reasonable value is possible)");
+    output.println("                           [default = 2]");
+    output.println("  --threshold={int >= 1}:  Selects the minimum number length of any inverted list.");
+    output.println("                           Larger values will produce smaller indexes.");
+    output.println("                           [default = 2]");
+    output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
+    output.println("                           [default=false]");
+    output.println("  --stemming={true|false}: Selects whether to build a stemmed ngram inverted list.");
+    output.println("                           [default=false]");
+    output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
+    output.println("                           [default=local]");
+    output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");
+    output.println("                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]");
+    output.println("  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete");
+    output.println("                           0 --> keep all data");
+    output.println("                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)");
+    output.println("                           2 --> delete entire temp directory");
+    output.println("                           [default=2]");
+    output.println("  --distrib={int > 1}:     Selects the number of simultaneous jobs to create");
+    output.println("                           [default = 10]");
+  }
+
+
   private void handleBuild(String[] args) throws Exception {
     if (args.length < 3) { // build index input
       commandHelpBuild();
@@ -377,6 +420,61 @@ public class App {
     }
   }
 
+
+    private void handleNgram(String[] args) throws Exception {
+    if (args.length < 3) { // ngram index input
+      commandHelpNgram();
+      return;
+    }
+
+    String[][] filtered = Utility.filterFlags(args);
+
+    String[] flags = filtered[0];
+    String[] nonFlags = filtered[1];
+    String indexName = nonFlags[1];
+    String[] docs = Utility.subarray(nonFlags, 2);
+
+    Parameters p = new Parameters(flags);
+    p.add("indexPath", indexName);
+    for (String doc : docs) {
+      p.add("inputPaths", doc);
+    }
+
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
+    int deleteOutput = Integer.parseInt(p.get("deleteOutput", "2"));
+    int hash = (int) p.get("distrib", 0);
+    String mode = p.get("mode", "local");
+    String tempFolderPath = p.get("galagoTemp", "");
+    File tempFolder = Utility.createGalagoTempDir(tempFolderPath);
+    p.set("galagoTemp", tempFolder.getAbsolutePath());
+
+    Job job;
+    if (nonFlags[0].contains("se")) {
+      BuildNgramIndexSE build = new BuildNgramIndexSE();
+      job = build.getIndexJob(p);
+    } else {
+      BuildNgramIndex build = new BuildNgramIndex();
+      job = build.getIndexJob(p);
+    }
+
+    if (printJob) {
+      System.out.println(job.toString());
+      return;
+    }
+
+    ErrorStore store = new ErrorStore();
+
+    if (hash > 0) {
+      job.properties.put("hashCount", Integer.toString(hash));
+    }
+
+    JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
+    if (store.hasStatements()) {
+      output.println(store.toString());
+    }
+  }
+
+
   private void handleBatchSearch(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelpBatchSearch();
@@ -465,6 +563,8 @@ public class App {
     output.println("   eval");
     output.println("   make-corpus");
     output.println("   merge-index");
+    output.println("   ngram");
+    output.println("   ngram-se");
     output.println("   pagerank");
     output.println("   search");
   }
@@ -472,10 +572,10 @@ public class App {
   public void commandHelp(String command) throws IOException {
     if (command.equals("batch-search")) {
       commandHelpBatchSearch();
-    } else if (command.equals("build")) {
+    } else if (command.startsWith("build")) {
       commandHelpBuild();
-    } else if (command.equals("build-fast")) {
-      commandHelpBuild();
+    } else if (command.startsWith("ngram")) {
+      commandHelpNgram();
     } else if (command.startsWith("pagerank")) {
       PageRankApp.commandHelpPageRank();
     } else if (command.equals("doc")) {
@@ -628,6 +728,10 @@ public class App {
       handleMakeCorpus(args);
     } else if (command.equals("merge-index")) {
       handleMergeIndexes(args);
+    } else if (command.equals("ngram")) {
+      handleNgram(args);
+    } else if (command.equals("ngram-se")) {
+      handleNgram(args);
     } else if (command.equals("pagerank")) {
       PageRankApp.main(args);
     } else if (command.equals("search")) {
