@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  *
@@ -224,4 +225,7 @@ public class StructuredIndex {
     throw new RuntimeException("part " + part + " does not have offer an Extent Index Iterator");
   }
 
+  public Set<String> getPartNames(){
+    return parts.keySet();
+  }
 }

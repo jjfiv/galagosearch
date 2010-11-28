@@ -13,9 +13,12 @@ import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
+import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
+import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
 import org.galagosearch.core.scoring.DirichletScorer;
+import org.galagosearch.core.scoring.JelinekMercerScorer;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
 
@@ -65,7 +68,8 @@ import org.galagosearch.tupleflow.Parameters.Value;
  * traversal will be executed first, and the bottom traversal will be executed
  * last.</p>
  *
- * @author trevor
+ * @author trevor, sjh, marc
+ *
  */
 public class FeatureFactory {
     static String[][] sOperatorLookup = {
@@ -81,9 +85,13 @@ public class FeatureFactory {
         {ScaleIterator.class.getName(), "scale"}
     };
     static String[][] sFeatureLookup = {
-        {DirichletScorer.class.getName(), "dirichlet"}
+        {DirichletScorer.class.getName(), "dirichlet"},
+        {JelinekMercerScorer.class.getName(), "linear"},
+        {JelinekMercerScorer.class.getName(), "jm"}
     };
     static String[] sTraversalList = {
+        SequentialDependenceTraversal.class.getName(),
+        NgramRewriteTraversal.class.getName(),
         AddCombineTraversal.class.getName(),
         WeightConversionTraversal.class.getName(),
         IndriWindowCompatibilityTraversal.class.getName(),

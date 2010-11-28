@@ -116,7 +116,7 @@ public class App {
     output.println("                           [default = 10]");
   }
 
-    private void commandHelpNgram() {
+  private void commandHelpNgram() {
     output.println("galago ngram[-se] [flags] <index> (<input>)+");
     output.println();
     output.println("  Builds a Galago StructuredIndex ngram part file with TupleFlow, using");
@@ -157,7 +157,6 @@ public class App {
     output.println("  --distrib={int > 1}:     Selects the number of simultaneous jobs to create");
     output.println("                           [default = 10]");
   }
-
 
   private void handleBuild(String[] args) throws Exception {
     if (args.length < 3) { // build index input
@@ -230,6 +229,20 @@ public class App {
     output.println(document.text);
   }
 
+  private void handleDocId(String[] args) throws IOException {
+    if (args.length <= 2) {
+      commandHelp(args[0]);
+      return;
+    }
+
+    String indexPath = args[1];
+    String identifier = args[2];
+
+    DocumentNameReader reader = new DocumentNameReader(indexPath);
+    int docNum = reader.getDocumentId(identifier);
+    output.println(docNum);
+  }
+
   private void handleDumpIndex(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
@@ -297,6 +310,7 @@ public class App {
       iterator.nextKey();
     }
   }
+
   private void handleDumpLengths(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
@@ -420,8 +434,7 @@ public class App {
     }
   }
 
-
-    private void handleNgram(String[] args) throws Exception {
+  private void handleNgram(String[] args) throws Exception {
     if (args.length < 3) { // ngram index input
       commandHelpNgram();
       return;
@@ -474,7 +487,6 @@ public class App {
     }
   }
 
-
   private void handleBatchSearch(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelpBatchSearch();
@@ -482,6 +494,22 @@ public class App {
     }
 
     BatchSearch.run(Utility.subarray(args, 1), output);
+  }
+
+  private void handleSearch(Parameters p) throws Exception {
+    Search search = new Search(p);
+    int port = Integer.parseInt(p.get("port", "0"));
+    if (port == 0) {
+      port = Utility.getFreePort();
+    } else {
+      if (!Utility.isFreePort(port)) {
+        throw new IOException("Tried to bind to port " + port + " which is in use.");
+      }
+    }
+    Server server = new Server(port);
+    server.addHandler(new SearchWebHandler(search));
+    server.start();
+    output.println("Server: http://localhost:" + port);
   }
 
   private void handleSearch(Retrieval retrieval, DocumentStore store) throws Exception {
@@ -516,22 +544,30 @@ public class App {
       commandHelp("search");
       return;
     }
+    // This is put in there to handle ONLY a parameter file, since
+    // if you're loading multiple indexes you need to use a parameter file for it.
+    if (args.length == 2 && args[1].endsWith(".xml")) {
+      File f = new File(args[1]);
+      Parameters p = new Parameters(f);
+      handleSearch(p);
+    } else {
 
-    String indexPath = args[1];
-    String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
-    String[] flags = filtered[0];
-    String[] corpusFiles = filtered[1];
+      String indexPath = args[1];
+      String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
+      String[] flags = filtered[0];
+      String[] corpusFiles = filtered[1];
 
-    // Any flag marked '--parameters' marks a parameters file.
-    // We trim that part of the flag off so that the Parameters object will
-    // load it as a parameters file.
-    for (int i = 0; i < flags.length; ++i) {
-      flags[i] = flags[i].replace("--parameters=", "");
+      // Any flag marked '--parameters' marks a parameters file.
+      // We trim that part of the flag off so that the Parameters object will
+      // load it as a parameters file.
+      for (int i = 0; i < flags.length; ++i) {
+        flags[i] = flags[i].replace("--parameters=", "");
+      }
+
+      Parameters p = new Parameters(flags);
+      Retrieval retrieval = Retrieval.instance(indexPath, p);
+      handleSearch(retrieval, getDocumentStore(corpusFiles));
     }
-
-    Parameters p = new Parameters(flags);
-    Retrieval retrieval = Retrieval.instance(indexPath, p);
-    handleSearch(retrieval, getDocumentStore(corpusFiles));
   }
 
   public void handleEval(String[] args) throws IOException {
