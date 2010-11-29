@@ -16,38 +16,16 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public abstract class Retrieval implements Runnable {
 
-  public abstract String getDocumentName(int document) throws IOException;
-
-  /**
-   * Transforms the query into a more complete representation that can
-   * be directly executed.
-   */
-  public abstract Node transformQuery(Node query) throws Exception;
-
-  public abstract ScoredDocument[] runQuery(Node query, int requested) throws Exception;
-
-  public abstract void runAsynchronousQuery(Node query, int requested, List<ScoredDocument> scored, int idx) throws Exception;
-
   public abstract void close() throws IOException;
 
+  // should return collections statistics (collection length + documentCount + availiable parts)
+  public abstract Parameters getRetrievalStatistics() throws Exception;
+
+  public abstract ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception;
+
   // These are to allow for asynchronous execution
-  public abstract void run();
-
-  public abstract void join() throws InterruptedException;
-
-  // Hacks I added to make distributed retrieval work -- irmarc
-  public ScoredDocument[] runQuery(String query, int requested) throws Exception {
-    throw new Exception("Not appropriate in this context.");
-  }
-
-  public void runAsynchronousQuery(String query, int requested, List<ScoredDocument> scored, int idx) throws Exception {
-    throw new Exception("Not appropriate in this context.");
-  }
-
-  // defaults to true -- proxyRetrievals should return false;
-  public boolean isLocal() {
-    return true;
-  }
+  public abstract void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception;
+  public abstract void waitForAsynchronousQuery() throws InterruptedException;
 
   static public Retrieval instance(String indexPath, Parameters parameters) throws IOException {
     // May need something smarter here in the future

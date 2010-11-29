@@ -34,7 +34,7 @@ import org.galagosearch.core.types.DocumentSplit;
  * This is somewhat similar to FileSource, except that it can autodetect file formats.
  * This splitter can detect ARC, TREC, TRECWEB and corpus files.
  * 
- * @author trevor
+ * @author trevor, sjh
  */
 @Verified
 @OutputClass(className = "org.galagosearch.core.types.DocumentSplit")
@@ -83,7 +83,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
   }
 
   private void processCorpusFile(String fileName, String fileType) throws IOException {
-    
+
     // we want to divde the corpus up into ~100MB chunks
     long chunkSize = 100 * 1024 * 1024;
     long corpusSize = 0L;
@@ -185,9 +185,13 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
         // perhaps the user has renamed the corpus index
         fileType = "corpus";
       } else {
+        fileType = detectTrecTextOrWeb(fileName);
+
         // Eventually it'd be nice to do more format detection here.
-        System.err.println("Skipping: " + fileName);
-        return;
+        if (fileType == null) {
+          System.err.println("Skipping: " + fileName);
+          return;
+        }
       }
     }
 
@@ -260,6 +264,64 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
     }
 
     processor.close();
+  }
+
+  // For now we assume <doc> tags, so we read in one doc
+  // (i.e. <doc> to </doc>), and look for the following
+  // tags: <docno> and (<text> or <html>)
+  private String detectTrecTextOrWeb(String fileName) {
+
+    try {
+      BufferedReader br = new BufferedReader(new FileReader(fileName));
+      String line;
+
+      // check the first ten lines for a "<doc>" line
+      //  - as file could have some header data
+      boolean docflag = false;
+      for (int i = 0; i < 10; i++) {
+        line = br.readLine();
+        if (line != null
+                && line.equalsIgnoreCase("<doc>")) {
+          docflag = true;
+        }
+      }
+      if (!docflag) {
+        return null;
+      }
+
+      // Now just read until we see docno and (text or html) tags
+      boolean hasDocno, hasHtml, hasText;
+      hasDocno = hasHtml = hasText = false;
+      String fileType = null;
+      while (br.ready()) {
+        line = br.readLine();
+        if (line == null || line.equalsIgnoreCase("</doc>")) {
+          break; // doc is closed or null line
+        }
+        line = line.toLowerCase();
+        if (line.indexOf("<docno>") != -1) {
+          hasDocno = true;
+        } else if (line.indexOf("<text>") != -1) {
+          hasText = true;
+        } else if (line.indexOf("<html>") != -1) {
+          hasHtml = true;
+        }
+
+        if (hasDocno && hasText) {
+          fileType = "trectext";
+          break;
+        } else if (hasDocno && hasHtml) {
+          fileType = "trecweb";
+          break;
+        }
+      }
+      br.close();
+
+      return fileType;
+    } catch (IOException ioe) {
+      ioe.printStackTrace(System.err);
+      return null;
+    }
   }
 
   public void setProcessor(Step processor) throws IncompatibleProcessorException {

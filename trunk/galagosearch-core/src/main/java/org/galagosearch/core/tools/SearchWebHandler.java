@@ -82,6 +82,7 @@ public class SearchWebHandler extends AbstractHandler {
     return builder.toString();
   }
 
+  /*
   public void handleDocumentNames(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String idsStr = request.getParameter("ids");
     String[] ids = idsStr.split(",");
@@ -106,6 +107,8 @@ public class SearchWebHandler extends AbstractHandler {
     outputter.endTag(); // response
     outputter.endDocument();
   }
+   * 
+   */
 
   public void handleDocument(HttpServletRequest request, HttpServletResponse response) throws IOException {
     request.getParameterMap();
@@ -308,7 +311,7 @@ public class SearchWebHandler extends AbstractHandler {
       outputter.endTag();
 
       outputter.startTag("document");
-      outputter.pcdata(Integer.toString(item.internalId));
+      //outputter.pcdata(Integer.toString(item.internalId));
       outputter.endTag();
 
       outputter.startTag("score");
@@ -336,7 +339,8 @@ public class SearchWebHandler extends AbstractHandler {
 
   public void writeCollectionSelector(PrintWriter writer) {
     // About to add this in
-    ArrayList<String> collGroups = search.getCollectionGroups();
+    //ArrayList<String> collGroups = search.getCollectionGroups();
+    ArrayList<String> collGroups = new ArrayList();
     if (collGroups.size() == 1) {
       return;
     }
@@ -419,8 +423,10 @@ public class SearchWebHandler extends AbstractHandler {
       }
     } else if (request.getPathInfo().equals("/document")) {
       handleDocument(request, response);
-    } else if (request.getPathInfo().equals("/documentnames")) {
-      handleDocumentNames(request, response);
+
+    //} else if (request.getPathInfo().equals("/documentnames")) {
+    //handleDocumentNames(request, response);
+
     } else if (request.getPathInfo().equals("/searchxml")) {
       try {
         handleSearchXML(request, response);

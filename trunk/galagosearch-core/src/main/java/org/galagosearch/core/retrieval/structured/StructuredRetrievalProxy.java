@@ -27,36 +27,129 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class StructuredRetrievalProxy extends Retrieval {
 
+  String indexUrl;
+  private SAXParser parser;
   // For asynchronous evaluation
   Thread runner;
   String query;
-  List<ScoredDocument> scored;
-  int resultsRequested;
-  int idx;
+  Parameters queryParams;
+  List<ScoredDocument> queryResults;
 
-  public static class DocumentNameMapping {
-
-    public int document;
-    public String name;
+  public StructuredRetrievalProxy(String url, Parameters parameters) throws IOException {
+    this.indexUrl = url;
+    this.parser = null;
   }
 
-  private static class DocumentNameHandler extends DefaultHandler {
+  public void close() throws IOException {
+    // Nothing to do - index is serving remotely - possibly to several handlers
+  }
+
+  public Parameters getRetrievalStatistics() throws Exception {
+    StringBuilder request = new StringBuilder(indexUrl);
+    String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
+    request.append("/stats");
+
+    URL resource = new URL(request.toString());
+    HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
+    connection.setRequestMethod("GET");
+
+    // Hook up an xml handler to the input stream to directly generate the results, as opposed
+    // to buffering them up
+    if (parser == null) {
+      parser = SAXParserFactory.newInstance().newSAXParser();
+    }
+
+    StatisticsResultHandler handler = new StatisticsResultHandler();
+    handler.reset();
+    parser.parse(connection.getInputStream(), handler);
+    connection.disconnect();
+
+    return handler.parameters;
+  }
+
+  public ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception {
+
+    int requested = (int) parameters.get("requested", 1000);
+    boolean transform = parameters.get("transform", true);
+    String qtype = parameters.get("queryType", "complex");
+    String indexId = parameters.get("indexId", "0");
+
+    ArrayList<ScoredDocument> results = new ArrayList<ScoredDocument>();
+
+    StringBuilder request = new StringBuilder(indexUrl);
+    String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
+    request.append("/searchxml?q=").append(encoded);
+    request.append("&n=").append(requested);
+    request.append("&start=").append(0);
+    request.append("&transform=").append(transform);
+    request.append("&qtype=").append(qtype);
+    request.append("&indexId=").append(indexId);
+
+    URL resource = new URL(request.toString());
+    HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
+    connection.setRequestMethod("GET");
+
+    // Hook up an xml handler to the input stream to directly generate the results, as opposed
+    // to buffering them up
+    if (parser == null) {
+      parser = SAXParserFactory.newInstance().newSAXParser();
+    }
+
+    // might be a better way to do this....
+    SearchResultHandler handler = new SearchResultHandler();
+    handler.reset();
+    parser.parse(connection.getInputStream(), handler);
+    connection.disconnect();
+    return (handler.getResults());
+  }
+
+  public void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+    this.query = query;
+    this.queryParams = parameters;
+    this.queryResults = queryResults;
+
+    runner = new Thread(this);
+    runner.start();
+  }
+
+  public void waitForAsynchronousQuery() throws InterruptedException {
+    this.join();
+  }
+
+  public void join() throws InterruptedException {
+    if (runner != null) {
+      runner.join();
+    }
+    runner = null;
+  }
+
+  public void run() {
+    try {
+      ScoredDocument[] docs = runQuery(query, queryParams);
+
+      // Now add it to the accumulator, but synchronously
+      synchronized (queryResults) {
+        queryResults.addAll(Arrays.asList(docs));
+      }
+    } catch (Exception e) {
+      System.err.println("ERROR RETRIEVING: " + e.getMessage());
+    }
+  }
+
+  // private classes
+  private static class StatisticsResultHandler extends DefaultHandler {
 
     Stack<String> contexts;
-    ArrayList<DocumentNameMapping> results;
+    Parameters parameters;
 
-    public DocumentNameHandler() {
+    public StatisticsResultHandler() {
       contexts = new Stack<String>();
-      results = new ArrayList<DocumentNameMapping>();
+      parameters = new Parameters();
     }
 
     public void reset() {
-      results.clear();
+      parameters = new Parameters();
       contexts.clear();
-    }
-
-    public DocumentNameMapping[] getResults() {
-      return (results.toArray(new DocumentNameMapping[0]));
     }
 
     public void endElement(String uri, String localName, String rawName) {
@@ -66,19 +159,19 @@ public class StructuredRetrievalProxy extends Retrieval {
     public void startElement(String uri, String localName, String qName, Attributes attributes)
             throws SAXException {
       contexts.push(qName);
-      if (qName.equals("result")) {
-        results.add(new DocumentNameMapping());
-      }
     }
 
     public void characters(char[] ch, int start, int length) {
       String context = contexts.peek();
-      if (context.equals("id")) {
+      if (context.equals("collectionLength")) {
         String value = new String(ch, start, length);
-        results.get(results.size() - 1).document = Integer.parseInt(value);
-      } else if (context.equals("name")) {
+        parameters.add("collectionLength", value);
+      } else if (context.equals("documentCount")) {
         String value = new String(ch, start, length);
-        results.get(results.size() - 1).name = value;
+        parameters.add("documentCount", value);
+      } else if (context.equals("part")) {
+        String value = new String(ch, start, length);
+        parameters.add("part", value);
       }
     }
   }
@@ -124,134 +217,13 @@ public class StructuredRetrievalProxy extends Retrieval {
         String value = new String(ch, start, length);
         double score = Double.parseDouble(value);
         results.get(results.size() - 1).score = score;
+      } else if (context.equals("name")) {
+        String value = new String(ch, start, length);
+        results.get(results.size() - 1).documentName = value;
+      } else if (context.equals("index")) {
+        String value = new String(ch, start, length);
+        results.get(results.size() - 1).source = value;
       }
-    }
-  }
-  private String url;
-  private SAXParser parser = null;
-
-  public StructuredRetrievalProxy(String url, Parameters parameters) throws IOException {
-    this.url = url;
-  }
-
-  public boolean isLocal() {
-    return false;
-  }
-
-  public String getDocumentName(int document) throws IOException {
-    ArrayList<Integer> wrapper = new ArrayList<Integer>();
-    wrapper.add(document);
-    String[] results = getDocumentNames(wrapper);
-    return (results[0]);
-  }
-
-  public String[] getDocumentNames(List<Integer> documents) throws IOException {
-    StringBuilder request = new StringBuilder(url);
-    request.append("/documentnames?ids=");
-    for (int i = 0; i < documents.size(); i++) {
-      if (i != 0) {
-        request.append(",");
-      }
-      request.append(Integer.toString(documents.get(i)));
-    }
-
-    try {
-      URL resource = new URL(request.toString());
-      HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
-      connection.setRequestMethod("GET");
-
-      if (parser == null) {
-        parser = SAXParserFactory.newInstance().newSAXParser();
-      }
-      DocumentNameHandler handler = new DocumentNameHandler();
-      handler.reset();
-      parser.parse(connection.getInputStream(), handler);
-      connection.disconnect();
-      DocumentNameMapping[] results = handler.getResults();
-      String[] names = new String[results.length];
-      for (int i = 0; i < results.length; i++) {
-        names[i] = results[i].name;
-      }
-      return (names);
-    } catch (SAXException saxe) {
-      throw new IOException(saxe);
-    } catch (ParserConfigurationException pce) {
-      throw new IOException(pce);
-    }
-  }
-
-  public Node transformQuery(Node query) throws Exception {
-    throw new Exception("Not implemented yet");
-  }
-
-  public ScoredDocument[] runQuery(Node query, int requested) throws Exception {
-    throw new Exception("Not handling this yet");
-  }
-
-  public ScoredDocument[] runQuery(String query, int requested) throws Exception {
-    ArrayList<ScoredDocument> results = new ArrayList<ScoredDocument>();
-    StringBuilder request = new StringBuilder(url);
-    String encoded = URLEncoder.encode(query, "UTF-8");
-    request.append("/searchxml?q=").append(encoded); // need to web-escape
-    request.append("&n=").append(requested);
-    request.append("&start=").append(0);
-
-    URL resource = new URL(request.toString());
-    HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
-    connection.setRequestMethod("GET");
-
-    // Hook up an xml handler to the input stream to directly generate the results, as opposed
-    // to buffering them up
-    if (parser == null) {
-      parser = SAXParserFactory.newInstance().newSAXParser();
-    }
-    SearchResultHandler handler = new SearchResultHandler();
-    handler.reset();
-    parser.parse(connection.getInputStream(), handler);
-    connection.disconnect();
-    return (handler.getResults());
-  }
-
-  public void close() throws IOException {
-    // Nothing to do
-  }
-
-  // To do asynchronous retrieval
-  public void runAsynchronousQuery(Node query, int requested,
-          List<ScoredDocument> scored, int idx) throws Exception {
-    throw new Exception("Unimplemented in this form.");
-  }
-
-  public void runAsynchronousQuery(String query, int requested,
-          List<ScoredDocument> scored, int idx) throws Exception {
-    this.query = query;
-    this.resultsRequested = requested;
-    this.scored = scored;
-    this.idx = idx;
-    runner = new Thread(this);
-    runner.start();
-  }
-
-  public void join() throws InterruptedException {
-    if (runner != null) {
-      runner.join();
-    }
-    runner = null;
-  }
-
-  public void run() {
-    try {
-      ScoredDocument[] docs = runQuery(query, resultsRequested);
-      for (ScoredDocument sd : docs) {
-        sd.source = idx;
-      }
-
-      // Now add it to the accumulator, but synchronously
-      synchronized (scored) {
-        scored.addAll(Arrays.asList(docs));
-      }
-    } catch (Exception e) {
-      System.err.println("ERROR RETRIEVING: " + e.getMessage());
     }
   }
 }

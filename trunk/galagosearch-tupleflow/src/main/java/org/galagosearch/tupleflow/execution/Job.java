@@ -14,6 +14,12 @@ import java.util.TreeMap;
  * A Job object specifies a TupleFlow execution: the objects used, their parameters,
  * and how they communicate.  A Job can be specified in XML (and parsed with JobConstructor),
  * or in code.
+ *
+ * Usage: users create these, then run them using the JobExecutor
+ *
+ * Possible Improvements:
+ * - the ability to branch on some condition
+ * - arbitrary looping
  * 
  * @author trevor
  */
@@ -297,6 +303,32 @@ public class Job implements Serializable {
         builder.append("}\n");
         return builder.toString();
     }
+    
+    /*
+     * TODO: print graphs of the steps in each stage
+     * 
+    private void printSubgraphs(final StringBuilder builder, ArrayList<Step> steps) {
+        for (int i = 0; i < steps.size(); i++) {
+            Step step = steps.get(i);
+            if (step instanceof MultiStep) {
+
+            } else if (step instanceof InputStep) {
+
+            } else if (step instanceof OutputStep) {
+
+            } else {
+                String name = step.getClassName();
+                name = name.substring(name.lastIndexOf(".")+1);
+                builder.append(name);
+                if (i < (steps.size()-2)) builder.append(" -> ");
+                else builder.append(";");
+            }
+        }
+    }
+
+     * 
+     * 
+     */
 
     @Override
     public String toString() {

@@ -3,7 +3,6 @@ package org.galagosearch.core.tools;
 
 import org.galagosearch.core.retrieval.*;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,81 +14,34 @@ import org.galagosearch.core.parse.DocumentReader;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
+import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.core.store.DocumentIndexStore;
-import org.galagosearch.core.store.NullStore;
 import org.galagosearch.core.store.DocumentStore;
+import org.galagosearch.core.store.NullStore;
 import org.galagosearch.core.store.SnippetGenerator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
 
-/*
- * DEV NOTES:
- *
- * The hashmap allows sub-groups of the index shards to be queried.
- * currently the default is to search all supplied indexes.
- * By using the "all" group.
- *
- * Currently document stores are kept as one whole
- * However we should try to keep the indexes + stores paired somehow
- *
- */
 /**
- * @author trevor, irmarc, sjh
+ *
+ * @author trevor
  */
 public class Search {
 
   SnippetGenerator generator;
   DocumentStore store;
-  HashMap<String, ArrayList<Retrieval>> retrievals;
+  Retrieval retrieval;
 
   public Search(Retrieval retrieval, DocumentStore store) {
-    this.retrievals = new HashMap<String, ArrayList<Retrieval>>();
-    ArrayList<Retrieval> defaultList = new ArrayList<Retrieval>();
-    defaultList.add(retrieval);
-    this.retrievals.put("all", defaultList);
     this.store = store;
-
+    this.retrieval = retrieval;
     generator = new SnippetGenerator();
   }
 
-  public Search(Parameters p) throws IOException {
-    this.retrievals = new HashMap<String, ArrayList<Retrieval>>();
-    this.retrievals.put("all", new ArrayList<Retrieval>());
+  public Search(Parameters params) throws IOException {
+    this.store = getDocumentStore(params.list("corpus"));
+    this.retrieval = new StructuredRetrieval(params.get("index"), new Parameters());
     generator = new SnippetGenerator();
-
-    // Load up the corpus files
-    this.store = new NullStore();
-    if(p.containsKey("corpus")){
-      this.store = getDocumentStore(p.list("corpus"));
-    }
-
-    // Load up the indexes
-    String id, path;
-    List<Parameters.Value> indexes = p.list("index");
-    for (Parameters.Value value : indexes) {
-      id = "all";
-      if (value.containsKey("path")) {
-        path = value.get("path").toString();
-        if (value.containsKey("id")) {
-          id = value.get("id").toString();
-        }
-      } else {
-        path = value.toString();
-      }
-      if (!retrievals.containsKey(id)) {
-        retrievals.put(id, new ArrayList<Retrieval>());
-      }
-
-      try {
-        Retrieval r = Retrieval.instance(path, p);
-        retrievals.get(id).add(r);
-        if (!id.equals("all")) {
-          retrievals.get("all").add(r); // Always put it in default as well
-        }
-      } catch (Exception e) {
-        System.err.println("Unable to load index (" + id + ") at path " + path + ": " + e.getMessage());
-      }
-    }
   }
 
   private DocumentStore getDocumentStore(List<Value> corpora) throws IOException {
@@ -113,12 +65,7 @@ public class Search {
 
   public void close() throws IOException {
     store.close();
-    for (String desc : retrievals.keySet()) {
-      ArrayList<Retrieval> collGroup = retrievals.get(desc);
-      for (Retrieval r : collGroup) {
-        r.close();
-      }
-    }
+    retrieval.close();
   }
 
   public static class SearchResult {
@@ -131,19 +78,12 @@ public class Search {
   public static class SearchResultItem {
 
     public int rank;
-    public int internalId;
     public String identifier;
     public String displayTitle;
     public String url;
     public Map<String, String> metadata;
     public String summary;
     public double score;
-  }
-
-  public ArrayList<String> getCollectionGroups() {
-    ArrayList<String> collGroups = new ArrayList<String>();
-    collGroups.addAll(retrievals.keySet());
-    return collGroups;
   }
 
   public String getSummary(Document document, Set<String> query) throws IOException {
@@ -172,69 +112,26 @@ public class Search {
     return store.get(identifier);
   }
 
-  public String getDocumentName(int documentid) throws IOException {
-    ArrayList<Retrieval> all = retrievals.get("all");
-    // need to ensure that we only have one index (otherwise this question is ambiguous
-    if(all.size() > 1)
-      throw new IOException("Search.getDocumentName(int id) should only be called where there is only one index availiable.");
-    return (all.get(0).getDocumentName(documentid));
-  }
-
-  public String getDocumentName(ArrayList<Retrieval> r, ScoredDocument sd) throws IOException {
-    int remoteID = BatchSearch._mapToRemote(sd, r.size());
-    return r.get(sd.source).getDocumentName(remoteID);
-  }
-
-  public SearchResult runQuery(String query, int startAt, int count, boolean summarize, String descriptor) throws Exception {
-    // Try to get the correct subset of retrievals
-    if (!retrievals.containsKey(descriptor)) {
-      throw new Exception("Unable to load id '" + descriptor + "' for query '" + query + "'");
-    }
-    ArrayList<Retrieval> subset = retrievals.get(descriptor);
-    List<ScoredDocument> scored = new ArrayList<ScoredDocument>();
-    Node tree = null;
-    Node transformed = null;
+  public SearchResult runQuery(String query, int startAt, int count, boolean summarize, String id) throws Exception {
+    Parameters p = new Parameters();
+    p.add("indexId", "0");
+    p.add("requested", Integer.toString(startAt + count));
+    ScoredDocument[] results = retrieval.runQuery(query, p);
     SearchResult result = new SearchResult();
-    result.items = new ArrayList();
-    tree = parseQuery(query, new Parameters());
+
+    Node tree = parseQuery(query, new Parameters());
     Set<String> queryTerms = StructuredQuery.findQueryTerms(tree);
     result.query = tree;
+    result.items = new ArrayList();
 
-
-    // Asynchronous retrieval
-    for (int i = 0; i < subset.size(); i++) {
-      Retrieval r = subset.get(i);
-      if (r.isLocal()) {
-        if (transformed == null) {
-          transformed = r.transformQuery(tree);
-          result.transformedQuery = transformed;
-        }
-        r.runAsynchronousQuery(transformed, startAt + count, scored, i);
-      } else {
-        r.runAsynchronousQuery(query, startAt + count, scored, i);
-      }
-    }
-
-    // Wait for a finished list
-    for (Retrieval r : subset) {
-      r.join();
-    }
-
-    // Map the documents to local
-    BatchSearch._mapToLocal(scored, subset.size());
-
-    // Now do all the needed transforms
-    for (int i = startAt; i < Math.min(startAt + count, scored.size()); i++) {
-      ScoredDocument sd = scored.get(i);
-      String identifier = getDocumentName(subset, sd);
+    for (int i = startAt; i < Math.min(startAt + count, results.length); i++) {
+      String identifier = results[i].documentName;
       Document document = getDocument(identifier);
       SearchResultItem item = new SearchResultItem();
 
       item.rank = i + 1;
       item.identifier = identifier;
       item.displayTitle = identifier;
-      item.internalId = sd.document;
-      item.score = sd.score;
 
       if (document.metadata.containsKey("title")) {
         item.displayTitle = document.metadata.get("title");
@@ -253,6 +150,7 @@ public class Search {
       }
 
       item.metadata = document.metadata;
+      item.score = results[i].score;
       result.items.add(item);
     }
 

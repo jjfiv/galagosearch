@@ -3,7 +3,7 @@ package org.galagosearch.core.retrieval;
 
 /**
  *
- * @author trevor, irmarc
+ * @author trevor, irmarc, sjh
  */
 public class ScoredDocument implements Comparable<ScoredDocument> {
 
@@ -20,13 +20,19 @@ public class ScoredDocument implements Comparable<ScoredDocument> {
     if (score != other.score) {
       return Double.compare(score, other.score);
     }
+    if( (source != null) &&
+        (! source.equals(other.source))){
+      return source.compareTo(other.source);
+    }
     return other.document - document;
   }
 
   public String toString() {
     return String.format("%d,%f", document, score);
   }
+
+  public String documentName;
+  public String source; // lets us know where this scored doc came from
   public int document;
   public double score;
-  public int source; // lets us know where this scored doc came from
 }

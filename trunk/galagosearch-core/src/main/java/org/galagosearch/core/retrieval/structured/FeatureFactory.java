@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.Traversal;
@@ -375,6 +376,9 @@ public class FeatureFactory {
         }
         return result;
     }
+
+
+    // TODO: change traversals to use a Retrieval object not a StructuredRetrieval
 
     public List<Traversal> getTraversals(StructuredRetrieval retrieval)
             throws ClassNotFoundException, NoSuchMethodException, InstantiationException,

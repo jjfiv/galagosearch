@@ -13,6 +13,7 @@ import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -24,14 +25,14 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public class StructuredRetrieval extends Retrieval {
 
+  String indexId;
   StructuredIndex index;
   FeatureFactory featureFactory;
   // these allow asynchronous evaluation
   Thread runner;
-  Node queryRoot;
-  int resultsRequested;
-  List<ScoredDocument> scored;
-  int idx;
+  String query;
+  Parameters queryParams;
+  List<ScoredDocument> queryResults;
 
   public StructuredRetrieval(StructuredIndex index, Parameters factoryParameters) {
     this.index = index;
@@ -47,63 +48,41 @@ public class StructuredRetrieval extends Retrieval {
     this(new StructuredIndex(filename), parameters);
   }
 
-  public StructuredIndex getIndex() {
-    return index;
+  public void close() throws IOException {
+    index.close();
   }
 
-  public ScoredDocument[] getArrayResults(PriorityQueue<ScoredDocument> scores) {
-    ScoredDocument[] results = new ScoredDocument[scores.size()];
-
-    for (int i = scores.size() - 1; i >= 0; i--) {
-      results[i] = scores.poll();
+  public Parameters getRetrievalStatistics() throws Exception {
+    Parameters p = new Parameters();
+    p.add("collectionLength", Long.toString(index.getCollectionLength()));
+    p.add("documentCount", Long.toString(index.getDocumentCount()));
+    for (String partName : index.getPartNames()) {
+      p.add("part", partName);
     }
-
-    return results;
-  }
-
-  public NodeType getNodeType(Node node) throws Exception {
-    NodeType nodeType = index.getNodeType(node);
-    if (nodeType == null) {
-      nodeType = featureFactory.getNodeType(node);
-    }
-    return nodeType;
-  }
-
-  public StructuredIterator createIterator(Node node) throws Exception {
-    ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
-
-    for (Node internalNode : node.getInternalNodes()) {
-      StructuredIterator internalIterator = createIterator(internalNode);
-      internalIterators.add(internalIterator);
-    }
-
-    StructuredIterator iterator = index.getIterator(node);
-    if (iterator == null) {
-      iterator = featureFactory.getIterator(node, internalIterators);
-    }
-
-    return iterator;
-  }
-
-  public Node transformQuery(Node queryTree) throws Exception {
-    List<Traversal> traversals = featureFactory.getTraversals(this);
-    for (Traversal traversal : traversals) {
-      queryTree = StructuredQuery.copy(traversal, queryTree);
-    }
-    return queryTree;
+    return p;
   }
 
   /**
    * Evaluates a query.
    *
-   * @param queryTree A query tree that has been already transformed with StructuredRetrieval.transformQuery.
-   * @param requested The number of documents to retrieve, at most.
+   * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
+   * @param parameters - query parameters (indexId, # requested, query type, transform)
    * @return
    * @throws java.lang.Exception
    */
-  public ScoredDocument[] runQuery(Node queryTree, int requested) throws Exception {
+  public ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception {
+    // parse the query
+    Node queryTree = parseQuery(query, parameters);
+
+    // transform the query if necessary 
+    // (if this is part of some distributed retrieval - transformation may not be necessary)
+    if (parameters.get("transform", true)) {
+      queryTree = transformQuery(queryTree);
+    }
+
     // construct the query iterators
     ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
+    int requested = (int) parameters.get("requested", 1000);
 
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
@@ -125,25 +104,28 @@ public class StructuredRetrieval extends Retrieval {
       iterator.movePast(document);
     }
 
-    return getArrayResults(queue);
+    String indexId = parameters.get("indexId", "0");
+    return getArrayResults(queue, indexId);
   }
 
-  public String getDocumentName(int document) throws IOException {
-    return index.getDocumentName(document);
-  }
+  /**
+   * 
+   * @param query - query to be evaluated
+   * @param parameters - query parameters (indexId, # requested, query type, transform, retrievalGroup)
+   * @param queryResults - object that will contain the results
+   * @throws Exception
+   */
+  public void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+    this.query = query;
+    this.queryParams = parameters;
+    this.queryResults = queryResults;
 
-  public void close() throws IOException {
-    index.close();
-  }
-
-  // Evaluates a query asynchronously
-  public void runAsynchronousQuery(Node query, int requested, List<ScoredDocument> scored, int idx) {
-    this.scored = scored;
-    this.resultsRequested = requested;
-    this.queryRoot = query;
-    this.idx = idx;
     runner = new Thread(this);
     runner.start();
+  }
+
+  public void waitForAsynchronousQuery() throws InterruptedException {
+    this.join();
   }
 
   // Finish and clean up
@@ -151,22 +133,95 @@ public class StructuredRetrieval extends Retrieval {
     if (runner != null) {
       runner.join();
     }
+    query = null;
     runner = null;
   }
 
   public void run() {
-    try {
-      ScoredDocument[] docs = runQuery(queryRoot, resultsRequested);
-      for (ScoredDocument sd : docs) {
-        sd.source = idx;
-      }
+    // we haven't got a query to run - return
+    if (query == null) {
+      return;
+    }
 
-      // Now add it to the accumulator, but synchronously
-      synchronized (scored) {
-        scored.addAll(Arrays.asList(docs));
+    try {
+      ScoredDocument[] results = runQuery(query, queryParams);
+
+      // Now add it to the output structure, but synchronously
+      synchronized (queryResults) {
+        queryResults.addAll(Arrays.asList(results));
       }
     } catch (Exception e) {
+      // TODO: use logger here
       System.err.println("ERROR RETRIEVING: " + e.getMessage());
     }
+  }
+
+  // private functions
+
+  /*
+   * getArrayResults annotates a queue of scored documents
+   * returns an array
+   * 
+   */
+  private ScoredDocument[] getArrayResults(PriorityQueue<ScoredDocument> scores, String indexId) throws IOException {
+    ScoredDocument[] results = new ScoredDocument[scores.size()];
+
+    for (int i = scores.size() - 1; i >= 0; i--) {
+      results[i] = scores.poll();
+      results[i].source = indexId;
+      results[i].documentName = getDocumentName(results[i].document);
+    }
+    return results;
+  }
+
+  private String getDocumentName(int document) throws IOException {
+    return index.getDocumentName(document);
+  }
+
+  private Node parseQuery(String query, Parameters parameters) {
+    String queryType = parameters.get("queryType", "complex");
+
+    if (queryType.equals("simple")) {
+      return SimpleQuery.parseTree(query);
+    }
+
+    return StructuredQuery.parse(query);
+  }
+
+  private StructuredIterator createIterator(Node node) throws Exception {
+    ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
+
+    for (Node internalNode : node.getInternalNodes()) {
+      StructuredIterator internalIterator = createIterator(internalNode);
+      internalIterators.add(internalIterator);
+    }
+
+    StructuredIterator iterator = index.getIterator(node);
+    if (iterator == null) {
+      iterator = featureFactory.getIterator(node, internalIterators);
+    }
+
+    return iterator;
+  }
+
+  private Node transformQuery(Node queryTree) throws Exception {
+    List<Traversal> traversals = featureFactory.getTraversals(this);
+    for (Traversal traversal : traversals) {
+      queryTree = StructuredQuery.copy(traversal, queryTree);
+    }
+    return queryTree;
+  }
+
+  // NASTY HACKS THAT NEED TO BE FIXED
+  public NodeType getNodeType(Node node) throws Exception {
+    NodeType nodeType = index.getNodeType(node);
+    if (nodeType == null) {
+      nodeType = featureFactory.getNodeType(node);
+    }
+    return nodeType;
+  }
+
+  public StructuredIndex getIndex() {
+    return index;
   }
 }
