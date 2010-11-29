@@ -49,7 +49,7 @@ public class DocumentNameWriterOld implements Processor<NumberedDocumentData> {
             return;
         }
 
-        byte[] headerBytes = Utility.makeBytes(lastHeader);
+        byte[] headerBytes = Utility.fromString(lastHeader);
         output.writeInt(headerBytes.length);
         output.write(headerBytes);
         output.writeInt(lastFooterWidth);

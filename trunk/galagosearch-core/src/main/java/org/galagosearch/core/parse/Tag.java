@@ -46,7 +46,7 @@ public class Tag implements Comparable<Tag> {
         if (tagName.length() > 32) {
             // Here we convert the string to UTF-8 to check the actual
             // byte length.
-            while (Utility.makeBytes(tagName).length >= 256) {
+            while (Utility.fromString(tagName).length >= 256) {
                 // There's no way a tag with more than 256 chars can be small
                 // enough to pass, so we trim those characters right away.
                 if (tagName.length() > 256) {

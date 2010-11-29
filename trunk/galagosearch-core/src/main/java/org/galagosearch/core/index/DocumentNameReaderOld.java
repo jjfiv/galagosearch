@@ -102,7 +102,7 @@ public class DocumentNameReaderOld {
             
             slot.footerWidth = footerWidth;
             slot.offset = offset;
-            slot.prefix = Utility.makeString(prefixData);
+            slot.prefix = Utility.toString(prefixData);
             slot.footers = new int[footerCount];
             
             for(int i=0; i<footerCount; i++) {

@@ -44,14 +44,14 @@ public class SparseFloatListReaderTest extends TestCase {
         TupleFlowParameters parameters = new FakeParameters(p);
         SparseFloatListWriter writer = new SparseFloatListWriter(parameters);
 
-        writer.processWord(Utility.makeBytes("a"));
+        writer.processWord(Utility.fromString("a"));
 
         for (int i = 0; i < aDocs.length; i++) {
             writer.processNumber(aDocs[i]);
             writer.processTuple(aScores[i]);
         }
 
-        writer.processWord(Utility.makeBytes("b"));
+        writer.processWord(Utility.fromString("b"));
 
         for (int i = 0; i < bDocs.length; i++) {
             writer.processNumber(bDocs[i]);

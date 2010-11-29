@@ -25,7 +25,7 @@ public class NumberedPostingsPositionExtractor extends StandardStep<NumberedDocu
             if (term == null)
                 continue;
             
-            processor.process(new NumberWordPosition(object.number, Utility.makeBytes(term), i));
+            processor.process(new NumberWordPosition(object.number, Utility.fromString(term), i));
         }
     }
 }

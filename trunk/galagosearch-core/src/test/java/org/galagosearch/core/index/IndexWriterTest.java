@@ -49,7 +49,7 @@ public class IndexWriterTest extends TestCase {
         assertTrue(IndexReader.isIndexFile(temporary.getAbsolutePath()));
         IndexReader reader = new IndexReader(temporary.getAbsolutePath());
         
-        assertEquals("value", reader.getValueString("key"));
+        assertEquals("value", reader.getValueString(Utility.fromString("key")));
         reader.close();
     }
     
@@ -69,16 +69,16 @@ public class IndexWriterTest extends TestCase {
         // Skip to 'more'
         iterator.skipTo(new byte[] { (byte) 'm' });
         assertFalse(iterator.isDone());
-        assertEquals("more", iterator.getKey());
+        assertEquals("more", Utility.toString(iterator.getKey()));
         assertEquals("value2", iterator.getValueString());
         assertFalse(iterator.nextKey());
         
         // Start at the beginning
         iterator = reader.getIterator();
         assertFalse(iterator.isDone());
-        assertEquals("key", iterator.getKey());
+        assertEquals("key", Utility.toString(iterator.getKey()));
         assertTrue(iterator.nextKey());
-        assertEquals("more", iterator.getKey());
+        assertEquals("more", Utility.toString(iterator.getKey()));
         assertFalse(iterator.nextKey());
         
         // Start after all keys
@@ -102,7 +102,7 @@ public class IndexWriterTest extends TestCase {
         assertTrue(IndexReader.isIndexFile(temporary.getAbsolutePath()));
         IndexReader reader = new IndexReader(temporary.getAbsolutePath());
         
-        assertEquals("value", reader.getValueString("key"));
+        assertEquals("value", reader.getValueString(Utility.fromString("key")));
         reader.close();
     }
     
@@ -126,7 +126,7 @@ public class IndexWriterTest extends TestCase {
             String key = String.format("%05d", i);
             String value = String.format("value%05d", i);
 
-            assertEquals(value, reader.getValueString(key));
+            assertEquals(value, reader.getValueString(Utility.fromString(key)));
         }
         reader.close();
     }
@@ -152,7 +152,7 @@ public class IndexWriterTest extends TestCase {
             String key = String.format("%05d", i);
             String value = String.format("value%05d", i);
 
-            assertEquals(value, reader.getValueString(key));
+            assertEquals(value, reader.getValueString(Utility.fromString(key)));
         }
         reader.close();
     }

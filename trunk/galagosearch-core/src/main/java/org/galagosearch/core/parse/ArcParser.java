@@ -61,7 +61,7 @@ public class ArcParser implements DocumentStreamParser {
         stream.read(data);
         // get the training newline
         stream.read();
-        String fullText = Utility.makeString(data);
+        String fullText = Utility.toString(data);
         int headerEnd = findDoubleNewline(fullText);
 
         String serverHeader;

@@ -21,7 +21,7 @@ import org.galagosearch.core.types.NumberedExtent;
 public class NumberedExtentExtractor extends StandardStep<NumberedDocument, NumberedExtent> {
 	public void process(NumberedDocument document) throws IOException {
         for (Tag tag : document.tags) {
-            processor.process(new NumberedExtent(Utility.makeBytes(tag.name),
+            processor.process(new NumberedExtent(Utility.fromString(tag.name),
             		document.number,
             		tag.begin,
                     tag.end));

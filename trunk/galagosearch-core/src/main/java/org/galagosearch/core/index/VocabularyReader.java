@@ -86,6 +86,6 @@ public class VocabularyReader {
     }
     
     public TermSlot get(String key) {
-        return get(Utility.makeBytes(key));
+        return get(Utility.fromString(key));
     }
 }

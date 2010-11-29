@@ -31,597 +31,632 @@ import org.galagosearch.tupleflow.execution.Step;
  */
 public class Utility {
 
-  /**
-   * <p>If the parent directories for this file don't exist, this function creates them.</p>
-   *
-   * <p>Often we want to create a file, but we don't yet know if the parent path has been
-   * created yet.  Call this function immediately before opening a file for writing to
-   * make sure those directories have been created.</p>
-   *
-   * @param filename A filename that will soon be opened for writing.
-   */
-  public static void makeParentDirectories(String filename) {
-    File parent = new File(filename).getParentFile();
-    if (parent != null) {
-      parent.mkdirs();
-    }
-  }
-
-  /**
-   * Builds a simple Sorter step that can be added to a TupleFlow stage.
-   *
-   * @param sortOrder An order object representing how and what to sort.
-   * @return a Step object that can be added to a TupleFlow Stage.
-   */
-  public static Step getSorter(Order sortOrder) {
-    return getSorter(sortOrder, null);
-  }
-
-  /**
-   * Builds a Sorter step with a reducer that can be added to a TupleFlow stage.
-   *
-   * @param sortOrder An order object representing how and what to sort.
-   * @param reducerClass The class of a reducer object that can reduce this data.
-   * @return a Step object that can be added to a TupleFlow Stage.
-   */
-  public static Step getSorter(Order sortOrder, Class reducerClass) {
-    Parameters p = new Parameters();
-    p.add("class", sortOrder.getOrderedClass().getName());
-    p.add("order", Utility.join(sortOrder.getOrderSpec()));
-    if (reducerClass != null) {
-      try {
-        reducerClass.asSubclass(Reducer.class);
-      } catch (ClassCastException e) {
-        throw new IllegalArgumentException("getSorter called with a reducerClass argument "
-                + "which is not actually a reducer: "
-                + reducerClass.getName());
-      }
-      p.add("reducer", reducerClass.getName());
-    }
-    return new Step(Sorter.class, p);
-  }
-
-  /**
-   * Finds a free port to listen on.  Useful for starting up internal web servers.
-   * (copied from chaoticjava.com)
-   */
-  public static int getFreePort() throws IOException {
-    ServerSocket server = new ServerSocket(0);
-    int port = server.getLocalPort();
-    server.close();
-    return port;
-  }
-
-  /**
-   * Determines if the specified port is available for use.
-   */
-  public static boolean isFreePort(int portnum) {
-    try {
-      ServerSocket server = new ServerSocket(portnum);
-      int boundPort = server.getLocalPort();
-      server.close();
-      return (boundPort == portnum);
-    } catch (IOException ioe) {
-      return false;
-    }
-  }
-
-  public static boolean isInteger(String s) {
-    try {
-      Integer.parseInt(s);
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  public static String wrap(String t) {
-    int start = 0;
-    StringBuilder result = new StringBuilder();
-
-    while (t.length() > start + 50) {
-      int end = t.indexOf(" ", start + 50);
-
-      if (end < 0) {
-        break;
-      }
-      result.append(t, start, end);
-      result.append('\n');
-      start = end + 1;
+    /**
+     * <p>If the parent directories for this file don't exist, this function creates them.</p>
+     *
+     * <p>Often we want to create a file, but we don't yet know if the parent path has been
+     * created yet.  Call this function immediately before opening a file for writing to
+     * make sure those directories have been created.</p>
+     *
+     * @param filename A filename that will soon be opened for writing.
+     */
+    public static void makeParentDirectories(String filename) {
+        File parent = new File(filename).getParentFile();
+        if (parent != null) {
+            parent.mkdirs();
+        }
     }
 
-    result.append(t.substring(start));
-    return result.toString();
-  }
-
-  public static String escape(String raw) {
-    StringBuilder builder = new StringBuilder();
-
-    for (int i = 0; i < raw.length(); i++) {
-      char c = raw.charAt(i);
-
-      if (c == '"') {
-        builder.append("&quot;");
-      } else if (c == '&') {
-        builder.append("&amp;");
-      } else if (c == '<') {
-        builder.append("&gt;");
-      } else if (c == '>') {
-        builder.append("&lt;");
-      } else if (c <= 127) {
-        builder.append(c);
-      } else {
-        int unsigned = ((int) c) & 0xFFFF;
-
-        builder.append("&#");
-        builder.append(unsigned);
-        builder.append(";");
-      }
+    /**
+     * Builds a simple Sorter step that can be added to a TupleFlow stage.
+     *
+     * @param sortOrder An order object representing how and what to sort.
+     * @return a Step object that can be added to a TupleFlow Stage.
+     */
+    public static Step getSorter(Order sortOrder) {
+        return getSorter(sortOrder, null);
     }
 
-    return builder.toString();
-  }
-
-  public static String strip(String source, String suffix) {
-    if (source.endsWith(suffix)) {
-      return source.substring(0, source.length() - suffix.length());
+    /**
+     * Builds a Sorter step with a reducer that can be added to a TupleFlow stage.
+     *
+     * @param sortOrder An order object representing how and what to sort.
+     * @param reducerClass The class of a reducer object that can reduce this data.
+     * @return a Step object that can be added to a TupleFlow Stage.
+     */
+    public static Step getSorter(Order sortOrder, Class reducerClass) {
+        Parameters p = new Parameters();
+        p.add("class", sortOrder.getOrderedClass().getName());
+        p.add("order", Utility.join(sortOrder.getOrderSpec()));
+        if (reducerClass != null) {
+            try {
+                reducerClass.asSubclass(Reducer.class);
+            } catch (ClassCastException e) {
+                throw new IllegalArgumentException("getSorter called with a reducerClass argument "
+                        + "which is not actually a reducer: "
+                        + reducerClass.getName());
+            }
+            p.add("reducer", reducerClass.getName());
+        }
+        return new Step(Sorter.class, p);
     }
 
-    return null;
-  }
-
-  /*
-   * Functions to translate:
-   *  - strings to bytes
-   *  - bytes to strings
-   *  - integers to bytes
-   *  - bytes to integers
-   */
-  public static String makeString(byte[] word) {
-    try {
-      return new String(word, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException("UTF-8 is not supported by your Java Virtual Machine.");
-    }
-  }
-
-  public static byte[] makeBytes(String word) {
-    try {
-      return word.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException("UTF-8 is not supported by your Java Virtual Machine.");
-    }
-  }
-
-  public static byte[] makeBytes(int value) {
-    try {
-      ByteArrayOutputStream stream = new ByteArrayOutputStream();
-      DataOutputStream wrapper = new DataOutputStream(stream);
-      wrapper.writeInt(value);
-      return stream.toByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException("Unexpected issues converting an int to bytes!");
-    }
-  }
-
-  public static int makeInt(byte[] value) {
-    try {
-      ByteArrayInputStream stream = new ByteArrayInputStream(value);
-      DataInputStream wrapper = new DataInputStream(stream);
-      int i = wrapper.readInt();
-      return i;
-    } catch (IOException e) {
-      throw new RuntimeException("Unexpected issues converting an int to bytes!");
-    }
-  }
-
-  /**
-   * <p>Splits args into an array of flags and an array of parameters.</p>
-   *
-   * <p>This method assumes that args is an array of strings, where some of those
-   * strings are flags (they start with '-') and the others are non-flag arguments.
-   * This splits those into two arrays so they can be processed separately.</p>
-   *
-   * @param args
-   * @return An array of length 2, where the first element is an array of flags
-   *         and the second is an array of arguments.
-   */
-  public static String[][] filterFlags(String[] args) {
-    ArrayList<String> flags = new ArrayList<String>();
-    ArrayList<String> nonFlags = new ArrayList<String>();
-
-    for (String arg : args) {
-      if (arg.startsWith("-")) {
-        flags.add(arg);
-      } else {
-        nonFlags.add(arg);
-      }
+    /**
+     * Finds a free port to listen on.  Useful for starting up internal web servers.
+     * (copied from chaoticjava.com)
+     */
+    public static int getFreePort() throws IOException {
+        ServerSocket server = new ServerSocket(0);
+        int port = server.getLocalPort();
+        server.close();
+        return port;
     }
 
-    String[][] twoArrays = new String[2][];
-    twoArrays[0] = flags.toArray(new String[0]);
-    twoArrays[1] = nonFlags.toArray(new String[0]);
-
-    return twoArrays;
-  }
-
-  /**
-   * For an array master, returns
-   * an array containing the last master.length-index elements.
-   */
-  public static String[] subarray(String[] master, int index) {
-    if (master.length <= index) {
-      return new String[0];
-    } else {
-      String[] sub = new String[master.length - index];
-      System.arraycopy(master, index, sub, 0, sub.length);
-      return sub;
-    }
-  }
-
-  /**
-   * Returns a string containing all the elements of args, space delimited.
-   */
-  public static String join(String[] args, String delimiter) {
-    String output = "";
-    StringBuilder builder = new StringBuilder();
-
-    for (String arg : args) {
-      if (builder.length() > 0) {
-        builder.append(delimiter);
-      }
-      builder.append(arg);
+    /**
+     * Determines if the specified port is available for use.
+     */
+    public static boolean isFreePort(int portnum) {
+        try {
+            ServerSocket server = new ServerSocket(portnum);
+            int boundPort = server.getLocalPort();
+            server.close();
+            return (boundPort == portnum);
+        } catch (IOException ioe) {
+            return false;
+        }
     }
 
-    return builder.toString();
-  }
-
-  public static String join(String[] args) {
-    return join(args, " ");
-  }
-
-  public static String caps(String input) {
-    if (input.length() == 0) {
-      return input;
-    }
-    char first = Character.toUpperCase(input.charAt(0));
-    return "" + first + input.substring(1);
-  }
-
-  public static String plural(String input) {
-    return input + "s";
-  }
-
-  public static int compare(int one, int two) {
-    return one - two;
-  }
-
-  public static int compare(long one, long two) {
-    long result = one - two;
-
-    if (result > 0) {
-      return 1;
-    }
-    if (result < 0) {
-      return -1;
-    }
-    return 0;
-  }
-
-  public static int compare(double one, double two) {
-    double result = one - two;
-
-    if (result > 0) {
-      return 1;
-    }
-    if (result < 0) {
-      return -1;
-    }
-    return 0;
-  }
-
-  public static int compare(float one, float two) {
-    float result = one - two;
-
-    if (result > 0) {
-      return 1;
-    }
-    if (result < 0) {
-      return -1;
-    }
-    return 0;
-  }
-
-  public static int compare(String one, String two) {
-    return one.compareTo(two);
-  }
-
-  public static int compare(byte[] one, byte[] two) {
-    int sharedLength = Math.min(one.length, two.length);
-
-    for (int i = 0; i < sharedLength; i++) {
-      int a = ((int) one[i]) & 0xFF;
-      int b = ((int) two[i]) & 0xFF;
-      int result = a - b;
-
-      if (result < 0) {
-        return -1;
-      }
-      if (result > 0) {
-        return 1;
-      }
+    public static boolean isInteger(String s) {
+        try {
+            Integer.parseInt(s);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    return one.length - two.length;
-  }
+    public static String wrap(String t) {
+        int start = 0;
+        StringBuilder result = new StringBuilder();
 
-  public static int hash(byte b) {
-    return ((int) b) & 0xFF;
-  }
+        while (t.length() > start + 50) {
+            int end = t.indexOf(" ", start + 50);
 
-  public static int hash(int i) {
-    return i;
-  }
+            if (end < 0) {
+                break;
+            }
+            result.append(t, start, end);
+            result.append('\n');
+            start = end + 1;
+        }
 
-  public static int hash(long l) {
-    return (int) l;
-  }
-
-  public static int hash(double d) {
-    return (int) (d * 100000);
-  }
-
-  public static int hash(float f) {
-    return (int) (f * 100000);
-  }
-
-  public static int hash(String s) {
-    return s.hashCode();
-  }
-
-  public static int hash(byte[] b) {
-    int h = 0;
-    for (int i = 0; i < b.length; i++) {
-      h += 7 * h + b[i];
-    }
-    return h;
-  }
-
-  public static void deleteDirectory(File directory) throws IOException {
-    for (File sub : directory.listFiles()) {
-      if (sub.isDirectory()) {
-        deleteDirectory(sub);
-      } else {
-        sub.delete();
-      }
+        result.append(t.substring(start));
+        return result.toString();
     }
 
-    directory.delete();
-  }
+    public static String escape(String raw) {
+        StringBuilder builder = new StringBuilder();
 
-  public static void partialDeleteDirectory(File directory, Set<String> omissions) throws IOException {
-    for (File sub : directory.listFiles()) {
-      if (omissions.contains(sub.getName())) {
-        // don't delete this file
-      } else if (sub.isDirectory()) {
-        deleteDirectory(sub);
-      } else {
-        sub.delete();
-      }
-    }
-    if (directory.listFiles().length == 0) {
-      directory.delete();
-    }
-  }
+        for (int i = 0; i < raw.length(); i++) {
+            char c = raw.charAt(i);
 
-  public static File createGalagoTempDir() throws IOException {
-    return createGalagoTempDir("");
-  }
+            if (c == '"') {
+                builder.append("&quot;");
+            } else if (c == '&') {
+                builder.append("&amp;");
+            } else if (c == '<') {
+                builder.append("&gt;");
+            } else if (c == '>') {
+                builder.append("&lt;");
+            } else if (c <= 127) {
+                builder.append(c);
+            } else {
+                int unsigned = ((int) c) & 0xFFFF;
 
-  public static File createGalagoTempDir(String path) throws IOException {
-    File galagoTemp = null;
-    if (path.length() > 0) {
-      galagoTemp = new File(path);
-    } else {
-      galagoTemp = Utility.createTemporary();
+                builder.append("&#");
+                builder.append(unsigned);
+                builder.append(";");
+            }
+        }
+
+        return builder.toString();
     }
 
-    makeParentDirectories(galagoTemp.getAbsolutePath());
-    galagoTemp.delete();
-    galagoTemp.mkdir();
+    public static String strip(String source, String suffix) {
+        if (source.endsWith(suffix)) {
+            return source.substring(0, source.length() - suffix.length());
+        }
 
-    return galagoTemp;
-  }
-
-  public static File createTemporary() throws IOException {
-    return createTemporary(1024 * 1024 * 1024);
-  }
-
-  public static long getUnixFreeSpace(String pathname) throws IOException {
-    try {
-      // BUGBUG: will not work on windows
-      String[] command = {"df", "-Pk", pathname};
-      Process process = Runtime.getRuntime().exec(command);
-      InputStream procOutput = process.getInputStream();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(procOutput));
-
-      // skip the first line
-      reader.readLine();
-      String line = reader.readLine();
-      String[] fields = line.split("\\s+");
-      reader.close();
-
-      process.getErrorStream().close();
-      process.getInputStream().close();
-      process.getOutputStream().close();
-      process.waitFor();
-
-      long freeSpace = Long.parseLong(fields[3]) * 1024;
-      return freeSpace;
-    } catch (InterruptedException ex) {
-      return 0;
-    }
-  }
-
-  public static long getFreeSpace(String pathname) throws IOException {
-    try {
-      // this will only work in Java 1.6 or later
-      Method m = File.class.getMethod("getUsableSpace");
-      Long result = (Long) m.invoke(new File(pathname));
-      return (long) result;
-    } catch (Exception e) {
-      try {
-        return getUnixFreeSpace(pathname);
-      } catch (Exception ex) {
-        return 1024 * 1024 * 1024; // 1GB
-      }
-    }
-  }
-
-  public static File createTemporary(long requiredSpace) throws IOException {
-    // try to find a prefs file for this
-    String homeDirectory = System.getProperty("user.home");
-    File prefsFile = new File(homeDirectory + "/" + ".galagotmp");
-    ArrayList<String> roots = new ArrayList<String>();
-    File temporary = null;
-
-    if (prefsFile.exists()) {
-      BufferedReader reader = new BufferedReader(new FileReader(prefsFile));
-      String line;
-
-      while ((line = reader.readLine()) != null) {
-        roots.add(line.trim());
-      }
-
-      reader.close();
+        return null;
     }
 
-    for (String root : roots) {
-      long freeSpace = getFreeSpace(root);
+    /**
+     * <p>Splits args into an array of flags and an array of parameters.</p>
+     *
+     * <p>This method assumes that args is an array of strings, where some of those
+     * strings are flags (they start with '-') and the others are non-flag arguments.
+     * This splits those into two arrays so they can be processed separately.</p>
+     *
+     * @param args
+     * @return An array of length 2, where the first element is an array of flags
+     *         and the second is an array of arguments.
+     */
+    public static String[][] filterFlags(String[] args) {
+        ArrayList<String> flags = new ArrayList<String>();
+        ArrayList<String> nonFlags = new ArrayList<String>();
 
-      if (freeSpace < requiredSpace) {
-        continue;
-      }
-      String logString = String.format("Found %6.3fMB >= %6.3fMB left on %s",
-              freeSpace / 1048576.0, requiredSpace / 1048576.0, root);
-      Logger.getLogger(Utility.class.toString()).info(logString);
-      temporary = File.createTempFile("tupleflow", "", new File(root));
-      break;
+        for (String arg : args) {
+            if (arg.startsWith("-")) {
+                flags.add(arg);
+            } else {
+                nonFlags.add(arg);
+            }
+        }
+
+        String[][] twoArrays = new String[2][];
+        twoArrays[0] = flags.toArray(new String[0]);
+        twoArrays[1] = nonFlags.toArray(new String[0]);
+
+        return twoArrays;
     }
 
-    if (temporary == null) {
-      temporary = File.createTempFile("tupleflow", "");
+    /**
+     * For an array master, returns
+     * an array containing the last master.length-index elements.
+     */
+    public static String[] subarray(String[] master, int index) {
+        if (master.length <= index) {
+            return new String[0];
+        } else {
+            String[] sub = new String[master.length - index];
+            System.arraycopy(master, index, sub, 0, sub.length);
+            return sub;
+        }
     }
 
-    return temporary;
-  }
+    /**
+     * Returns a string containing all the elements of args, space delimited.
+     */
+    public static String join(String[] args, String delimiter) {
+        String output = "";
+        StringBuilder builder = new StringBuilder();
 
-  /**
-   * Copies data from the input stream to the output stream.
-   * @param input The input stream.
-   * @param output The output stream.
-   * @throws java.io.IOException
-   */
-  public static void copyStream(InputStream input, OutputStream output) throws IOException {
-    byte[] data = new byte[65536];
-    while (true) {
-      int bytesRead = input.read(data);
-      if (bytesRead < 0) {
-        break;
-      }
-      output.write(data, 0, bytesRead);
-    }
-  }
+        for (String arg : args) {
+            if (builder.length() > 0) {
+                builder.append(delimiter);
+            }
+            builder.append(arg);
+        }
 
-  /**
-   * Copies the data from file into the stream.  Note that this method
-   * does not close the stream (in case you want to put more in it).
-   *
-   * @param file
-   * @param stream
-   * @throws java.io.IOException
-   */
-  public static void copyFileToStream(File file, OutputStream stream) throws IOException {
-    FileInputStream input = new FileInputStream(file);
-    long longLength = file.length();
-    final int fiveMegabytes = 5 * 1024 * 1024;
-
-    while (longLength > 0) {
-      int chunk = (int) Math.min(longLength, fiveMegabytes);
-      byte[] data = new byte[chunk];
-      input.read(data, 0, chunk);
-      stream.write(data, 0, chunk);
-      longLength -= chunk;
+        return builder.toString();
     }
 
-    input.close();
-  }
-
-  /**
-   * Copies the data from the InputStream to a file, then closes both when
-   * finished.
-   *
-   * @param stream
-   * @param file
-   * @throws java.io.IOException
-   */
-  public static void copyStreamToFile(InputStream stream, File file) throws IOException {
-    FileOutputStream output = new FileOutputStream(file);
-    final int oneMegabyte = 1 * 1024 * 1024;
-    byte[] data = new byte[oneMegabyte];
-
-    while (true) {
-      int bytesRead = stream.read(data);
-
-      if (bytesRead < 0) {
-        break;
-      }
-      output.write(data, 0, bytesRead);
+    public static String join(String[] args) {
+        return join(args, " ");
     }
 
-    stream.close();
-    output.close();
-  }
-
-  /**
-   * Copies the data from the string s to the file.
-   *
-   * @param s
-   * @param file
-   * @throws java.io.IOException
-   */
-  public static void copyStringToFile(String s, File file) throws IOException {
-    InputStream stream = new ByteArrayInputStream(Utility.makeBytes(s));
-    Utility.copyStreamToFile(stream, file);
-  }
-
-  public static void calculateMessageDigest(File file, MessageDigest instance) throws IOException {
-    FileInputStream input = new FileInputStream(file);
-    final int oneMegabyte = 1024 * 1024;
-    byte[] data = new byte[oneMegabyte];
-
-    while (true) {
-      int bytesRead = input.read(data);
-
-      if (bytesRead < 0) {
-        break;
-      }
-      instance.update(data, 0, bytesRead);
+    public static String caps(String input) {
+        if (input.length() == 0) {
+            return input;
+        }
+        char first = Character.toUpperCase(input.charAt(0));
+        return "" + first + input.substring(1);
     }
 
-    input.close();
-  }
-
-  public static HashSet<String> readFileToStringSet(File file) throws IOException {
-    BufferedReader reader = new BufferedReader(new FileReader(file));
-    HashSet<String> set = new HashSet<String>();
-    String line;
-
-    while ((line = reader.readLine()) != null) {
-      set.add(line.trim());
+    public static String plural(String input) {
+        return input + "s";
     }
 
-    reader.close();
-    return set;
-  }
+    public static int compare(int one, int two) {
+        return one - two;
+    }
+
+    public static int compare(long one, long two) {
+        long result = one - two;
+
+        if (result > 0) {
+            return 1;
+        }
+        if (result < 0) {
+            return -1;
+        }
+        return 0;
+    }
+
+    public static int compare(double one, double two) {
+        double result = one - two;
+
+        if (result > 0) {
+            return 1;
+        }
+        if (result < 0) {
+            return -1;
+        }
+        return 0;
+    }
+
+    public static int compare(float one, float two) {
+        float result = one - two;
+
+        if (result > 0) {
+            return 1;
+        }
+        if (result < 0) {
+            return -1;
+        }
+        return 0;
+    }
+
+    public static int compare(String one, String two) {
+        return one.compareTo(two);
+    }
+
+    public static int compare(byte[] one, byte[] two) {
+        int sharedLength = Math.min(one.length, two.length);
+
+        for (int i = 0; i < sharedLength; i++) {
+            int a = ((int) one[i]) & 0xFF;
+            int b = ((int) two[i]) & 0xFF;
+            int result = a - b;
+
+            if (result < 0) {
+                return -1;
+            }
+            if (result > 0) {
+                return 1;
+            }
+        }
+
+        return one.length - two.length;
+    }
+
+    public static int hash(byte b) {
+        return ((int) b) & 0xFF;
+    }
+
+    public static int hash(int i) {
+        return i;
+    }
+
+    public static int hash(long l) {
+        return (int) l;
+    }
+
+    public static int hash(double d) {
+        return (int) (d * 100000);
+    }
+
+    public static int hash(float f) {
+        return (int) (f * 100000);
+    }
+
+    public static int hash(String s) {
+        return s.hashCode();
+    }
+
+    public static int hash(byte[] b) {
+        int h = 0;
+        for (int i = 0; i < b.length; i++) {
+            h += 7 * h + b[i];
+        }
+        return h;
+    }
+
+    public static void deleteDirectory(File directory) throws IOException {
+        for (File sub : directory.listFiles()) {
+            if (sub.isDirectory()) {
+                deleteDirectory(sub);
+            } else {
+                sub.delete();
+            }
+        }
+
+        directory.delete();
+    }
+
+    public static void partialDeleteDirectory(File directory, Set<String> omissions) throws IOException {
+        for (File sub : directory.listFiles()) {
+            if (omissions.contains(sub.getName())) {
+                // don't delete this file
+            } else if (sub.isDirectory()) {
+                deleteDirectory(sub);
+            } else {
+                sub.delete();
+            }
+        }
+        if (directory.listFiles().length == 0) {
+            directory.delete();
+        }
+    }
+
+    public static File createGalagoTempDir() throws IOException {
+        return createGalagoTempDir("");
+    }
+
+    public static File createGalagoTempDir(String path) throws IOException {
+        File galagoTemp = null;
+        if (path.length() > 0) {
+            galagoTemp = new File(path);
+        } else {
+            galagoTemp = Utility.createTemporary();
+        }
+
+        makeParentDirectories(galagoTemp.getAbsolutePath());
+        galagoTemp.delete();
+        galagoTemp.mkdir();
+
+        return galagoTemp;
+    }
+
+    public static File createTemporary() throws IOException {
+        return createTemporary(1024 * 1024 * 1024);
+    }
+
+    public static long getUnixFreeSpace(String pathname) throws IOException {
+        try {
+            // BUGBUG: will not work on windows
+            String[] command = {"df", "-Pk", pathname};
+            Process process = Runtime.getRuntime().exec(command);
+            InputStream procOutput = process.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(procOutput));
+
+            // skip the first line
+            reader.readLine();
+            String line = reader.readLine();
+            String[] fields = line.split("\\s+");
+            reader.close();
+
+            process.getErrorStream().close();
+            process.getInputStream().close();
+            process.getOutputStream().close();
+            process.waitFor();
+
+            long freeSpace = Long.parseLong(fields[3]) * 1024;
+            return freeSpace;
+        } catch (InterruptedException ex) {
+            return 0;
+        }
+    }
+
+    public static long getFreeSpace(String pathname) throws IOException {
+        try {
+            // this will only work in Java 1.6 or later
+            Method m = File.class.getMethod("getUsableSpace");
+            Long result = (Long) m.invoke(new File(pathname));
+            return (long) result;
+        } catch (Exception e) {
+            try {
+                return getUnixFreeSpace(pathname);
+            } catch (Exception ex) {
+                return 1024 * 1024 * 1024; // 1GB
+            }
+        }
+    }
+
+    public static File createTemporary(long requiredSpace) throws IOException {
+        // try to find a prefs file for this
+        String homeDirectory = System.getProperty("user.home");
+        File prefsFile = new File(homeDirectory + "/" + ".galagotmp");
+        ArrayList<String> roots = new ArrayList<String>();
+        File temporary = null;
+
+        if (prefsFile.exists()) {
+            BufferedReader reader = new BufferedReader(new FileReader(prefsFile));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                roots.add(line.trim());
+            }
+
+            reader.close();
+        }
+
+        for (String root : roots) {
+            long freeSpace = getFreeSpace(root);
+
+            if (freeSpace < requiredSpace) {
+                continue;
+            }
+            String logString = String.format("Found %6.3fMB >= %6.3fMB left on %s",
+                    freeSpace / 1048576.0, requiredSpace / 1048576.0, root);
+            Logger.getLogger(Utility.class.toString()).info(logString);
+            temporary = File.createTempFile("tupleflow", "", new File(root));
+            break;
+        }
+
+        if (temporary == null) {
+            temporary = File.createTempFile("tupleflow", "");
+        }
+
+        return temporary;
+    }
+
+    /**
+     * Copies data from the input stream to the output stream.
+     * @param input The input stream.
+     * @param output The output stream.
+     * @throws java.io.IOException
+     */
+    public static void copyStream(InputStream input, OutputStream output) throws IOException {
+        byte[] data = new byte[65536];
+        while (true) {
+            int bytesRead = input.read(data);
+            if (bytesRead < 0) {
+                break;
+            }
+            output.write(data, 0, bytesRead);
+        }
+    }
+
+    /**
+     * Copies the data from file into the stream.  Note that this method
+     * does not close the stream (in case you want to put more in it).
+     *
+     * @param file
+     * @param stream
+     * @throws java.io.IOException
+     */
+    public static void copyFileToStream(File file, OutputStream stream) throws IOException {
+        FileInputStream input = new FileInputStream(file);
+        long longLength = file.length();
+        final int fiveMegabytes = 5 * 1024 * 1024;
+
+        while (longLength > 0) {
+            int chunk = (int) Math.min(longLength, fiveMegabytes);
+            byte[] data = new byte[chunk];
+            input.read(data, 0, chunk);
+            stream.write(data, 0, chunk);
+            longLength -= chunk;
+        }
+
+        input.close();
+    }
+
+    /**
+     * Copies the data from the InputStream to a file, then closes both when
+     * finished.
+     *
+     * @param stream
+     * @param file
+     * @throws java.io.IOException
+     */
+    public static void copyStreamToFile(InputStream stream, File file) throws IOException {
+        FileOutputStream output = new FileOutputStream(file);
+        final int oneMegabyte = 1 * 1024 * 1024;
+        byte[] data = new byte[oneMegabyte];
+
+        while (true) {
+            int bytesRead = stream.read(data);
+
+            if (bytesRead < 0) {
+                break;
+            }
+            output.write(data, 0, bytesRead);
+        }
+
+        stream.close();
+        output.close();
+    }
+
+    /**
+     * Copies the data from the string s to the file.
+     *
+     * @param s
+     * @param file
+     * @throws java.io.IOException
+     */
+    public static void copyStringToFile(String s, File file) throws IOException {
+        InputStream stream = new ByteArrayInputStream(Utility.fromString(s));
+        Utility.copyStreamToFile(stream, file);
+    }
+
+    public static void calculateMessageDigest(File file, MessageDigest instance) throws IOException {
+        FileInputStream input = new FileInputStream(file);
+        final int oneMegabyte = 1024 * 1024;
+        byte[] data = new byte[oneMegabyte];
+
+        while (true) {
+            int bytesRead = input.read(data);
+
+            if (bytesRead < 0) {
+                break;
+            }
+            instance.update(data, 0, bytesRead);
+        }
+
+        input.close();
+    }
+
+    public static HashSet<String> readFileToStringSet(File file) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        HashSet<String> set = new HashSet<String>();
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+            set.add(line.trim());
+        }
+
+        reader.close();
+        return set;
+    }
+
+    /*
+     * Functions to translate:
+     *  - strings to bytes
+     *  - bytes to strings
+     *  - integers to bytes
+     *  - bytes to integers
+     */
+    public static String toString(byte[] word) {
+        try {
+            return new String(word, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("UTF-8 is not supported by your Java Virtual Machine.");
+        }
+    }
+
+    public static byte[] fromString(String word) {
+        try {
+            return word.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("UTF-8 is not supported by your Java Virtual Machine.");
+        }
+    }
+
+    public static short toShort(byte[] key) {
+        assert (key.length == 2);
+        int value = ((key[0] << 8) + key[1]);
+        return ((short)value);
+    }
+
+    public static byte[] fromShort(short key) {
+        byte[] writeBuffer = new byte[2];
+        writeBuffer[0] = (byte)((key >>> 8) & 0xFF);
+        writeBuffer[1] = (byte) key;
+        return writeBuffer;
+    }
+
+    public static int toInt(byte[] key) {
+        assert (key.length == 4);
+        return ((key[0] << 24) + (key[1] << 16) + (key[2] << 8) + key[3]);
+    }
+
+    public static byte[] fromInt(int key) {
+        byte[] converted = new byte[4];
+        converted[0] = (byte) ((key >>> 24) & 0xFF);
+        converted[1] = (byte) ((key >>> 16) & 0xFF);
+        converted[2] = (byte) ((key >>> 8) & 0xFF);
+        converted[3] = (byte) (key & 0xFF);
+        return converted;
+    }
+
+    public static long toLong(byte[] key) {
+        assert (key.length == 8);
+               return (((long)key[0] << 56) +
+                ((long)(key[1] & 255) << 48) +
+		((long)(key[2] & 255) << 40) +
+                ((long)(key[3] & 255) << 32) +
+                ((long)(key[4] & 255) << 24) +
+                ((key[5] & 255) << 16) +
+                ((key[6] & 255) <<  8) +
+                ((key[7] & 255) <<  0));
+    }
+
+    public static byte[] fromLong(long key) {
+        byte[] writeBuffer = new byte[8];
+
+        writeBuffer[0] = (byte)(key >>> 56);
+        writeBuffer[1] = (byte)(key >>> 48);
+        writeBuffer[2] = (byte)(key >>> 40);
+        writeBuffer[3] = (byte)(key >>> 32);
+        writeBuffer[4] = (byte)(key >>> 24);
+        writeBuffer[5] = (byte)(key >>> 16);
+        writeBuffer[6] = (byte)(key >>>  8);
+        writeBuffer[7] = (byte)(key >>>  0);
+        return writeBuffer;
+    }
+
+    public static float toFloat(byte[] key) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 }

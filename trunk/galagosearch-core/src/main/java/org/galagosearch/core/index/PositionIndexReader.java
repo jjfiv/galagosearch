@@ -19,6 +19,7 @@ import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.Processor;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
 
 /**
@@ -102,7 +103,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
         public String getRecordString() {
             StringBuilder builder = new StringBuilder();
             
-            builder.append(iterator.getKey());
+            builder.append(getKey());
             builder.append(",");
             builder.append(currentDocument);
             for (int i = 0; i < extentArray.getPosition(); ++i) {
@@ -125,8 +126,8 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             return iterator.getValueLength();
         }
 
-        public String getKey() throws IOException {
-            return iterator.getKey();
+        public String getKey() {
+            return Utility.toString(iterator.getKey());
         }
 
         public void nextDocument() throws IOException {
@@ -185,7 +186,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
      * null if the term doesn't exist in the inverted file.
      */
     public Iterator getTermExtents(String term) throws IOException {
-        IndexReader.Iterator iterator = reader.getIterator(term);
+        IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
         if (iterator != null) {
             return new Iterator(iterator);

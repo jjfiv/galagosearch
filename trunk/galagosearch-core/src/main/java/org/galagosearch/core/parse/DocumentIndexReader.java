@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.tupleflow.DataStream;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
 
 /**
@@ -33,7 +34,7 @@ public class DocumentIndexReader implements DocumentReader {
     }
 
     public Document getDocument(String key) throws IOException {
-        IndexReader.Iterator iterator = reader.getIterator(key);
+        IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(key));
         if (iterator == null) return null;
         return new Iterator(iterator).getDocument();
     }
@@ -51,7 +52,7 @@ public class DocumentIndexReader implements DocumentReader {
         }
 
         public String getKey() {
-            return iterator.getKey();
+            return Utility.toString(iterator.getKey());
         }
 
         public boolean isDone() {
@@ -59,7 +60,7 @@ public class DocumentIndexReader implements DocumentReader {
         }
 
         public Document getDocument() throws IOException {
-            String key = iterator.getKey();
+            String key = Utility.toString(iterator.getKey());
             DataStream stream = iterator.getValueStream();
             return decodeDocument(key, stream);
         }

@@ -460,7 +460,7 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
         // we want to make sure the token is short enough that someone
         // might actually type it.  UTF-8 can expand one character to 6 bytes.
         if (token.length() > maxTokenLength / 6 &&
-            Utility.makeBytes(token).length >= maxTokenLength) {
+            Utility.fromString(token).length >= maxTokenLength) {
             return;
         }
         tokens.add(token);

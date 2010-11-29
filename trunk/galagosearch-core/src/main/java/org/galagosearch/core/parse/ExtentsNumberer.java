@@ -39,7 +39,7 @@ public class ExtentsNumberer extends StandardStep<DocumentExtent, NumberedExtent
       
       if((currentNDD != null) &&
         (Utility.compare(currentNDD.identifier, object.identifier) == 0)){
-        processor.process(new NumberedExtent(Utility.makeBytes(object.extentName),
+        processor.process(new NumberedExtent(Utility.fromString(object.extentName),
             currentNDD.number, object.begin, object.end));
 
       } else {

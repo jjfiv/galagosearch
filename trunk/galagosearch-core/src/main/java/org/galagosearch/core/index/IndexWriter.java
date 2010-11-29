@@ -308,7 +308,7 @@ public class IndexWriter {
                 byte[] lastWord = word;
                 assert word.length >= blockOverlap :
                     "Overlap: " + blockOverlap + " too small for " + word.length +
-                    " (" + Utility.makeString(word) + ")";
+                    " (" + Utility.toString(word) + ")";
                 assert word.length < 256;
 
                 // this is the first word in the group

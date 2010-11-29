@@ -47,7 +47,7 @@ public class PositionIndexReaderTest extends TestCase {
         PositionIndexWriter writer =
                 new PositionIndexWriter(new org.galagosearch.tupleflow.FakeParameters(p));
 
-        writer.processWord(Utility.makeBytes("a"));
+        writer.processWord(Utility.fromString("a"));
 
         for (int[] doc : dataA) {
             writer.processDocument(doc[0]);
@@ -57,7 +57,7 @@ public class PositionIndexReaderTest extends TestCase {
             }
         }
 
-        writer.processWord(Utility.makeBytes("b"));
+        writer.processWord(Utility.fromString("b"));
 
         for (int[] doc : dataB) {
             writer.processDocument(doc[0]);

@@ -32,7 +32,7 @@ public class VByteOutput implements DataOutput {
     }
     
     public void writeString(String string) throws IOException {
-        byte[] bytes = Utility.makeBytes(string);
+        byte[] bytes = Utility.fromString(string);
         writeInt(bytes.length);
         write(bytes);
     }

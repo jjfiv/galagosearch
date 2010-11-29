@@ -41,7 +41,7 @@ public class DocumentToKeyValuePairTest extends TestCase {
         dkvp.process(document);
 
         KeyValuePair pair = kvpProcessor.pair;
-        assertEquals(Utility.makeString(pair.key), "DOC2");
+        assertEquals(Utility.toString(pair.key), "DOC2");
 
         ByteArrayInputStream stream = new ByteArrayInputStream(pair.value);
         ObjectInputStream input = new ObjectInputStream(stream);

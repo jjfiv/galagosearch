@@ -24,7 +24,7 @@ public class PostingsPositionExtractor extends StandardStep<Document, DocumentWo
             if (term == null)
                 continue;
             
-            processor.process(new DocumentWordPosition(object.identifier, Utility.makeBytes(term), i));
+            processor.process(new DocumentWordPosition(object.identifier, Utility.fromString(term), i));
         }
     }
 }

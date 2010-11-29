@@ -27,7 +27,7 @@ public class KeyExtentToNumberWordPosition extends StandardStep<KeyExtent, Numbe
   }
 
   public void process(KeyExtent ke) throws IOException {
-    NumberWordPosition nwp = new NumberWordPosition(ke.document, Utility.makeBytes(ke.key), ke.extent.begin);
+    NumberWordPosition nwp = new NumberWordPosition(ke.document, Utility.fromString(ke.key), ke.extent.begin);
     processor.process(nwp);
   }
 }

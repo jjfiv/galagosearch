@@ -226,7 +226,7 @@ public class DataMapReader {
     }
 
     public String getRecordString() {
-      return Utility.makeString(dmi.key) + ", " + Utility.makeString(dmi.value);
+      return Utility.toString(dmi.key) + ", " + Utility.toString(dmi.value);
     }
 
     public boolean nextRecord() throws IOException {

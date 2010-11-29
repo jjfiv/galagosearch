@@ -27,7 +27,7 @@ public class VByteInput implements DataInput {
         int length = readInt();
         byte[] data = new byte[length];
         input.readFully(data);
-        return Utility.makeString(data);
+        return Utility.toString(data);
     }
 
     public int skipBytes(int i) throws IOException {

@@ -11,6 +11,7 @@ import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.StreamCreator;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
 
 /**
@@ -51,7 +52,7 @@ public class CorpusReader implements DocumentReader {
   }
 
   public Document getDocument(String key) throws IOException {
-    IndexReader.Iterator iterator = indexReader.getIterator(key);
+    IndexReader.Iterator iterator = indexReader.getIterator(Utility.fromString(key));
     if (iterator == null) {
       return null;
     }
@@ -71,7 +72,7 @@ public class CorpusReader implements DocumentReader {
     }
 
     public String getKey() {
-      return iterator.getKey();
+      return Utility.toString(iterator.getKey());
     }
 
     public boolean isDone() {
@@ -79,7 +80,7 @@ public class CorpusReader implements DocumentReader {
     }
 
     public Document getDocument() throws IOException {
-      String key = iterator.getKey();
+      String key = Utility.toString(iterator.getKey());
       DataStream stream = iterator.getValueStream();
       return decodeDocument(key, stream);
     }

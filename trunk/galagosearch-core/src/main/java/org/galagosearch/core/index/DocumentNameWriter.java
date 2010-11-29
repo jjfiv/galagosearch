@@ -64,8 +64,8 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     assert last.number <= ndd.number;
     assert last.identifier != null;
    
-    byte[] docnum = Utility.makeBytes(ndd.number);
-    byte[] docname = Utility.makeBytes(ndd.identifier);
+    byte[] docnum = Utility.fromInt(ndd.number);
+    byte[] docname = Utility.fromString(ndd.identifier);
     
     DataMapItem btiFL = new DataMapItem(docnum, docname);
     sorterFL.process(btiFL);

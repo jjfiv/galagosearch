@@ -43,7 +43,7 @@ public class KeyValuePairToDocumentTest extends TestCase {
         document.identifier = "DOC1";
         output.writeObject(document);
 
-        byte[] key = Utility.makeBytes(document.identifier);
+        byte[] key = Utility.fromString(document.identifier);
         byte[] value = array.toByteArray();
         KeyValuePair pair = new KeyValuePair(key, value);
 

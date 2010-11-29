@@ -36,8 +36,8 @@ public class DataMapTest extends TestCase {
       ArrayList<DataMapItem> data = new ArrayList();
       for(int key_val = 10 ; key_val < 25 ; key_val++){
         String str_val = "key is " + key_val;
-        byte[] key = Utility.makeBytes(key_val);
-        byte[] value = Utility.makeBytes(str_val);
+        byte[] key = Utility.fromInt(key_val);
+        byte[] value = Utility.fromString(str_val);
         DataMapItem dat = new DataMapItem(key, value);
         data.add(dat);
       }
@@ -51,12 +51,12 @@ public class DataMapTest extends TestCase {
 
       DataMapItem result = null;
 
-      result = reader.get(Utility.makeBytes(11));
+      result = reader.get(Utility.fromInt(11));
       assertNotNull(result);
-      assertEquals(11, Utility.makeInt(result.key));
+      assertEquals(11, Utility.toInt(result.key));
 
       String str_val = "key is " + 11;
-      assertTrue(str_val.equals(Utility.makeString(result.value)));
+      assertTrue(str_val.equals(Utility.toString(result.value)));
 
       Utility.deleteDirectory(f);
     } 

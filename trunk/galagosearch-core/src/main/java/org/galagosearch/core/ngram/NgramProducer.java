@@ -56,7 +56,7 @@ public class NgramProducer extends StandardStep<NumberedDocument, Ngram> {
         sb.append( doc.terms.get((position+j)));
         sb.append( "~" );
       }
-      byte[] ngram = Utility.makeBytes(sb.toString());
+      byte[] ngram = Utility.fromString(sb.toString());
       processor.process(new Ngram(doc.fileId, currentFilePosition, doc.number, position, ngram ));
       currentFilePosition += 1;
     }

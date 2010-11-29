@@ -39,7 +39,7 @@ public class ExtentIndexReaderTest extends TestCase {
         ExtentIndexWriter writer =
                 new ExtentIndexWriter(new org.galagosearch.tupleflow.FakeParameters(p));
 
-        writer.processExtentName(Utility.makeBytes("title"));
+        writer.processExtentName(Utility.fromString("title"));
         writer.processNumber(1);
         writer.processBegin(2);
         writer.processTuple(3);
@@ -50,7 +50,7 @@ public class ExtentIndexReaderTest extends TestCase {
         writer.processBegin(5);
         writer.processTuple(10);
 
-        writer.processExtentName(Utility.makeBytes("z"));
+        writer.processExtentName(Utility.fromString("z"));
         writer.processNumber(15);
         writer.processBegin(9);
         writer.processTuple(11);

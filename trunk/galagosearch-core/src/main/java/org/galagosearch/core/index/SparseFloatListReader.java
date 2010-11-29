@@ -12,6 +12,7 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.core.retrieval.structured.ScoreIterator;
 import org.galagosearch.tupleflow.DataStream;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
 
 /**
@@ -61,7 +62,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
         public String getRecordString() {
             StringBuilder builder = new StringBuilder();
             
-            builder.append(iterator.getKey());
+            builder.append(getKey());
             builder.append(",");
             builder.append(currentDocument);
             builder.append(",");
@@ -92,7 +93,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
         }
 
         public String getKey() {
-            return iterator.getKey();
+            return Utility.toString(iterator.getKey());
         }
 
         public boolean nextTerm() throws IOException {
@@ -142,7 +143,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
     }
 
     public Iterator getScores(String term) throws IOException {
-        IndexReader.Iterator iterator = reader.getIterator(term);
+        IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
         return new Iterator(iterator);
     }
 

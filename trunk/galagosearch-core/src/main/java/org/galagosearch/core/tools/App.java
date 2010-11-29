@@ -302,11 +302,28 @@ public class App {
       return;
     }
 
+   String keyType = "string";
+   if (args.length > 2) {
+       keyType = args[2];
+   }
+    String key = "";
     IndexReader reader = new IndexReader(args[1]);
     IndexReader.Iterator iterator = reader.getIterator();
     while (!iterator.isDone()) {
-      output.println(iterator.getKey());
-      iterator.getValueString();
+      if (keyType.equals("string")) {
+        key = Utility.toString(iterator.getKey());
+      } else if (keyType.equals("int")) {
+        key = Integer.toString(Utility.toInt(iterator.getKey()));
+      } else if (keyType.equals("long")) {
+        key = Long.toString(Utility.toLong(iterator.getKey()));
+      } else if (keyType.equals("short")) {
+        key = Short.toString(Utility.toShort(iterator.getKey()));
+      } else {
+          throw new IOException("Key type '" + keyType +"' unsupported.");
+      }
+      output.println(key);
+      // I don't think this is needed since it's not getting printed.
+      // iterator.getValueString();
       iterator.nextKey();
     }
   }

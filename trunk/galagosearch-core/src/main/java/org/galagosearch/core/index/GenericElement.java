@@ -23,13 +23,13 @@ public class GenericElement implements IndexElement {
     }
     
     public GenericElement(String key, byte[] data) {
-        this.key = Utility.makeBytes(key);
+        this.key = Utility.fromString(key);
         this.data = data;
     }
     
     public GenericElement(String key, String value) {
-        this.key = Utility.makeBytes(key);
-        this.data = Utility.makeBytes(value);
+        this.key = Utility.fromString(key);
+        this.data = Utility.fromString(value);
     }
 
     public byte[] key() {

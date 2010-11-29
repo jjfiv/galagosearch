@@ -11,6 +11,7 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.*;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.DataStream;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
 
 /**
@@ -52,7 +53,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
         
         public String getRecordString() {
             StringBuilder builder = new StringBuilder();
-            builder.append(iterator.getKey());
+            builder.append(getKey());
             builder.append(",");
             builder.append(document);
             for (int i = 0; i < extents.getPosition(); ++i) {
@@ -116,7 +117,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
         }
 
         public String getKey(){
-          return iterator.getKey();
+          return Utility.toString(iterator.getKey());
         }
 
         public int document() {
@@ -146,7 +147,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     }
 
     public Iterator getExtents(String term) throws IOException {
-        IndexReader.Iterator iterator = reader.getIterator(term);
+        IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
         if (iterator != null) {
             return new Iterator(iterator);
@@ -155,7 +156,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     }
 
     public CountIterator getCounts(String term) throws IOException {
-        IndexReader.Iterator iterator = reader.getIterator(term);
+        IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
         if (iterator != null) {
             return new Iterator(iterator);

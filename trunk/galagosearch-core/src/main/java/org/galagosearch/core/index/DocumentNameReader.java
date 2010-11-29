@@ -30,23 +30,23 @@ public class DocumentNameReader {
 
   // gets the document name of the internal id index.
   public String get(int index) throws IOException {
-    DataMapItem dmi = inputFl.get(Utility.makeBytes(index));
+    DataMapItem dmi = inputFl.get(Utility.fromInt(index));
     if (dmi == null) {
       throw new IOException("Unknown Document Number " + index);
     }
-    return Utility.makeString(dmi.value);
+    return Utility.toString(dmi.value);
   }
 
   // gets the document id for some document name
   public int getDocumentId(String documentName) throws IOException {
     byte[] value = new byte[0];
-    value = Utility.makeBytes(documentName);
+    value = Utility.fromString(documentName);
     DataMapItem dmi = inputRl.get(value);
     if (dmi == null) {
       throw new IOException("Unknown Document Name " + documentName);
     }
 
-    return Utility.makeInt(dmi.value);
+    return Utility.toInt(dmi.value);
   }
 
   
@@ -77,9 +77,9 @@ public class DocumentNameReader {
 
     public String getRecordString() {
       if(forwardLookup){
-        return Utility.makeInt(current.key) + ", " + Utility.makeString(current.value);
+        return Utility.toInt(current.key) + ", " + Utility.toString(current.value);
       } else {
-        return Utility.makeInt(current.value) + ", " + Utility.makeString(current.key);
+        return Utility.toInt(current.value) + ", " + Utility.toString(current.key);
       }      
     }
 
@@ -93,17 +93,17 @@ public class DocumentNameReader {
 
     public NumberedDocumentData getDocumentData() throws IOException {
       if(forwardLookup){
-        return new NumberedDocumentData(Utility.makeString(current.value), "", Utility.makeInt(current.key), 0);
+        return new NumberedDocumentData(Utility.toString(current.value), "", Utility.toInt(current.key), 0);
       } else {
-        return new NumberedDocumentData(Utility.makeString(current.key), "", Utility.makeInt(current.value), 0);
+        return new NumberedDocumentData(Utility.toString(current.key), "", Utility.toInt(current.value), 0);
       }      
     }
 
     public String getKey() {
       if(forwardLookup){
-        return Integer.toString(Utility.makeInt(current.key));
+        return Integer.toString(Utility.toInt(current.key));
       } else {
-        return Utility.makeString(current.key);
+        return Utility.toString(current.key);
       }
     }
   }

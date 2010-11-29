@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 import org.galagosearch.core.index.IndexWriter;
 import org.galagosearch.core.index.VocabularyReader.TermSlot;
@@ -36,8 +37,14 @@ import org.galagosearch.tupleflow.Utility;
  * is a good choice.</p>
  * 
  * <p>Typically this class is extended by composition instead of inheritance.</p>
- * 
+ *
+ * <p>(11/29/2010, irmarc): After conferral with Sam, going to remove the requirement
+ * that keys be Strings. It makes the mapping from other classes/primitives to Strings
+ * really restrictive if they always have to be mapped to Strings. Therefore, mapping
+ * byte[] keys to the client keyspace is the responsibility of the client of the IndexReader.</p>
+ *
  * @author trevor
+ * @author irmarc
  */
 public class IndexReader {
     VocabularyReader vocabulary;
@@ -56,13 +63,13 @@ public class IndexReader {
         long endValueFileOffset;
 
         long[] endValueOffsets;
-        String[] keys;
+        byte[][] keys;
 
         public VocabularyBlock(
                 long startFileOffset,
                 long startValueFileOffset,
                 long endValueFileOffset,
-                long[] endValueOffsets, String[] keys) {
+                long[] endValueOffsets, byte[][] keys) {
             this.keys = keys;
             this.endValueOffsets = endValueOffsets;
             this.startFileOffset = startFileOffset;
@@ -101,18 +108,18 @@ public class IndexReader {
             return endValueOffsets.length > (index + 1);
         }
 
-        public int findIndex(String term) {
+        public int findIndex(byte[] key) {
             // Need to do a linear search here because the vocabulary order
             // does not necessarily match Java's idea of alphabetical order
             for (int i = 0; i < keys.length; i++) {
-                if (keys[i].equals(term)) {
+                if (Arrays.equals(keys[i], key)) {
                     return i;
                 }
             }
             return -1;
         }
 
-        private String getKey(int termIndex) {
+        private byte[] getKey(int termIndex) {
             return this.keys[termIndex];
         }
     }
@@ -120,7 +127,7 @@ public class IndexReader {
     public class Iterator {
         VocabularyBlock block;
         byte[] decompressedData;
-        String key;
+        byte[] key;
         int keyIndex;
         boolean done;
 
@@ -134,7 +141,7 @@ public class IndexReader {
         }
 
         void loadIndex() throws IOException {
-            key = "";
+            key = null;
 
             if (block == null || keyIndex < 0) {
                 done = true;
@@ -179,7 +186,7 @@ public class IndexReader {
                 block = readVocabularyBlock(slot.begin);
                 keyIndex = 0;
                 while (keyIndex < block.keys.length) {
-                    byte[] blockKey = Utility.makeBytes(block.keys[keyIndex]);
+                    byte[] blockKey = block.keys[keyIndex];
                     if (Utility.compare(key, blockKey) <= 0) {
                         loadIndex();
                         return;
@@ -207,7 +214,7 @@ public class IndexReader {
         /**
          * Returns the key associated with the current inverted list.
          */
-        public String getKey() {
+        public byte[] getKey() {
             return key;
         }
         
@@ -251,7 +258,7 @@ public class IndexReader {
             assert stream.length() < Integer.MAX_VALUE;
             byte[] data = new byte[(int) stream.length()];
             stream.readFully(data);
-            return Utility.makeString(data);
+            return Utility.toString(data);
         }
         
         /**
@@ -405,7 +412,7 @@ public class IndexReader {
      * Returns an iterator pointing at a specific key.  Returns
      * null if the key is not found in the index.
      */
-    public Iterator getIterator(String key) throws IOException {
+    public Iterator getIterator(byte[] key) throws IOException {
         // read from offset to offset in the vocab structure (right?)
         VocabularyReader.TermSlot slot = vocabulary.get(key);
 
@@ -427,7 +434,7 @@ public class IndexReader {
      * @return The index value for this key, or null if there is no such value.
      * @throws java.io.IOException
      */
-    public String getValueString(String key) throws IOException {
+    public String getValueString(byte[] key) throws IOException {
         Iterator iter = getIterator(key);
         
         if (iter == null) {
@@ -444,7 +451,7 @@ public class IndexReader {
      * @throws java.io.IOException
      */
     
-    public DataStream getValueStream(String key) throws IOException {
+    public DataStream getValueStream(byte[] key) throws IOException {
         Iterator iter = getIterator(key);
         
         if (iter == null) {
@@ -528,65 +535,65 @@ public class IndexReader {
 
         // now we decode everything from the stream
         long endBlock = blockStream.readLong();
-        long wordCount = blockStream.readLong();
+        long keyCount = blockStream.readLong();
 
         int prefixLength = blockStream.readUnsignedByte();
         byte[] prefixBytes = new byte[prefixLength];
         blockStream.readFully(prefixBytes);
 
-        int wordBlockCount = (int) Math.ceil((double) wordCount / vocabGroup);
-        short[] wordBlockEnds = new short[wordBlockCount];
-        String[] words = new String[(int) wordCount];
-        long[] invertedListEnds = new long[(int) wordCount];
+        int keyBlockCount = (int) Math.ceil((double) keyCount / vocabGroup);
+        short[] keyBlockEnds = new short[keyBlockCount];
+        byte[][] keys = new byte[(int) keyCount][];
+        long[] invertedListEnds = new long[(int) keyCount];
 
-        for (int i = 0; i < wordBlockCount; i++) {
-            wordBlockEnds[i] = blockStream.readShort();
+        for (int i = 0; i < keyBlockCount; i++) {
+            keyBlockEnds[i] = blockStream.readShort();
         }
 
-        for (int i = 0; i < wordCount; i++) {
+        for (int i = 0; i < keyCount; i++) {
             invertedListEnds[i] = blockStream.readShort();
         }
 
-        for (int i = 0; i < wordCount; i += vocabGroup) {
+        for (int i = 0; i < keyCount; i += vocabGroup) {
             int suffixLength = blockStream.readUnsignedByte();
-            int wordLength = suffixLength + prefixLength;
-            byte[] wordBytes = new byte[wordLength];
-            byte[] lastWordBytes = wordBytes;
-            System.arraycopy(prefixBytes, 0, wordBytes, 0, prefixBytes.length);
-            int end = (int) Math.min(wordCount, i + vocabGroup);
+            int keyLength = suffixLength + prefixLength;
+            byte[] keyBytes = new byte[keyLength];
+            byte[] lastKeyBytes = keyBytes;
+            System.arraycopy(prefixBytes, 0, keyBytes, 0, prefixBytes.length);
+            int end = (int) Math.min(keyCount, i + vocabGroup);
 
-            blockStream.readFully(wordBytes, prefixBytes.length,
-                                  wordBytes.length - prefixBytes.length);
-            words[i] = Utility.makeString(wordBytes);
+            blockStream.readFully(keyBytes, prefixBytes.length,
+                                  keyBytes.length - prefixBytes.length);
+            keys[i] = keyBytes;
 
             for (int j = i + 1; j < end; j++) {
                 int common = blockStream.readUnsignedByte();
-                wordLength = blockStream.readUnsignedByte();
-                assert wordLength >= 0 : "Negative word length: " + wordLength + " " + j;
-                assert wordLength >= common : "word length too small: " + wordLength + " " + common + " " + j;
-                wordBytes = new byte[wordLength];
+                keyLength = blockStream.readUnsignedByte();
+                assert keyLength >= 0 : "Negative key length: " + keyLength + " " + j;
+                assert keyLength >= common : "key length too small: " + keyLength + " " + common + " " + j;
+                keyBytes = new byte[keyLength];
 
                 try {
-                    System.arraycopy(lastWordBytes, 0, wordBytes, 0, common);
-                    blockStream.readFully(wordBytes, common, wordLength - common);
+                    System.arraycopy(lastKeyBytes, 0, keyBytes, 0, common);
+                    blockStream.readFully(keyBytes, common, keyLength - common);
                 } catch (ArrayIndexOutOfBoundsException e) {
-                    System.out.println("wl: " + wordLength + " c: " + common);
+                    System.out.println("wl: " + keyLength + " c: " + common);
                     throw e;
                 }
-                words[j] = Utility.makeString(wordBytes);
-                lastWordBytes = wordBytes;
+                keys[j] = keyBytes;
+                lastKeyBytes = keyBytes;
             }
         }
 
-        int suffixBytes = wordBlockEnds[wordBlockEnds.length - 1];
-        long headerLength = 8 + // word count
+        int suffixBytes = keyBlockEnds[keyBlockEnds.length - 1];
+        long headerLength = 8 + // key count
                 8 + // block end
-                1 + prefixLength + // word prefix bytes
-                2 * wordBlockCount + // word lengths 
-                2 * wordCount + // inverted list endings
+                1 + prefixLength + // key prefix bytes
+                2 * keyBlockCount + // key lengths
+                2 * keyCount + // inverted list endings
                 suffixBytes;          // suffix storage 
 
         long startInvertedLists = slotBegin + headerLength;
-        return new VocabularyBlock(slotBegin, startInvertedLists, endBlock, invertedListEnds, words);
+        return new VocabularyBlock(slotBegin, startInvertedLists, endBlock, invertedListEnds, keys);
     }
 }
