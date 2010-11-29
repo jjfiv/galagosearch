@@ -408,21 +408,23 @@ public class SearchWebHandler extends AbstractHandler {
   }
 
   public void handle(String target,
-          HttpServletRequest request,
-          HttpServletResponse response,
-          int dispatch) throws IOException, ServletException {
+      HttpServletRequest request,
+      HttpServletResponse response,
+      int dispatch) throws IOException, ServletException {
     if (request.getPathInfo().equals("/search")) {
       try {
         handleSearch(request, response);
-      } catch (Exception e) {
+      } catch(Exception e) {
         throw new ServletException("Caught exception from handleSearch", e);
       }
     } else if (request.getPathInfo().equals("/document")) {
       handleDocument(request, response);
+    } else if (request.getPathInfo().equals("/documentnames")) {
+      handleDocumentNames(request, response);
     } else if (request.getPathInfo().equals("/searchxml")) {
       try {
         handleSearchXML(request, response);
-      } catch (Exception e) {
+      } catch(Exception e) {
         throw new ServletException("Caught exception from handleSearchXML", e);
       }
     } else if (request.getPathInfo().equals("/snippet")) {

@@ -496,9 +496,12 @@ public class App {
     BatchSearch.run(Utility.subarray(args, 1), output);
   }
 
+  /*
+   * handle search is repeated 3 times
+   */
   private void handleSearch(Parameters p) throws Exception {
     Search search = new Search(p);
-    int port = Integer.parseInt(p.get("port", "0"));
+    int port = (int) p.get("port", 0);
     if (port == 0) {
       port = Utility.getFreePort();
     } else {
@@ -512,50 +515,24 @@ public class App {
     output.println("Server: http://localhost:" + port);
   }
 
-  private void handleSearch(Retrieval retrieval, DocumentStore store) throws Exception {
-    Search search = new Search(retrieval, store);
-    int port = Utility.getFreePort();
-    Server server = new Server(port);
-    server.addHandler(new SearchWebHandler(search));
-    server.start();
-    output.println("Server: http://localhost:" + port);
-  }
-
-  private DocumentStore getDocumentStore(String[] corpusFiles) throws IOException {
-    DocumentStore store = null;
-    if (corpusFiles.length > 0) {
-      ArrayList<DocumentReader> readers = new ArrayList<DocumentReader>();
-      for (int i = 0; i < corpusFiles.length; ++i) {
-        if (CorpusReader.isCorpus(corpusFiles[i])) {
-          readers.add(new CorpusReader(corpusFiles[i]));
-        } else {
-          readers.add(new DocumentIndexReader(corpusFiles[i]));
-        }
-      }
-      store = new DocumentIndexStore(readers);
-    } else {
-      store = new NullStore();
-    }
-    return store;
-  }
-
   private void handleSearch(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelp("search");
       return;
     }
+
     // This is put in there to handle ONLY a parameter file, since
     // if you're loading multiple indexes you need to use a parameter file for it.
     if (args.length == 2 && args[1].endsWith(".xml")) {
       File f = new File(args[1]);
       Parameters p = new Parameters(f);
       handleSearch(p);
-    } else {
 
+    } else {
       String indexPath = args[1];
       String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
       String[] flags = filtered[0];
-      String[] corpusFiles = filtered[1];
+      String[] corpora = filtered[1];
 
       // Any flag marked '--parameters' marks a parameters file.
       // We trim that part of the flag off so that the Parameters object will
@@ -565,8 +542,11 @@ public class App {
       }
 
       Parameters p = new Parameters(flags);
-      Retrieval retrieval = Retrieval.instance(indexPath, p);
-      handleSearch(retrieval, getDocumentStore(corpusFiles));
+      p.add("index", indexPath);
+      for (String corpus : corpora) {
+        p.add("corpus", corpus);
+      }
+      handleSearch(p);
     }
   }
 
@@ -718,6 +698,12 @@ public class App {
       output.println("  the documentation for ");
       output.println("  org.galagosearch.core.retrieval.structured.FeatureFactory for more");
       output.println("  information.");
+      output.println();
+      output.println("  Parameters availiable:");
+      output.println("   --corpus={file path} : corpus file path");
+      output.println("   --index={file path}  : index file path");
+      output.println("   --index={url}        : galago search url (for distributed retrieval)");
+      output.println("   --port={int<65000}   : port number for web retrieval. ");
     } else if (command.equals("all")) {
       String[] commands = {"batch-search", "build", "doc", "dump-connection", "dump-corpus",
         "dump-index", "dump-keys", "eval", "make-corpus", "search"};
