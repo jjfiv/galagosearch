@@ -49,7 +49,7 @@ public class StructuredRetrievalTest extends TestCase {
         TupleFlowParameters extParameters = new FakeParameters(extp);
 
         ExtentIndexWriter ewriter = new ExtentIndexWriter(extParameters);
-        ewriter.processExtentName(Utility.makeBytes("title"));
+        ewriter.processExtentName(Utility.fromString("title"));
         ewriter.processNumber(1);
         ewriter.processBegin(1);
         ewriter.processTuple(3);
@@ -62,7 +62,7 @@ public class StructuredRetrievalTest extends TestCase {
 
         PositionIndexWriter pwriter = new PositionIndexWriter(posParameters);
 
-        pwriter.processWord(Utility.makeBytes("a"));
+        pwriter.processWord(Utility.fromString("a"));
         pwriter.processDocument(1);
         pwriter.processPosition(1);
         pwriter.processPosition(2);
@@ -74,7 +74,7 @@ public class StructuredRetrievalTest extends TestCase {
         pwriter.processDocument(5);
         pwriter.processPosition(1);
 
-        pwriter.processWord(Utility.makeBytes("b"));
+        pwriter.processWord(Utility.fromString("b"));
         pwriter.processDocument(1);
         pwriter.processPosition(2);
         pwriter.processPosition(4);
