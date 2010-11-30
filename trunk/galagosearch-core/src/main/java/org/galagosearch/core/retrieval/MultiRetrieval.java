@@ -22,171 +22,194 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public class MultiRetrieval extends Retrieval {
 
-  HashMap<String, ArrayList<Retrieval>> retrievals;
-  // for asynchronous retrieval
-  Thread runner;
-  String query;
-  Parameters queryParams;
-  List<ScoredDocument> queryResults;
+    HashMap<String, ArrayList<Retrieval>> retrievals;
+    // for asynchronous retrieval
+    Thread runner;
+    String query;
+    Parameters queryParams;
+    List<ScoredDocument> queryResults;
 
-  public MultiRetrieval(Parameters p) throws Exception {
-    this.retrievals = new HashMap<String, ArrayList<Retrieval>>();
-    this.retrievals.put("all", new ArrayList<Retrieval>());
+    public MultiRetrieval(Parameters p) throws Exception {
+        this.retrievals = new HashMap<String, ArrayList<Retrieval>>();
+        this.retrievals.put("all", new ArrayList<Retrieval>());
 
-    // Load up the indexes
-    String id, path;
-    List<Parameters.Value> indexes = p.list("index");
-    for (Parameters.Value value : indexes) {
-      id = "all";
-      if (value.containsKey("path")) {
-        path = value.get("path").toString();
-        if (value.containsKey("id")) {
-          id = value.get("id").toString();
+        // Load up the indexes
+        String id, path;
+        List<Parameters.Value> indexes = p.list("index");
+        for (Parameters.Value value : indexes) {
+            id = "all";
+            if (value.containsKey("path")) {
+                path = value.get("path").toString();
+                if (value.containsKey("id")) {
+                    id = value.get("id").toString();
+                }
+            } else {
+                path = value.toString();
+            }
+            if (!retrievals.containsKey(id)) {
+                retrievals.put(id, new ArrayList<Retrieval>());
+            }
+
+            try {
+                Retrieval r = Retrieval.instance(path, p);
+                retrievals.get(id).add(r);
+                if (!id.equals("all")) {
+                    retrievals.get("all").add(r); // Always put it in default as well
+                }
+            } catch (Exception e) {
+                System.err.println("Unable to load index (" + id + ") at path " + path + ": " + e.getMessage());
+            }
         }
-      } else {
-        path = value.toString();
-      }
-      if (!retrievals.containsKey(id)) {
-        retrievals.put(id, new ArrayList<Retrieval>());
-      }
+    }
 
-      try {
-        Retrieval r = Retrieval.instance(path, p);
-        retrievals.get(id).add(r);
-        if (!id.equals("all")) {
-          retrievals.get("all").add(r); // Always put it in default as well
+    public void close() throws IOException {
+        for (String desc : retrievals.keySet()) {
+            ArrayList<Retrieval> collGroup = retrievals.get(desc);
+            for (Retrieval r : collGroup) {
+                r.close();
+            }
         }
-      } catch (Exception e) {
-        System.err.println("Unable to load index (" + id + ") at path " + path + ": " + e.getMessage());
-      }
-    }
-  }
-
-  public void close() throws IOException {
-    for (String desc : retrievals.keySet()) {
-      ArrayList<Retrieval> collGroup = retrievals.get(desc);
-      for (Retrieval r : collGroup) {
-        r.close();
-      }
-    }
-  }
-
-  // function accumulates statistics accross index subset
-  public Parameters getRetrievalStatistics() throws Exception {
-    throw new Exception("unimplemented");
-  }
-
-
-  /**
-   *
-   * Runs a query across all retrieval objects
-   *
-   * @param query
-   * @param parameters
-   * @return
-   * @throws Exception
-   */
-  public ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception {
-    String retrievalGroup = parameters.get("retrievalGroup", "all");
-    if (!retrievals.containsKey(retrievalGroup)) {
-      // this should fail nicely
-      // Print a fail, then return null
-      throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + query + "'");
-    }
-    ArrayList<Retrieval> subset = retrievals.get(retrievalGroup);
-    List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
-
-    Parameters shardTemplate = parameters.clone();
-
-    if (parameters.get("transform", true)) {
-      Node queryRoot = parseQuery(query, parameters);
-      queryRoot = transformQuery(queryRoot);
-      query = queryRoot.toString();
-      shardTemplate.set("transform", "false");
     }
 
-    // Asynchronous retrieval
-    String indexId = parameters.get("indexId", "0");
-
-    for (int i = 0; i < subset.size(); i++) {
-      Parameters shardParams = shardTemplate.clone();
-      shardParams.set("indexId", indexId + "." + Integer.toString(i));
-      Retrieval r = subset.get(i);
-      r.runAsynchronousQuery(query, shardParams, queryResults);
+    // function accumulates statistics accross index subset
+    public Parameters getRetrievalStatistics() throws Exception {
+        throw new Exception("unimplemented");
     }
 
-    // Wait for a finished list
-    for (Retrieval r : subset) {
-      r.waitForAsynchronousQuery();
+    /**
+     *
+     * Runs a query across all retrieval objects
+     *
+     * @param query
+     * @param parameters
+     * @return
+     * @throws Exception
+     */
+    public ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception {
+        String retrievalGroup = parameters.get("retrievalGroup", "all");
+        if (!retrievals.containsKey(retrievalGroup)) {
+            // this should fail nicely
+            // Print a fail, then return null
+            throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + query + "'");
+        }
+        ArrayList<Retrieval> subset = retrievals.get(retrievalGroup);
+        List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
+
+        Parameters shardTemplate = parameters.clone();
+
+        if (parameters.get("transform", true)) {
+            Node queryRoot = parseQuery(query, parameters);
+            queryRoot = transformQuery(queryRoot);
+            query = queryRoot.toString();
+            shardTemplate.set("transform", "false");
+        }
+
+        // Asynchronous retrieval
+        String indexId = parameters.get("indexId", "0");
+
+        for (int i = 0; i < subset.size(); i++) {
+            Parameters shardParams = shardTemplate.clone();
+            shardParams.set("indexId", indexId + "." + Integer.toString(i));
+            Retrieval r = subset.get(i);
+            r.runAsynchronousQuery(query, shardParams, queryResults);
+        }
+
+        // Wait for a finished list
+        for (Retrieval r : subset) {
+            r.waitForAsynchronousQuery();
+        }
+
+        // sort the results
+        Collections.sort(queryResults);
+
+        // get the best {requested} results
+        int requested = (int) parameters.get("requested", 1000);
+        return queryResults.subList(0, requested).toArray(new ScoredDocument[0]);
     }
 
-    // sort the results
-    Collections.sort(queryResults);
+    public void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+        this.query = query;
+        this.queryParams = parameters;
+        this.queryResults = queryResults;
 
-    // get the best {requested} results
-    int requested = (int) parameters.get("requested", 1000);
-    return queryResults.subList(0, requested).toArray(new ScoredDocument[0]);
-  }
-
-  public void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
-    this.query = query;
-    this.queryParams = parameters;
-    this.queryResults = queryResults;
-
-    runner = new Thread(this);
-    runner.start();
-  }
-
-  public void waitForAsynchronousQuery() throws InterruptedException {
-    this.join();
-  }
-
-  // Finish and clean up
-  public void join() throws InterruptedException {
-    if (runner != null) {
-      runner.join();
-    }
-    query = null;
-    runner = null;
-  }
-
-  public void run() {
-    // we haven't got a query to run - return
-    if (query == null) {
-      return;
+        runner = new Thread(this);
+        runner.start();
     }
 
-    try {
-      ScoredDocument[] results = runQuery(query, queryParams);
-
-      // Now add it to the output structure, but synchronously
-      synchronized (queryResults) {
-        queryResults.addAll(Arrays.asList(results));
-      }
-    } catch (Exception e) {
-      // TODO: use logger here
-      System.err.println("ERROR RETRIEVING: " + e.getMessage());
-    }
-  }
-
-  // private functions
-  private Node parseQuery(String query, Parameters parameters) {
-    String queryType = parameters.get("queryType", "complex");
-
-    if (queryType.equals("simple")) {
-      return SimpleQuery.parseTree(query);
+    public void waitForAsynchronousQuery() throws InterruptedException {
+        this.join();
     }
 
-    return StructuredQuery.parse(query);
-  }
+    // Finish and clean up
+    public void join() throws InterruptedException {
+        if (runner != null) {
+            runner.join();
+        }
+        query = null;
+        runner = null;
+    }
 
-  private Node transformQuery(Node queryTree) throws Exception {
-    throw new Exception("unimplemented");
+    public void run() {
+        // we haven't got a query to run - return
+        if (query == null) {
+            return;
+        }
+
+        try {
+            ScoredDocument[] results = runQuery(query, queryParams);
+
+            // Now add it to the output structure, but synchronously
+            synchronized (queryResults) {
+                queryResults.addAll(Arrays.asList(results));
+            }
+        } catch (Exception e) {
+            // TODO: use logger here
+            System.err.println("ERROR RETRIEVING: " + e.getMessage());
+        }
+    }
+
+    // private functions
+    private Node parseQuery(String query, Parameters parameters) {
+        String queryType = parameters.get("queryType", "complex");
+
+        if (queryType.equals("simple")) {
+            return SimpleQuery.parseTree(query);
+        }
+
+        return StructuredQuery.parse(query);
+    }
+
+    private Node transformQuery(Node queryTree) throws Exception {
+        throw new Exception("unimplemented");
 //    List<Traversal> traversals = featureFactory.getTraversals(this);
 //    for (Traversal traversal : traversals) {
 //     queryTree = StructuredQuery.copy(traversal, queryTree);
 //   }
 //   return queryTree;
-  }
+    }
 
+    /**
+     * Currently does this synchronously to make sure it works.
+     * We can multi-thread it when we have time.
+     */
+    @Override
+    public long xcount(String nodeString) throws Exception {
+        // For now, grab the parameters from the node itself.
+        // Maybe a better option than parsing the query at EVERY level,
+        // but at least it works.
+        Node countNode = StructuredQuery.parse(nodeString);
+        Parameters parameters = countNode.getParameters();
+        String retrievalGroup = parameters.get("retrievalGroup", "all");
+        if (!retrievals.containsKey(retrievalGroup)) {
+            // this should fail nicely
+            // Print a fail, then return null
+            throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + query + "'");
+        }
+        ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
+        long count = 0;
+        for (Retrieval r : selected) {
+            count += r.xcount(nodeString);
+        }
+        return count;
+    }
 }

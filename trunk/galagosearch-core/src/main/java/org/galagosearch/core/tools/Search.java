@@ -112,6 +112,10 @@ public class Search {
     return store.get(identifier);
   }
 
+  public long xcount(String nodeString) throws Exception {
+      return this.retrieval.xcount(nodeString);
+  }
+
   public SearchResult runQuery(String query, int startAt, int count, boolean summarize, String id) throws Exception {
     Parameters p = new Parameters();
     p.add("indexId", "0");

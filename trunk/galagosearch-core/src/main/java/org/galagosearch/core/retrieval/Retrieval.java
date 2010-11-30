@@ -21,6 +21,16 @@ public abstract class Retrieval implements Runnable {
   // should return collections statistics (collection length + documentCount + availiable parts)
   public abstract Parameters getRetrievalStatistics() throws Exception;
 
+  /**
+   * Returns the count of the expression provided to the method. Therefore the
+   * string passed should represent a node type that will produce a CountIterator.
+   *
+   * @param nodeString
+   * @return The count of the provided expression
+   * @throws Exception
+   */
+  public abstract long xcount(String nodeString) throws Exception;
+
   public abstract ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception;
 
   // These are to allow for asynchronous execution

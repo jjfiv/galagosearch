@@ -272,7 +272,8 @@ public class SearchWebHandler extends AbstractHandler {
     return identifier.substring(lastPath + 1, identifier.length() - 4);
   }
 
-  public void handleSearchXML(HttpServletRequest request, HttpServletResponse response) throws IllegalStateException, IllegalArgumentException, IOException, Exception {
+  public void handleSearchXML(HttpServletRequest request, HttpServletResponse response)
+          throws IllegalStateException, IllegalArgumentException, IOException, Exception {
     SearchResult result = performSearch(request);
     PrintWriter writer = response.getWriter();
     XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
@@ -334,6 +335,23 @@ public class SearchWebHandler extends AbstractHandler {
       outputter.endTag(); // result
     }
     outputter.endTag();
+    outputter.endDocument();
+  }
+
+  public void handleXCount(HttpServletRequest request, HttpServletResponse response) 
+          throws IllegalStateException, IllegalArgumentException, IOException, Exception {
+      String exp = request.getParameter("expression");
+      long count = search.xcount(exp);
+          PrintWriter writer = response.getWriter();
+    XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
+    response.setContentType("text/xml");
+    outputter.startTag("response");
+
+    outputter.startTag("count");
+    outputter.pcdata(Long.toString(count));
+    outputter.endTag(); // count
+
+    outputter.endTag(); // response
     outputter.endDocument();
   }
 
@@ -433,6 +451,12 @@ public class SearchWebHandler extends AbstractHandler {
       } catch(Exception e) {
         throw new ServletException("Caught exception from handleSearchXML", e);
       }
+    } else if (request.getPathInfo().equals("/xcount")) {
+        try {
+          handleXCount(request, response);
+        } catch(Exception e) {
+            throw new ServletException("Caught exception from handleXCount", e);
+        }
     } else if (request.getPathInfo().equals("/snippet")) {
       handleSnippet(request, response);
     } else if (request.getPathInfo().startsWith("/images")) {
