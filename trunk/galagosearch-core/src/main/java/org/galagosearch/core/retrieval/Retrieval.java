@@ -19,7 +19,7 @@ public abstract class Retrieval implements Runnable {
   public abstract void close() throws IOException;
 
   // should return collections statistics (collection length + documentCount + availiable parts)
-  public abstract Parameters getRetrievalStatistics() throws Exception;
+  public abstract Parameters getRetrievalStatistics() throws IOException ;
 
   /**
    * Returns the count of the expression provided to the method. Therefore the

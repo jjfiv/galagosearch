@@ -38,7 +38,7 @@ public class Search {
     generator = new SnippetGenerator();
   }
 
-  public Search(Parameters params) throws IOException {
+  public Search(Parameters params) throws Exception {
     this.store = getDocumentStore(params.list("corpus"));
     this.retrieval = new StructuredRetrieval(params.get("index"), new Parameters());
     generator = new SnippetGenerator();
@@ -61,6 +61,10 @@ public class Search {
       store = new NullStore();
     }
     return store;
+  }
+
+  public Parameters getRetrievalStats() throws IOException{
+    return retrieval.getRetrievalStatistics();
   }
 
   public void close() throws IOException {

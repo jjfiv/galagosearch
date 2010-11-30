@@ -72,8 +72,8 @@ public class MultiRetrieval extends Retrieval {
     }
 
     // function accumulates statistics accross index subset
-    public Parameters getRetrievalStatistics() throws Exception {
-        throw new Exception("unimplemented");
+    public Parameters getRetrievalStatistics() throws IOException {
+        throw new IOException("unimplemented");
     }
 
     /**

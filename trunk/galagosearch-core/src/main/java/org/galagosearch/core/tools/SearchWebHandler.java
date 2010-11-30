@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.tools.Search.SearchResult;
 import org.galagosearch.core.tools.Search.SearchResultItem;
+import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 import org.mortbay.jetty.handler.AbstractHandler;
 import org.znerd.xmlenc.XMLOutputter;
@@ -84,32 +85,31 @@ public class SearchWebHandler extends AbstractHandler {
 
   /*
   public void handleDocumentNames(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    String idsStr = request.getParameter("ids");
-    String[] ids = idsStr.split(",");
-    PrintWriter writer = response.getWriter();
-    XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
-    response.setContentType("text/xml");
-    outputter.startTag("response");
-    for (String id : ids) {
-      String documentName = search.getDocumentName(Integer.parseInt(id));
-      outputter.startTag("result");
+  String idsStr = request.getParameter("ids");
+  String[] ids = idsStr.split(",");
+  PrintWriter writer = response.getWriter();
+  XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
+  response.setContentType("text/xml");
+  outputter.startTag("response");
+  for (String id : ids) {
+  String documentName = search.getDocumentName(Integer.parseInt(id));
+  outputter.startTag("result");
 
-      outputter.startTag("id");
-      outputter.pcdata(id);
-      outputter.endTag();
+  outputter.startTag("id");
+  outputter.pcdata(id);
+  outputter.endTag();
 
-      outputter.startTag("name");
-      outputter.pcdata(documentName);
-      outputter.endTag();
+  outputter.startTag("name");
+  outputter.pcdata(documentName);
+  outputter.endTag();
 
-      outputter.endTag();
-    }
-    outputter.endTag(); // response
-    outputter.endDocument();
+  outputter.endTag();
+  }
+  outputter.endTag(); // response
+  outputter.endDocument();
   }
    * 
    */
-
   public void handleDocument(HttpServletRequest request, HttpServletResponse response) throws IOException {
     request.getParameterMap();
     String identifier = request.getParameter("identifier");
@@ -338,11 +338,11 @@ public class SearchWebHandler extends AbstractHandler {
     outputter.endDocument();
   }
 
-  public void handleXCount(HttpServletRequest request, HttpServletResponse response) 
+  public void handleXCount(HttpServletRequest request, HttpServletResponse response)
           throws IllegalStateException, IllegalArgumentException, IOException, Exception {
-      String exp = request.getParameter("expression");
-      long count = search.xcount(exp);
-          PrintWriter writer = response.getWriter();
+    String exp = request.getParameter("expression");
+    long count = search.xcount(exp);
+    PrintWriter writer = response.getWriter();
     XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
     response.setContentType("text/xml");
     outputter.startTag("response");
@@ -353,6 +353,14 @@ public class SearchWebHandler extends AbstractHandler {
 
     outputter.endTag(); // response
     outputter.endDocument();
+  }
+
+  public void handleStats(HttpServletRequest request, HttpServletResponse response)
+          throws IllegalStateException, IllegalArgumentException, IOException {
+    Parameters p = search.getRetrievalStats();
+    PrintWriter writer = response.getWriter();
+    writer.write(p.toString());
+    writer.close();
   }
 
   public void writeCollectionSelector(PrintWriter writer) {
@@ -430,37 +438,39 @@ public class SearchWebHandler extends AbstractHandler {
   }
 
   public void handle(String target,
-      HttpServletRequest request,
-      HttpServletResponse response,
-      int dispatch) throws IOException, ServletException {
+          HttpServletRequest request,
+          HttpServletResponse response,
+          int dispatch) throws IOException, ServletException {
     if (request.getPathInfo().equals("/search")) {
       try {
         handleSearch(request, response);
-      } catch(Exception e) {
+      } catch (Exception e) {
         throw new ServletException("Caught exception from handleSearch", e);
       }
     } else if (request.getPathInfo().equals("/document")) {
       handleDocument(request, response);
 
-    //} else if (request.getPathInfo().equals("/documentnames")) {
-    //handleDocumentNames(request, response);
+      //} else if (request.getPathInfo().equals("/documentnames")) {
+      //handleDocumentNames(request, response);
 
     } else if (request.getPathInfo().equals("/searchxml")) {
       try {
         handleSearchXML(request, response);
-      } catch(Exception e) {
+      } catch (Exception e) {
         throw new ServletException("Caught exception from handleSearchXML", e);
       }
     } else if (request.getPathInfo().equals("/xcount")) {
-        try {
-          handleXCount(request, response);
-        } catch(Exception e) {
-            throw new ServletException("Caught exception from handleXCount", e);
-        }
+      try {
+        handleXCount(request, response);
+      } catch (Exception e) {
+        throw new ServletException("Caught exception from handleXCount", e);
+      }
     } else if (request.getPathInfo().equals("/snippet")) {
       handleSnippet(request, response);
     } else if (request.getPathInfo().startsWith("/images")) {
       handleImage(request, response);
+    } else if (request.getPathInfo().equals("/stats")) {
+      handleStats(request, response);
     } else {
       handleMainPage(request, response);
     }

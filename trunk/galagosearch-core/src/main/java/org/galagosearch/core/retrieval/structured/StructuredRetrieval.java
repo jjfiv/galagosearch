@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Set;
 import org.galagosearch.core.index.StructuredIndex;
+import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
@@ -16,6 +18,7 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Parameters.Value;
 
 /**
  * 10/7/2010 - Modified for asynchronous execution
@@ -52,12 +55,29 @@ public class StructuredRetrieval extends Retrieval {
         index.close();
     }
 
-    public Parameters getRetrievalStatistics() throws Exception {
+    /*
+     * <parameters>
+     *  <collectionLength>cl<collectionLength>
+     *  <documentCount>dc<documentCount>
+     *  <part>
+     *   <partName>n</partName>
+     *   (<nodeType>n</nodeType>) +
+     *  </part>
+     * </parameters>
+     */
+    public Parameters getRetrievalStatistics() throws IOException {
         Parameters p = new Parameters();
         p.add("collectionLength", Long.toString(index.getCollectionLength()));
         p.add("documentCount", Long.toString(index.getDocumentCount()));
         for (String partName : index.getPartNames()) {
             p.add("part", partName);
+        }
+        for(Value part : p.list("part")){
+          Set<String> nodeTypes = index.getPartNodeTypes(part.toString());
+          part.add("partName", part.toString());
+          for(String nodeType : nodeTypes){
+            part.add("nodeType", nodeType);
+          }
         }
         return p;
     }
