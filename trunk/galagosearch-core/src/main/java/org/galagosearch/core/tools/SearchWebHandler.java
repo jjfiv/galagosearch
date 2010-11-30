@@ -179,7 +179,7 @@ public class SearchWebHandler extends AbstractHandler {
   }
 
   public void handleSearch(HttpServletRequest request, HttpServletResponse response) throws Exception {
-    SearchResult result = performSearch(request);
+    SearchResult result = performSearch(request, true);
     response.setContentType("text/html");
     String displayQuery = scrub(request.getParameter("q"));
     String encodedQuery = URLEncoder.encode(request.getParameter("q"), "UTF-8");
@@ -274,7 +274,7 @@ public class SearchWebHandler extends AbstractHandler {
 
   public void handleSearchXML(HttpServletRequest request, HttpServletResponse response)
           throws IllegalStateException, IllegalArgumentException, IOException, Exception {
-    SearchResult result = performSearch(request);
+    SearchResult result = performSearch(request, false);
     PrintWriter writer = response.getWriter();
     XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
     response.setContentType("text/xml");
@@ -359,7 +359,7 @@ public class SearchWebHandler extends AbstractHandler {
           throws IllegalStateException, IllegalArgumentException, IOException {
     Parameters p = search.getRetrievalStats();
     PrintWriter writer = response.getWriter();
-    writer.write(p.toString());
+    writer.write(p.toString()); // parameters are output into an XML format already
     writer.close();
   }
 
@@ -476,14 +476,28 @@ public class SearchWebHandler extends AbstractHandler {
     }
   }
 
-  private SearchResult performSearch(HttpServletRequest request) throws Exception {
+  private SearchResult performSearch(HttpServletRequest request, boolean snippits) throws Exception {
     String query = request.getParameter("q");
     String startAtString = request.getParameter("start");
     String countString = request.getParameter("n");
-    String id = (request.getParameterValues("subset") == null) ? "all" : request.getParameterValues("subset")[0];
+    String transform = request.getParameter("transform");
+    String id = (request.getParameterValues("indexId") == null) ? "0" : request.getParameterValues("indexId")[0];
+    String retGroup = (request.getParameterValues("subset") == null) ? "all" : request.getParameterValues("subset")[0];
+    String qtype = (request.getParameterValues("qtype") == null) ? "complex" : request.getParameterValues("qtype")[0];
     int startAt = (startAtString == null) ? 0 : Integer.parseInt(startAtString);
     int resultCount = (countString == null) ? 10 : Integer.parseInt(countString);
-    SearchResult result = search.runQuery(query, startAt, resultCount, true, id);
+    boolean t = (transform == null) ? true : Boolean.parseBoolean(transform);
+
+    Parameters p = new Parameters();
+    p.add("indexId", id);
+    p.add("queryType", qtype);
+    p.add("transform", Boolean.toString(t));
+    p.add("requested", Integer.toString( startAt + resultCount ));
+    p.add("startAt", Integer.toString( startAt));
+    p.add("resultCount", Integer.toString( resultCount ));
+    p.add("retrievalGroup", retGroup);
+
+    SearchResult result = search.runQuery(query, p, snippits);
     return result;
   }
 

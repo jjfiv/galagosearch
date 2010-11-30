@@ -59,10 +59,7 @@ public class StructuredRetrieval extends Retrieval {
      * <parameters>
      *  <collectionLength>cl<collectionLength>
      *  <documentCount>dc<documentCount>
-     *  <part>
-     *   <partName>n</partName>
-     *   (<nodeType>n</nodeType>) +
-     *  </part>
+     *  (<partName>nodeType</partName>) + 
      * </parameters>
      */
     public Parameters getRetrievalStatistics() throws IOException {
@@ -70,13 +67,9 @@ public class StructuredRetrieval extends Retrieval {
         p.add("collectionLength", Long.toString(index.getCollectionLength()));
         p.add("documentCount", Long.toString(index.getDocumentCount()));
         for (String partName : index.getPartNames()) {
-            p.add("part", partName);
-        }
-        for(Value part : p.list("part")){
-          Set<String> nodeTypes = index.getPartNodeTypes(part.toString());
-          part.add("partName", part.toString());
+          Set<String> nodeTypes = index.getPartNodeTypes(partName);
           for(String nodeType : nodeTypes){
-            part.add("nodeType", nodeType);
+            p.add(partName, nodeType);
           }
         }
         return p;

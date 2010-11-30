@@ -46,12 +46,10 @@ public class BatchSearch {
         // record results requested
         int requested = (int) parameters.get("count", 1000);
 
-        // for each query, run it, get the results, look up the docnos, print in TREC format
+        // for each query, run it, get the results, print in TREC format
         for (Parameters.Value query : queries) {
-            // parse the query
+
             String queryText = query.get("text");
-            //Node queryRoot = parseQuery(queryText, parameters);
-            //queryRoot = retrieval.transformQuery(queryRoot);
 
             Parameters p = new Parameters();
             p.add("requested", Integer.toString(requested));

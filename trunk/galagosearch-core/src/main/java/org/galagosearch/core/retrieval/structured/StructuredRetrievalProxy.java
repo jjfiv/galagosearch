@@ -86,6 +86,7 @@ public class StructuredRetrievalProxy extends Retrieval {
     boolean transform = parameters.get("transform", true);
     String qtype = parameters.get("queryType", "complex");
     String indexId = parameters.get("indexId", "0");
+    String subset = parameters.get("retrievalGroup", "all");
 
     ArrayList<ScoredDocument> results = new ArrayList<ScoredDocument>();
 
@@ -97,6 +98,7 @@ public class StructuredRetrievalProxy extends Retrieval {
     request.append("&transform=").append(transform);
     request.append("&qtype=").append(qtype);
     request.append("&indexId=").append(indexId);
+    request.append("&subset=").append(subset);
 
     URL resource = new URL(request.toString());
     HttpURLConnection connection = (HttpURLConnection) resource.openConnection();

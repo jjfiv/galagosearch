@@ -513,9 +513,7 @@ public class App {
     BatchSearch.run(Utility.subarray(args, 1), output);
   }
 
-  /*
-   * handle search is repeated 3 times
-   */
+
   private void handleSearch(Parameters p) throws Exception {
     Search search = new Search(p);
     int port = (int) p.get("port", 0);

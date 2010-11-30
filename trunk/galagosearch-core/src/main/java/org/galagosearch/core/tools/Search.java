@@ -32,12 +32,6 @@ public class Search {
   DocumentStore store;
   Retrieval retrieval;
 
-  public Search(Retrieval retrieval, DocumentStore store) {
-    this.store = store;
-    this.retrieval = retrieval;
-    generator = new SnippetGenerator();
-  }
-
   public Search(Parameters params) throws Exception {
     this.store = getDocumentStore(params.list("corpus"));
     this.retrieval = new StructuredRetrieval(params.get("index"), new Parameters());
@@ -120,10 +114,10 @@ public class Search {
       return this.retrieval.xcount(nodeString);
   }
 
-  public SearchResult runQuery(String query, int startAt, int count, boolean summarize, String id) throws Exception {
-    Parameters p = new Parameters();
-    p.add("indexId", "0");
-    p.add("requested", Integer.toString(startAt + count));
+  public SearchResult runQuery(String query, Parameters p, boolean summarize) throws Exception {
+    int startAt = Integer.parseInt(p.get("startAt"));
+    int count = Integer.parseInt(p.get("resultCount"));
+    
     ScoredDocument[] results = retrieval.runQuery(query, p);
     SearchResult result = new SearchResult();
 
