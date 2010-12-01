@@ -111,7 +111,7 @@ public class App {
     output.println("                           0 --> keep all data");
     output.println("                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)");
     output.println("                           2 --> delete entire temp directory");
-    output.println("                           [default=0]");
+    output.println("                           [default=2]");
     output.println("  --distrib={int > 1}:     Selects the number of simultaneous jobs to create");
     output.println("                           [default = 10]");
   }

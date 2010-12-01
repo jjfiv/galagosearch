@@ -17,7 +17,7 @@ public class SparseFloatListWriter implements
   DoubleInvertedList list;
 
   public class DoubleInvertedList implements IndexElement {
-    BackedCompressedByteBuffer data = new BackedCompressedByteBuffer();
+    CompressedRawByteBuffer data = new CompressedRawByteBuffer();
     CompressedByteBuffer header = new CompressedByteBuffer();
     int lastDocument;
     int documentCount;

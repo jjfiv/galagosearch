@@ -29,9 +29,9 @@ public class PositionIndexWriter implements
 
     public class PositionsList implements IndexElement {
         public PositionsList() {
-            documents = new BackedCompressedByteBuffer();
-            counts = new BackedCompressedByteBuffer();
-            positions = new BackedCompressedByteBuffer();
+            documents = new CompressedRawByteBuffer();
+            counts = new CompressedRawByteBuffer();
+            positions = new CompressedRawByteBuffer();
             header = new CompressedByteBuffer();
         }
 
@@ -114,9 +114,9 @@ public class PositionIndexWriter implements
         private int totalPositionCount;
         public byte[] word;
         public CompressedByteBuffer header;
-        public BackedCompressedByteBuffer documents;
-        public BackedCompressedByteBuffer counts;
-        public BackedCompressedByteBuffer positions;
+        public CompressedRawByteBuffer documents;
+        public CompressedRawByteBuffer counts;
+        public CompressedRawByteBuffer positions;
     }
     long maximumDocumentCount = 0;
     long maximumDocumentNumber = 0;

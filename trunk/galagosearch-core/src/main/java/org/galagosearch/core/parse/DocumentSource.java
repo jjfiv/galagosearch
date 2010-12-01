@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
@@ -189,7 +190,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
 
         // Eventually it'd be nice to do more format detection here.
         if (fileType == null) {
-          System.err.println("Skipping: " + fileName);
+          if (emitSplits) System.err.println("Skipping: " + fileName);
           return;
         }
       }
@@ -270,29 +271,21 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
   // (i.e. <doc> to </doc>), and look for the following
   // tags: <docno> and (<text> or <html>)
   private String detectTrecTextOrWeb(String fileName) {
-
+    String fileType = null;
+    BufferedReader br;
     try {
-      BufferedReader br = new BufferedReader(new FileReader(fileName));
+      br = new BufferedReader(new FileReader(fileName));
       String line;
 
-      // check the first ten lines for a "<doc>" line
-      //  - as file could have some header data
-      boolean docflag = false;
-      for (int i = 0; i < 10; i++) {
-        line = br.readLine();
-        if (line != null
-                && line.equalsIgnoreCase("<doc>")) {
-          docflag = true;
-        }
-      }
-      if (!docflag) {
-        return null;
+      // check the first line for a "<doc>" line
+      line = br.readLine();
+      if (line == null || line.equalsIgnoreCase("<doc>") == false) {
+          return fileType;
       }
 
       // Now just read until we see docno and (text or html) tags
       boolean hasDocno, hasHtml, hasText;
       hasDocno = hasHtml = hasText = false;
-      String fileType = null;
       while (br.ready()) {
         line = br.readLine();
         if (line == null || line.equalsIgnoreCase("</doc>")) {
@@ -316,7 +309,6 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
         }
       }
       br.close();
-
       return fileType;
     } catch (IOException ioe) {
       ioe.printStackTrace(System.err);

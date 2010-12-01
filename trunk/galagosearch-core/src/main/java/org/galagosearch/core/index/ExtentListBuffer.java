@@ -9,7 +9,7 @@ public class ExtentListBuffer implements IndexElement {
     documentCount = 0;
     extentCount = 0;
     endCount = 0;
-    data = new BackedCompressedByteBuffer();
+    data = new CompressedRawByteBuffer();
     header = new CompressedByteBuffer();
     documentExtents = new CompressedByteBuffer();
   }
@@ -96,6 +96,6 @@ public class ExtentListBuffer implements IndexElement {
   private int documentCount;
   public byte[] word;
   public CompressedByteBuffer header;
-  public BackedCompressedByteBuffer data;
+  public CompressedRawByteBuffer data;
   public CompressedByteBuffer documentExtents;
 }
