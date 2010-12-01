@@ -1,7 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.tupleflow.execution;
 
+import java.io.BufferedReader;
 import java.net.UnknownHostException;
 import org.mortbay.jetty.Server;
 import org.galagosearch.tupleflow.Utility;
@@ -13,6 +13,7 @@ import org.galagosearch.tupleflow.execution.StageInstanceDescription.PipeInput;
 import org.galagosearch.tupleflow.execution.StageInstanceDescription.PipeOutput;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.galagosearch.tupleflow.Parameters;
 import org.mortbay.jetty.bio.SocketConnector;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -55,10 +57,15 @@ import org.xml.sax.SAXParseException;
  * <p>TupleFlow has many different kinds of StageExecutors you can use.  To get started
  * and to debug your code, use the LocalStageExecutor or ThreadedExecutor.  To harness
  * more parallelism, use the SSHStageExecutor or the DRMAAStageExecutor.</p>
- * 
+ *
+ * <p>(12/01/2010, irmarc): Added a bit of code to print out the server url on command. Hit 'space'
+ * to see it.</p>
+ *
  * @author trevor
+ * @author irmarc
  */
 public class JobExecutor {
+
     ErrorStore store;
     Job job;
     String temporaryStorage;
@@ -340,15 +347,15 @@ public class JobExecutor {
         }
         Stage s = new Stage(mergedStageName);
         s.add(new StageConnectionPoint(ConnectionPointType.Input,
-                                       pointName,
-                                       className,
-                                       typeOrder,
-                                       null));
+                pointName,
+                className,
+                typeOrder,
+                null));
         s.add(new StageConnectionPoint(ConnectionPointType.Output,
-                                       pointName + "-merged",
-                                       className,
-                                       typeOrder,
-                                       null));
+                pointName + "-merged",
+                className,
+                typeOrder,
+                null));
 
         s.add(new InputStep(pointName));
         s.add(new OutputStep(mergedPointName));
@@ -360,10 +367,10 @@ public class JobExecutor {
         // run through the connections list, find all inputs for the previous data
         for (Connection connection : job.connections) {
             for (ConnectionEndPoint input : connection.inputs) {
-                if (input.getStageName().equals(stageName) &&
-                        input.getPointName().equals(pointName)) {
-                    if (hash != null && connection.hash != null &&
-                        !Arrays.equals(hash,connection.hash)) {
+                if (input.getStageName().equals(stageName)
+                        && input.getPointName().equals(pointName)) {
+                    if (hash != null && connection.hash != null
+                            && !Arrays.equals(hash, connection.hash)) {
                         continue;
                     }
                     if (connection.hash != null) {
@@ -379,10 +386,10 @@ public class JobExecutor {
 
         // now, add a connection between the producing stage and the merge stage
         job.connect(new StagePoint(stageName, pointName),
-                    new StagePoint(mergedStageName, pointName),
-                    ConnectionAssignmentType.Each,
-                    hash,
-                    hashCount);
+                new StagePoint(mergedStageName, pointName),
+                ConnectionAssignmentType.Each,
+                hash,
+                hashCount);
     }
 
     /**
@@ -430,8 +437,8 @@ public class JobExecutor {
                     StageGroupDescription inputStageDesc = stages.get(inputStageName);
 
                     // if there's no description, that means we just added it
-                    if (inputStageDesc == null ||
-                            inputStageName.endsWith("mergeStage")) {
+                    if (inputStageDesc == null
+                            || inputStageName.endsWith("mergeStage")) {
                         continue;
                     }
                     if (inputStageDesc.instanceCount > 1) {
@@ -443,6 +450,7 @@ public class JobExecutor {
     }
 
     private static class EndPointName implements Comparable<EndPointName> {
+
         public String stageName;
         public String pointName;
         public ConnectionPointType type;
@@ -498,8 +506,7 @@ public class JobExecutor {
 
             // add all connection points to the set
             for (StageConnectionPoint point : stage.connections.values()) {
-                EndPointName ep = new EndPointName(stage.name, point.getExternalName(), point.
-                                                   getType(), point.location);
+                EndPointName ep = new EndPointName(stage.name, point.getExternalName(), point.getType(), point.location);
                 endPointNames.add(ep);
             }
         }
@@ -509,14 +516,14 @@ public class JobExecutor {
         for (ConnectionDescription connection : connections.values()) {
             for (EndPointDescription input : connection.inputs) {
                 EndPointName ep = new EndPointName(input.stage.getName(),
-                                                   input.stagePoint.getExternalName(),
-                                                   input.stagePoint.getType());
+                        input.stagePoint.getExternalName(),
+                        input.stagePoint.getType());
                 endPointNames.remove(ep);
             }
             for (EndPointDescription output : connection.outputs) {
                 EndPointName ep = new EndPointName(output.stage.getName(),
-                                                   output.stagePoint.getExternalName(),
-                                                   output.stagePoint.getType());
+                        output.stagePoint.getExternalName(),
+                        output.stagePoint.getType());
                 endPointNames.remove(ep);
             }
         }
@@ -524,8 +531,8 @@ public class JobExecutor {
 
         for (EndPointName ep : endPointNames) {
             store.addError(ep.location,
-                           ep.stageName + ": No connection references the " + ep.type +
-                           " with the name '" + ep.pointName + "'.");
+                    ep.stageName + ": No connection references the " + ep.type
+                    + " with the name '" + ep.pointName + "'.");
         }
     }
 
@@ -632,10 +639,11 @@ public class JobExecutor {
     }
 
     private static class EndPointDescription {
+
         public EndPointDescription(ConnectionDescription connection,
-                                   StageGroupDescription stage,
-                                   ConnectionEndPoint connectionPoint,
-                                   StageConnectionPoint stagePoint) {
+                StageGroupDescription stage,
+                ConnectionEndPoint connectionPoint,
+                StageConnectionPoint stagePoint) {
             this.connectionPoint = connectionPoint;
             this.stagePoint = stagePoint;
             this.stage = stage;
@@ -664,6 +672,7 @@ public class JobExecutor {
     }
 
     private class ConnectionDescription {
+
         public ConnectionDescription(Connection connection) {
             this.connection = connection;
             this.inputs = new ArrayList();
@@ -682,8 +691,8 @@ public class JobExecutor {
 
                 if (connection.getHashCount() > 0) {
                     result = connection.getHashCount();
-                } else if (hashCount != null &&
-                        Utility.isInteger(hashCount)) {
+                } else if (hashCount != null
+                        && Utility.isInteger(hashCount)) {
                     result = Integer.parseInt(hashCount);
                 } else {
                     result = defaultHashCount;
@@ -740,30 +749,29 @@ public class JobExecutor {
     }
 
     private EndPointDescription createEndPoint(ConnectionDescription connection,
-                                               ConnectionEndPoint endPoint) {
+            ConnectionEndPoint endPoint) {
         StageGroupDescription stageDescription = stages.get(endPoint.getStageName());
 
         if (stageDescription == null) {
             store.addError(endPoint.location,
-                           "The stage '" + endPoint.getStageName() + "' was not found.");
+                    "The stage '" + endPoint.getStageName() + "' was not found.");
         } else {
             Stage stage = stageDescription.getStage();
             StageConnectionPoint point = stage.getConnection(endPoint.getPointName());
 
             if (point == null) {
-                store.addError(endPoint.location, "The endpoint '" + endPoint.getPointName() + "' wasn't found in this stage, " +
-                               "even though there is a connection to it.");
+                store.addError(endPoint.location, "The endpoint '" + endPoint.getPointName() + "' wasn't found in this stage, "
+                        + "even though there is a connection to it.");
             } else if (!ConnectionPointType.connectable(endPoint.getType(), point.getType())) {
                 store.addError(endPoint.location,
-                               "The endpoint '" + endPoint.getPointName() + "' is in this stage, but it's going the wrong direction.");
+                        "The endpoint '" + endPoint.getPointName() + "' is in this stage, but it's going the wrong direction.");
             } else if (!point.getClassName().equals(connection.connection.getClassName())) {
-                store.addError(endPoint.location, "This " + point.getType() + " has a different class name '" + point.getClassName() +
-                               " than the connection that connects to it: " + connection.connection.
-                               getClassName() + ".");
+                store.addError(endPoint.location, "This " + point.getType() + " has a different class name '" + point.getClassName()
+                        + " than the connection that connects to it: " + connection.connection.getClassName() + ".");
             } else if (!Arrays.equals(point.getOrder(), connection.connection.getOrder())) {
-                store.addError(endPoint.location, "This " + point.getType() + " has a different order " + Arrays.toString(point.getOrder()) +
-                               " than the connection that connects to it: " + Arrays.toString(
-                               connection.connection.getOrder()));
+                store.addError(endPoint.location, "This " + point.getType() + " has a different order " + Arrays.toString(point.getOrder())
+                        + " than the connection that connects to it: " + Arrays.toString(
+                        connection.connection.getOrder()));
             } else {
                 return new EndPointDescription(connection, stageDescription, endPoint, point);
             }
@@ -773,7 +781,7 @@ public class JobExecutor {
     }
 
     private ArrayList<EndPointDescription> createEndPoints(ConnectionDescription connection,
-                                                           ArrayList<ConnectionEndPoint> endPoints) {
+            ArrayList<ConnectionEndPoint> endPoints) {
         ArrayList<EndPointDescription> results = new ArrayList<EndPointDescription>();
 
         for (ConnectionEndPoint endPoint : endPoints) {
@@ -805,8 +813,8 @@ public class JobExecutor {
 
             if (connection.getHash() != null) {
                 Verification.requireOrder(connection.getClassName(),
-                                                                        connection.getHash(),
-                                                                        handler);
+                        connection.getHash(),
+                        handler);
             }
             description.inputs = createEndPoints(description, connection.inputs);
             description.outputs = createEndPoints(description, connection.outputs);
@@ -858,7 +866,7 @@ public class JobExecutor {
                     switch (assignment) {
                         case One:
                             store.addError(point.location,
-                                           "The 'one' mode is not currently supported.");
+                                    "The 'one' mode is not currently supported.");
                             break;
 
                         case Each:
@@ -868,9 +876,9 @@ public class JobExecutor {
                                 instanceCount = inputCount;
                                 unknown = false;
                             } else if (!unknown && instanceCount != inputCount) {
-                                store.addError(point.location, "The number of stage instances for '" +
-                                               stageName + "' is ambiguous (" + inputCount +
-                                               " or " + instanceCount + ")");
+                                store.addError(point.location, "The number of stage instances for '"
+                                        + stageName + "' is ambiguous (" + inputCount
+                                        + " or " + instanceCount + ")");
                             }
                             break;
 
@@ -899,12 +907,12 @@ public class JobExecutor {
             new File(directoryName).mkdir();
 
             DataPipe pipe = new DataPipe(directoryName,
-                                         connection.getName(),
-                                         connection.getClassName(),
-                                         connection.getOrder(),
-                                         connection.getHash(),
-                                         connection.getInputCount(),
-                                         connection.getOutputCount());
+                    connection.getName(),
+                    connection.getClassName(),
+                    connection.getOrder(),
+                    connection.getHash(),
+                    connection.getInputCount(),
+                    connection.getOutputCount());
 
             int startIndex = 0;
             connection.setPipe(pipe);
@@ -912,20 +920,20 @@ public class JobExecutor {
             for (EndPointDescription input : connection.inputs) {
                 StageGroupDescription description = stages.get(input.getStageName());
                 description.outputs.put(input.getStagePoint().getInternalName(),
-                                        new DataPipeRegion(pipe,
-                                                           startIndex,
-                                                           startIndex + description.getInstanceCount(),
-                                                           ConnectionPointType.Input));
+                        new DataPipeRegion(pipe,
+                        startIndex,
+                        startIndex + description.getInstanceCount(),
+                        ConnectionPointType.Input));
                 startIndex += description.getInstanceCount();
             }
 
             for (EndPointDescription output : connection.outputs) {
                 StageGroupDescription description = stages.get(output.getStageName());
                 description.inputs.put(output.getStagePoint().getInternalName(),
-                                       new DataPipeRegion(pipe,
-                                                          0,
-                                                          connection.getOutputCount(),
-                                                          ConnectionPointType.Output));
+                        new DataPipeRegion(pipe,
+                        0,
+                        connection.getOutputCount(),
+                        ConnectionPointType.Output));
             }
 
             pipes.add(pipe);
@@ -934,6 +942,7 @@ public class JobExecutor {
 
     public static class JobExecutionStatus {
         // these are the names of all stages that have completed
+
         HashMap<String, StageExecutionStatus> completedStages = new HashMap<String, StageExecutionStatus>();
         // named of all stages that have been launched (contains all completed stages too)
         HashSet<String> launchedStages = new HashSet<String>();
@@ -944,13 +953,18 @@ public class JobExecutor {
         HashSet<String> completedConnections = new HashSet<String>();
         // map from connection names to the names of stages that provide inputs to the connection
         HashMap<String, HashSet<String>> connectionDependencies = new HashMap<String, HashSet<String>>();
-
         // reference to the parent class.
         HashMap<String, StageGroupDescription> stages;
         // reference to the parent class.
         String temporaryStorage;
         StageExecutor executor;
         Date startDate;
+        String masterURL;
+        // (irmarc)
+        // We're going to do something a little nutso here - accept user input!
+        // Wrap System.in and poll for characters. If we see a space+<enter>, print the
+        // master URL out, b/c I'm tired of not being able to see it.
+        BufferedReader poller = new BufferedReader(new InputStreamReader(System.in));
 
         public JobExecutionStatus(HashMap<String, StageGroupDescription> stages,
                 String temporaryStorage, StageExecutor executor, String masterURL) {
@@ -958,6 +972,7 @@ public class JobExecutor {
             this.temporaryStorage = temporaryStorage;
             this.executor = executor;
             this.startDate = new Date();
+            this.masterURL = masterURL;
 
             for (StageGroupDescription description : stages.values()) {
                 // build a list of dependencies from pipe inputs to stage names
@@ -976,21 +991,42 @@ public class JobExecutor {
         }
 
         class BlockedExecutionStatus implements StageExecutionStatus {
+
             String name;
             int instances;
-            
+
             BlockedExecutionStatus(String name, int instances) {
                 this.name = name;
                 this.instances = instances;
             }
 
-            public String getName() { return name; }
-            public int getBlockedInstances() { return instances; }
-            public int getQueuedInstances() { return 0; }
-            public int getRunningInstances() { return 0; }
-            public int getCompletedInstances() { return 0; }
-            public boolean isDone() { return false; }
-            public List<Exception> getExceptions() { return Collections.EMPTY_LIST; }
+            public String getName() {
+                return name;
+            }
+
+            public int getBlockedInstances() {
+                return instances;
+            }
+
+            public int getQueuedInstances() {
+                return 0;
+            }
+
+            public int getRunningInstances() {
+                return 0;
+            }
+
+            public int getCompletedInstances() {
+                return 0;
+            }
+
+            public boolean isDone() {
+                return false;
+            }
+
+            public List<Exception> getExceptions() {
+                return Collections.EMPTY_LIST;
+            }
         }
 
         public synchronized boolean isComplete() {
@@ -1017,7 +1053,6 @@ public class JobExecutor {
         /**
          * Returns the start date for this job.
          */
-
         public Date getStartDate() {
             return startDate;
         }
@@ -1025,7 +1060,6 @@ public class JobExecutor {
         /**
          * Returns the total amount of free memory in this JVM.
          */
-
         public long getFreeMemory() {
             return Runtime.getRuntime().freeMemory();
         }
@@ -1034,17 +1068,30 @@ public class JobExecutor {
          * Returns the maximum amount of memory that can be used by this
          * Java virtual machine.
          */
-
         public long getMaxMemory() {
             return Runtime.getRuntime().maxMemory();
         }
 
+        private void poll() {
+            try {
+                if (poller.ready()) {
+                    char c = (char) poller.read();
+                    if (c == ' ') {
+                        System.out.println("Web url: " + masterURL);
+                    }
+                }
+            } catch (IOException ioe) {
+                // this is not that important - don't complain
+            }
+        }
+
         public void run() throws InterruptedException, ExecutionException {
+
             // while there are incomplete stages, choose one to execute
             while (launchedStages.size() < stages.size()) {
                 // look for stages where all of their inputs are complete
                 StageGroupDescription description = findRunnableStage(stages.values(), launchedStages,
-                                                                      completedConnections);
+                        completedConnections);
 
                 // didn't find any runnable stages, so we need to check to
                 // see if any other stages have finished recently that might have
@@ -1053,24 +1100,27 @@ public class JobExecutor {
                     // wait for at least one stage to complete
                     waitForStages(runningStages, completedStages);
                     updateCompletedConnections(completedStages, completedConnections,
-                                               connectionDependencies);
+                            connectionDependencies);
 
                     // now, try again to find a runnable stage
                     description = findRunnableStage(stages.values(), launchedStages,
-                                                    completedConnections);
+                            completedConnections);
+                    poll();
                 }
 
                 StageExecutionStatus result = executor.execute(description, temporaryStorage);
 
-                synchronized(this) {
+                synchronized (this) {
                     launchedStages.add(description.stage.name);
                     runningStages.put(description.stage.name, result);
                 }
+                poll();
             }
 
             // wait for everything to complete
             while (runningStages.size() > 0) {
                 waitForStages(runningStages, completedStages);
+                poll();
             }
         }
 
@@ -1109,6 +1159,7 @@ public class JobExecutor {
             // there are no stages ready to run
             return null;
         }
+
         /**
          * Polls all the running stages to see if they've completed.  When one completes,
          * it is added to completedStages and the method returns.
@@ -1125,7 +1176,7 @@ public class JobExecutor {
             long delay = 1;
 
             while (runningStages.size() > 0) {
-                synchronized(this) {
+                synchronized (this) {
                     for (String name : runningStages.keySet()) {
                         StageExecutionStatus status = runningStages.get(name);
                         if (status.isDone()) {
@@ -1143,6 +1194,7 @@ public class JobExecutor {
 
                 // check at least once a second, but poll faster at first
                 delay = Math.min(delay * 2, 1000);
+                poll();
                 Thread.sleep(delay);
             }
         }
@@ -1193,83 +1245,70 @@ public class JobExecutor {
         server.removeHandler(handler);
     }
 
-    
-    
-    public static boolean runLocally(Job job, ErrorStore store, boolean keepOutput) throws IOException,
-    InterruptedException, ExecutionException, Exception {
-      File tempFolder = Utility.createGalagoTempDir();
-      return runLocally(job, store, keepOutput, "local", tempFolder);
-    }
+    public static boolean runLocally(Job job, ErrorStore store, Parameters p) throws IOException,
+            InterruptedException, ExecutionException, Exception {
+        // Extraction from parameters can go here now
+        String tempPath = p.get("galagoTemp","");
+        File tempFolder = Utility.createGalagoTempDir(tempPath);
+        String mode = p.get("mode", "local");
 
-    public static boolean runLocally(Job job, ErrorStore store, boolean keepOutput, String mode) throws IOException,
-    InterruptedException, ExecutionException, Exception {
-      File tempFolder = Utility.createGalagoTempDir();
-      return runLocally(job, store, keepOutput, mode, tempFolder);
-    }
-
-    public static boolean runLocally(Job job, ErrorStore store, boolean keepOutput, String mode, File tempFolder) throws IOException,
-    InterruptedException, ExecutionException, Exception {
-      int outputmode;
-      if (keepOutput) {
-        outputmode = 0;
-      } else {
-        outputmode = 2;
-      }
-
-      return runLocally(job, store, outputmode, mode, tempFolder);
-    }
-
-    public static boolean runLocally(Job job, ErrorStore store, int deleteOutput, String mode, File tempFolder) throws IOException,
-    InterruptedException, ExecutionException, Exception {
-
-      String[] params = new String[] {};
-
-      // CIIR Cluster parameters:
-      if(mode.equals("drmaa")){
-        // First get the hostname
-        InetAddress local = InetAddress.getLocalHost();
-        String hostname = local.getHostName();
-        if (hostname.contains("swarm")) {
-          params = new String[] {"-ns=-q long.q -l long=TRUE"};
-        } else if (hostname.contains("sydney")) {
-          params = new String[] {"-ns=-q std.q -pe thread.std 2"};
+        int port = (int) p.get("port", 0);
+        if (port == 0) {
+            port = Utility.getFreePort();
         } else {
-          params = new String[0];
+            if (!Utility.isFreePort(port)) {
+                throw new IOException("Tried to bind to port " + port + " which is in use.");
+            }
         }
-      }
+        int deleteOutput = (int) p.get("deleteOutput", 2);
 
-      StageExecutor executor = StageExecutorFactory.newInstance(mode, params);        
+        String[] params = new String[]{};
 
-      JobExecutor jobExecutor = new JobExecutor(job, tempFolder.getAbsolutePath(), store);
-      jobExecutor.prepare();
+        // CIIR Cluster parameters:
+        if (mode.equals("drmaa")) {
+            // First get the hostname
+            InetAddress local = InetAddress.getLocalHost();
+            String hostname = local.getHostName();
+            if (hostname.contains("swarm")) {
+                params = new String[]{"-ns=-q long.q -l long=TRUE"};
+            } else if (hostname.contains("sydney")) {
+                params = new String[]{"-ns=-q std.q -pe thread.std 2"};
+            } else {
+                params = new String[0];
+            }
+        }
 
-      if (store.hasStatements()) {
-        return false;
-      }
+        StageExecutor executor = StageExecutorFactory.newInstance(mode, params);
 
-      int port = Utility.getFreePort();
-      Server server = new Server(port);
-      server.start();
-      System.out.println("Status: http://localhost:" + port);
-      try {
-        jobExecutor.runWithServer(executor, server);
-      } finally {
-        server.stop();
-        executor.shutdown();
-      }
+        JobExecutor jobExecutor = new JobExecutor(job, tempFolder.getAbsolutePath(), store);
+        jobExecutor.prepare();
 
-      if (deleteOutput == 1){
-        // we want to keep the jobs dir -- helps verify what has been done
-        // may want to specify other folders to keep
-        HashSet<String> omissions = new HashSet();
-        omissions.add("jobs");
-        Utility.partialDeleteDirectory(tempFolder, omissions);
+        if (store.hasStatements()) {
+            return false;
+        }
 
-      } else if (deleteOutput == 2) {
-        Utility.deleteDirectory(tempFolder);
-      }
+        Server server = new Server(port);
+        server.start();
+        System.out.println("Status: http://localhost:" + port);
+        try {
+            jobExecutor.runWithServer(executor, server);
+        } finally {
+            server.stop();
+            executor.shutdown();
+        }
 
-      return !store.hasStatements();
+        if (deleteOutput == 1) {
+            // we want to keep the jobs dir -- helps verify what has been done
+            // may want to specify other folders to keep
+            HashSet<String> omissions = new HashSet();
+            omissions.add("jobs");
+            Utility.partialDeleteDirectory(tempFolder, omissions);
+
+        } else if (deleteOutput == 2) {
+            Utility.deleteDirectory(tempFolder);
+        }
+
+        return !store.hasStatements();
     }
 
     public static void main(String[] args) throws ParserConfigurationException, SAXException,

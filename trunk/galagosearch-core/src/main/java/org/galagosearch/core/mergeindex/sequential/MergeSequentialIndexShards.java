@@ -101,8 +101,9 @@ public class MergeSequentialIndexShards {
 
     Job job = this.getJob();
     ErrorStore store = new ErrorStore();
-    File tempFolder = Utility.createGalagoTempDir("");
-    JobExecutor.runLocally(job, store, 2, mode, tempFolder);
+    Parameters p = new Parameters();
+    p.set("mode", mode);
+    JobExecutor.runLocally(job, store, p);
     if (store.hasStatements()) {
       System.err.println(store.toString());
     }

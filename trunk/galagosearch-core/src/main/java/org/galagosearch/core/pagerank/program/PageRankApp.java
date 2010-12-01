@@ -104,10 +104,9 @@ public class PageRankApp {
 
     ErrorStore store = new ErrorStore();
 
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
+    boolean printJob = Boolean.parseBoolean(p.get("printJob","false"));
     int deleteOutput = (int) p.get("deleteOutput", 2);
     int hash = (int) p.get("distrib", 0);
-    String mode = p.get("mode", "local");
     int maxIterations = (int) p.get("maxIterations", Integer.MAX_VALUE);
     File pagerankFolder = new File(p.get("pagerankTemp"));
     File tempFolder = new File(p.get("galagoTemp"));
@@ -159,7 +158,8 @@ public class PageRankApp {
 
     if (init) {
       System.err.println("Init Phase:");
-      JobExecutor.runLocally(initJob, store, deleteOutput, mode, makeGalagoTemp(tempFolder, "init"));
+      p.set("galagoTemp", makeGalagoTemp(tempFolder, "init").getCanonicalPath());
+      JobExecutor.runLocally(initJob, store, p);
       if (store.hasStatements()) {
         return store;
       }
@@ -173,7 +173,8 @@ public class PageRankApp {
           break;
         }
 
-        JobExecutor.runLocally(iterJob, store, deleteOutput, mode, makeGalagoTemp(tempFolder, "iteration-" + iteration));
+        p.set("galagoTemp", makeGalagoTemp(tempFolder, "iteration-"+iteration).getCanonicalPath());
+        JobExecutor.runLocally(iterJob, store, p);
         if (store.hasStatements()) {
           return store;
         }
@@ -182,7 +183,8 @@ public class PageRankApp {
       }
       
       System.err.println("Cleanup Phase:");
-      JobExecutor.runLocally(closeJob, store, deleteOutput, mode, makeGalagoTemp(tempFolder, "closer"));
+      p.set("galagoTemp", makeGalagoTemp(tempFolder, "closer").getCanonicalPath());
+      JobExecutor.runLocally(closeJob, store, p);
 
       if (store.hasStatements()) {
         return store;

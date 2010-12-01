@@ -29,7 +29,6 @@ public class StageExecutorFactory {
             } catch (Exception e) {
                 return null;
             }
-        //} else if (name.startsWith("thread") || name.startsWith("local")) {
         } else if (name.startsWith("thread")) {
             return new ThreadedStageExecutor();
         } else if (name.startsWith("ssh")) {

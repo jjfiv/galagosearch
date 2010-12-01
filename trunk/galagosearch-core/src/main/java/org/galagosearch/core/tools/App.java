@@ -177,13 +177,6 @@ public class App {
       p.add("inputPaths", doc);
     }
 
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-    int deleteOutput = Integer.parseInt(p.get("deleteOutput", "2"));
-    int hash = (int) p.get("distrib", 0);
-    String mode = p.get("mode", "local");
-    String tempFolderPath = p.get("galagoTemp", "");
-    File tempFolder = Utility.createGalagoTempDir(tempFolderPath);
-
     Job job;
     if (nonFlags[0].contains("fast")) {
       BuildFastIndex build = new BuildFastIndex();
@@ -193,18 +186,19 @@ public class App {
       job = build.getIndexJob(p);
     }
 
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
     if (printJob) {
       System.out.println(job.toString());
       return;
     }
 
-    ErrorStore store = new ErrorStore();
-
+    int hash = (int) p.get("distrib", 0);
     if (hash > 0) {
       job.properties.put("hashCount", Integer.toString(hash));
     }
 
-    JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
+    ErrorStore store = new ErrorStore();
+    JobExecutor.runLocally(job, store, p);
     if (store.hasStatements()) {
       output.println(store.toString());
     }
@@ -372,28 +366,23 @@ public class App {
     for (String doc : docs) {
       p.add("inputPaths", doc);
     }
-
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-    int deleteOutput = Integer.parseInt(p.get("deleteOutput", "2"));
-    int hash = (int) p.get("distrib", 0);
-    String mode = p.get("mode", "local");
-    String tempFolderPath = p.get("galagoTemp", "");
-    File tempFolder = Utility.createGalagoTempDir(tempFolderPath);
-
+    
     MakeCorpus mc = new MakeCorpus();
     Job job = mc.getMakeCorpusJob(p);
 
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
     if (printJob) {
       System.out.println(job.toString());
       return;
     }
 
+    int hash = (int) p.get("distrib", 0);
     if (hash > 0) {
       job.properties.put("hashCount", Integer.toString(hash));
     }
 
     ErrorStore store = new ErrorStore();
-    JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
+    JobExecutor.runLocally(job, store, p);
     if (store.hasStatements()) {
       output.println(store.toString());
     }
@@ -422,30 +411,23 @@ public class App {
       p.add("inputIndexes", input);
     }
 
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-    int deleteOutput = (int) p.get("deleteOutput", 2);
-    int hash = (int) p.get("distrib", 0); // doesn't really matter in this case.
-    String mode = p.get("mode", "local");
-    String tempFolderPath = p.get("galagoTemp", "");
-    File tempFolder = Utility.createGalagoTempDir(tempFolderPath);
-    p.set("galagoTemp", tempFolder.getAbsolutePath());
-
     MergeParallelIndexShards merger = new MergeParallelIndexShards();
     Job job = merger.getJob(p);
 
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
     if (printJob) {
       System.out.println(job.toString());
       return;
     }
 
-    ErrorStore store = new ErrorStore();
-
+    int hash = (int) p.get("distrib", 0); // doesn't really matter in this case.
     if (hash > 0) // all other numbers don't make any sense
     {
       job.properties.put("hashCount", Integer.toString(hash));
     }
 
-    JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
+    ErrorStore store = new ErrorStore();
+    JobExecutor.runLocally(job, store, p);
     if (store.hasStatements()) {
       output.println(store.toString());
     }
@@ -470,14 +452,6 @@ public class App {
       p.add("inputPaths", doc);
     }
 
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-    int deleteOutput = Integer.parseInt(p.get("deleteOutput", "2"));
-    int hash = (int) p.get("distrib", 0);
-    String mode = p.get("mode", "local");
-    String tempFolderPath = p.get("galagoTemp", "");
-    File tempFolder = Utility.createGalagoTempDir(tempFolderPath);
-    p.set("galagoTemp", tempFolder.getAbsolutePath());
-
     Job job;
     if (nonFlags[0].contains("se")) {
       BuildNgramIndexSE build = new BuildNgramIndexSE();
@@ -487,18 +461,19 @@ public class App {
       job = build.getIndexJob(p);
     }
 
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
     if (printJob) {
       System.out.println(job.toString());
       return;
     }
 
-    ErrorStore store = new ErrorStore();
-
+    int hash = (int) p.get("distrib", 0);
     if (hash > 0) {
       job.properties.put("hashCount", Integer.toString(hash));
     }
-
-    JobExecutor.runLocally(job, store, deleteOutput, mode, tempFolder);
+    
+    ErrorStore store = new ErrorStore();
+    JobExecutor.runLocally(job, store, p);
     if (store.hasStatements()) {
       output.println(store.toString());
     }

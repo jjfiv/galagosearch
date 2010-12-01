@@ -224,6 +224,7 @@ public class CompressedRawByteBuffer {
 	    try {
 		spillStream.close();
 		Utility.copyFileToStream(spillFile, stream);
+                spillStream = new FileOutputStream(spillFile); // maybe use RandomAccess here to do it?
 	    } catch (IOException ioe) {
 		throw new RuntimeException(ioe);
 	    }
