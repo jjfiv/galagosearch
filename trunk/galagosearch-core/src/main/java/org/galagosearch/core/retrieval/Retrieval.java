@@ -4,6 +4,7 @@ package org.galagosearch.core.retrieval;
 import java.io.IOException;
 import java.util.List;
 import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.core.retrieval.structured.StructuredRetrievalProxy;
 import org.galagosearch.tupleflow.Parameters;
@@ -18,8 +19,13 @@ public abstract class Retrieval implements Runnable {
 
   public abstract void close() throws IOException;
 
-  // should return collections statistics (collection length + documentCount + availiable parts)
-  public abstract Parameters getRetrievalStatistics() throws IOException ;
+  // should return collections statistics (collection length + documentCount)
+  // retrievalGroup controls the set of retrievals that should be used -- MultiRetrieval only
+  public abstract Parameters getRetrievalStatistics(String retrievalGroup) throws IOException ;
+  // should return availiable parts (postings + extents + ...) and nodeTypes (count + extents)
+  // retrievalGroup controls the set of retrievals that should be used -- MultiRetrieval only
+  public abstract Parameters getAvailiableParts(String retrievalGroup) throws IOException ;
+  public abstract NodeType getNodeType(Node node, String retrievalGroup) throws Exception ;
 
   /**
    * Returns the count of the expression provided to the method. Therefore the

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import org.galagosearch.core.index.StructuredIndex;
@@ -37,11 +38,14 @@ public class StructuredRetrieval extends Retrieval {
     Parameters queryParams;
     List<ScoredDocument> queryResults;
 
-    public StructuredRetrieval(StructuredIndex index, Parameters factoryParameters) {
+    public StructuredRetrieval(StructuredIndex index, Parameters factoryParameters) throws IOException {
         this.index = index;
+
         Parameters featureParameters = factoryParameters.clone();
-        featureParameters.add("collectionLength", Long.toString(index.getCollectionLength()));
-        featureParameters.add("documentCount", Long.toString(index.getDocumentCount()));
+        Parameters indexStats = getRetrievalStatistics("all");
+        featureParameters.add("collectionLength", indexStats.get("collectionLength"));
+        featureParameters.add("documentCount", indexStats.get("documentCount"));
+        featureParameters.add("retrievalGroup", "all"); // the value wont matter here
         featureFactory = new FeatureFactory(featureParameters);
         runner = null;
     }
@@ -59,17 +63,32 @@ public class StructuredRetrieval extends Retrieval {
      * <parameters>
      *  <collectionLength>cl<collectionLength>
      *  <documentCount>dc<documentCount>
-     *  (<partName>nodeType</partName>) + 
      * </parameters>
      */
-    public Parameters getRetrievalStatistics() throws IOException {
+    public Parameters getRetrievalStatistics(String _retGroup) throws IOException {
         Parameters p = new Parameters();
         p.add("collectionLength", Long.toString(index.getCollectionLength()));
         p.add("documentCount", Long.toString(index.getDocumentCount()));
+        return p;
+    }
+    /*
+     * <parameters>
+     *  <part>
+     *   (partName)+
+     *  </part>
+     *  <nodeType>
+     *   <(partName)_(nodeType)>(class)</(partName)_(nodeType)>
+     *  </nodeType>
+     * </parameters>
+     */
+    public Parameters getAvailiableParts(String _retGroup) throws IOException {
+        Parameters p = new Parameters();
         for (String partName : index.getPartNames()) {
-          Set<String> nodeTypes = index.getPartNodeTypes(partName);
-          for(String nodeType : nodeTypes){
-            p.add(partName, nodeType);
+          p.add("part", partName);
+
+          Map<String, NodeType> nodeTypes = index.getPartNodeTypes(partName);
+          for(String nodeType : nodeTypes.keySet()){
+            p.add("nodeType/" + partName + "/" + nodeType, nodeTypes.get(nodeType).getIteratorClass().getName());
           }
         }
         return p;
@@ -225,19 +244,6 @@ public class StructuredRetrieval extends Retrieval {
         return queryTree;
     }
 
-    // NASTY HACKS THAT NEED TO BE FIXED
-    public NodeType getNodeType(Node node) throws Exception {
-        NodeType nodeType = index.getNodeType(node);
-        if (nodeType == null) {
-            nodeType = featureFactory.getNodeType(node);
-        }
-        return nodeType;
-    }
-
-    public StructuredIndex getIndex() {
-        return index;
-    }
-
     /**
      * Returns the number of occurrences of the provided
      * expression. If the expression does not produce a CountIterator
@@ -248,7 +254,6 @@ public class StructuredRetrieval extends Retrieval {
      * @return Number of times the expression occurs.
      * @throws Exception
      */
-    @Override
     public long xcount(String nodeString) throws Exception {
 
         // first parse the node
@@ -265,5 +270,13 @@ public class StructuredRetrieval extends Retrieval {
         } else {
             throw new IllegalArgumentException("Node " + nodeString + " did not return a counting iterator.");
         }
+    }
+
+    public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
+        NodeType nodeType = index.getNodeType(node);
+        if (nodeType == null) {
+            nodeType = featureFactory.getNodeType(node);
+        }
+        return nodeType;
     }
 }

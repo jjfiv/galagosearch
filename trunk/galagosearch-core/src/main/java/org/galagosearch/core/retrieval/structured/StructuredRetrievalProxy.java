@@ -9,6 +9,7 @@ import java.util.Stack;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.ScoredDocument;
+import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.tupleflow.Parameters;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +49,7 @@ public class StructuredRetrievalProxy extends Retrieval {
 
 
   /* this function should return:
-   * 
+   *
    * <parameters>
    *  <collectionLength>cl<collectionLength>
    *  <documentCount>dc<documentCount>
@@ -58,10 +59,43 @@ public class StructuredRetrievalProxy extends Retrieval {
    *  </part>
    * </parameters>
    */
-  public Parameters getRetrievalStatistics() throws IOException {
+  public Parameters getRetrievalStatistics(String retGroup) throws IOException {
     StringBuilder request = new StringBuilder(indexUrl);
     String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
-    request.append("/stats");
+    request.append("/stats?retGroup=").append(retGroup);
+
+    URL resource = new URL(request.toString());
+    HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
+    connection.setRequestMethod("GET");
+
+    InputStream stream = connection.getInputStream();
+    // now parse the stream -> parameter object
+    ByteArrayOutputStream array = new ByteArrayOutputStream();
+    int d = stream.read();
+    while (d >= 0) {
+      array.write(d);
+      d = stream.read();
+    }
+    connection.disconnect();
+
+    return new Parameters(array.toByteArray());
+  }
+
+  /* this function should return:
+   *
+   * <parameters>
+   *  <collectionLength>cl<collectionLength>
+   *  <documentCount>dc<documentCount>
+   *  <part>
+   *   <partName>n</partName>
+   *   (<nodeType>n</nodeType>) +
+   *  </part>
+   * </parameters>
+   */
+  public Parameters getAvailiableParts(String retGroup) throws IOException {
+    StringBuilder request = new StringBuilder(indexUrl);
+    String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
+    request.append("/parts?retGroup=").append(retGroup);
 
     URL resource = new URL(request.toString());
     HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
@@ -172,6 +206,12 @@ public class StructuredRetrievalProxy extends Retrieval {
     parser.parse(connection.getInputStream(), handler);
     connection.disconnect();
     return (handler.getCount());
+  }
+
+  // this function is for the query transform function (which should not be completed here)
+  @Override
+  public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
+    throw new UnsupportedOperationException("Not supported and never will be.");
   }
 
   // private classes

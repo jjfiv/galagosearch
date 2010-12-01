@@ -357,7 +357,17 @@ public class SearchWebHandler extends AbstractHandler {
 
   public void handleStats(HttpServletRequest request, HttpServletResponse response)
           throws IllegalStateException, IllegalArgumentException, IOException {
-    Parameters p = search.getRetrievalStats();
+    String retGroup = request.getParameter("retGroup");
+    Parameters p = search.getRetrievalStats(retGroup);
+    PrintWriter writer = response.getWriter();
+    writer.write(p.toString()); // parameters are output into an XML format already
+    writer.close();
+  }
+
+  public void handleParts(HttpServletRequest request, HttpServletResponse response)
+          throws IllegalStateException, IllegalArgumentException, IOException {
+    String retGroup = request.getParameter("retGroup");
+    Parameters p = search.getAvailiableParts(retGroup);
     PrintWriter writer = response.getWriter();
     writer.write(p.toString()); // parameters are output into an XML format already
     writer.close();
@@ -471,6 +481,8 @@ public class SearchWebHandler extends AbstractHandler {
       handleImage(request, response);
     } else if (request.getPathInfo().equals("/stats")) {
       handleStats(request, response);
+    } else if (request.getPathInfo().equals("/parts")) {
+      handleParts(request, response);
     } else {
       handleMainPage(request, response);
     }

@@ -1,12 +1,14 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.traversal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
-import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.core.retrieval.Retrieval;
+import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
 import org.tartarus.snowball.ext.englishStemmer;
 
@@ -21,11 +23,12 @@ import org.tartarus.snowball.ext.englishStemmer;
  * @author sjh
  * 
  */
+@RequiredStatistics(statistics = {"retrievalGroup"})
 public class NgramRewriteTraversal implements Traversal {
-  private StructuredIndex index;
+  Parameters availiableParts;
 
-  public NgramRewriteTraversal(Parameters parameters, StructuredRetrieval retrieval) {
-      this.index = retrieval.getIndex();
+  public NgramRewriteTraversal(Parameters parameters, Retrieval retrieval) throws IOException {
+      this.availiableParts = retrieval.getAvailiableParts(parameters.get("retrievalGroup"));
   }
 
   /*
@@ -77,7 +80,7 @@ public class NgramRewriteTraversal implements Traversal {
 
   // minimum work to ensure that an n-gram index exists
   private boolean possibleIndexExists(int n){
-    for(String part : index.getPartNames()){
+    for(String part : availiableParts.listKeys()){
       if(part.startsWith(Integer.toString(n) + "-grams-"))
         return true;
     }
@@ -86,11 +89,12 @@ public class NgramRewriteTraversal implements Traversal {
 
   // will pick index part with the lowest threshold
   // n-gram indexes look like: n-gram-h-count
+  //  + currently we don't do stemming
   private String getnGramPartName(int n){
     String selectedPart = null;
     int selectedH = Integer.MAX_VALUE;
 
-    for(String part : index.getPartNames()){
+    for(String part : availiableParts.listKeys()){
       if(part.startsWith(Integer.toString(n) + "-grams-") &&
           (! part.contains("-stemmed"))){
 

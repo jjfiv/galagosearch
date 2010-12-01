@@ -5,7 +5,7 @@ package org.galagosearch.core.retrieval.traversal;
 import java.util.ArrayList;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
-import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -15,7 +15,7 @@ import org.galagosearch.tupleflow.Parameters;
 public class AddCombineTraversal implements Traversal {
     int levels = 0;
 
-    public AddCombineTraversal(Parameters parameters, StructuredRetrieval retrieval) {
+    public AddCombineTraversal(Parameters parameters, Retrieval retrieval) {
     }
 
     public void beforeNode(Node object) throws Exception {

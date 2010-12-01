@@ -228,10 +228,10 @@ public class StructuredIndex {
     return parts.keySet();
   }
 
-  public Set<String> getPartNodeTypes(String partName) throws IOException {
+  public Map<String, NodeType> getPartNodeTypes(String partName) throws IOException {
     if (!parts.containsKey(partName)) {
       throw new IOException("The index has no part named '" + partName + "'");
     }
-    return parts.get(partName).getNodeTypes().keySet();
+    return parts.get(partName).getNodeTypes();
   }
 }

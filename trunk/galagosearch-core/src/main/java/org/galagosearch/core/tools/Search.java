@@ -57,8 +57,12 @@ public class Search {
     return store;
   }
 
-  public Parameters getRetrievalStats() throws IOException{
-    return retrieval.getRetrievalStatistics();
+  public Parameters getRetrievalStats(String retGroup) throws IOException {
+    return retrieval.getRetrievalStatistics(retGroup);
+  }
+
+  public Parameters getAvailiableParts(String retGroup) throws IOException{
+    return retrieval.getAvailiableParts(retGroup);
   }
 
   public void close() throws IOException {

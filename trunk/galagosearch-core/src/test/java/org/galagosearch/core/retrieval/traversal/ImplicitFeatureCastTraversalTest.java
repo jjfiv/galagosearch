@@ -38,7 +38,10 @@ public class ImplicitFeatureCastTraversalTest extends TestCase {
     public void testTraversal() throws Exception {
         StructuredIndex index = new StructuredIndex(indexPath.getAbsolutePath());
         StructuredRetrieval retrieval = new StructuredRetrieval(index, new Parameters());
-        ImplicitFeatureCastTraversal traversal = new ImplicitFeatureCastTraversal(new Parameters(), retrieval);
+
+        Parameters p = new Parameters();
+        p.add("retrievalGroup","test");
+        ImplicitFeatureCastTraversal traversal = new ImplicitFeatureCastTraversal(p, retrieval);
         Node tree = StructuredQuery.parse("#combine(cat dog.title)");
         // Just a smoke test for now, verifies that no exceptions are thrown
         //Node result = StructuredQuery.copy(traversal, tree);

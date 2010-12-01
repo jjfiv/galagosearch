@@ -4,7 +4,7 @@ package org.galagosearch.core.retrieval.traversal;
 import java.util.ArrayList;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
-import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -18,7 +18,7 @@ import org.galagosearch.tupleflow.Parameters;
  * @author trevor
  */
 public class IndriWindowCompatibilityTraversal implements Traversal {
-    public IndriWindowCompatibilityTraversal(Parameters parameters, StructuredRetrieval retrieval) {
+    public IndriWindowCompatibilityTraversal(Parameters parameters, Retrieval retrieval) {
     }
 
     public Node afterNode(Node original) {

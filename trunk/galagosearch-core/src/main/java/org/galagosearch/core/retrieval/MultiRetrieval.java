@@ -10,10 +10,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.structured.FeatureFactory;
+import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
 
@@ -26,6 +28,9 @@ import org.galagosearch.tupleflow.Parameters.Value;
 public class MultiRetrieval extends Retrieval {
 
   HashMap<String, ArrayList<Retrieval>> retrievals;
+  HashMap<String, Parameters> retrievalStatistics;
+  HashMap<String, Parameters> retrievalParts;
+  HashMap<String, FeatureFactory> featureFactories;
   // for asynchronous retrieval
   Thread runner;
   String query;
@@ -64,7 +69,7 @@ public class MultiRetrieval extends Retrieval {
       }
     }
 
-    initRetrievalStatistics();
+    initRetrieval();
   }
 
   public void close() throws IOException {
@@ -75,52 +80,22 @@ public class MultiRetrieval extends Retrieval {
       }
     }
   }
-  HashMap<String, Parameters> retrievalStatistics = new HashMap();
-
-  private void initRetrievalStatistics() throws IOException {
-    for (String retGroup : retrievals.keySet()) {
-      ArrayList<Parameters> stats = new ArrayList();
-      for (Retrieval r : retrievals.get(retGroup)) {
-        stats.add(r.getRetrievalStatistics());
-      }
-      retrievalStatistics.put(retGroup, mergeParameters(stats));
-    }
-  }
-
-  private Parameters mergeParameters(List<Parameters> ps) {
-
-    // first collection stats
-    long cl = 0;
-    long dc = 0;
-    for (Parameters p : ps) {
-      cl += Long.parseLong(p.get("collectionLength"));
-      dc += Long.parseLong(p.get("documentCount"));
-    }
-
-    // next available parts
-    Parameters intersection = ps.get(0).clone();
-    for (String partName : intersection.listKeys()) {
-      // ignore the collection stats from this object
-      if (partName == "collectionLength" || partName == "documentCount") {
-        continue;
-      }
-      for(Parameters p : ps){
-        // if some index does not contain the correct part:
-        if( ! p.containsKey(partName) ){
-          intersection.value().map().remove(partName);
-        }
-      }
-    }
-
-    intersection.set("collectionLength", Long.toString(cl));
-    intersection.set("documentCount", Long.toString(dc));
-
-    return intersection;
-  }
 
   // function accumulates statistics accross index subset
-  public Parameters getRetrievalStatistics() throws IOException {
-    return retrievalStatistics.get("all");
+  public Parameters getRetrievalStatistics(String retGroup) throws IOException {
+    if (retrievalStatistics.containsKey(retGroup)) {
+      return retrievalStatistics.get(retGroup);
+    } else {
+      return null;
+    }
+  }
+
+  public Parameters getAvailiableParts(String retGroup) throws IOException {
+    if (retrievalParts.containsKey(retGroup)) {
+      return retrievalParts.get(retGroup);
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -146,7 +121,7 @@ public class MultiRetrieval extends Retrieval {
 
     if (parameters.get("transform", true)) {
       Node queryRoot = parseQuery(query, parameters);
-      queryRoot = transformQuery(queryRoot);
+      queryRoot = transformQuery(queryRoot, retrievalGroup);
       query = queryRoot.toString();
       shardTemplate.set("transform", "false");
     }
@@ -226,20 +201,75 @@ public class MultiRetrieval extends Retrieval {
     return StructuredQuery.parse(query);
   }
 
-  private Node transformQuery(Node queryTree) throws Exception {
-    throw new Exception("unimplemented");
-//    List<Traversal> traversals = featureFactory.getTraversals(this);
-//    for (Traversal traversal : traversals) {
-//     queryTree = StructuredQuery.copy(traversal, queryTree);
-//   }
-//   return queryTree;
+  private Node transformQuery(Node queryTree, String retrievalGroup) throws Exception {
+    FeatureFactory ff = featureFactories.get(retrievalGroup);
+    List<Traversal> traversals = ff.getTraversals(this);
+    for (Traversal traversal : traversals) {
+      queryTree = StructuredQuery.copy(traversal, queryTree);
+    }
+    return queryTree;
+  }
+
+  private void initRetrieval() throws IOException {
+    retrievalStatistics = new HashMap();
+    retrievalParts = new HashMap();
+    featureFactories = new HashMap();
+
+    for (String retGroup : retrievals.keySet()) {
+      ArrayList<Parameters> stats = new ArrayList();
+      ArrayList<Parameters> parts = new ArrayList();
+      for (Retrieval r : retrievals.get(retGroup)) {
+        stats.add(r.getRetrievalStatistics(retGroup));
+        parts.add(r.getAvailiableParts(retGroup));
+      }
+      retrievalStatistics.put(retGroup, mergeStats(stats));
+      retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
+      retrievalParts.put(retGroup, mergeParts(stats));
+
+      featureFactories.put(retGroup, new FeatureFactory(retrievalStatistics.get(retGroup)));
+    }
+  }
+
+  // this function accumulates statistics collected from the subordinate retrievals
+  private Parameters mergeStats(List<Parameters> ps) {
+    long cl = 0;
+    long dc = 0;
+    for (Parameters p : ps) {
+      cl += Long.parseLong(p.get("collectionLength"));
+      dc += Long.parseLong(p.get("documentCount"));
+    }
+
+    Parameters out = new Parameters();
+    out.set("collectionLength", Long.toString(cl));
+    out.set("documentCount", Long.toString(dc));
+
+    return out;
+
+  }
+
+  // this function intersects the set of availiable parts
+  // ASSUMPTION: part names correspond to unique index part concepts (that could be merged)
+  private Parameters mergeParts(List<Parameters> ps) {
+    Parameters intersection = ps.get(0).clone();
+    for (String partName : intersection.stringList("part")) {
+      for (Parameters p : ps) {
+        // if some index does not contain the correct part - delete it and all node Classes
+        if (! p.stringList("part").contains(partName)) {
+          for(Value v : intersection.list("part")){
+            if(v.toString().equals(partName)){
+              intersection.list("part").remove(v);
+            }
+          }
+        }
+      }
+    }
+    return intersection;
   }
 
   /**
    * Currently does this synchronously to make sure it works.
    * We can multi-thread it when we have time.
    */
-  @Override
   public long xcount(String nodeString) throws Exception {
     // For now, grab the parameters from the node itself.
     // Maybe a better option than parsing the query at EVERY level,
@@ -258,5 +288,33 @@ public class MultiRetrieval extends Retrieval {
       count += r.xcount(nodeString);
     }
     return count;
+  }
+
+  public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
+    NodeType nodeType = getIndexNodeType(node, retrievalGroup);
+    if (nodeType == null) {
+      nodeType = featureFactories.get(retrievalGroup).getNodeType(node);
+    }
+    return nodeType;
+  }
+
+  private NodeType getIndexNodeType(Node node, String retrievalGroup) throws Exception {
+    if (node.getParameters().containsKey("part")) {
+      Parameters parts = this.getAvailiableParts(retrievalGroup);
+      String partName = node.getParameters().get("part");
+
+      if (!parts.stringList("part").contains(partName)) {
+        throw new IOException("The index has no part named '" + partName + "'");
+      }
+      String operator = node.getOperator();
+      if(! parts.containsKey("nodeType/" + partName + "/" + operator)){
+        throw new IOException("The index has no iterator for the operator '" + operator + "'");
+      } 
+      String iteratorClass = parts.get("nodeType/" + partName + "/" + operator);
+
+      // may need to do some checking here...
+      return new NodeType( (Class<? extends StructuredIterator>) Class.forName(iteratorClass));
+    }
+    return null;
   }
 }

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.query.MalformedQueryException;
-import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -26,7 +26,7 @@ public class SequentialDependenceTraversal implements Traversal {
     private int levels;
 
 
-    public SequentialDependenceTraversal(Parameters parameters, StructuredRetrieval retrieval) {
+    public SequentialDependenceTraversal(Parameters parameters, Retrieval retrieval) {
         levels = 0;
     }
 

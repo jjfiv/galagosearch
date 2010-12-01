@@ -7,6 +7,9 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.structured.CountIterator;
 import org.galagosearch.core.retrieval.structured.ScoreIterator;
+import org.galagosearch.core.retrieval.Retrieval;
+import org.galagosearch.core.retrieval.structured.FeatureFactory;
+import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -19,11 +22,15 @@ import org.galagosearch.tupleflow.Parameters;
  * 
  * @author trevor
  */
+@RequiredStatistics(statistics = {"retrievalGroup"})
 public class ImplicitFeatureCastTraversal implements Traversal {
-    StructuredRetrieval retrieval;
+    Retrieval retrieval;
+    String retrievalGroup;
 
-    public ImplicitFeatureCastTraversal(Parameters parameters, StructuredRetrieval retrieval) {
+    public ImplicitFeatureCastTraversal(Parameters parameters, Retrieval retrieval) {
         this.retrieval = retrieval;
+        System.err.println( parameters.toString() );
+        this.retrievalGroup = parameters.get("retrievalGroup");
     }
     
     Node createSmoothingNode(Node child) {
@@ -33,7 +40,7 @@ public class ImplicitFeatureCastTraversal implements Traversal {
     }
     
     public boolean isCountNode(Node node) throws Exception {
-        NodeType nodeType = retrieval.getNodeType(node);
+        NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
         if (nodeType == null) return false;
         Class outputClass = nodeType.getIteratorClass();
         return CountIterator.class.isAssignableFrom(outputClass);
@@ -44,8 +51,10 @@ public class ImplicitFeatureCastTraversal implements Traversal {
 
     public Node afterNode(Node node) throws Exception {
         ArrayList<Node> newChildren = new ArrayList<Node>();
-        NodeType nodeType = retrieval.getNodeType(node);
+        
+        NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
         if (nodeType == null) return node;
+
         ArrayList<Node> children = node.getInternalNodes();
         // Given that we're going to pass children.size() + 1 parameters to
         // this constructor, what types should those parameters have?
@@ -69,3 +78,4 @@ public class ImplicitFeatureCastTraversal implements Traversal {
                         newChildren, node.getPosition());
     }
 }
+

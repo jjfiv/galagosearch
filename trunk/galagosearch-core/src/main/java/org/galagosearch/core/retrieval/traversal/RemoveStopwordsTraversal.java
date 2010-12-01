@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Stack;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
-import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -22,7 +22,7 @@ public class RemoveStopwordsTraversal implements Traversal {
     Stack<Integer> removableOperators = new Stack<Integer>();
     HashSet<String> words;
 
-    public RemoveStopwordsTraversal(Parameters parameters, StructuredRetrieval retrieval) {
+    public RemoveStopwordsTraversal(Parameters parameters, Retrieval retrieval) {
         List<String> wordsList = parameters.stringList("word");
         words = new HashSet<String>(wordsList);
     }

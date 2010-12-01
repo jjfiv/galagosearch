@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
-import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -14,7 +14,7 @@ import org.galagosearch.tupleflow.Parameters;
  * @author trevor
  */
 public class WeightConversionTraversal implements Traversal {
-    public WeightConversionTraversal(Parameters parameters, StructuredRetrieval retrieval) {
+    public WeightConversionTraversal(Parameters parameters, Retrieval retrieval) {
     }
 
     public void beforeNode(Node object) throws Exception {
