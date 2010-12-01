@@ -80,7 +80,7 @@ public class NgramRewriteTraversal implements Traversal {
 
   // minimum work to ensure that an n-gram index exists
   private boolean possibleIndexExists(int n){
-    for(String part : availiableParts.listKeys()){
+    for(String part : availiableParts.stringList("part")){
       if(part.startsWith(Integer.toString(n) + "-grams-"))
         return true;
     }
@@ -94,7 +94,7 @@ public class NgramRewriteTraversal implements Traversal {
     String selectedPart = null;
     int selectedH = Integer.MAX_VALUE;
 
-    for(String part : availiableParts.listKeys()){
+    for(String part : availiableParts.stringList("part")){
       if(part.startsWith(Integer.toString(n) + "-grams-") &&
           (! part.contains("-stemmed"))){
 
