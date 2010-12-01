@@ -21,11 +21,12 @@ import org.xml.sax.SAXException;
  * @author trevor
  */
 public class LocalStageExecutor implements StageExecutor {
+
   public static class SequentialExecutionContext implements StageExecutionStatus, Runnable {
+
     String name;
     List<StageInstanceDescription> instances;
     ArrayList<Exception> exceptions = new ArrayList();
-
     int queuedInstances = 0;
     int runningInstances = 0;
     int completedInstances = 0;
@@ -47,7 +48,7 @@ public class LocalStageExecutor implements StageExecutor {
     public void run() {
       try {
         for (StageInstanceDescription instance : instances) {
-          synchronized(this) {
+          synchronized (this) {
             runningInstances++;
             queuedInstances--;
           }
@@ -57,17 +58,17 @@ public class LocalStageExecutor implements StageExecutor {
           ExNihiloSource source = factory.instantiate(instance);
           source.run();
           manager.stop();
-          synchronized(this) {
+          synchronized (this) {
             runningInstances--;
             completedInstances++;
           }
         }
-      } catch(Exception e) {
-        synchronized(this) {
+      } catch (Exception e) {
+        synchronized (this) {
           exceptions.add(e);
         }
       } finally {
-        synchronized(this) {
+        synchronized (this) {
           done = true;
         }
       }
@@ -101,6 +102,12 @@ public class LocalStageExecutor implements StageExecutor {
       return exceptions;
     }
 
+    public synchronized List<Double> getRunTimes() {
+      ArrayList<Double> times = new ArrayList();
+      // do something
+      return times;
+    }
+
     private synchronized void addException(Exception e) {
       exceptions.add(e);
     }
@@ -108,14 +115,14 @@ public class LocalStageExecutor implements StageExecutor {
 
   public SequentialExecutionContext execute(StageGroupDescription stage, String temporary) {
     SequentialExecutionContext context =
-      new SequentialExecutionContext(stage.getName(), stage.getInstances());
+            new SequentialExecutionContext(stage.getName(), stage.getInstances());
     context.run();
     return context;
   }
 
   public SequentialExecutionContext execute(StageInstanceDescription stage) {
     SequentialExecutionContext context =
-      new SequentialExecutionContext(stage.getName(), Collections.singletonList(stage));
+            new SequentialExecutionContext(stage.getName(), Collections.singletonList(stage));
     context.run();
     return context;
   }
@@ -131,9 +138,9 @@ public class LocalStageExecutor implements StageExecutor {
     // try to parse the stage description from disk
     try {
       ObjectInputStream stream =
-        new ObjectInputStream(new FileInputStream(new File(descriptionFile)));
+              new ObjectInputStream(new FileInputStream(new File(descriptionFile)));
       stage = (StageInstanceDescription) stream.readObject();
-    } catch(Exception e) {
+    } catch (Exception e) {
       return new ErrorExecutionStatus("unknown", e);
     }
 
@@ -141,7 +148,7 @@ public class LocalStageExecutor implements StageExecutor {
     if (completeFile.exists()) {
       logger.info("Exiting early because a complete checkpoint was found.");
       result = new SequentialExecutionContext(stage.getName(),
-          Collections.singletonList(stage));
+              Collections.singletonList(stage));
       result.markDone();
       return result;
     }
@@ -163,7 +170,7 @@ public class LocalStageExecutor implements StageExecutor {
         BufferedWriter writer = new BufferedWriter(new FileWriter(completeFile));
         writer.close();
       }
-    } catch(Exception e) {
+    } catch (Exception e) {
       logger.warning("Trouble writing completion/error files: " + errorFile.toString());
     }
 
@@ -188,7 +195,8 @@ public class LocalStageExecutor implements StageExecutor {
       }
       try {
         Thread.sleep(1000); // wait 1 second
-      } catch (Exception e) {} // Don't care about interruption errors
+      } catch (Exception e) {
+      } // Don't care about interruption errors
     } while (count++ < 60000); // 1 min timeout
 
     StageExecutionStatus context = new LocalStageExecutor().execute(stageDescriptionFile);

@@ -2,6 +2,7 @@
 
 package org.galagosearch.tupleflow.execution;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,4 +27,5 @@ public class ErrorExecutionStatus implements StageExecutionStatus {
     public int getCompletedInstances() { return 0; }
     public boolean isDone() { return true; }
     public List<Exception> getExceptions() { return exceptions; }
+    public List<Double> getRunTimes() { return new ArrayList(); }
 }
