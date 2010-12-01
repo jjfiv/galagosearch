@@ -252,13 +252,25 @@ public class IndexReader {
         /**
          * Returns the value as a string.
          */
-        
+
         public String getValueString() throws IOException {
             DataStream stream = getValueStream();
             assert stream.length() < Integer.MAX_VALUE;
             byte[] data = new byte[(int) stream.length()];
             stream.readFully(data);
             return Utility.toString(data);
+        }
+
+         /**
+         * Returns the value as a string.
+         */
+
+        public byte[] getValueBytes() throws IOException {
+            DataStream stream = getValueStream();
+            assert stream.length() < Integer.MAX_VALUE;
+            byte[] data = new byte[(int) stream.length()];
+            stream.readFully(data);
+            return data;
         }
         
         /**
@@ -436,13 +448,28 @@ public class IndexReader {
      */
     public String getValueString(byte[] key) throws IOException {
         Iterator iter = getIterator(key);
-        
+
         if (iter == null) {
             return null;
         }
         return iter.getValueString();
     }
-    
+
+    /**
+     * Gets the value stored in the index associated with this key.
+     * @param key
+     * @return The index value for this key, or null if there is no such value.
+     * @throws java.io.IOException
+     */
+    public byte[] getValueBytes(byte[] key) throws IOException {
+        Iterator iter = getIterator(key);
+
+        if (iter == null) {
+            return null;
+        }
+        return iter.getValueBytes();
+    }
+
     /**
      * Gets the value stored in the index associated with this key.
      * 

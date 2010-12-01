@@ -2,15 +2,10 @@
 
 package org.galagosearch.core.index;
 
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 
-import org.galagosearch.core.types.DataMapItem;
+import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
@@ -27,13 +22,14 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
  * Does not assume that the data is sorted
  *  - as data would need to be sorted into both key and value order
  *  - instead this class takes care of the re-sorting
+ *  - this may be inefficient, but docnames is a reletively small pair of files
  *
  * @author sjh
  */
 @InputClass(className = "org.galagosearch.core.types.NumberedDocumentData")
 public class DocumentNameWriter implements Processor<NumberedDocumentData> {
-  Sorter<DataMapItem> sorterFL;
-  Sorter<DataMapItem> sorterRL;
+  Sorter<KeyValuePair> sorterFL;
+  Sorter<KeyValuePair> sorterRL;
   
   NumberedDocumentData last = null;
   Counter documentNamesWritten = null;
@@ -42,17 +38,13 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     //writer = new BulkTreeWriter(parameters);
     documentNamesWritten = parameters.getCounter("Document Names Written");
     // make a folder
-    File folder = new File(parameters.getXML().get("filename"));
-    if(!folder.isDirectory()){
-      folder.delete();
-      folder.mkdirs();
-    }
+    String fileName = parameters.getXML().get("filename");
     
-    DataMapWriter writerFL = new DataMapWriter(folder, "fl");
-    DataMapWriter writerRL = new DataMapWriter(folder, "rl");
+    IndexWriterProcessor writerFL = new IndexWriterProcessor(fileName + ".fl");
+    IndexWriterProcessor writerRL = new IndexWriterProcessor(fileName + ".rl");
     
-    sorterFL = new Sorter<DataMapItem>(new DataMapItem.KeyOrder());
-    sorterRL = new Sorter<DataMapItem>(new DataMapItem.KeyOrder());
+    sorterFL = new Sorter<KeyValuePair>(new KeyValuePair.KeyOrder());
+    sorterRL = new Sorter<KeyValuePair>(new KeyValuePair.KeyOrder());
     sorterFL.processor = writerFL;
     sorterRL.processor = writerRL;
       
@@ -66,11 +58,13 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
    
     byte[] docnum = Utility.fromInt(ndd.number);
     byte[] docname = Utility.fromString(ndd.identifier);
-    
-    DataMapItem btiFL = new DataMapItem(docnum, docname);
+
+    // numbers -> names
+    KeyValuePair btiFL = new KeyValuePair(docnum, docname);
     sorterFL.process(btiFL);
 
-    DataMapItem btiRL = new DataMapItem(docname, docnum);
+    // names -> numbers
+    KeyValuePair btiRL = new KeyValuePair(docname, docnum);
     sorterRL.process(btiRL);
 
     if (documentNamesWritten != null) documentNamesWritten.increment();
@@ -86,5 +80,28 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
       handler.addError("DocumentNameWriter requires an 'filename' parameter.");
       return;
     }
+  }
+
+
+
+  /*
+   * Translates the Key Value Pairs to Generic elements + writes them to the index
+   */
+  private class IndexWriterProcessor implements Processor<KeyValuePair>{
+    IndexWriter writer;
+    public IndexWriterProcessor(String fileName) throws IOException{
+      // default uncompressed index is fine
+      writer = new IndexWriter(fileName);
+    }
+    
+    public void process(KeyValuePair kvp) throws IOException {
+      GenericElement element = new GenericElement(kvp.key, kvp.value);
+      writer.add(element);
+    }
+
+    public void close() throws IOException {
+      writer.close();
+    }
+    
   }
 }

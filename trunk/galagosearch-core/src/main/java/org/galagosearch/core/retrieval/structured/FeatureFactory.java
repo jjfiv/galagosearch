@@ -371,8 +371,6 @@ public class FeatureFactory {
             type.getIteratorClass().getAnnotation(RequiredStatistics.class);
     if (required != null) {
       for (String statistic : required.statistics()) {
-        System.err.println("added required statistics:" + statistic);
-        System.err.println("value:" + parameters.get(statistic, "test"));
         parametersCopy.add(statistic, parameters.get(statistic, null));
       }
     }
@@ -403,8 +401,6 @@ public class FeatureFactory {
               traversalClass.getAnnotation(RequiredStatistics.class);
       if (required != null) {
         for (String statistic : required.statistics()) {
-          System.err.println("added required statistics - traversal:" + statistic);
-          System.err.println("value:" + parameters.get(statistic, "test"));
           parametersCopy.add(statistic, parameters.get(statistic, null));
         }
       }

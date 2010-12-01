@@ -1,9 +1,0 @@
-
-package org.galagosearch.core.types;
-
-type DataMapItem {
-  bytes key;
-  bytes value;
-
-  order: +key;
-}

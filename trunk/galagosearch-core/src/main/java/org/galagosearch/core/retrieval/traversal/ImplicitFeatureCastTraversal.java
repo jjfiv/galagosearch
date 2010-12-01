@@ -29,7 +29,6 @@ public class ImplicitFeatureCastTraversal implements Traversal {
 
     public ImplicitFeatureCastTraversal(Parameters parameters, Retrieval retrieval) {
         this.retrieval = retrieval;
-        System.err.println( parameters.toString() );
         this.retrievalGroup = parameters.get("retrievalGroup");
     }
     

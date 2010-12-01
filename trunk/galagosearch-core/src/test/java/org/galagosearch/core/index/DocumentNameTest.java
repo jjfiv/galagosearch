@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 import junit.framework.TestCase;
 
-import org.galagosearch.core.types.DataMapItem;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.FakeParameters;
 import org.galagosearch.tupleflow.Parameters;
@@ -30,11 +29,12 @@ public class DocumentNameTest extends TestCase {
       Parameters p = new Parameters();
       File f = Utility.createTemporary();
       f.delete();
-      p.add("filename", f.getAbsolutePath());
+      f.mkdir();
+      File names = File.createTempFile("docName.", "", f);
+      p.add("filename", names.getAbsolutePath());
       FakeParameters params = new FakeParameters(p);
       DocumentNameWriter writer = new DocumentNameWriter(params);
             
-      ArrayList<DataMapItem> data = new ArrayList();
       for(int key_val = 10 ; key_val < 35 ; key_val++){
         String str_val = "document_name_key_is_" + key_val;
         NumberedDocumentData ndd = new NumberedDocumentData(str_val, "", key_val, 0);
@@ -42,7 +42,7 @@ public class DocumentNameTest extends TestCase {
       }
       writer.close();
       
-      DocumentNameReader reader = new DocumentNameReader(f.getAbsolutePath());
+      DocumentNameReader reader = new DocumentNameReader(names.getAbsolutePath());
 
       int key = 15;
       String name = "document_name_key_is_" + key;

@@ -3,8 +3,8 @@ package org.galagosearch.core.index;
 
 import java.io.IOException;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
+import org.galagosearch.core.types.KeyValuePair;
 
-import org.galagosearch.core.types.DataMapItem;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Utility;
 
@@ -19,52 +19,55 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class DocumentNameReader {
 
-  DataMapReader inputFl;
-  DataMapReader inputRl;
+  IndexReader flIndex;
+  IndexReader rlIndex;
 
   /** Creates a new instance of DocumentNameReader */
-  public DocumentNameReader(String folder) throws IOException {
-    inputFl = new DataMapReader(folder, "fl", true);
-    inputRl = new DataMapReader(folder, "rl", false);
+  public DocumentNameReader(String fileName) throws IOException {
+    // Ensure that we are dealing with the correct fileName
+    if(fileName.endsWith(".fl") || fileName.endsWith(".rl"))
+      fileName = fileName.substring(0, fileName.lastIndexOf("."));
+
+    flIndex = new IndexReader(fileName+".fl");
+    rlIndex = new IndexReader(fileName+".rl");
   }
 
   // gets the document name of the internal id index.
   public String get(int index) throws IOException {
-    DataMapItem dmi = inputFl.get(Utility.fromInt(index));
-    if (dmi == null) {
-      throw new IOException("Unknown Document Number " + index);
+    byte[] data = flIndex.getValueBytes(Utility.fromInt(index));
+
+    if (data == null) {
+      throw new IOException("Unknown Document Number : " + index);
     }
-    return Utility.toString(dmi.value);
+    return Utility.toString(data);
   }
 
   // gets the document id for some document name
   public int getDocumentId(String documentName) throws IOException {
-    byte[] value = new byte[0];
-    value = Utility.fromString(documentName);
-    DataMapItem dmi = inputRl.get(value);
-    if (dmi == null) {
-      throw new IOException("Unknown Document Name " + documentName);
-    }
+    byte[] data = rlIndex.getValueBytes(Utility.fromString(documentName));
 
-    return Utility.toInt(dmi.value);
+    if (data == null) {
+      throw new IOException("Unknown Document Name : " + documentName);
+    }
+    return Utility.toInt(data);
   }
 
   
   public NumberedDocumentDataIterator getNumberOrderIterator() throws IOException {
-    return new Iterator(inputFl, true);
+    return new Iterator(flIndex, true);
   }
   public NumberedDocumentDataIterator getNameOrderIterator() throws IOException {
-    return new Iterator(inputRl, false);
+    return new Iterator(rlIndex, false);
   }
 
   public class Iterator extends NumberedDocumentDataIterator{
     
     boolean forwardLookup;
-    DataMapReader input;
-    DataMapReader.Iterator iterator;
-    DataMapItem current;
+    IndexReader input;
+    IndexReader.Iterator iterator;
+    KeyValuePair current;
 
-    public Iterator(DataMapReader input, boolean forwardLookup) throws IOException {
+    public Iterator(IndexReader input, boolean forwardLookup) throws IOException {
       this.forwardLookup = forwardLookup;
       this.input = input;
       reset();
@@ -72,7 +75,10 @@ public class DocumentNameReader {
 
     public void reset() throws IOException {
       iterator = input.getIterator();
-      current = iterator.getItem();
+
+      byte[] key = iterator.getKey();
+      byte[] value = iterator.getValueBytes();
+      current = new KeyValuePair(key, value);
     }
 
     public String getRecordString() {
@@ -84,11 +90,17 @@ public class DocumentNameReader {
     }
 
     public boolean nextRecord() throws IOException {
-      if (iterator.nextRecord()) {
-        current = iterator.getItem();
-        return true;
+      iterator.nextKey();
+
+      if(iterator.isDone()) {
+        return false;
       }
-      return false;
+
+      byte[] key = iterator.getKey();
+      byte[] value = iterator.getValueBytes();
+      current = new KeyValuePair(key, value);
+
+      return true;
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {
