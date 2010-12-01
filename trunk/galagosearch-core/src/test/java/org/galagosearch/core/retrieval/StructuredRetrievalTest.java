@@ -168,8 +168,7 @@ public class StructuredRetrievalTest extends TestCase {
 
         Parameters p = new Parameters();
         p.add("requested", "5");
-        p.add("transform", "false");
-        ScoredDocument[] result = retrieval.runQuery(root.toString(), p);
+        ScoredDocument[] result = retrieval.runQuery(root, p);
 
         assertEquals(result.length, 5);
 

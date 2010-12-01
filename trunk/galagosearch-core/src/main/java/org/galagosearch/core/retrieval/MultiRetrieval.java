@@ -33,7 +33,7 @@ public class MultiRetrieval extends Retrieval {
   HashMap<String, FeatureFactory> featureFactories;
   // for asynchronous retrieval
   Thread runner;
-  String query;
+  Node root = null;
   Parameters queryParams;
   List<ScoredDocument> queryResults;
 
@@ -107,24 +107,18 @@ public class MultiRetrieval extends Retrieval {
    * @return
    * @throws Exception
    */
-  public ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception {
+  public ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception {
+    this.root = root;
     String retrievalGroup = parameters.get("retrievalGroup", "all");
     if (!retrievals.containsKey(retrievalGroup)) {
       // this should fail nicely
       // Print a fail, then return null
-      throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + query + "'");
+      throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + root.toString() + "'");
     }
     ArrayList<Retrieval> subset = retrievals.get(retrievalGroup);
     List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
 
     Parameters shardTemplate = parameters.clone();
-
-    if (parameters.get("transform", true)) {
-      Node queryRoot = parseQuery(query, parameters);
-      queryRoot = transformQuery(queryRoot, retrievalGroup);
-      query = queryRoot.toString();
-      shardTemplate.set("transform", "false");
-    }
 
     // Asynchronous retrieval
     String indexId = parameters.get("indexId", "0");
@@ -133,7 +127,7 @@ public class MultiRetrieval extends Retrieval {
       Parameters shardParams = shardTemplate.clone();
       shardParams.set("indexId", indexId + "." + Integer.toString(i));
       Retrieval r = subset.get(i);
-      r.runAsynchronousQuery(query, shardParams, queryResults);
+      r.runAsynchronousQuery(this.root, shardParams, queryResults);
     }
 
     // Wait for a finished list
@@ -149,8 +143,8 @@ public class MultiRetrieval extends Retrieval {
     return queryResults.subList(0, requested).toArray(new ScoredDocument[0]);
   }
 
-  public void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
-    this.query = query;
+  public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+    this.root = query;
     this.queryParams = parameters;
     this.queryResults = queryResults;
 
@@ -167,18 +161,18 @@ public class MultiRetrieval extends Retrieval {
     if (runner != null) {
       runner.join();
     }
-    query = null;
+    root = null;
     runner = null;
   }
 
   public void run() {
     // we haven't got a query to run - return
-    if (query == null) {
+    if (root == null) {
       return;
     }
 
     try {
-      ScoredDocument[] results = runQuery(query, queryParams);
+      ScoredDocument[] results = runQuery(root, queryParams);
 
       // Now add it to the output structure, but synchronously
       synchronized (queryResults) {
@@ -201,7 +195,7 @@ public class MultiRetrieval extends Retrieval {
     return StructuredQuery.parse(query);
   }
 
-  private Node transformQuery(Node queryTree, String retrievalGroup) throws Exception {
+  public Node transformQuery(Node queryTree, String retrievalGroup) throws Exception {
     FeatureFactory ff = featureFactories.get(retrievalGroup);
     List<Traversal> traversals = ff.getTraversals(this);
     for (Traversal traversal : traversals) {
@@ -280,7 +274,7 @@ public class MultiRetrieval extends Retrieval {
     if (!retrievals.containsKey(retrievalGroup)) {
       // this should fail nicely
       // Print a fail, then return null
-      throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + query + "'");
+      throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + nodeString + "'");
     }
     ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
     long count = 0;

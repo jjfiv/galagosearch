@@ -37,10 +37,11 @@ public abstract class Retrieval implements Runnable {
    */
   public abstract long xcount(String nodeString) throws Exception;
 
-  public abstract ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception;
+  public abstract ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception;
+  public abstract Node transformQuery(Node root, String retrievalGroup) throws Exception;
 
   // These are to allow for asynchronous execution
-  public abstract void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception;
+  public abstract void runAsynchronousQuery(Node root, Parameters parameters, List<ScoredDocument> queryResults) throws Exception;
   public abstract void waitForAsynchronousQuery() throws InterruptedException;
 
   static public Retrieval instance(String indexPath, Parameters parameters) throws IOException {

@@ -71,7 +71,7 @@ public class Search {
   }
 
   public static class SearchResult {
-
+    public String queryAsString;
     public Node query;
     public Node transformedQuery;
     public List<SearchResultItem> items;
@@ -119,15 +119,22 @@ public class Search {
   }
 
   public SearchResult runQuery(String query, Parameters p, boolean summarize) throws Exception {
+    Node root = StructuredQuery.parse(query);
+    Node transformed = retrieval.transformQuery(root, p.get("retrievalGroup","all"));
+    SearchResult result = runTransformedQuery(transformed, p, summarize);
+    result.query = root;
+    result.queryAsString = query;
+    return result;
+  }
+
+  public SearchResult runTransformedQuery(Node root, Parameters p, boolean summarize) throws Exception {
     int startAt = Integer.parseInt(p.get("startAt"));
     int count = Integer.parseInt(p.get("resultCount"));
-    
-    ScoredDocument[] results = retrieval.runQuery(query, p);
-    SearchResult result = new SearchResult();
 
-    Node tree = parseQuery(query, new Parameters());
-    Set<String> queryTerms = StructuredQuery.findQueryTerms(tree);
-    result.query = tree;
+    ScoredDocument[] results = retrieval.runQuery(root, p);
+    SearchResult result = new SearchResult();
+    Set<String> queryTerms = StructuredQuery.findQueryTerms(root);
+    result.transformedQuery = root;
     result.items = new ArrayList();
 
     for (int i = startAt; i < Math.min(startAt + count, results.length); i++) {

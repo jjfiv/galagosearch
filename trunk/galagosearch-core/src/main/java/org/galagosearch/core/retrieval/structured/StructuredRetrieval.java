@@ -34,7 +34,7 @@ public class StructuredRetrieval extends Retrieval {
     FeatureFactory featureFactory;
     // these allow asynchronous evaluation
     Thread runner;
-    String query;
+    Node query;
     Parameters queryParams;
     List<ScoredDocument> queryResults;
 
@@ -102,15 +102,7 @@ public class StructuredRetrieval extends Retrieval {
      * @return
      * @throws java.lang.Exception
      */
-    public ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception {
-        // parse the query
-        Node queryTree = parseQuery(query, parameters);
-
-        // transform the query if necessary
-        // (if this is part of some distributed retrieval - transformation may not be necessary)
-        if (parameters.get("transform", true)) {
-            queryTree = transformQuery(queryTree);
-        }
+    public ScoredDocument[] runQuery(Node queryTree, Parameters parameters) throws Exception {
 
         // construct the query iterators
         ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
@@ -147,7 +139,7 @@ public class StructuredRetrieval extends Retrieval {
      * @param queryResults - object that will contain the results
      * @throws Exception
      */
-    public void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+    public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
         this.query = query;
         this.queryParams = parameters;
         this.queryResults = queryResults;
@@ -236,7 +228,7 @@ public class StructuredRetrieval extends Retrieval {
         return iterator;
     }
 
-    private Node transformQuery(Node queryTree) throws Exception {
+    public Node transformQuery(Node queryTree, String retrievalGroup) throws Exception {
         List<Traversal> traversals = featureFactory.getTraversals(this);
         for (Traversal traversal : traversals) {
             queryTree = StructuredQuery.copy(traversal, queryTree);

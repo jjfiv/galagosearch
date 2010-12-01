@@ -519,10 +519,11 @@ public class App {
       handleSearch(p);
 
     } else {
-      String indexPath = args[1];
-      String[][] filtered = Utility.filterFlags(Utility.subarray(args, 2));
+      String[][] filtered = Utility.filterFlags(Utility.subarray(args, 1));
       String[] flags = filtered[0];
-      String[] corpora = filtered[1];
+      String[] inputs = filtered[1];
+      String indexPath = inputs[0];
+      String[] corpora = Utility.subarray(inputs, 1);
 
       // Any flag marked '--parameters' marks a parameters file.
       // We trim that part of the flag off so that the Parameters object will

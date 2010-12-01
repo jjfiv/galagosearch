@@ -19,6 +19,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.galagosearch.core.parse.Document;
+import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.tools.Search.SearchResult;
 import org.galagosearch.core.tools.Search.SearchResultItem;
 import org.galagosearch.tupleflow.Parameters;
@@ -216,6 +218,8 @@ public class SearchWebHandler extends AbstractHandler {
     writer.append("<div id=\"debug\">");
     writer.append("<table>");
     writer.append(String.format("<tr><td>%s</td><td>%s</td></tr>",
+            "Original Query", result.queryAsString));
+    writer.append(String.format("<tr><td>%s</td><td>%s</td></tr>",
             "Parsed Query", result.query.toString()));
     writer.append(String.format("<tr><td>%s</td><td>%s</td></tr>",
             "Transformed Query", result.transformedQuery.toString()));
@@ -373,6 +377,28 @@ public class SearchWebHandler extends AbstractHandler {
     writer.close();
   }
 
+  public void handleTransformQuery(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+    String nodeString = request.getParameter("q");
+    String retrievalGroup = request.getParameter("retrievalGroup");
+    Node root = StructuredQuery.parse(nodeString);
+    try {
+      Node transformed = search.retrieval.transformQuery(root, retrievalGroup);
+      PrintWriter writer = response.getWriter();
+      XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
+      response.setContentType("text/xml");
+      outputter.startTag("response");
+
+      outputter.startTag("query");
+      outputter.pcdata(transformed.toString());
+      outputter.endTag(); // count
+
+      outputter.endTag(); // response
+      outputter.endDocument();
+    } catch (Exception e) {
+      throw new ServletException("Unable to complete request.", e);
+    }
+  }
+
   public void writeCollectionSelector(PrintWriter writer) {
     // About to add this in
     //ArrayList<String> collGroups = search.getCollectionGroups();
@@ -483,6 +509,8 @@ public class SearchWebHandler extends AbstractHandler {
       handleStats(request, response);
     } else if (request.getPathInfo().equals("/parts")) {
       handleParts(request, response);
+    } else if (request.getPathInfo().equals("/transform")) {
+      handleTransformQuery(request, response);
     } else {
       handleMainPage(request, response);
     }
@@ -490,26 +518,30 @@ public class SearchWebHandler extends AbstractHandler {
 
   private SearchResult performSearch(HttpServletRequest request, boolean snippits) throws Exception {
     String query = request.getParameter("q");
+    String transformString = request.getParameter("transform");
+    boolean doTransform = Boolean.parseBoolean(transformString == null ? "false" : transformString);
     String startAtString = request.getParameter("start");
     String countString = request.getParameter("n");
-    String transform = request.getParameter("transform");
     String id = (request.getParameterValues("indexId") == null) ? "0" : request.getParameterValues("indexId")[0];
     String retGroup = (request.getParameterValues("subset") == null) ? "all" : request.getParameterValues("subset")[0];
     String qtype = (request.getParameterValues("qtype") == null) ? "complex" : request.getParameterValues("qtype")[0];
     int startAt = (startAtString == null) ? 0 : Integer.parseInt(startAtString);
     int resultCount = (countString == null) ? 10 : Integer.parseInt(countString);
-    boolean t = (transform == null) ? true : Boolean.parseBoolean(transform);
 
     Parameters p = new Parameters();
     p.add("indexId", id);
     p.add("queryType", qtype);
-    p.add("transform", Boolean.toString(t));
-    p.add("requested", Integer.toString( startAt + resultCount ));
-    p.add("startAt", Integer.toString( startAt));
-    p.add("resultCount", Integer.toString( resultCount ));
+    p.add("requested", Integer.toString(startAt + resultCount));
+    p.add("startAt", Integer.toString(startAt));
+    p.add("resultCount", Integer.toString(resultCount));
     p.add("retrievalGroup", retGroup);
 
-    SearchResult result = search.runQuery(query, p, snippits);
+    SearchResult result;
+    if (doTransform) {
+      result = search.runQuery(query, p, snippits);
+    } else {
+      result = search.runTransformedQuery(StructuredQuery.parse(query), p, snippits);
+    }
     return result;
   }
 

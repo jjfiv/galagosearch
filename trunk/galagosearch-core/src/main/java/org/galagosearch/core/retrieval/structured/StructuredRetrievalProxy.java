@@ -19,6 +19,7 @@ import java.net.URLEncoder;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.galagosearch.core.retrieval.query.StructuredQuery;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -34,7 +35,7 @@ public class StructuredRetrievalProxy extends Retrieval {
   private SAXParser parser;
   // For asynchronous evaluation
   Thread runner;
-  String query;
+  Node query;
   Parameters queryParams;
   List<ScoredDocument> queryResults;
 
@@ -61,7 +62,7 @@ public class StructuredRetrievalProxy extends Retrieval {
    */
   public Parameters getRetrievalStatistics(String retGroup) throws IOException {
     StringBuilder request = new StringBuilder(indexUrl);
-    String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
+    String encoded = URLEncoder.encode(query.toString(), "UTF-8"); // need to web-escape
     request.append("/stats?retGroup=").append(retGroup);
 
     URL resource = new URL(request.toString());
@@ -94,7 +95,7 @@ public class StructuredRetrievalProxy extends Retrieval {
    */
   public Parameters getAvailiableParts(String retGroup) throws IOException {
     StringBuilder request = new StringBuilder(indexUrl);
-    String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
+    String encoded = URLEncoder.encode(query.toString(), "UTF-8"); // need to web-escape
     request.append("/parts?retGroup=").append(retGroup);
 
     URL resource = new URL(request.toString());
@@ -114,10 +115,9 @@ public class StructuredRetrievalProxy extends Retrieval {
     return new Parameters(array.toByteArray());
   }
 
-  public ScoredDocument[] runQuery(String query, Parameters parameters) throws Exception {
+  public ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception {
 
     int requested = (int) parameters.get("requested", 1000);
-    boolean transform = parameters.get("transform", true);
     String qtype = parameters.get("queryType", "complex");
     String indexId = parameters.get("indexId", "0");
     String subset = parameters.get("retrievalGroup", "all");
@@ -125,11 +125,10 @@ public class StructuredRetrievalProxy extends Retrieval {
     ArrayList<ScoredDocument> results = new ArrayList<ScoredDocument>();
 
     StringBuilder request = new StringBuilder(indexUrl);
-    String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
+    String encoded = URLEncoder.encode(root.toString(), "UTF-8"); // need to web-escape
     request.append("/searchxml?q=").append(encoded);
     request.append("&n=").append(requested);
     request.append("&start=").append(0);
-    request.append("&transform=").append(transform);
     request.append("&qtype=").append(qtype);
     request.append("&indexId=").append(indexId);
     request.append("&subset=").append(subset);
@@ -152,7 +151,33 @@ public class StructuredRetrievalProxy extends Retrieval {
     return (handler.getResults());
   }
 
-  public void runAsynchronousQuery(String query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+  public Node transformQuery(Node queryTree, String retrievalGroup) throws Exception {
+    String query = queryTree.toString();
+    StringBuilder request = new StringBuilder(indexUrl);
+    String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
+    request.append("/transform?q=").append(encoded);
+    request.append("&retrievalGroup=").append(retrievalGroup);
+
+    URL resource = new URL(request.toString());
+    HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
+    connection.setRequestMethod("GET");
+
+    // Hook up an xml handler to the input stream to directly generate the results, as opposed
+    // to buffering them up
+    if (parser == null) {
+      parser = SAXParserFactory.newInstance().newSAXParser();
+    }
+
+    // might be a better way to do this....
+    TransformQueryHandler handler = new TransformQueryHandler();
+    handler.reset();
+    parser.parse(connection.getInputStream(), handler);
+    connection.disconnect();
+    Node root = StructuredQuery.parse(handler.nodeString);
+    return (root);
+  }
+
+  public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
     this.query = query;
     this.queryParams = parameters;
     this.queryResults = queryResults;
@@ -189,7 +214,7 @@ public class StructuredRetrievalProxy extends Retrieval {
   public long xcount(String nodeString) throws Exception {
 
     StringBuilder request = new StringBuilder(indexUrl);
-    String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
+    String encoded = URLEncoder.encode(nodeString, "UTF-8"); // need to web-escape
     request.append("/xcount?expression=").append(encoded);
     URL resource = new URL(request.toString());
     HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
@@ -336,6 +361,36 @@ public class StructuredRetrievalProxy extends Retrieval {
       if (context.equals("count")) {
         value = Integer.parseInt(new String(ch, start, length));
         String value = new String(ch, start, length);
+      }
+    }
+  }
+
+  private static class TransformQueryHandler extends DefaultHandler {
+
+    String context;
+    public String nodeString;
+
+    public TransformQueryHandler() {
+      reset();
+    }
+
+    public void reset() {
+        nodeString = "";
+        context = null;
+    }
+
+    public void endElement(String uri, String localName, String rawName) {
+      context = null;
+    }
+
+    public void startElement(String uri, String localName, String qName, Attributes attributes)
+            throws SAXException {
+      context = qName;
+    }
+
+    public void characters(char[] ch, int start, int length) {
+      if (context.equals("query")) {
+        nodeString = new String(ch, start, length);
       }
     }
   }
