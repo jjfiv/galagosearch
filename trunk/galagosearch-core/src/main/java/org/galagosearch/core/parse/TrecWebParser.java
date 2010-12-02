@@ -4,6 +4,7 @@ package org.galagosearch.core.parse;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  *
@@ -17,15 +18,16 @@ public class TrecWebParser implements DocumentStreamParser {
         this.reader = reader;
     }
 
-    public String waitFor(String tag) throws IOException {
+    public String waitFor(String... tags) throws IOException {
         String line;
 
         while ((line = reader.readLine()) != null) {
+          for (String tag : tags) {
             if (line.startsWith(tag)) {
                 return line;
             }
+          }
         }
-
         return null;
     }
 
@@ -74,9 +76,9 @@ public class TrecWebParser implements DocumentStreamParser {
         identifier = identifier.substring(7).trim();
         identifier = identifier.substring(0, identifier.length() - 8);
         identifier = new String(identifier.trim());
-        waitFor("<DOCHDR>");
+        waitFor("<DOCHDR>", "<HEADER>");
         String url = readUrl();
-        waitFor("</DOCHDR>");
+        waitFor("</DOCHDR>", "</HEADER>");
 
         StringBuilder buffer = new StringBuilder(20 * 1024);
 
