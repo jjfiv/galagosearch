@@ -80,7 +80,9 @@ public class TemplateTypeBuilder {
             this.inputType = caps(type.getInternalType());
             this.baseType = type.getBaseType();
             this.classTypeName = type.getClassName();
+            this.boxedName = type.getBoxedName();
             this.isArray = dataType.isArray();
+            this.isString = dataType.isString();
         }
         public DataType dataType;
         public String type;
@@ -90,6 +92,7 @@ public class TemplateTypeBuilder {
         public boolean isString;
         public boolean isArray;
         public String classTypeName;
+        public String boxedName;
         public String capsName;
         public String inputType;
         public String pluralName;

@@ -8,21 +8,22 @@ package org.galagosearch.tupleflow.typebuilder;
  */
 public class FieldSpecification {
     public enum DataType {
-        BOOLEAN ("boolean", "boolean", "Boolean", false, false, false),
-        BYTE   ("byte", "byte", "Byte", true, false, false),
-        SHORT  ("short", "short", "Short", true, false, false),
-        INT    ("int", "int", "Integer", true, false, false),
-        LONG   ("long", "long", "Long", true, false, false),
-        FLOAT  ("float", "float", "Float", false, false, false),
-        DOUBLE ("double", "double", "Double", false, false, false),
-        STRING ("String", "String", "String", false, true, false),
-        BYTES  ("bytes", "byte", "byte[]", false, false, true);
+        BOOLEAN ("boolean", "boolean", "Boolean","Boolean", false, false, false),
+        BYTE   ("byte", "byte", "Byte","Byte", true, false, false),
+        SHORT  ("short", "short", "Short","Short", true, false, false),
+        INT    ("int", "int", "Integer","Int", true, false, false),
+        LONG   ("long", "long", "Long","Long", true, false, false),
+        FLOAT  ("float", "float", "Float","Float", false, false, false),
+        DOUBLE ("double", "double", "Double","Double", false, false, false),
+        STRING ("String", "String", "String","String", false, true, false),
+        BYTES  ("bytes", "byte", "byte[]","byte[]", false, false, true);
                 
-        DataType(String internalType, String baseType, String className,
+        DataType(String internalType, String baseType, String className, String boxedName,
                  boolean isInteger, boolean isString, boolean isArray) {
             this.internalType = internalType;
             this.baseType = baseType;
             this.className = className;
+            this.boxedName = boxedName;
             this.isInteger = isInteger;
             this.isString = isString;
             this.isArray = isArray;
@@ -57,10 +58,15 @@ public class FieldSpecification {
         public String getClassName() {
             return className;
         }
-        
+
+        public String getBoxedName() {
+            return boxedName;
+        }
+
         private String baseType;
         private String internalType;
         private String className;
+        private String boxedName;
         private boolean isInteger;
         private boolean isString;
         private boolean isArray;

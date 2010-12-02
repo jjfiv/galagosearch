@@ -21,6 +21,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Collection;
+import gnu.trove.TByteArrayList;
+import gnu.trove.TDoubleArrayList;
+import gnu.trove.TFloatArrayList;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TLongArrayList;
+import gnu.trove.TShortArrayList;
+
 
 public class <typeName> implements Type\<<typeName>\> {
     <fields:{public <it.type> <it.name>;}; separator="\n"> 
@@ -328,8 +335,18 @@ public void copyUntil(ShreddedBuffer other, ShreddedProcessor output) throws IOE
 >>
 
 shreddedBufferDecls() ::= <<
-<order.rleFields:{f |ArrayList\<<f.classTypeName>\> <f.pluralName> = new ArrayList();}; separator="\n">
-<order.rleFields:{f |ArrayList\<Integer\> <f.name>TupleIdx = new ArrayList();}; separator="\n">
+<order.rleFields:{f |
+<if(f.isString)>
+ArrayList\<<f.classTypeName>\> <f.pluralName> = new ArrayList();
+<else>
+<if(f.isArray)>
+ArrayList\<<f.classTypeName>\> <f.pluralName> = new ArrayList();
+<else>
+T<f.boxedName>ArrayList <f.pluralName> = new T<f.boxedName>ArrayList();
+<endif>
+<endif>
+}; separator="\n">
+<order.rleFields:{f |TIntArrayList <f.name>TupleIdx = new TIntArrayList();}; separator="\n">
 <order.rleFields:{f |int <f.name>ReadIdx = 0;}; separator="\n">
                 
 <order.deltaFields:{f | <f.type>[] <f.pluralName>;}; separator="\n">
