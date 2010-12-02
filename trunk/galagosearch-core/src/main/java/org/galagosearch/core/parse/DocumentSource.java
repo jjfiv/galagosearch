@@ -284,8 +284,8 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
       }
 
       // Now just read until we see docno and (text or html) tags
-      boolean hasDocno, hasHtml, hasText;
-      hasDocno = hasHtml = hasText = false;
+      boolean hasDocno, hasDocHdr, hasHtml, hasText, hasBody;
+      hasDocno = hasDocHdr = hasHtml = hasText = hasBody = false;
       while (br.ready()) {
         line = br.readLine();
         if (line == null || line.equalsIgnoreCase("</doc>")) {
@@ -294,21 +294,27 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
         line = line.toLowerCase();
         if (line.indexOf("<docno>") != -1) {
           hasDocno = true;
+        } else if (line.indexOf("<dochdr>") != -1) {
+          hasDocHdr = true;
         } else if (line.indexOf("<text>") != -1) {
           hasText = true;
         } else if (line.indexOf("<html>") != -1) {
           hasHtml = true;
+        } else if (line.indexOf("<body>") != -1) {
+          hasBody = true;
         }
 
         if (hasDocno && hasText) {
           fileType = "trectext";
           break;
-        } else if (hasDocno && hasHtml) {
+        } else if (hasDocno && (hasHtml || hasBody || hasDocHdr)) {
           fileType = "trecweb";
           break;
         }
       }
       br.close();
+      if(fileType == null)
+        System.err.println(fileName + " classified as " + fileType);
       return fileType;
     } catch (IOException ioe) {
       ioe.printStackTrace(System.err);

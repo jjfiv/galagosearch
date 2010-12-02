@@ -1275,10 +1275,11 @@ public class JobExecutor {
       // First get the hostname
       InetAddress local = InetAddress.getLocalHost();
       String hostname = local.getHostName();
-      if (hostname.contains("swarm-long")) {
-        params = new String[]{"-ns=-q long.q -l long=TRUE"};
+      if (hostname.contains("swarm")) {
+        //params = new String[]{"-ns=-q long.q -l long=TRUE", "Xmx1600m", "Xms1500m"};
+        params = new String[]{"Xmx1600m", "Xms1500m"};
       } else if (hostname.contains("sydney")) {
-        params = new String[]{"-ns=-q std.q -pe thread.std 2"};
+        params = new String[]{"-ns=-q std.q -pe thread.std 2", "Xmx1600m", "Xms1500m"};
       } else {
         params = new String[0];
       }
