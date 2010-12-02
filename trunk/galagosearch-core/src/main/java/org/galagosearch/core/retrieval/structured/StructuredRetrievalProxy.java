@@ -132,6 +132,7 @@ public class StructuredRetrievalProxy extends Retrieval {
     request.append("&qtype=").append(qtype);
     request.append("&indexId=").append(indexId);
     request.append("&subset=").append(subset);
+    request.append("&transform=").append("false"); // all runquery queries should be pre-transformed by search/batch-search
 
     URL resource = new URL(request.toString());
     HttpURLConnection connection = (HttpURLConnection) resource.openConnection();

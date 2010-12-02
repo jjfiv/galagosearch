@@ -519,7 +519,7 @@ public class SearchWebHandler extends AbstractHandler {
   private SearchResult performSearch(HttpServletRequest request, boolean snippits) throws Exception {
     String query = request.getParameter("q");
     String transformString = request.getParameter("transform");
-    boolean doTransform = Boolean.parseBoolean(transformString == null ? "false" : transformString);
+    boolean doTransform = Boolean.parseBoolean(transformString == null ? "true" : transformString);
     String startAtString = request.getParameter("start");
     String countString = request.getParameter("n");
     String id = (request.getParameterValues("indexId") == null) ? "0" : request.getParameterValues("indexId")[0];
