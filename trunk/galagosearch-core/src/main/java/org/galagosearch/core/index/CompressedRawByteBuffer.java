@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import org.galagosearch.tupleflow.Utility;
+import gnu.trove.TByteArrayList;
 
 public class CompressedRawByteBuffer {
     ArrayList<byte[]> values = null;
@@ -162,9 +163,8 @@ public class CompressedRawByteBuffer {
     }
 
     public void add(CompressedByteBuffer other) {
-        ArrayList<Byte> boxed = other.values;
-        for (int i = 0; i < other.position; i++) {
-            addRaw(boxed.get(i).byteValue());
+        for (int i = 0; i < other.values.size(); i++) {
+            addRaw(other.values.getQuick(i));
         }
     }
 

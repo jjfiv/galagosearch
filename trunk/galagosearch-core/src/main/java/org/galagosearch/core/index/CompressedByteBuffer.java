@@ -4,6 +4,8 @@ package org.galagosearch.core.index;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import gnu.trove.TByteArrayList;
+import gnu.trove.TByteProcedure;
 
 /**
  * Stores lists of integers in vbyte compressed form.  This
@@ -11,145 +13,148 @@ import java.util.ArrayList;
  * compressed on disk.
  * 
  * [sjh: all removed code has been commented out - nothing was deleted]
- * 
+ *
+ * (12/03/2010, irmarc): Switched the ArrayList of boxed bytes to TByteArrayList from trove. LHF.
+ *
  * @author trevor + modified by sjh
+ * @author irmarc
  * 
  */
 public class CompressedByteBuffer {
-    //byte[] values;
-    ArrayList<Byte> values;
-    int position;
-    
-    public CompressedByteBuffer() {
-      clear();
-    }
-    
-    public CompressedByteBuffer(int resetSize) {
-      clear();
-      values.ensureCapacity(resetSize);
-    }
 
-    /**
-     * Add a single byte to the buffer.  This byte is written
-     * directly to the buffer without compression.
-     *
-     * @param value The byte value to add.
-     */
-    public void addRaw(int value) { 
-      values.add( (byte) value );
-      position += 1;
-      /*
-      if (position >= values.length) {
-        byte[] nValues = new byte[values.length * 2];
-        System.arraycopy(values, 0, nValues, 0, values.length);
-        values = nValues;
+  TByteArrayList values;
+  ByteWriterProcedure writer = new ByteWriterProcedure();
+  ByteCopierProcedure copier = new ByteCopierProcedure();
+
+  public CompressedByteBuffer() {
+    clear();
+  }
+
+  public CompressedByteBuffer(int resetSize) {
+    clear();
+    values.ensureCapacity(resetSize);
+  }
+
+  /**
+   * Add a single byte to the buffer.  This byte is written
+   * directly to the buffer without compression.
+   *
+   * @param value The byte value to add.
+   */
+  public void addRaw(int value) {
+    values.add((byte) value);
+  }
+
+  /**
+   * Adds a single number to the buffer.  This number is
+   * converted to compressed form before it is stored.
+   */
+  public void add(long i) {
+    if (i < 1 << 7) {
+      addRaw((int) (i | 0x80));
+    } else if (i < 1 << 14) {
+      addRaw((int) (i >> 0) & 0x7f);
+      addRaw((int) ((i >> 7) & 0x7f) | 0x80);
+    } else if (i < 1 << 21) {
+      addRaw((int) (i >> 0) & 0x7f);
+      addRaw((int) (i >> 7) & 0x7f);
+      addRaw((int) ((i >> 14) & 0x7f) | 0x80);
+    } else {
+      while (i >= 1 << 7) {
+        addRaw((int) (i & 0x7f));
+        i >>= 7;
       }
 
-      values[position] = (byte) value;
-      position += 1;
-      */
+      addRaw((int) (i | 0x80));
+    }
+  }
+
+  /**
+   * Adds a floating point value, (4 bytes) to the buffer.
+   * This is an uncompressed value.
+   */
+  public void addFloat(float value) {
+    int bits = Float.floatToIntBits(value);
+
+    addRaw((bits >>> 24) & 0xFF);
+    addRaw((bits >>> 16) & 0xFF);
+    addRaw((bits >>> 8) & 0xFF);
+    addRaw(bits & 0xFF);
+  }
+
+  /**
+   * Copies the entire contents of another compressed
+   * buffer to the end of this one.
+   *
+   * @param other The buffer to copy.
+   */
+  public void add(CompressedByteBuffer other) {
+    copier.target = this;
+    other.values.forEach(copier);
+    copier.target = null; // no danglers
+  }
+
+  /**
+   * Erases the contents of this buffer and sets its
+   * length to zero.
+   */
+  public void clear() {
+    values = new TByteArrayList();
+  }
+
+  /**
+   * Returns a byte array containing the contents of this buffer.
+   * The array returned may be larger than the actual length of
+   * the stored data.  Use the length method to determine the
+   * true data length.
+   */
+  public byte[] getBytes() {
+    return values.toNativeArray();
+  }
+
+  /**
+   * Returns the length of the data stored in this buffer.
+   */
+  public int length() {
+    return values.size();
+  }
+
+  /**
+   * Writes the contents of this buffer to a stream.
+   */
+  public void write(OutputStream stream) throws IOException {
+    writer.stream = stream;
+    values.forEach(writer);
+    writer.stream = null; //  don't want a dangling reference
+  }
+
+  private class ByteWriterProcedure implements TByteProcedure {
+
+    public OutputStream stream;
+
+    public ByteWriterProcedure() {
     }
 
-    /** 
-     * Adds a single number to the buffer.  This number is 
-     * converted to compressed form before it is stored.
-     */
-    public void add(long i) {
-        if (i < 1 << 7) {
-            addRaw((int) (i | 0x80));
-        } else if (i < 1 << 14) {
-            addRaw((int) (i >> 0) & 0x7f);
-            addRaw((int) ((i >> 7) & 0x7f) | 0x80);
-        } else if (i < 1 << 21) {
-            addRaw((int) (i >> 0) & 0x7f);
-            addRaw((int) (i >> 7) & 0x7f);
-            addRaw((int) ((i >> 14) & 0x7f) | 0x80);
-        } else {
-            while (i >= 1 << 7) {
-                addRaw((int) (i & 0x7f));
-                i >>= 7;
-            }
-
-            addRaw((int) (i | 0x80));
-        }
-    }
-
-    /**
-     * Adds a floating point value, (4 bytes) to the buffer.
-     * This is an uncompressed value.
-     */
-    public void addFloat(float value) {
-        int bits = Float.floatToIntBits(value);
-
-        addRaw((bits >>> 24) & 0xFF);
-        addRaw((bits >>> 16) & 0xFF);
-        addRaw((bits >>> 8) & 0xFF);
-        addRaw(bits & 0xFF);
-    }
-
-    /**
-     * Copies the entire contents of another compressed
-     * buffer to the end of this one.
-     *
-     * @param other The buffer to copy.
-     */
-    public void add(CompressedByteBuffer other) {
-      values.addAll(other.values);
-      position += other.length();
-
-      /* int totalLength = other.length() + length();
-         byte[] newValues = new byte[totalLength];
-
-        System.arraycopy(values, 0, newValues, 0, position);
-        System.arraycopy(other.values, 0, newValues, position, other.position);
-        values = newValues;
-        position = totalLength;
-       */
-    }
-
-    /** 
-     * Erases the contents of this buffer and sets its
-     * length to zero.
-     */
-    public void clear() {
-      values = new ArrayList();
-      //values = new byte [1 * 1024 * 1024 ]; // ~1 MB
-      position = 0;
-    }
-
-    /**
-     * Returns a byte array containing the contents of this buffer.
-     * The array returned may be larger than the actual length of
-     * the stored data.  Use the length method to determine the 
-     * true data length.
-     */
-    public byte[] getBytes() {
-      byte[] data = new byte[ values.size() ];
-      int i = 0;
-      for(Byte b : values){
-        data[i] = b;
-        i++;
+    public boolean execute(byte value) {
+      try {
+        stream.write(value);
+        return true;
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
       }
-      return data;
-      //return values;
+    }
+  }
+
+  private class ByteCopierProcedure implements TByteProcedure {
+
+    public CompressedByteBuffer target;
+
+    public ByteCopierProcedure() {
     }
 
-    /** 
-     * Returns the length of the data stored in this buffer.
-     */
-    public int length() {
-        return position;
+    public boolean execute(byte value) {
+      target.values.add(value);
+      return true;
     }
-
-    /**
-     * Writes the contents of this buffer to a stream.
-     */
-    public void write(OutputStream stream) throws IOException {
-      for(Byte b : values){
-        stream.write( b );
-      }
-      //stream.write(getBytes(), 0, position);
-      //stream.write(values, 0, position);
-    }
+  }
 }
-
