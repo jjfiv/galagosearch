@@ -188,7 +188,7 @@ public class StructuredIndex {
     documentLengths.close();
   }
 
-  public int getLength(int document) {
+  public int getLength(int document) throws IOException {
     return documentLengths.getLength(document);
   }
 
@@ -200,7 +200,7 @@ public class StructuredIndex {
     return documentNames.getDocumentId(document);
   }
 
-  public NumberedDocumentDataIterator getDocumentLengthsIterator() {
+  public NumberedDocumentDataIterator getDocumentLengthsIterator() throws IOException {
     return documentLengths.getIterator();
   }
 
