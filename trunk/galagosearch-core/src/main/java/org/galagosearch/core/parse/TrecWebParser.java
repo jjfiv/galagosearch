@@ -18,15 +18,13 @@ public class TrecWebParser implements DocumentStreamParser {
         this.reader = reader;
     }
 
-    public String waitFor(String... tags) throws IOException {
+    public String waitFor(String tag) throws IOException {
         String line;
 
         while ((line = reader.readLine()) != null) {
-          for (String tag : tags) {
             if (line.startsWith(tag)) {
                 return line;
             }
-          }
         }
         return null;
     }
@@ -76,9 +74,9 @@ public class TrecWebParser implements DocumentStreamParser {
         identifier = identifier.substring(7).trim();
         identifier = identifier.substring(0, identifier.length() - 8);
         identifier = new String(identifier.trim());
-        waitFor("<DOCHDR>", "<HEADER>");
+        waitFor("<DOCHDR>");
         String url = readUrl();
-        waitFor("</DOCHDR>", "</HEADER>");
+        waitFor("</DOCHDR>");
 
         StringBuilder buffer = new StringBuilder(20 * 1024);
 

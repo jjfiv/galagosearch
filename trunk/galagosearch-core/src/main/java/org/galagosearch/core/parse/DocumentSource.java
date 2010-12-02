@@ -309,7 +309,6 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
           break;
         } else if (hasDocno && (hasHtml || hasBody || hasDocHdr)) {
           fileType = "trecweb";
-          break;
         }
       }
       br.close();
