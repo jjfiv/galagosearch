@@ -5,10 +5,7 @@
 
 package org.galagosearch.tupleflow;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import junit.framework.TestCase;
 
 /**
@@ -67,5 +64,66 @@ public class UtilityTest extends TestCase {
 
         Utility.deleteDirectory(new File(f.getParent() + File.separator + "bbb"));
         f.delete();
+    }
+
+    public void testConverters() throws IOException {
+	// String
+	String testString = "I am a little teapot, short and stout";
+	byte[] buffer = Utility.fromString(testString);
+	String convString = Utility.toString(buffer);
+	assertTrue(testString.equals(convString));
+
+	// short
+	short testShort = 2345;
+	buffer = Utility.fromShort(testShort);
+	short convShort = Utility.toShort(buffer);
+	assertEquals(testShort, convShort);
+	
+	// int
+	int testInt = 832905257;
+	buffer = Utility.fromInt(testInt);
+	int convInt = Utility.toInt(buffer);
+	assertEquals(testInt, convInt);
+
+	// long
+	long testLong = 9034790013458L;
+	buffer = Utility.fromLong(testLong);
+	long convLong = Utility.toLong(buffer);
+	assertEquals(testLong, convLong);
+
+	// compression
+	DataOutputStream out;
+	ByteArrayOutputStream bout;
+	DataInputStream in;
+	ByteArrayInputStream bin;
+	bout = new ByteArrayOutputStream();
+	out = new DataOutputStream(bout);
+	
+	// int on data streams
+	testInt = 313;
+	Utility.compressInt(out, testInt);
+	bin = new ByteArrayInputStream(bout.toByteArray());
+	in = new DataInputStream(bin);
+	convInt = Utility.uncompressInt(in);
+	assertEquals(testInt, convInt);
+
+	// int uncompressed from byte array
+	buffer = bout.toByteArray();
+	convInt = Utility.uncompressInt(buffer, 0);
+	assertEquals(testInt, convInt);
+
+	// long on data streams		      
+	bout.reset();
+	testLong = 453279;
+	Utility.compressLong(out, testLong);
+	bin = new ByteArrayInputStream(bout.toByteArray());
+	in = new DataInputStream(bin);
+	convLong = Utility.uncompressLong(in);
+	assertEquals(testLong, convLong);
+
+	// long uncompressed from byte array
+	buffer = bout.toByteArray();
+	convLong = Utility.uncompressLong(buffer, 0);
+	assertEquals(testLong, convLong);
     }
 }

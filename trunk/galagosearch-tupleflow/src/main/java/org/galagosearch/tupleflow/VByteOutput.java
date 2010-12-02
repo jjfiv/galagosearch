@@ -46,29 +46,7 @@ public class VByteOutput implements DataOutput {
     }
 
     public void write(int i) throws IOException {
-        assert i >= 0;
-
-        if (i < 1 << 7) {
-            output.writeByte((i | 0x80));
-        } else if (i < 1 << 14) {
-            output.writeByte((i >> 0) & 0x7f);
-            output.writeByte(((i >> 7) & 0x7f) | 0x80);
-        } else if (i < 1 << 21) {
-            output.writeByte((i >> 0) & 0x7f);
-            output.writeByte((i >> 7) & 0x7f);
-            output.writeByte(((i >> 14) & 0x7f) | 0x80);
-        } else if (i < 1 << 28) {
-            output.writeByte((i >> 0) & 0x7f);
-            output.writeByte((i >> 7) & 0x7f);
-            output.writeByte((i >> 14) & 0x7f);
-            output.writeByte(((i >> 21) & 0x7f) | 0x80);
-        } else {
-            output.writeByte((i >> 0) & 0x7f);
-            output.writeByte((i >> 7) & 0x7f);
-            output.writeByte((i >> 14) & 0x7f);
-            output.writeByte((i >> 21) & 0x7f);
-            output.writeByte(((i >> 28) & 0x7f) | 0x80);
-        }
+      Utility.compressInt(output, i);
     }
 
     public void writeByte(int i) throws IOException {
@@ -96,25 +74,7 @@ public class VByteOutput implements DataOutput {
     }
 
     public void writeLong(long i) throws IOException {
-        assert i >= 0;
-
-        if (i < 1 << 7) {
-            output.writeByte((int) (i | 0x80));
-        } else if (i < 1 << 14) {
-            output.writeByte((int) (i >> 0) & 0x7f);
-            output.writeByte((int) ((i >> 7) & 0x7f) | 0x80);
-        } else if (i < 1 << 21) {
-            output.writeByte((int) (i >> 0) & 0x7f);
-            output.writeByte((int) (i >> 7) & 0x7f);
-            output.writeByte((int) ((i >> 14) & 0x7f) | 0x80);
-        } else {
-            while (i >= 1 << 7) {
-                output.writeByte((int) (i & 0x7f));
-                i >>= 7;
-            }
-
-            output.writeByte((int) (i | 0x80));
-        }
+      Utility.compressLong(output, i);
     }
 
     public void writeDouble(double d) throws IOException {

@@ -65,40 +65,11 @@ public class VByteInput implements DataInput {
     }
 
     public int readInt() throws IOException {
-        int result = 0;
-        int b;
-
-        for (int position = 0; true; position++) {
-            assert position < 6;
-            b = input.readUnsignedByte();
-
-            if ((b & 0x80) == 0x80) {
-                result |= ((b & 0x7f) << (7 * position));
-                break;
-            } else {
-                result |= (b << (7 * position));
-            }
-        }
-
-        return result;
+      return Utility.uncompressInt(input);
     }
 
     public long readLong() throws IOException {
-        long result = 0;
-        long b;
-
-        for (int position = 0; true; position++) {
-            b = input.readUnsignedByte();
-
-            if ((b & 0x80) == 0x80) {
-                result |= ((long) (b & 0x7f) << (7 * position));
-                break;
-            } else {
-                result |= ((long) b << (7 * position));
-            }
-        }
-
-        return result;
+      return Utility.uncompressLong(input);
     }
 
     public String readLine() throws IOException {

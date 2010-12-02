@@ -20,7 +20,6 @@ import org.galagosearch.tupleflow.execution.Verification;
 @InputClass(className = "org.galagosearch.core.types.NumberWordPosition", order = {"+word", "+document", "+position"})
 public class PositionIndexWriter implements
         NumberWordPosition.WordDocumentPositionOrder.ShreddedProcessor {
-    int blockSize = 32768;
     byte[] lastWord;
     long lastPosition = 0;
     long lastDocument = 0;

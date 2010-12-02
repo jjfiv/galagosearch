@@ -3,6 +3,7 @@
 package org.galagosearch.core.index;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -22,41 +23,41 @@ import org.galagosearch.tupleflow.execution.Verification;
  * input to more scoring functions.
  * 
  * offset is the first document number (for sequential sharding purposes)
+ *
+ * (12/01/2010, irmarc): Rewritten to make use of the IndexWriter class. As it is, the memory-mapping is
+ *                     fast, but its also dangerous due to lack of compression
  * 
- * @author trevor, sjh
+ * @author trevor, sjh, irmarc
  */
 @InputClass(className = "org.galagosearch.core.types.NumberedDocumentData", order = {"+number"})
 public class DocumentLengthsWriter implements Processor<NumberedDocumentData> {
     DataOutputStream output;
+    IndexWriter writer;
     int document = 0;
     int offset = 0;
     Counter documentsWritten = null;
+    ByteArrayOutputStream bstream;
+    DataOutputStream stream;
 
     /** Creates a new instance of DocumentLengthsWriter */
-    public DocumentLengthsWriter(TupleFlowParameters parameters) throws FileNotFoundException {
+    public DocumentLengthsWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
         String filename = parameters.getXML().get("filename");
         Utility.makeParentDirectories(filename);
-        output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
-        documentsWritten = parameters.getCounter("Documents Written");
-
-        offset = -1;
+        writer = new IndexWriter(parameters);
+        bstream = new ByteArrayOutputStream();
+        stream = new DataOutputStream(bstream);
+        documentsWritten = parameters.getCounter("Document Lengths Written");
     }
 
     public void close() throws IOException {
-      output.writeInt(offset);
-      output.close();
+       writer.close();
     }
 
     public void process(NumberedDocumentData object) throws IOException {
-        if(offset < 0) offset = object.number;
-        assert (document + offset) <= object.number : "d: " + document + " o.d:" + object.number;
-
-        while ((document + offset) < object.number) {
-            output.writeInt(0);
-            document++;
-        }
-
-        output.writeInt(object.textLength);
+        bstream.reset();
+        Utility.compressInt(stream, object.textLength);
+        GenericElement element = new GenericElement(Utility.fromInt(object.number), bstream.toByteArray());
+        writer.add(element);
         document++;
         if (documentsWritten != null) documentsWritten.increment();
     }

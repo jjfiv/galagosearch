@@ -1,6 +1,8 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.index;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.core.types.NumberedDocumentData;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  * Reads documents lengths from a document lengths file.
@@ -20,37 +23,23 @@ import org.galagosearch.core.types.NumberedDocumentData;
  */
 public class DocumentLengthsReader {
 
-  RandomAccessFile file;
-  FileChannel channel;
-  ByteBuffer buffer;
-  int documentNumberOffset;
-  int totalDocuments;
+  IndexReader reader;
 
   public DocumentLengthsReader(String filename) throws FileNotFoundException, IOException {
-    file = new RandomAccessFile(new File(filename), "r");
 
-    file.seek(file.length() - 4);
-    documentNumberOffset = file.readInt();
-    file.seek(0);
-    totalDocuments = (int) ((file.length() / 4) - 1); // final int is the offset
-
-    // the last four bytes are the document offset;
-    // thus they should not be readable from the channel map
-    channel = file.getChannel();
-    buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, (channel.size() - 4));
+    reader = new IndexReader(filename);
   }
 
   public void close() throws IOException {
-    channel.close();
-    file.close();
+    reader.close();
   }
 
-  public int getLength(int document) {
-    return buffer.getInt(document * 4);
+  public int getLength(int document) throws IOException {
+    return Utility.uncompressInt(reader.getValueBytes(Utility.fromInt(document)), 0);
   }
 
-  public NumberedDocumentDataIterator getIterator() {
-    return new Iterator();
+  public NumberedDocumentDataIterator getIterator() throws IOException {
+    return new Iterator(reader);
   }
 
   /*
@@ -60,32 +49,41 @@ public class DocumentLengthsReader {
    */
   public class Iterator extends NumberedDocumentDataIterator {
 
-    int current = 0;
+    IndexReader.Iterator iterator;
+    IndexReader reader;
+
+    public Iterator(IndexReader reader) throws IOException {
+      this.reader = reader;
+      reset();
+    }
 
     public void reset() throws IOException {
-      current = 0;
+      iterator = reader.getIterator();
     }
 
     public String getRecordString() {
-      int docNum = current + documentNumberOffset;
-      return docNum + ", " + getLength(current);
+      try {
+        StringBuilder sb = new StringBuilder();
+        sb.append(Utility.toInt(iterator.getKey())).append(",");
+        sb.append(Utility.uncompressInt(iterator.getValueBytes(),0));
+        return sb.toString();
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
     }
 
     public boolean nextRecord() throws IOException {
-      current++;
-      if (current < totalDocuments) {
-        return true;
-      }
-      return false;
+      return (iterator.nextKey());
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {
-      int docNum = current + documentNumberOffset;
-      return new NumberedDocumentData("", "", docNum, getLength(current));
+      int docNum = Utility.toInt(iterator.getKey());
+      int length = Utility.uncompressInt(iterator.getValueBytes(), 0);
+      return new NumberedDocumentData("", "", docNum, length);
     }
 
     public String getKey() {
-      return Integer.toString(current + documentNumberOffset);
+      return Utility.toString(iterator.getKey());
     }
   }
 }
