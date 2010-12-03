@@ -126,22 +126,6 @@ public class StructuredRetrievalTest extends TestCase {
         Utility.deleteDirectory(tempPath);
     }
 
-    public void testDocuments() throws FileNotFoundException, IOException {
-        StructuredRetrieval retrieval = new StructuredRetrieval(tempPath.toString(), new Parameters());
-        String name;
-
-        //name = retrieval.getDocumentName(1);
-        //assertEquals("DOC1", name);
-        //name = retrieval.getDocumentName(2);
-        //assertEquals("DOC2", name);
-        //name = retrieval.getDocumentName(3);
-        //assertEquals("DOC3", name);
-        //name = retrieval.getDocumentName(4);
-        //assertEquals("DOC4", name);
-        //name = retrieval.getDocumentName(5);
-        //assertEquals("DOC5", name);
-    }
-
     public void testSimple() throws FileNotFoundException, IOException, Exception {
         StructuredRetrieval retrieval = new StructuredRetrieval(tempPath.toString(), new Parameters());
 
@@ -174,11 +158,18 @@ public class StructuredRetrievalTest extends TestCase {
 
         HashMap<Integer, Double> realScores = new HashMap<Integer, Double>();
 
-        realScores.put(1, -12.422161102294922);
-        realScores.put(3, -13.636285781860352);
-        realScores.put(5, -14.483583450317383);
-        realScores.put(18, -14.483583450317383);
-        realScores.put(2, -14.483583450317383);
+        realScores.put(1, -6.211080532397473);
+        realScores.put(3, -6.81814312029245);
+        realScores.put(5, -7.241792050486051);
+        realScores.put(18, -7.241792050486051);
+        realScores.put(2, -7.241792050486051);
+
+        HashMap<Integer, String> realNames = new HashMap();
+        realNames.put(1, "DOC1");
+        realNames.put(2, "DOC2");
+        realNames.put(3, "DOC3");
+        realNames.put(5, "DOC5");
+        realNames.put(18, "DOC18");
 
         // make sure the results are sorted
         double lastScore = Double.MAX_VALUE;
@@ -186,8 +177,9 @@ public class StructuredRetrievalTest extends TestCase {
         for (int i = 0; i < result.length; i++) {
             double score = result[i].score;
             double expected = realScores.get(result[i].document);
-
+            String expname = realNames.get(result[i].document);
             assertTrue(lastScore >= result[i].score);
+            assertEquals(expname, result[i].documentName);
             assertEquals(expected, score, 0.0001);
 
             lastScore = score;

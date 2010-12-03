@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
+import org.galagosearch.tupleflow.Parameters;
 
 /**
  *
@@ -35,12 +36,12 @@ public class WeightConversionTraversalTest extends TestCase {
         internalNodes.add(new Node("text", "1.0"));
         internalNodes.add(new Node("text", "dog"));
         Node root = new Node("weight", internalNodes);
-        
-        ArrayList<Node> expectedVeryInternal = new ArrayList<Node>();
-        expectedVeryInternal.add(new Node("text", "dog"));
-        ArrayList<Node> expectedInternal = new ArrayList<Node>();
-        expectedInternal.add(new Node("scale", "1.0", expectedVeryInternal));
-        Node expected = new Node("combine", expectedInternal);
+
+        ArrayList<Node> expectedInternal = new ArrayList();
+        expectedInternal.add( new Node("text", "dog") );
+        Parameters expectedParameters = new Parameters();
+        expectedParameters.add("0", "1.0");
+        Node expected = new Node("combine", expectedParameters, expectedInternal, 0);
         
         WeightConversionTraversal traversal = new WeightConversionTraversal(null, null);
         Node result = traversal.afterNode(root);
@@ -53,7 +54,7 @@ public class WeightConversionTraversalTest extends TestCase {
 
         WeightConversionTraversal traversal = new WeightConversionTraversal(null, null);
         Node result = StructuredQuery.copy(traversal, root);
-        assertEquals("#combine( #scale:@/1.5/( #text:dog() ) #scale:@/2.0/( #text:cat() ) )", result.toString());
+        assertEquals("#combine:1=@/2.0/:0=@/1.5/( #text:dog() #text:cat() )", result.toString());
     }
 
     public void testRealIntegers() throws Exception {
@@ -62,6 +63,6 @@ public class WeightConversionTraversalTest extends TestCase {
 
         WeightConversionTraversal traversal = new WeightConversionTraversal(null, null);
         Node result = StructuredQuery.copy(traversal, root);
-        assertEquals("#combine( #scale:1( #text:dog() ) #scale:2( #text:cat() ) )", result.toString());
+        assertEquals("#combine:1=2:0=1( #text:dog() #text:cat() )", result.toString());
     }
 }

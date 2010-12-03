@@ -23,7 +23,7 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
     int[] docsB = new int[]{2, 4, 6, 8, 10, 12, 14, 16, 18, 20};
     double[] scoresB = new double[]{2, 4, 6, 8, 10, 12, 14, 16, 18, 20};
     int[] docsTogether = new int[]{2, 4, 5, 6, 8, 10, 12, 14, 15, 16, 18, 20};
-    double[] scoresTogether = new double[]{2, 4, 1, 6, 8, 12, 12, 14, 3, 16, 18, 24};
+    double[] scoresTogether = new double[]{1, 2, 0.5, 3, 4, 6, 6, 7, 1.5, 8, 9, 12};
 
     public void testNextCandidateAny() throws IOException {
         FakeScoreIterator one = new FakeScoreIterator(docsA, scoresA);

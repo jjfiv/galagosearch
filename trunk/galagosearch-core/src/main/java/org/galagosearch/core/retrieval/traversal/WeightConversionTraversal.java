@@ -36,8 +36,9 @@ public class WeightConversionTraversal implements Traversal {
     }
 
     public Node afterNode(Node node) throws Exception {
-        ArrayList<Node> children = node.getInternalNodes();
         if (node.getOperator().equals("weight")) {
+            ArrayList<Node> children = node.getInternalNodes();
+
             // first, verify that the appropriate children are weights
             if (children.size() % 2 == 1) {
                 throw new IOException("A weighted node cannot have an odd number of internal nodes: " +
@@ -45,18 +46,17 @@ public class WeightConversionTraversal implements Traversal {
             }
                         
             // now, reassemble everything:
+            Parameters newParameters = node.getParameters();
             ArrayList<Node> newChildren = new ArrayList<Node>();
             for (int i = 0; i < children.size(); i += 2) {
                 Node weightNode = children.get(i);
                 Node childNode = children.get(i+1);
                 
-                ArrayList<Node> newChild = new ArrayList<Node>();
-                newChild.add(childNode);
-                Node scaledNode = new Node("scale", getWeight(weightNode), newChild);
-                newChildren.add(scaledNode);
+                newChildren.add(childNode);
+                newParameters.set(Integer.toString(i/2), getWeight(weightNode));
             }
 
-            return new Node("combine", newChildren);
+            return new Node("combine", newParameters, newChildren, node.getPosition());
         } else {
             return node;
         }

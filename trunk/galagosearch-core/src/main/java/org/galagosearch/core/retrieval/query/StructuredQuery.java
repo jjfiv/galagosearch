@@ -16,6 +16,8 @@ import org.galagosearch.tupleflow.Parameters;
  * #operator:argument(...)
  * term, or term.field, or term.field.field, etc.
  *
+ * [sjh] : added a parameterTerm parse function to allow decimal numbers to be passed
+ *
  * @author trevor
  */
 public class StructuredQuery {
@@ -63,22 +65,39 @@ public class StructuredQuery {
         traversal.afterNode(tree);
     }
 
+    // sjh: parse parameterTerm (key or value) 
+    // Added to ensure doubles/floats can be parsed in parameters
+    public static String parseParameterTerm(TokenStream tokens){
+      String term = tokens.current().text;
+      tokens.next();
+
+      // check if we have a float/double value
+      if(tokens.currentEquals(".")){
+        tokens.next();
+        term = term + "." + tokens.current().text;
+        tokens.next();
+      }
+
+      return term;
+    }
+
     public static Parameters parseParameters(TokenStream tokens) {
         Parameters parameters = new Parameters();
         assert tokens.currentEquals(":");
 
         while (tokens.currentEquals(":")) {
             tokens.next();
-            String key = tokens.current().text;
-            tokens.next();
+            //String key = tokens.current().text;
+            String key = parseParameterTerm(tokens);
 
             if (tokens.currentEquals("=")) {
                 tokens.next();
 
                 if (tokens.hasCurrent()) {
-                    String value = tokens.current().text;
+                    //String value = tokens.current().text;
+                    String value = parseParameterTerm(tokens);
                     parameters.add(key, value);
-                    tokens.next();
+
                 }
             } else {
                 parameters.add("default", key);

@@ -15,7 +15,7 @@ public class ScaleIterator implements ScoreIterator {
 
     public ScaleIterator(Parameters parameters, ScoreIterator iterator) throws IllegalArgumentException {
         this.iterator = iterator;
-        weight = parameters.get("weight", 1.0);
+        weight = parameters.get("default", 1.0);
     }
 
     public int nextCandidate() {

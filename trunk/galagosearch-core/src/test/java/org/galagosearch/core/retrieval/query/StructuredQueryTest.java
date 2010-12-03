@@ -147,4 +147,10 @@ public class StructuredQueryTest extends TestCase {
         Node result = StructuredQuery.parse(query);
         assertEquals("#quote( #text:a() #text:b() #text:c() )", result.toString());
     }
+
+    public void testParameterDoubles() {
+        String query = "#combine:0=1.2:3.4=5( a b )";
+        Node result = StructuredQuery.parse(query);
+        assertEquals("#combine:0=@/1.2/:@/3.4/=5( #text:a() #text:b() )", result.toString());
+    }
 }

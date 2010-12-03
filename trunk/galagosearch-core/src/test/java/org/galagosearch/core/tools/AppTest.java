@@ -1,5 +1,4 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.tools;
 
 import java.io.ByteArrayOutputStream;
@@ -23,10 +22,9 @@ public class AppTest extends TestCase {
   }
 
   public String trecDocument(String docno, String text) {
-    return "<DOC>\n<DOCNO>" + docno + "</DOCNO>\n" +
-    "<TEXT>\n" + text + "</TEXT>\n</DOC>\n";
+    return "<DOC>\n<DOCNO>" + docno + "</DOCNO>\n"
+            + "<TEXT>\n" + text + "</TEXT>\n</DOC>\n";
   }
-
 
   public void testMakeCorpora() throws Exception {
     File trecCorpusFile = null;
@@ -37,23 +35,23 @@ public class AppTest extends TestCase {
 
     try {
       // create a simple doc file, trec format:
-      String trecCorpus = trecDocument("55", "This is a sample document") +
-      trecDocument("59", "sample document two");
+      String trecCorpus = trecDocument("55", "This is a sample document")
+              + trecDocument("59", "sample document two");
       trecCorpusFile = File.createTempFile("galago", ".trectext");
       Utility.copyStringToFile(trecCorpus, trecCorpusFile);
 
       // now, attempt to make a corpus folder from that.
       corpusFile1 = File.createTempFile("galago", ".corpus");
       corpusFile1.delete();
-      App.main(new String[] { "make-corpus", corpusFile1.getAbsolutePath(),
-          trecCorpusFile.getAbsolutePath(), "--corpusFormat=file"} );
+      App.main(new String[]{"make-corpus", corpusFile1.getAbsolutePath(),
+                trecCorpusFile.getAbsolutePath(), "--corpusFormat=file"});
 
       // now, attempt to make a corpus folder from that.
       corpusFile2 = File.createTempFile("galago", ".corpus");
       corpusFile2.delete();
-      App.main(new String[] { "make-corpus", corpusFile2.getAbsolutePath(),
-          trecCorpusFile.getAbsolutePath() } );
-      
+      App.main(new String[]{"make-corpus", corpusFile2.getAbsolutePath(),
+                trecCorpusFile.getAbsolutePath()});
+
       // make sure the corpus folder exists
       assertTrue(corpusFile1.exists());
       // make sure the corpus file exists
@@ -62,26 +60,36 @@ public class AppTest extends TestCase {
       // now, try to build an index from that
       indexFile1 = Utility.createTemporary();
       indexFile1.delete();
-      App.main(new String[] { "build", indexFile1.getAbsolutePath(),
-          corpusFile1.getAbsolutePath()});
+      App.main(new String[]{"build", indexFile1.getAbsolutePath(),
+                corpusFile1.getAbsolutePath()});
 
-            // now, try to build an index from that
+      // now, try to build an index from that
       indexFile2 = Utility.createTemporary();
       indexFile2.delete();
-      App.main(new String[] { "build", indexFile2.getAbsolutePath(),
-          corpusFile2.getAbsolutePath()});
+      App.main(new String[]{"build", indexFile2.getAbsolutePath(),
+                corpusFile2.getAbsolutePath()});
 
       // make sure the indexes exists
       assertTrue(indexFile1.exists());
       assertTrue(indexFile2.exists());
-      
+
 
     } finally {
-      if( trecCorpusFile != null) trecCorpusFile.delete();
-      if( corpusFile1 != null) corpusFile1.delete();
-      if( corpusFile2 != null) Utility.deleteDirectory(corpusFile2);
-      if( indexFile1 != null) Utility.deleteDirectory(indexFile1);
-      if( indexFile2 != null) Utility.deleteDirectory(indexFile2);
+      if (trecCorpusFile != null) {
+        trecCorpusFile.delete();
+      }
+      if (corpusFile1 != null) {
+        corpusFile1.delete();
+      }
+      if (corpusFile2 != null) {
+        Utility.deleteDirectory(corpusFile2);
+      }
+      if (indexFile1 != null) {
+        Utility.deleteDirectory(indexFile1);
+      }
+      if (indexFile2 != null) {
+        Utility.deleteDirectory(indexFile2);
+      }
     }
   }
 
@@ -95,37 +103,37 @@ public class AppTest extends TestCase {
 
     try {
       // create a simple doc file, trec format:
-      String trecCorpus = trecDocument("55", "This is a sample document") +
-      trecDocument("59", "sample document two");
+      String trecCorpus = trecDocument("55", "This is a sample document")
+              + trecDocument("59", "sample document two");
       trecCorpusFile = File.createTempFile("galago", ".trectext");
       Utility.copyStringToFile(trecCorpus, trecCorpusFile);
 
       // now, attempt to make a corpus file from that.
       corpusFile = File.createTempFile("galago", ".corpus");
       corpusFile.delete();
-      App.main(new String[] { "make-corpus", corpusFile.getAbsolutePath(),
-          trecCorpusFile.getAbsolutePath() } );
-      
-      
+      App.main(new String[]{"make-corpus", corpusFile.getAbsolutePath(),
+                trecCorpusFile.getAbsolutePath()});
+
+
       // make sure the corpus file exists
       assertTrue(corpusFile.exists());
 
       // now, try to build an index from that
       indexFile = Utility.createTemporary();
       indexFile.delete();
-      App.main(new String[] { "build", indexFile.getAbsolutePath(),
-          corpusFile.getAbsolutePath()});
+      App.main(new String[]{"build", indexFile.getAbsolutePath(),
+                corpusFile.getAbsolutePath()});
 
       assertTrue(indexFile.exists());
 
       // try to batch search that index with a no-match string
       String queries =
-        "<parameters>\n" +
-        "<query><number>5</number><text>nothing</text></query>\n" +
-        "<query><number>9</number><text>sample</text></query>\n" +
-        "<query><number>10</number><text>nothing sample</text></query>\n" +
-        "<query><number>14</number><text>#combine(#1(this is) sample)</text></query>\n" +
-        "</parameters>\n";
+              "<parameters>\n"
+              + "<query><number>5</number><text>nothing</text></query>\n"
+              + "<query><number>9</number><text>sample</text></query>\n"
+              + "<query><number>10</number><text>nothing sample</text></query>\n"
+              + "<query><number>14</number><text>#combine(#1(this is) sample)</text></query>\n"
+              + "</parameters>\n";
       queryFile = Utility.createTemporary();
       Utility.copyStringToFile(queries, queryFile);
 
@@ -133,25 +141,27 @@ public class AppTest extends TestCase {
       ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
       PrintStream printStream = new PrintStream(byteArrayStream);
 
-      new App(printStream).run(new String[] { "batch-search",
-          "--index=" + indexFile.getAbsolutePath(),
-          queryFile.getAbsolutePath() } );
+      new App(printStream).run(new String[]{"batch-search",
+                "--index=" + indexFile.getAbsolutePath(),
+                queryFile.getAbsolutePath()});
 
       // Now, verify that some stuff exists
       String output = byteArrayStream.toString();
-      String expectedScores = "9 Q0 59 1 -1.38562930 galago\n" +
-      "9 Q0 55 2 -1.38695908 galago\n" +
-      "10 Q0 59 1 -4.16021585 galago\n" +
-      "10 Q0 55 2 -4.16287565 galago\n" +
-      "14 Q0 55 1 -3.46440935 galago\n" +
-      "14 Q0 59 2 -3.46706867 galago\n";
+      String expectedScores =
+              "9 Q0 59 1 -1.38562925 galago\n"
+              + "9 Q0 55 2 -1.38695903 galago\n"
+              + "10 Q0 59 1 -2.08010799 galago\n"
+              + "10 Q0 55 2 -2.08143777 galago\n"
+              + "14 Q0 55 1 -1.73220460 galago\n"
+              + "14 Q0 59 2 -1.73353440 galago\n";
+
       assertEquals(expectedScores, output);
 
       // Verify dump-keys works
       byteArrayStream = new ByteArrayOutputStream();
       printStream = new PrintStream(byteArrayStream);
 
-      new App(printStream).run(new String[] { "dump-keys", corpusFile.getAbsolutePath() + File.separator + "index.corpus" });
+      new App(printStream).run(new String[]{"dump-keys", corpusFile.getAbsolutePath() + File.separator + "index.corpus"});
       output = byteArrayStream.toString();
       assertEquals("55\n59\n", output);
 
@@ -159,7 +169,7 @@ public class AppTest extends TestCase {
       byteArrayStream = new ByteArrayOutputStream();
       printStream = new PrintStream(byteArrayStream);
 
-      new App(printStream).run(new String[] { "doc", corpusFile.getAbsolutePath(), "55" });
+      new App(printStream).run(new String[]{"doc", corpusFile.getAbsolutePath(), "55"});
       output = byteArrayStream.toString();
       assertEquals("<TEXT>\nThis is a sample document</TEXT>\n\n", output);
 
@@ -167,19 +177,19 @@ public class AppTest extends TestCase {
       byteArrayStream = new ByteArrayOutputStream();
       printStream = new PrintStream(byteArrayStream);
 
-      String postingsName = Utility.join(new String[] { indexFile.getAbsolutePath(),
-          "parts", "stemmedPostings" },
-          File.separator);
-      new App(printStream).run(new String[] { "dump-index", postingsName });
+      String postingsName = Utility.join(new String[]{indexFile.getAbsolutePath(),
+                "parts", "stemmedPostings"},
+              File.separator);
+      new App(printStream).run(new String[]{"dump-index", postingsName});
       output = byteArrayStream.toString();
-      assertEquals("a,0,2\n" +
-          "document,0,4\n" +
-          "document,1,1\n" +
-          "is,0,1\n" +
-          "sampl,0,3\n" +
-          "sampl,1,0\n" +
-          "this,0,0\n" +
-          "two,1,2\n", output);
+      assertEquals("a,0,2\n"
+              + "document,0,4\n"
+              + "document,1,1\n"
+              + "is,0,1\n"
+              + "sampl,0,3\n"
+              + "sampl,1,0\n"
+              + "this,0,0\n"
+              + "two,1,2\n", output);
 
       // Verify eval works
       byteArrayStream = new ByteArrayOutputStream();
@@ -191,14 +201,26 @@ public class AppTest extends TestCase {
       Utility.copyStringToFile("9 Q0 55 1\n", relsFile);
 
       // for now this is just a smoke test.
-      new App(printStream).run(new String[] { "eval", scoresFile.getAbsolutePath(), relsFile.getAbsolutePath() });
+      new App(printStream).run(new String[]{"eval", scoresFile.getAbsolutePath(), relsFile.getAbsolutePath()});
     } finally {
-      if (relsFile != null) relsFile.delete();
-      if (queryFile != null) queryFile.delete();
-      if (scoresFile != null) scoresFile.delete();
-      if (trecCorpusFile != null) trecCorpusFile.delete();
-      if (corpusFile != null) Utility.deleteDirectory(corpusFile);
-      if (indexFile != null) Utility.deleteDirectory(indexFile);
+      if (relsFile != null) {
+        relsFile.delete();
+      }
+      if (queryFile != null) {
+        queryFile.delete();
+      }
+      if (scoresFile != null) {
+        scoresFile.delete();
+      }
+      if (trecCorpusFile != null) {
+        trecCorpusFile.delete();
+      }
+      if (corpusFile != null) {
+        Utility.deleteDirectory(corpusFile);
+      }
+      if (indexFile != null) {
+        Utility.deleteDirectory(indexFile);
+      }
     }
   }
 }

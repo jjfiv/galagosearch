@@ -18,7 +18,7 @@ public class FilteredCombinationIteratorTest extends TestCase {
     int[] docsB = new int[]{2, 4, 6, 8, 10, 12, 14, 16, 18, 20};
     double[] scoresB = new double[]{2, 4, 6, 8, 10, 12, 14, 16, 18, 20};
     int[] docsTogether = new int[]{10, 20};
-    double[] scoresTogether = new double[]{12, 24};
+    double[] scoresTogether = new double[]{6, 12};
 
     public FilteredCombinationIteratorTest(String testName) {
         super(testName);
