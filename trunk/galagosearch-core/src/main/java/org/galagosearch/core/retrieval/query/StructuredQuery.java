@@ -66,15 +66,19 @@ public class StructuredQuery {
     }
 
     // sjh: parse parameterTerm (key or value) 
-    // Added to ensure doubles/floats can be parsed in parameters
+    // parameter terms are delimited by :,=,(
+    // as in: #op:default:key1=value:key2=value,value,value( ... )
+    //  -- this allows us to pick up doubles/floats/and lists of values
+    //  -- note that a list is stored as the string entered
+    //     + user must parse it in the operatorIterator
     public static String parseParameterTerm(TokenStream tokens){
       String term = tokens.current().text;
       tokens.next();
 
-      // check if we have a float/double value
-      if(tokens.currentEquals(".")){
-        tokens.next();
-        term = term + "." + tokens.current().text;
+      while( (! tokens.currentEquals(":")) &&
+             (! tokens.currentEquals("=")) &&
+             (! tokens.currentEquals("("))){
+        term = term + tokens.current().text;
         tokens.next();
       }
 
