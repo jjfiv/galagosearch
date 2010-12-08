@@ -85,5 +85,10 @@ public class PageRankReader {
     public String getKey() {
       return Integer.toString(current + documentNumberOffset);
     }
+
+    // nothing needs to be done
+    public void skipTo(int key) throws IOException {
+      return;
+    }
   }
 }
