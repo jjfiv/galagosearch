@@ -714,6 +714,13 @@ public class App {
     }
 
     String command = args[0];
+    if (command.equals("test")) {
+      // For testing
+      args = new String[2];
+      command = "batch-search";
+      args[0] = "batch-search";
+      args[1] = "/usr/dan/users4/irmarc/ayr-disk/projects/galagosearch/galagosearch/test.queries";
+    }
 
     if (command.equals("help") && args.length > 1) {
       commandHelp(args[1]);

@@ -163,6 +163,14 @@ public class PositionIndexReader implements StructuredIndexPartReader {
         public int count() {
             return currentCount;
         }
+
+        public int totalDocuments() {
+          return documentCount;
+        }
+
+        public int totalPositions() {
+          return totalPositionCount;
+        }
     }
     IndexReader reader;
 

@@ -104,8 +104,6 @@ public class StructuredRetrieval extends Retrieval {
      */
     public ScoredDocument[] runQuery(Node queryTree, Parameters parameters) throws Exception {
 
-	System.err.println("@transformed: " + queryTree.toString());
-
         // construct the query iterators
         ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
         int requested = (int) parameters.get("requested", 1000);

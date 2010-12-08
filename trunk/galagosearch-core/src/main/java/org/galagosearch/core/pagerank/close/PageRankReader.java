@@ -77,6 +77,11 @@ public class PageRankReader {
       return false;
     }
 
+    public void skipTo(int key) {
+      if (key >= totalDocuments) throw new IndexOutOfBoundsException("Index " + key +" < " + totalDocuments);
+      current = key;
+    }
+
     public NumberedDocumentData getDocumentData() throws IOException {
       int docNum = current + documentNumberOffset;
       return new NumberedDocumentData("", "", docNum, getLength(current));
@@ -84,11 +89,6 @@ public class PageRankReader {
 
     public String getKey() {
       return Integer.toString(current + documentNumberOffset);
-    }
-
-    // nothing needs to be done
-    public void skipTo(int key) throws IOException {
-      return;
     }
   }
 }

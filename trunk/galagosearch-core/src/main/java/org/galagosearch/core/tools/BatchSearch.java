@@ -38,7 +38,6 @@ public class BatchSearch {
   public static void run(String[] args, PrintStream out) throws Exception {
     // read in parameters
     Parameters parameters = new Parameters(args);
-    System.out.println("params: " + parameters.toString());
     List<Parameters.Value> queries = parameters.list("query");
 
     // open index
