@@ -312,10 +312,12 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
         }
       }
       br.close();
-      if (fileType != null) {
-        System.out.println(fileName + " detected as " + fileType);
-      } else {
-        System.out.println("Unable to determine file type of " + fileName);
+      if (emitSplits) {
+        if (fileType != null) {
+          System.out.println(fileName + " detected as " + fileType);
+        } else {
+          System.out.println("Unable to determine file type of " + fileName);
+        }
       }
       return fileType;
     } catch (IOException ioe) {

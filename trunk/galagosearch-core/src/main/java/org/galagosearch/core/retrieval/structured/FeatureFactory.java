@@ -16,6 +16,7 @@ import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
 import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
+import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
 import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
 import org.galagosearch.core.scoring.DirichletScorer;
@@ -74,6 +75,14 @@ import org.galagosearch.tupleflow.Parameters.Value;
  */
 public class FeatureFactory {
 
+  // Note that some operators added here are "pseudo-operators" - they don't produce iterators
+  // themselves, but they operate as traversals that restructure sub-trees of the query. However
+  // these leave some kind of iterable operator in their wake. For example, the "rm" operator is applied
+  // after all other transforms to make sure the subquery is properly parameterized, but the rm operator
+  // itself is replaced by a combine operator after modification, so from the retrieval's point-of-view,
+  // the operator produces an UnfilteredCombinationOperator
+  //
+  // -- irmarc
   static String[][] sOperatorLookup = {
     {FilteredCombinationIterator.class.getName(), "filter"},
     {UnfilteredCombinationIterator.class.getName(), "combine"},
@@ -84,7 +93,9 @@ public class FeatureFactory {
     {OrderedWindowIterator.class.getName(), "od"},
     {UnorderedWindowIterator.class.getName(), "unordered"},
     {UnorderedWindowIterator.class.getName(), "uw"},
-    {ScaleIterator.class.getName(), "scale"}
+    {ScaleIterator.class.getName(), "scale"},
+    {UnfilteredCombinationIterator.class.getName(), "rm"},
+    {UnfilteredCombinationIterator.class.getName(), "seqdep"}
   };
   static String[][] sFeatureLookup = {
     {DirichletScorer.class.getName(), "dirichlet"},
@@ -98,7 +109,8 @@ public class FeatureFactory {
     WeightConversionTraversal.class.getName(),
     IndriWindowCompatibilityTraversal.class.getName(),
     TextFieldRewriteTraversal.class.getName(),
-    ImplicitFeatureCastTraversal.class.getName()
+    ImplicitFeatureCastTraversal.class.getName(),
+    RelevanceModelTraversal.class.getName()
   };
 
   static class OperatorSpec {
@@ -359,7 +371,7 @@ public class FeatureFactory {
     Class[] types = type.getParameterTypes(1 + childIterators.size());
 
     if (!isUsableConstructor(types, childIterators)) {
-      throw new Exception("Couldn't find a reasonable constructor.");
+	throw new Exception("Couldn't find a reasonable constructor for type:" + type.toString());
     }
 
     Parameters parametersCopy = new Parameters();

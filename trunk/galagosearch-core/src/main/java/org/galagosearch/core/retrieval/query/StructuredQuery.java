@@ -274,13 +274,17 @@ public class StructuredQuery {
     }
 
     public static Set<String> findQueryTerms(Node queryTree) {
+	return findQueryTerms(queryTree, "text");
+    }
+
+    public static Set<String> findQueryTerms(Node queryTree, String operator) {
         HashSet<String> queryTerms = new HashSet<String>();
 
-        if (queryTree.getOperator().equals("text")) {
+        if (queryTree.getOperator().equals(operator)) {
             queryTerms.add(queryTree.getDefaultParameter());
         } else {
             for (Node child : queryTree.getInternalNodes()) {
-                queryTerms.addAll(findQueryTerms(child));
+                queryTerms.addAll(findQueryTerms(child, operator));
             }
         }
 

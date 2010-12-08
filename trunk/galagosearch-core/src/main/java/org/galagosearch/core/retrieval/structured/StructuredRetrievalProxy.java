@@ -234,6 +234,10 @@ public class StructuredRetrievalProxy extends Retrieval {
     return (handler.getCount());
   }
 
+  public long xcount(Node root) throws Exception {
+    return xcount(root.toString());
+  }
+
   // this function is for the query transform function (which should not be completed here)
   @Override
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {

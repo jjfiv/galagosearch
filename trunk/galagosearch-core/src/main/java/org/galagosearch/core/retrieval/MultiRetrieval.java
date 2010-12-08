@@ -269,7 +269,12 @@ public class MultiRetrieval extends Retrieval {
     // Maybe a better option than parsing the query at EVERY level,
     // but at least it works.
     Node countNode = StructuredQuery.parse(nodeString);
+    return xcount(countNode);
+  }
+
+  public long xcount(Node countNode) throws Exception {
     Parameters parameters = countNode.getParameters();
+    String nodeString = countNode.toString();
     String retrievalGroup = parameters.get("retrievalGroup", "all");
     if (!retrievals.containsKey(retrievalGroup)) {
       // this should fail nicely

@@ -38,11 +38,12 @@ public class BatchSearch {
     public static void run(String[] args, PrintStream out) throws Exception {
         // read in parameters
         Parameters parameters = new Parameters(args);
+	System.out.println("params: " + parameters.toString());
         List<Parameters.Value> queries = parameters.list("query");
 
         // open index
         Retrieval retrieval = Retrieval.instance(parameters.get("index"), parameters);
-
+	
         // record results requested
         int requested = (int) parameters.get("count", 1000);
 
@@ -56,7 +57,6 @@ public class BatchSearch {
             Node root = StructuredQuery.parse(queryText);
             Node transformed = retrieval.transformQuery(root, "all");
             ScoredDocument[] results = retrieval.runQuery(transformed, p);
-
             for (int i = 0; i < results.length; i++) {
                 //String document = retrieval.getDocumentName(results[i].document);
                 double score = results[i].score;

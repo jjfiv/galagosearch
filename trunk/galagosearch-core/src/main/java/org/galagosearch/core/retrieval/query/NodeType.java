@@ -103,4 +103,8 @@ public class NodeType {
         
         throw new Exception("No reasonable constructors were found for " + nodeClass.toString());
     }
+
+    public String toString() {
+	return nodeClass.getName();
+    }
 }

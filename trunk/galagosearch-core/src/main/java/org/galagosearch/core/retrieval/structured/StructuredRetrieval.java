@@ -104,6 +104,8 @@ public class StructuredRetrieval extends Retrieval {
      */
     public ScoredDocument[] runQuery(Node queryTree, Parameters parameters) throws Exception {
 
+	System.err.println("@transformed: " + queryTree.toString());
+
         // construct the query iterators
         ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
         int requested = (int) parameters.get("requested", 1000);
@@ -250,6 +252,10 @@ public class StructuredRetrieval extends Retrieval {
 
         // first parse the node
         Node root = StructuredQuery.parse(nodeString);
+        return xcount(root);
+    }
+
+    public long xcount(Node root) throws Exception {
         StructuredIterator structIterator = index.getIterator(root);
         if (structIterator instanceof CountIterator) {
             CountIterator iterator = (CountIterator) structIterator;
@@ -260,8 +266,8 @@ public class StructuredRetrieval extends Retrieval {
             }
             return count;
         } else {
-            throw new IllegalArgumentException("Node " + nodeString + " did not return a counting iterator.");
-        }
+            throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
+       }
     }
 
     public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {

@@ -5,9 +5,11 @@ package org.galagosearch.core.parse;
 import java.io.IOException;
 import org.galagosearch.core.types.AdditionalDocumentText;
 import org.galagosearch.core.types.ExtractedLink;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.OutputClass;
 import org.galagosearch.tupleflow.StandardStep;
+import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.execution.Verified;
 
 /**
@@ -18,6 +20,13 @@ import org.galagosearch.tupleflow.execution.Verified;
 @InputClass(className = "org.galagosearch.core.parse.DocumentLinkData")
 @OutputClass(className = "org.galagosearch.core.types.AdditionalDocumentText")
 public class AnchorTextCreator extends StandardStep<DocumentLinkData, AdditionalDocumentText> {
+
+    Counter counter;
+
+    public AnchorTextCreator(TupleFlowParameters parameters) {
+      counter = parameters.getCounter("Anchors Created");
+    }
+
     @Override
     public void process(DocumentLinkData object) throws IOException {
         AdditionalDocumentText additional = new AdditionalDocumentText();
@@ -32,5 +41,6 @@ public class AnchorTextCreator extends StandardStep<DocumentLinkData, Additional
         additional.text = extraText.toString();
 
         processor.process(additional);
+        if (counter != null) counter.increment();
     }
 }

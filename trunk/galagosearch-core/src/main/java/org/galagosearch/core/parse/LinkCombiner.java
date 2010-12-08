@@ -16,6 +16,7 @@ import org.galagosearch.core.types.ExtractedLink;
 import org.galagosearch.core.types.IdentifiedLink;
 import java.io.IOException;
 import org.galagosearch.core.types.DocumentData;
+import org.galagosearch.tupleflow.Counter;
 
 /**
  *
@@ -27,12 +28,13 @@ public class LinkCombiner implements ExNihiloSource<IdentifiedLink>, IdentifiedL
     TypeReader<DocumentData> documentDatas;
     DocumentLinkData linkData;
     public Processor<DocumentLinkData> processor;
+    Counter linksProcessed;
 
     @SuppressWarnings("unchecked")
     public LinkCombiner(TupleFlowParameters parameters) throws IOException {
         String extractedLinksName = parameters.getXML().get("extractedLinks");
         String documentDatasName = parameters.getXML().get("documentDatas");
-
+        linksProcessed = parameters.getCounter("Links Combined");
         extractedLinks = parameters.getTypeReader(extractedLinksName);
         documentDatas = parameters.getTypeReader(documentDatasName);
     }
@@ -55,6 +57,7 @@ public class LinkCombiner implements ExNihiloSource<IdentifiedLink>, IdentifiedL
     void flush() throws IOException {
         if (linkData != null) {
             processor.process(linkData);
+            if (linksProcessed != null) linksProcessed.increment();
         }
     }
     

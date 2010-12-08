@@ -34,7 +34,7 @@ public class Search {
 
   public Search(Parameters params) throws Exception {
     this.store = getDocumentStore(params.list("corpus"));
-    this.retrieval = new StructuredRetrieval(params.get("index"), new Parameters());
+    this.retrieval = new StructuredRetrieval(params.get("index"), params);
     generator = new SnippetGenerator();
   }
 

@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.util.zip.GZIPInputStream;
 import org.galagosearch.core.index.IndexReader;
-import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.StreamCreator;
 import org.galagosearch.tupleflow.Utility;
@@ -41,6 +40,7 @@ public class CorpusReader implements DocumentReader {
 
   public CorpusReader() {
     // do nothing -- shouldn't really be used by anyone ever
+    throw new UnsupportedOperationException("NO!");
   }
 
   public void close() throws IOException {
