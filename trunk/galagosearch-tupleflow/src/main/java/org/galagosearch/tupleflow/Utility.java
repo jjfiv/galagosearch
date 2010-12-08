@@ -566,6 +566,19 @@ public class Utility {
     input.close();
   }
 
+  public static HashSet<String> readStreamToStringSet(InputStream stream) throws IOException {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+    HashSet<String> set = new HashSet<String>();
+    String line;
+
+    while ((line = reader.readLine()) != null) {
+      set.add(line.trim());
+    }
+
+    reader.close();
+    return set;
+  }
+
   public static HashSet<String> readFileToStringSet(File file) throws IOException {
     BufferedReader reader = new BufferedReader(new FileReader(file));
     HashSet<String> set = new HashSet<String>();
@@ -703,7 +716,7 @@ public class Utility {
     return result;
   }
 
-    public static int uncompressInt(byte[] input, int offset) throws IOException {
+  public static int uncompressInt(byte[] input, int offset) throws IOException {
     int result = 0;
     int b;
 
