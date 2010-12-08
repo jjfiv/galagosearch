@@ -112,10 +112,12 @@ public class StructuredRetrieval extends Retrieval {
 
         // now there should be an iterator at the root of this tree
         PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
+        NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
 
         while (!iterator.isDone()) {
             int document = iterator.nextCandidate();
-            int length = index.getLength(document);
+            lengthsIterator.skipTo( document );
+            int length = lengthsIterator.getDocumentData().textLength;
             double score = iterator.score(document, length);
 
             if (queue.size() <= requested || queue.peek().score < score) {

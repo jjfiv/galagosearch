@@ -76,6 +76,13 @@ public class DocumentLengthsReader {
       return (iterator.nextKey());
     }
 
+    public void skipTo( int key ) throws IOException{
+      byte[] bkey = Utility.fromInt(key);
+      while( Utility.compare( bkey, iterator.getKey()) != 0 ){
+        nextRecord();
+      }
+    }
+
     public NumberedDocumentData getDocumentData() throws IOException {
       int docNum = Utility.toInt(iterator.getKey());
       int length = Utility.uncompressInt(iterator.getValueBytes(), 0);

@@ -118,5 +118,9 @@ public class DocumentNameReader {
         return Utility.toString(current.key);
       }
     }
+
+    public void skipTo(int key) {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
   }
 }

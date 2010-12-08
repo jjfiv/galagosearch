@@ -24,4 +24,5 @@ public abstract class NumberedDocumentDataIterator implements IndexIterator {
   
   // Allows data to be retrieved
   public abstract NumberedDocumentData getDocumentData() throws IOException;
+  public abstract void skipTo( int key ) throws IOException;
 }
