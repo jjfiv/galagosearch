@@ -44,11 +44,7 @@ public class Search {
       ArrayList<DocumentReader> readers = new ArrayList<DocumentReader>();
       for (Value corpus : corpora) {
         String c = corpus.toString();
-        if (CorpusReader.isCorpus(c)) {
-          readers.add(new CorpusReader(c));
-        } else {
-          readers.add(new DocumentIndexReader(c));
-        }
+        readers.add( DocumentReader.getInstance(c) );
       }
       store = new DocumentIndexStore(readers);
     } else {

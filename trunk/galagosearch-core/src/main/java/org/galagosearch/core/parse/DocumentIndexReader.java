@@ -14,7 +14,7 @@ import org.galagosearch.tupleflow.VByteInput;
  *
  * @author trevor
  */
-public class DocumentIndexReader implements DocumentReader {
+public class DocumentIndexReader extends DocumentReader {
     IndexReader reader;
 
     public DocumentIndexReader(String fileName) throws FileNotFoundException, IOException {

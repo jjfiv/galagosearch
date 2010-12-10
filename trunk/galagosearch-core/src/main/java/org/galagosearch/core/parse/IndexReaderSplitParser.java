@@ -20,11 +20,7 @@ public class IndexReaderSplitParser implements DocumentStreamParser {
   DocumentSplit split;
 
   public IndexReaderSplitParser(DocumentSplit split) throws FileNotFoundException, IOException {
-    if(CorpusReader.isCorpus(split.fileName)){
-      reader = new CorpusReader(split.fileName);
-    } else {
-      reader = new DocumentIndexReader(split.fileName);
-    }
+    reader = DocumentReader.getInstance( split.fileName );
     iterator = reader.getIterator();
     iterator.skipTo(split.startKey);
     this.split = split;

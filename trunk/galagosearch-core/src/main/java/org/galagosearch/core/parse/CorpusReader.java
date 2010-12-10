@@ -19,7 +19,7 @@ import org.galagosearch.tupleflow.VByteInput;
  *
  * @author sjh
  */
-public class CorpusReader implements DocumentReader {
+public class CorpusReader extends DocumentReader {
 
   String corpusFolder;
   String corpusIndex;
@@ -117,36 +117,5 @@ public class CorpusReader implements DocumentReader {
 
       return document;
     }
-  }
-
-  /*
-   * Checks that there is an index.corpus file
-   * and at least one .cds or .cds.z file
-   * in the provided directory or in the parent directory of a file
-   *
-   */
-  public static boolean isCorpus(String fileName) {
-    File f = new File(fileName);
-
-    assert f.exists(): "Corpus file does not exist: " + f.getAbsolutePath();
-
-    if( ! f.isDirectory() ){
-      f = f.getParentFile();
-    }
-
-    boolean index = false;
-    boolean cds = false;
-    for (File sibling : f.listFiles()) {
-      if (sibling.getName().endsWith(".cds") || sibling.getName().endsWith(".cds.z")) {
-        cds = true;
-        continue;
-      }
-      if (sibling.getName().endsWith("index.corpus")) {
-        index = true;
-      }
-    }
-    if (cds && index)
-      return true;
-    return false;
   }
 }

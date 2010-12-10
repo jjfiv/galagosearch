@@ -16,7 +16,7 @@ public class DocumentIndexStoreTest extends TestCase {
     super(testName);
   }
 
-  class MockReader implements DocumentReader {
+  class MockReader extends DocumentReader {
 
     public boolean closeCalled = false;
 

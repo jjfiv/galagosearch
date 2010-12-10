@@ -89,7 +89,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
     long chunkSize = 100 * 1024 * 1024;
     long corpusSize = 0L;
 
-    if (CorpusReader.isCorpus(fileName)) {
+    if (DocumentReader.isCorpus(fileName)) {
       File folder = new File(fileName).getParentFile();
       for (File f : folder.listFiles()) {
         corpusSize += f.length();

@@ -4,7 +4,6 @@ package org.galagosearch.core.tools;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Map.Entry;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.DocumentNameReader;
@@ -17,12 +16,8 @@ import org.galagosearch.core.parse.DocumentIndexReader;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.mergeindex.parallel.MergeParallelIndexShards;
 import org.galagosearch.core.parse.DocumentReader;
-import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
-import org.galagosearch.core.store.DocumentIndexStore;
-import org.galagosearch.core.store.DocumentStore;
-import org.galagosearch.core.store.NullStore;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
 import org.galagosearch.tupleflow.FileOrderedReader;
@@ -212,12 +207,7 @@ public class App {
 
     String indexPath = args[1];
     String identifier = args[2];
-    DocumentReader reader;
-    if (CorpusReader.isCorpus(indexPath)) {
-      reader = new CorpusReader(indexPath);
-    } else {
-      reader = new DocumentIndexReader(indexPath);
-    }
+    DocumentReader reader = DocumentReader.getInstance(indexPath);
 
     Document document = reader.getDocument(identifier);
     output.println(document.text);
@@ -256,12 +246,7 @@ public class App {
       return;
     }
 
-    DocumentReader reader;
-    if (CorpusReader.isCorpus(args[1])) {
-      reader = new CorpusReader(args[1]);
-    } else {
-      reader = new DocumentIndexReader(args[1]);
-    }
+    DocumentReader reader = DocumentReader.getInstance(args[1]);
     DocumentReader.DocumentIterator iterator = reader.getIterator();
 
     while (!iterator.isDone()) {
