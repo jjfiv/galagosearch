@@ -78,6 +78,8 @@ import org.galagosearch.tupleflow.execution.Verification;
  */
 public class Sorter<T> extends StandardStep<T, T> implements NotificationListener {
 
+  public static final int DEFAULT_OBJECT_LIMIT = 50000000;
+
   private int limit;
   private int fileLimit = 20;
   private volatile boolean flushRequested = false;
@@ -90,7 +92,6 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
   private Comparator<T> lessThanCompare;
   private Reducer<T> reducer;
   private static int reduceInterval = 100 * 1000;
-  private static int defaultObjectLimit = 50 * 1000 * 1000;
   private Counter filesWritten = null;
   private Counter sorterCombineSteps;
   // contunters to assign a better combineBufferSize
@@ -98,11 +99,11 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
   private int combineBufferSize;
 
   public Sorter(Order<T> order) {
-    this(defaultObjectLimit, order, null, null);
+    this(DEFAULT_OBJECT_LIMIT, order, null, null);
   }
 
   public Sorter(Order<T> order, Reducer<T> reducer) {
-    this(defaultObjectLimit, order, reducer, null);
+    this(DEFAULT_OBJECT_LIMIT, order, reducer, null);
   }
 
   public Sorter(int limit, Order<T> order) {
@@ -137,7 +138,7 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
     Class clazz = Class.forName(className);
     Type<T> typeInstance = (Type<T>) clazz.newInstance();
     this.order = typeInstance.getOrder(orderSpec);
-    this.limit = (int) parameters.getXML().get("object-limit", defaultObjectLimit);
+    this.limit = (int) parameters.getXML().get("object-limit", DEFAULT_OBJECT_LIMIT);
     this.reducer = null;
     this.flushRequested = false;
 

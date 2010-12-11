@@ -89,8 +89,9 @@ public class App {
     output.println("Flags:");
     output.println("  --links={true|false}:    Selects whether to collect anchor text ");
     output.println("                           [default=false]");
-    output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
-    output.println("                           [default=false]");
+    output.println("  --printJob={plan|dot|none}: Simply prints the execution plan of a Tupleflow-based job then exits.");
+    output.println("                              'dot' dumps a dot file that you can use to look at the execution graph.");
+    output.println("                           [default=none]");
     output.println("  --stemming={true|false}: Selects whether to build stemmed inverted ");
     output.println("                           lists in addition to non-stemmed ones.");
     output.println("                           [default=true]");
@@ -181,9 +182,12 @@ public class App {
       job = build.getIndexJob(p);
     }
 
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-    if (printJob) {
+    String printJob = p.get("printJob", "none");
+    if (printJob.equals("plan")) {
       System.out.println(job.toString());
+      return;
+    } else if (printJob.equals("dot")) {
+      System.out.println(job.toDotString());
       return;
     }
 
@@ -332,7 +336,7 @@ public class App {
       output.println(iterator.getRecordString());
     } while (iterator.nextRecord());
   }
-
+  
   private void handleMakeCorpus(String[] args) throws Exception {
     if (args.length <= 2) {
       commandHelp(args[0]);
@@ -627,7 +631,7 @@ public class App {
       output.println("                           The folder structure can be produce in a parallel manner.");
       output.println("                           [default=folder]");
       output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
-      output.println("                           [default=false]");
+      output.println("                           [default=none]");
       output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
       output.println("                           [default=local]");
       output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");

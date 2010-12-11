@@ -6,6 +6,8 @@ type NumberWordProbability {
     double probability;
                
     order: +number +word;
+    order: +word -probability +number;
+    order: -probability +number;
     order: +number;
     order: +word;
 }

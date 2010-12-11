@@ -190,7 +190,7 @@ public class PositionIndexWriter implements
 
     public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
         if (!parameters.getXML().containsKey("filename")) {
-            handler.addError("PositionsListWriter requires an 'filename' parameter.");
+            handler.addError("PositionIndexWriter requires a 'filename' parameter.");
             return;
         }
 

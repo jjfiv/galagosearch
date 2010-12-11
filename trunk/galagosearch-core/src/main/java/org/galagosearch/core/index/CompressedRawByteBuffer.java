@@ -92,6 +92,21 @@ public class CompressedRawByteBuffer {
 	currentBuffer[position] = (byte)value ;
 	position += 1;
     }
+    
+    /**
+     * Adds a series of bytes to the buffer. Just iterates over
+     * 
+     */
+    public void add(byte[] bytes) {
+	add(bytes, 0, bytes.length);
+    }
+    
+    public void add(byte[] bytes, int offset, int length) {
+	assert(offset + length < bytes.length);
+	for (int i = offset; i < (offset+length); i++) {
+	    addRaw(bytes[i]);
+	}
+    }
 
     /**
      * Adds a single number to the buffer.  This number is
