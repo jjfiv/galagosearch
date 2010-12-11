@@ -8,7 +8,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
@@ -28,6 +27,7 @@ import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.execution.ErrorHandler;
 import org.galagosearch.tupleflow.execution.Verified;
 import org.galagosearch.core.types.DocumentSplit;
+import org.galagosearch.tupleflow.Counter;
 
 /**
  * From a set of inputs, splits the input into many DocumentSplit records.
@@ -35,12 +35,12 @@ import org.galagosearch.core.types.DocumentSplit;
  * This is somewhat similar to FileSource, except that it can autodetect file formats.
  * This splitter can detect ARC, TREC, TRECWEB and corpus files.
  * 
- * @author trevor, sjh
+ * @author trevor, sjh, irmarc
  */
 @Verified
 @OutputClass(className = "org.galagosearch.core.types.DocumentSplit")
 public class DocumentSource implements ExNihiloSource<DocumentSplit> {
-
+  Counter inputCounter;
   public Processor<DocumentSplit> processor;
   TupleFlowParameters parameters;
   int fileId = 0;
@@ -49,6 +49,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
 
   public DocumentSource(TupleFlowParameters parameters) {
     this.parameters = parameters;
+    inputCounter = parameters.getCounter("Inputs Processed");
   }
 
   private String getExtension(String fileName) {
@@ -127,6 +128,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
         fileId++;
         if (emitSplits) {
           processor.process(split);
+          if (inputCounter != null) inputCounter.increment();
         }
       }
     }
@@ -208,6 +210,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
     fileId++;
     if (emitSplits) {
       processor.process(split);
+      if (inputCounter != null) inputCounter.increment();
     }
   }
 
