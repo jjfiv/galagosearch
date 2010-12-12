@@ -1,14 +1,8 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.index;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Utility;
@@ -81,6 +75,8 @@ public class DocumentLengthsReader {
       while( Utility.compare( bkey, iterator.getKey()) != 0 ){
         nextRecord();
       }
+      // too slow:
+      // iterator.skipTo(key);
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {

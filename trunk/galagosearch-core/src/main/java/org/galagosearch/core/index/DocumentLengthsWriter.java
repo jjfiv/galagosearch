@@ -11,6 +11,7 @@ import java.io.IOException;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
+import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.Utility;
@@ -43,7 +44,10 @@ public class DocumentLengthsWriter implements Processor<NumberedDocumentData> {
     public DocumentLengthsWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
         String filename = parameters.getXML().get("filename");
         Utility.makeParentDirectories(filename);
-        writer = new IndexWriter(parameters);
+        Parameters p = new Parameters();
+        p.copy(parameters.getXML());
+        //p.set("blockSize", "64");
+        writer = new IndexWriter(filename, p);
         bstream = new ByteArrayOutputStream();
         stream = new DataOutputStream(bstream);
         documentsWritten = parameters.getCounter("Document Lengths Written");

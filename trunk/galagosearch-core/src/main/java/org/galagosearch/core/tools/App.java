@@ -10,9 +10,7 @@ import org.galagosearch.core.index.DocumentNameReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.pagerank.program.PageRankApp;
-import org.galagosearch.core.parse.CorpusReader;
 import org.galagosearch.core.parse.Document;
-import org.galagosearch.core.parse.DocumentIndexReader;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.mergeindex.parallel.MergeParallelIndexShards;
 import org.galagosearch.core.parse.DocumentReader;
@@ -101,6 +99,8 @@ public class App {
     output.println("                           [default=None]");
     output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
     output.println("                           [default=local]");
+    output.println("  --port={int<65000} :     port number for web based progress monitoring. ");
+    output.println("                           [default=randomly selected free port]");
     output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");
     output.println("                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]");
     output.println("  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete");
@@ -143,6 +143,8 @@ public class App {
     output.println("                           [default=false]");
     output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
     output.println("                           [default=local]");
+    output.println("  --port={int<65000} :     port number for web based progress monitoring. ");
+    output.println("                           [default=randomly selected free port]");
     output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");
     output.println("                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]");
     output.println("  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete");
@@ -634,6 +636,8 @@ public class App {
       output.println("                           [default=none]");
       output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
       output.println("                           [default=local]");
+      output.println("  --port={int<65000} :     port number for web based progress monitoring. ");
+      output.println("                           [default=randomly selected free port]");
       output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");
       output.println("                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]");
       output.println("  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete");
@@ -657,6 +661,8 @@ public class App {
       output.println("                           [default=false]");
       output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
       output.println("                           [default=local]");
+      output.println("  --port={int<65000} :     port number for web based progress monitoring. ");
+      output.println("                           [default=randomly selected free port]");
       output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");
       output.println("                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]");
       output.println("  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete");
@@ -708,7 +714,7 @@ public class App {
       args = new String[2];
       command = "batch-search";
       args[0] = "batch-search";
-      args[1] = "/usr/dan/users4/irmarc/ayr-disk/projects/galagosearch/galagosearch/test.queries";
+      args[1] = "/home/sjh/Documents/corpora/test.queries";
     }
 
     if (command.equals("help") && args.length > 1) {

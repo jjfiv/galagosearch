@@ -9,6 +9,7 @@ import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
+import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.Sorter;
 import org.galagosearch.tupleflow.TupleFlowParameters;
@@ -40,8 +41,11 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     // make a folder
     String fileName = parameters.getXML().get("filename");
     
-    IndexWriterProcessor writerFL = new IndexWriterProcessor(fileName + ".fl");
-    IndexWriterProcessor writerRL = new IndexWriterProcessor(fileName + ".rl");
+    Parameters p = new Parameters();
+    //p.add("blockSize", "128");
+    
+    IndexWriterProcessor writerFL = new IndexWriterProcessor(fileName + ".fl", p);
+    IndexWriterProcessor writerRL = new IndexWriterProcessor(fileName + ".rl", p);
     
     sorterFL = new Sorter<KeyValuePair>(new KeyValuePair.KeyOrder());
     sorterRL = new Sorter<KeyValuePair>(new KeyValuePair.KeyOrder());
@@ -89,9 +93,9 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
    */
   private class IndexWriterProcessor implements Processor<KeyValuePair>{
     IndexWriter writer;
-    public IndexWriterProcessor(String fileName) throws IOException{
+    public IndexWriterProcessor(String fileName, Parameters p) throws IOException{
       // default uncompressed index is fine
-      writer = new IndexWriter(fileName);
+      writer = new IndexWriter(fileName, p);
     }
     
     public void process(KeyValuePair kvp) throws IOException {

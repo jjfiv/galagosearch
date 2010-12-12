@@ -68,8 +68,6 @@ public abstract class DocumentReader {
         return true;
       }
     }
-    System.err.println( "fileName -- " + index + " -- " + cds );
-
     return false;
   }
 }

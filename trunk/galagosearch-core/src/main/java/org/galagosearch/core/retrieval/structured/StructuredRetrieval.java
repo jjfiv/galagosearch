@@ -8,9 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Set;
 import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
@@ -19,7 +17,6 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.tupleflow.Parameters;
-import org.galagosearch.tupleflow.Parameters.Value;
 
 /**
  * 10/7/2010 - Modified for asynchronous execution

@@ -25,11 +25,12 @@ public class DocumentNameReader {
   /** Creates a new instance of DocumentNameReader */
   public DocumentNameReader(String fileName) throws IOException {
     // Ensure that we are dealing with the correct fileName
-    if(fileName.endsWith(".fl") || fileName.endsWith(".rl"))
+    if (fileName.endsWith(".fl") || fileName.endsWith(".rl")) {
       fileName = fileName.substring(0, fileName.lastIndexOf("."));
+    }
 
-    flIndex = new IndexReader(fileName+".fl");
-    rlIndex = new IndexReader(fileName+".rl");
+    flIndex = new IndexReader(fileName + ".fl");
+    rlIndex = new IndexReader(fileName + ".rl");
   }
 
   // gets the document name of the internal id index.
@@ -52,16 +53,16 @@ public class DocumentNameReader {
     return Utility.toInt(data);
   }
 
-  
   public NumberedDocumentDataIterator getNumberOrderIterator() throws IOException {
     return new Iterator(flIndex, true);
   }
+
   public NumberedDocumentDataIterator getNameOrderIterator() throws IOException {
     return new Iterator(rlIndex, false);
   }
 
-  public class Iterator extends NumberedDocumentDataIterator{
-    
+  public class Iterator extends NumberedDocumentDataIterator {
+
     boolean forwardLookup;
     IndexReader input;
     IndexReader.Iterator iterator;
@@ -82,17 +83,17 @@ public class DocumentNameReader {
     }
 
     public String getRecordString() {
-      if(forwardLookup){
+      if (forwardLookup) {
         return Utility.toInt(current.key) + ", " + Utility.toString(current.value);
       } else {
         return Utility.toInt(current.value) + ", " + Utility.toString(current.key);
-      }      
+      }
     }
 
     public boolean nextRecord() throws IOException {
       iterator.nextKey();
 
-      if(iterator.isDone()) {
+      if (iterator.isDone()) {
         return false;
       }
 
@@ -104,15 +105,15 @@ public class DocumentNameReader {
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {
-      if(forwardLookup){
+      if (forwardLookup) {
         return new NumberedDocumentData(Utility.toString(current.value), "", Utility.toInt(current.key), 0);
       } else {
         return new NumberedDocumentData(Utility.toString(current.key), "", Utility.toInt(current.value), 0);
-      }      
+      }
     }
 
     public String getKey() {
-      if(forwardLookup){
+      if (forwardLookup) {
         return Integer.toString(Utility.toInt(current.key));
       } else {
         return Utility.toString(current.key);
