@@ -709,12 +709,14 @@ public class App {
     }
 
     String command = args[0];
+
     if (command.equals("test")) {
-      // For testing
+      // query testing
       args = new String[2];
-      command = "batch-search";
       args[0] = "batch-search";
-      args[1] = "/home/sjh/Documents/corpora/test.queries";
+      args[1] = "/usr/yea/scratch1/sjh/indexes/test.queries";
+      this.handleBatchSearch(args);
+      return ;
     }
 
     if (command.equals("help") && args.length > 1) {

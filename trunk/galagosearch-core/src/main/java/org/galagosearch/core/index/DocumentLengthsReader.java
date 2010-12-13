@@ -3,6 +3,7 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Utility;
@@ -72,11 +73,12 @@ public class DocumentLengthsReader {
 
     public void skipTo( int key ) throws IOException{
       byte[] bkey = Utility.fromInt(key);
-      while( Utility.compare( bkey, iterator.getKey()) != 0 ){
-        nextRecord();
-      }
+      //while( Utility.compare( bkey, iterator.getKey()) != 0 ){
+      //  nextRecord();
+      //}
       // too slow:
-      // iterator.skipTo(key);
+      iterator.skipTo(bkey);
+      //assert (Arrays.equals(bkey, iterator.key));
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {

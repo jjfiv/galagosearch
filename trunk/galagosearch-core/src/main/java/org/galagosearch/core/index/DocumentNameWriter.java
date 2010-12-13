@@ -42,7 +42,8 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     String fileName = parameters.getXML().get("filename");
     
     Parameters p = new Parameters();
-    //p.add("blockSize", "128");
+    p.copy(parameters.getXML());
+    //p.set("blockSize", "1048576");
     
     IndexWriterProcessor writerFL = new IndexWriterProcessor(fileName + ".fl", p);
     IndexWriterProcessor writerRL = new IndexWriterProcessor(fileName + ".rl", p);

@@ -120,8 +120,11 @@ public class DocumentNameReader {
       }
     }
 
-    public void skipTo(int key) {
-      throw new UnsupportedOperationException("Not supported yet.");
+    public void skipTo(int key) throws IOException {
+      iterator.skipTo( Utility.fromInt(key));
+      byte[] newkey = iterator.getKey();
+      byte[] newvalue = iterator.getValueBytes();
+      current = new KeyValuePair(newkey, newvalue);
     }
   }
 }

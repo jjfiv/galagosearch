@@ -46,7 +46,7 @@ public class DocumentLengthsWriter implements Processor<NumberedDocumentData> {
         Utility.makeParentDirectories(filename);
         Parameters p = new Parameters();
         p.copy(parameters.getXML());
-        //p.set("blockSize", "64");
+        //p.set("blockSize", "1048576");
         writer = new IndexWriter(filename, p);
         bstream = new ByteArrayOutputStream();
         stream = new DataOutputStream(bstream);
