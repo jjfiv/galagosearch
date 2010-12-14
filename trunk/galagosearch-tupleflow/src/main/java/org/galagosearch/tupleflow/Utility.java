@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -592,6 +593,15 @@ public class Utility {
     reader.close();
     return set;
   }
+
+    public static File getResourceFile(Class caller, String identifier) throws IOException {
+        try {
+            return new File(caller.getResource(identifier).toURI());
+        } catch (URISyntaxException use) {
+            throw new IOException("Unable to retrieve resource " + identifier, use);
+        }
+    }
+
 
   /*
    * Functions to translate:

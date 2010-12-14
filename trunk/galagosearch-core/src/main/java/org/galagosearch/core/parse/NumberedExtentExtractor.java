@@ -12,7 +12,7 @@ import org.galagosearch.core.types.DocumentExtent;
 import org.galagosearch.core.types.NumberedExtent;
 
 /**
- * Converts all tags from a document object into DocumentExtent tuples.
+ * Converts all tags from a document object into NumberedExtent tuples.
  * @author trevor
  */
 @InputClass(className = "org.galagosearch.core.parse.NumberedDocument")
