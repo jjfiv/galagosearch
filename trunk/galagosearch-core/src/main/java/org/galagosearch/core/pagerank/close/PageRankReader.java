@@ -90,5 +90,9 @@ public class PageRankReader {
     public String getKey() {
       return Integer.toString(current + documentNumberOffset);
     }
+
+    public byte[] getKeyBytes() throws IOException {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
   }
 }

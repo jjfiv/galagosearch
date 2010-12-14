@@ -27,7 +27,7 @@ public class KeyExtentToNumberedExtent extends StandardStep<KeyExtent, NumberedE
   }
 
   public void process(KeyExtent ke) throws IOException {
-    NumberedExtent ne = new NumberedExtent(Utility.fromString(ke.key), ke.document, ke.extent.begin, ke.extent.end);
+    NumberedExtent ne = new NumberedExtent(ke.key, ke.document, ke.extent.begin, ke.extent.end);
     processor.process(ne);
   }
 }

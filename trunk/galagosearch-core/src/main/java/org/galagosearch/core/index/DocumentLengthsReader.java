@@ -60,7 +60,7 @@ public class DocumentLengthsReader {
       try {
         StringBuilder sb = new StringBuilder();
         sb.append(Utility.toInt(iterator.getKey())).append(",");
-        sb.append(Utility.uncompressInt(iterator.getValueBytes(),0));
+        sb.append(Utility.uncompressInt(iterator.getValueBytes(), 0));
         return sb.toString();
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);
@@ -71,7 +71,7 @@ public class DocumentLengthsReader {
       return (iterator.nextKey());
     }
 
-    public void skipTo( int key ) throws IOException{
+    public void skipTo(int key) throws IOException {
       byte[] bkey = Utility.fromInt(key);
       //while( Utility.compare( bkey, iterator.getKey()) != 0 ){
       //  nextRecord();
@@ -89,6 +89,10 @@ public class DocumentLengthsReader {
 
     public String getKey() {
       return Utility.toString(iterator.getKey());
+    }
+
+    public byte[] getKeyBytes() {
+      return iterator.getKey();
     }
   }
 }

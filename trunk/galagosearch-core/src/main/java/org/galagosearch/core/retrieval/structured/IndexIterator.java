@@ -16,4 +16,6 @@ public interface IndexIterator extends StructuredIterator {
     String getRecordString();
     boolean nextRecord() throws IOException;
     String getKey() throws IOException;
+    // sjh: i need this method to ensure key order is consistent when merging indexes
+    byte[] getKeyBytes() throws IOException;
 }

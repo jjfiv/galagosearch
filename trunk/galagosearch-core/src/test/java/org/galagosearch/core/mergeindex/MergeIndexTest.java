@@ -28,10 +28,10 @@ public class MergeIndexTest extends TestCase {
   }
 
   public String trecDocument(Random rnd) {
-    return "<DOC>\n<DOCNO>docId-" + rnd.nextInt() + "</DOCNO>\n"
-            + "<TEXT>\nstart " + rnd.nextInt() + " this is a test\n"
-            + rnd.nextInt() + " and this is too\n"
-            + rnd.nextInt() + " now we done with a test\n"
+    return "<DOC>\n<DOCNO>docId-" + rnd.nextInt(50) + "</DOCNO>\n"
+            + "<TEXT>\nstart " + rnd.nextInt(50) + " this is a test\n"
+            + rnd.nextInt(50) + " and this is too\n"
+            + rnd.nextInt(50) + " now we done with a test\n"
             + "</TEXT>\n</DOC>\n";
   }
 

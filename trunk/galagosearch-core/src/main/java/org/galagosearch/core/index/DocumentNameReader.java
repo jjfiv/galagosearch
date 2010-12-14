@@ -120,8 +120,12 @@ public class DocumentNameReader {
       }
     }
 
+    public byte[] getKeyBytes() {
+      return current.key;
+    }
+
     public void skipTo(int key) throws IOException {
-      iterator.skipTo( Utility.fromInt(key));
+      iterator.skipTo(Utility.fromInt(key));
       byte[] newkey = iterator.getKey();
       byte[] newvalue = iterator.getValueBytes();
       current = new KeyValuePair(newkey, newvalue);

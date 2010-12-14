@@ -75,14 +75,14 @@ public class ExtentIteratorMerger extends StandardStep<ExtentIndexIterator, KeyE
   private class ExtentIndexIteratorWrapper implements Comparable<ExtentIndexIteratorWrapper> {
     boolean isDone;
     ExtentIndexIterator iterator;
-    String key;
+    byte[] key;
     int document;
     ExtentArray documentExtents;
 
     public ExtentIndexIteratorWrapper(ExtentIndexIterator iterator) throws IOException {
       this.iterator = iterator;
       this.documentExtents = iterator.extents();
-      this.key = iterator.getKey();
+      this.key = iterator.getKeyBytes();
       this.document = documentExtents.getBuffer()[0].document;
       isDone = false;
     }
@@ -94,7 +94,7 @@ public class ExtentIteratorMerger extends StandardStep<ExtentIndexIterator, KeyE
 
       if (iterator.nextRecord()) {
         this.documentExtents = iterator.extents();
-        this.key = iterator.getKey();
+        this.key = iterator.getKeyBytes();
         this.document = documentExtents.getBuffer()[0].document;
         return true;
       }
@@ -104,13 +104,12 @@ public class ExtentIteratorMerger extends StandardStep<ExtentIndexIterator, KeyE
     }
 
     public int compareTo(ExtentIndexIteratorWrapper other) {
-
-      if (!this.key.equals(other.key)) {
-        return Utility.compare(this.key, other.key);
-      } else {
-        return Utility.compare(documentExtents.getBuffer()[0].document,
-                other.documentExtents.getBuffer()[0].document);
+      int result;
+      result = Utility.compare(this.key, other.key);
+      if (result != 0) {
+        return result;
       }
+      return Utility.compare(this.document, other.document);
     }
   }
 }

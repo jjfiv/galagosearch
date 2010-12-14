@@ -30,12 +30,15 @@ public class ManifestMerger extends StandardStep<Parameters, XMLFragment> {
     for(Parameters p : manifests){
       collectionLength += (long) p.get("collectionLength", 0);
       documentCount += (long) p.get("documentCount", 0);
-      documentNumberOffset = Math.min(documentNumberOffset, (int) p.get("documentNumberOffset", Integer.MAX_VALUE));
+      documentNumberOffset = Math.min(documentNumberOffset, (int) p.get("documentNumberOffset", 0));
     }
     
     processor.process(new XMLFragment("collectionLength", Long.toString(collectionLength)));
     processor.process(new XMLFragment("documentCount", Long.toString(documentCount)));
-    processor.process(new XMLFragment("documentNumberOffset", Long.toString(documentNumberOffset)));
+
+    if(documentNumberOffset > 0){
+        processor.process(new XMLFragment("documentNumberOffset", Long.toString(documentNumberOffset)));
+    }
 
     processor.close();
   }

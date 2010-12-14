@@ -131,6 +131,9 @@ public class PositionIndexReader implements StructuredIndexPartReader {
         public String getKey() {
             return Utility.toString(iterator.getKey());
         }
+        public byte[] getKeyBytes() {
+            return iterator.getKey();
+        }
 
         public void nextEntry() throws IOException {
             documentIndex += 1;

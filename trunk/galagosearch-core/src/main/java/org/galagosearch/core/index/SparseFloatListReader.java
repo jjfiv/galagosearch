@@ -97,6 +97,9 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
         public String getKey() {
             return Utility.toString(iterator.getKey());
         }
+        public byte[] getKeyBytes() {
+            return iterator.getKey();
+        }
 
         public boolean nextTerm() throws IOException {
             if (iterator.nextKey()) {

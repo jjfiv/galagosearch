@@ -33,62 +33,62 @@ public class ExtentIteratorMerger extends StandardStep<ExtentIndexIterator, KeyE
     mapping = new NumberMappingReader(mapFolder.fileName);
   }
 
-  public ExtentIteratorMerger(Processor<KeyExtent> processor) throws IncompatibleProcessorException{
+  public ExtentIteratorMerger(Processor<KeyExtent> processor) throws IncompatibleProcessorException {
     super();
-    this.setProcessor( processor );
+    this.setProcessor(processor);
   }
-  
+
   public void process(ExtentIndexIterator ei) throws IOException {
     queue.add(new ExtentIndexIteratorWrapper(ei));
   }
-
-
   long counter = 0;
 
   public void close() throws IOException {
-    
-    while(queue.size() > 1){
+
+    while (queue.size() > 1) {
       ExtentIndexIteratorWrapper head = queue.poll();
-      
-      for(Extent e : head.documentExtents.toArray()){
-        KeyExtent ke = new KeyExtent( head.key , head.document, e );
-        processor.process( ke );
+
+      for (Extent e : head.documentExtents.toArray()) {
+        KeyExtent ke = new KeyExtent(head.key, head.document, e);
+        processor.process(ke);
         counter++;
       }
-      
-      if(head.next())
+
+      if (head.next()) {
         queue.offer(head);
+      }
     }
-    
+
     ExtentIndexIteratorWrapper head = queue.poll();
-    do{
-      for(Extent e : head.documentExtents.toArray()){
-        KeyExtent ke = new KeyExtent( head.key , head.document, e );
-        processor.process( ke );
+    do {
+      for (Extent e : head.documentExtents.toArray()) {
+        KeyExtent ke = new KeyExtent(head.key, head.document, e);
+        processor.process(ke);
         counter++;
       }
-    } while(head.next());
+    } while (head.next());
 
     processor.close();
   }
-  
+
   private class ExtentIndexIteratorWrapper implements Comparable<ExtentIndexIteratorWrapper> {
+
     ExtentIndexIterator iterator;
-    String key;
+    byte[] key;
     int document;
     ExtentArray documentExtents;
-    
-    public ExtentIndexIteratorWrapper(ExtentIndexIterator iterator) throws IOException{
+
+    public ExtentIndexIteratorWrapper(ExtentIndexIterator iterator) throws IOException {
       this.iterator = iterator;
       this.documentExtents = iterator.extents();
-      this.key = iterator.getKey();
+      this.key = iterator.getKeyBytes();
       this.document = mapping.getNewDocNumber(iterator.indexId, documentExtents.getBuffer()[0].document);
     }
-    
-    public boolean next() throws IOException{
-      if(iterator.nextRecord() ){
+
+    public boolean next() throws IOException {
+      if (iterator.nextRecord()) {
         this.documentExtents = iterator.extents();
-        this.key = iterator.getKey();
+        this.key = iterator.getKeyBytes();
         this.document = mapping.getNewDocNumber(iterator.indexId, documentExtents.getBuffer()[0].document);
         return true;
       }
@@ -96,15 +96,12 @@ public class ExtentIteratorMerger extends StandardStep<ExtentIndexIterator, KeyE
     }
 
     public int compareTo(ExtentIndexIteratorWrapper other) {
-
-      if(! this.key.equals(other.key)){
-        return Utility.compare(this.key, other.key);
-      } else {
-        return Utility.compare(this.document,
-            other.document);
+      int result;
+      result = Utility.compare(this.key, other.key);
+      if (result != 0) {
+        return result;
       }
+      return Utility.compare(this.document, other.document);
     }
   }
 }
-
-

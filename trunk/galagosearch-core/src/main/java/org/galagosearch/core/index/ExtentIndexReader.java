@@ -120,6 +120,10 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
           return Utility.toString(iterator.getKey());
         }
 
+        public byte[] getKeyBytes() {
+            return iterator.getKey();
+        }
+
         public int document() {
             return document;
         }
