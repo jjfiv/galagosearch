@@ -467,6 +467,7 @@ public class Utility {
       temporary = File.createTempFile("tupleflow", "");
     }
 
+    System.err.println("UTILITY_CREATED: " + temporary.getAbsolutePath());
     return temporary;
   }
 

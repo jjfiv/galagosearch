@@ -402,6 +402,9 @@ public class App {
       p.add("inputIndexes", input);
     }
 
+    // ensure galagoTemp has been set
+    p.set("galagoTemp", Utility.createGalagoTempDir( p.get("galagoTemp", "")).getAbsolutePath());
+
     MergeParallelIndexShards merger = new MergeParallelIndexShards();
     Job job = merger.getJob(p);
 

@@ -201,7 +201,8 @@ public class MergeParallelIndexShards {
     }
     // ensure output folders exist
     new File(outputIndexPath + File.separator + "parts").mkdirs();
-
+    System.err.println("made directory");
+    //this.tempFolder = new File(p.get("galagoTemp", ""));
     this.tempFolder = new File(p.get("galagoTemp"));
 
     job.add(getIndexPathStage());

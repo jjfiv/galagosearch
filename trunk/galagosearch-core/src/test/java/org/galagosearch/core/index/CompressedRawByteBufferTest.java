@@ -30,6 +30,9 @@ public class CompressedRawByteBufferTest extends TestCase {
         for (int i = 0; i < 400; i++) {
             assertEquals(result[i],(byte)i);
         }
+
+        // now delete the spill file
+        instance.clear();
     }
 
     public void testAdd() throws Exception {
