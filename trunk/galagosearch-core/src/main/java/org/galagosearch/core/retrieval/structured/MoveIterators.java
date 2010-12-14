@@ -106,7 +106,7 @@ public class MoveIterators {
         int minimumDocument = Integer.MAX_VALUE;
 
         for (ScoreIterator iterator : iterators) {
-            minimumDocument = Math.min(minimumDocument, iterator.nextCandidate());
+            minimumDocument = Math.min(minimumDocument, iterator.currentCandidate());
         }
 
         return minimumDocument;

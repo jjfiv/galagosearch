@@ -10,13 +10,8 @@ import org.galagosearch.core.util.ExtentArray;
  * 
  * @author trevor
  */
-public abstract class ExtentIterator extends CountIterator {
-    public abstract void nextDocument() throws IOException;
-    public abstract int document();
-    public abstract int count();
+public abstract class ExtentIterator extends DocumentOrderedCountIterator {
     public abstract ExtentArray extents();
-    public abstract boolean isDone();
-    public abstract void reset() throws IOException;
 
     @Override
     public boolean skipToDocument(int document) throws IOException {
@@ -24,7 +19,7 @@ public abstract class ExtentIterator extends CountIterator {
             return false;
         }
         while (!isDone() && document() < document) {
-            nextDocument();
+            nextEntry();
         }
         return !isDone() && document == document();
     }

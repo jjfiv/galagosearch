@@ -46,14 +46,14 @@ public class SynonymIteratorTest extends TestCase {
         assertEquals(3, array.getBuffer()[0].begin);
         assertEquals(4, array.getBuffer()[0].end);
 
-        instance.nextDocument();
+        instance.nextEntry();
         assertFalse(instance.isDone());
         assertEquals(1, array.getPosition());
         assertEquals(2, array.getBuffer()[0].document);
         assertEquals(4, array.getBuffer()[0].begin);
         assertEquals(5, array.getBuffer()[0].end);
 
-        instance.nextDocument();
+        instance.nextEntry();
         assertTrue(instance.isDone());
     }
 
@@ -77,7 +77,7 @@ public class SynonymIteratorTest extends TestCase {
         assertEquals(array.getBuffer()[1].begin, 4);
         assertEquals(array.getBuffer()[1].end, 5);
 
-        instance.nextDocument();
+        instance.nextEntry();
         assertTrue(instance.isDone());
     }
 }

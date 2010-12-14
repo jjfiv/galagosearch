@@ -63,11 +63,11 @@ import org.galagosearch.tupleflow.types.XMLFragment;
  * @author sjh
  */
 public class BuildFastIndex {
-  String indexPath;
-  String corpusPath;
-  boolean stemming;
-  boolean useLinks;
-  boolean makeCorpus;
+  protected String indexPath;
+  protected String corpusPath;
+  protected boolean stemming;
+  protected boolean useLinks;
+  protected boolean makeCorpus;
 
   public Stage getSplitStage(ArrayList<String> inputPaths) throws IOException {
     Stage stage = new Stage("inputSplit");

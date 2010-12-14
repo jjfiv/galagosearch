@@ -67,7 +67,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
         }
 
         public boolean nextRecord() throws IOException {
-            nextDocument();
+            nextEntry();
             if (!isDone()) return true;
             if (iterator.nextKey()) {
                 loadIndex();
@@ -86,10 +86,10 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
             termDocs = 0;
             done = false;
 
-            nextDocument();
+            nextEntry();
         }
 
-        public void nextDocument() throws IOException {
+        public void nextEntry() throws IOException {
             extents.reset();
 
             if (termDocs >= documentCount) {

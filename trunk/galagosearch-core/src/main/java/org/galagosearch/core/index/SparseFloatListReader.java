@@ -1,16 +1,14 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
-import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.structured.DocumentOrderedScoreIterator;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
-import org.galagosearch.core.retrieval.structured.ScoreIterator;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
@@ -21,7 +19,9 @@ import org.galagosearch.tupleflow.VByteInput;
  * @author trevor
  */
 public class SparseFloatListReader implements StructuredIndexPartReader {
-    public class Iterator implements ScoreIterator, IndexIterator {
+
+    public class Iterator extends DocumentOrderedScoreIterator implements IndexIterator {
+
         IndexReader.Iterator iterator;
         VByteInput stream;
         int documentCount;
@@ -58,22 +58,24 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
                 currentScore = stream.readFloat();
             }
         }
-        
+
         public String getRecordString() {
             StringBuilder builder = new StringBuilder();
-            
+
             builder.append(getKey());
             builder.append(",");
             builder.append(currentDocument);
             builder.append(",");
             builder.append(currentScore);
-            
+
             return builder.toString();
         }
 
         public boolean nextRecord() throws IOException {
             read();
-            if (!isDone()) return true;
+            if (!isDone()) {
+                return true;
+            }
             if (iterator.nextKey()) {
                 load();
                 return true;
@@ -81,14 +83,14 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
                 return false;
             }
         }
-        
+
         public void reset() throws IOException {
             currentDocument = 0;
             currentScore = 0;
             load();
         }
 
-        public int nextCandidate() {
+        public int currentCandidate() {
             return currentDocument;
         }
 
@@ -121,8 +123,13 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
             }
         }
 
-        public double score(int document, int length) {
-            if (document == currentDocument) {
+        public boolean skipToDocument(int document) throws IOException {
+            moveTo(document);
+            return this.hasMatch(document);
+        }
+
+        public double score() {
+            if (currentDocument == documentToScore) {
                 return currentScore;
             }
             return Double.NEGATIVE_INFINITY;
@@ -162,7 +169,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
             return getScores(node.getDefaultParameter());
         } else {
             throw new UnsupportedOperationException(
-                "Index doesn't support operator: " + node.getOperator());
+                    "Index doesn't support operator: " + node.getOperator());
         }
     }
 }

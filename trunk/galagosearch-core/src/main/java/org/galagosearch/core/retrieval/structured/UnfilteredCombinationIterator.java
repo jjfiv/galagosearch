@@ -12,25 +12,25 @@ import org.galagosearch.tupleflow.Parameters;
  * @author trevor
  */
 public class UnfilteredCombinationIterator extends ScoreCombinationIterator {
-    public UnfilteredCombinationIterator(Parameters parameters, ScoreIterator[] childIterators) {
+    public UnfilteredCombinationIterator(Parameters parameters, DocumentOrderedScoreIterator[] childIterators) {
         super(parameters, childIterators);
     }
 
-    public int nextCandidate() {
+    public int currentCandidate() {
         int candidate = Integer.MAX_VALUE;
 
-        for (ScoreIterator iterator : iterators) {
+        for (DocumentOrderedIterator iterator : iterators) {
             if (iterator.isDone()) {
                 continue;
             }
-            candidate = Math.min(candidate, iterator.nextCandidate());
+            candidate = Math.min(candidate, iterator.currentCandidate());
         }
 
         return candidate;
     }
 
     public boolean hasMatch(int document) {
-        for (ScoreIterator iterator : iterators) {
+        for (DocumentOrderedIterator iterator : iterators) {
             if (!iterator.isDone() && iterator.hasMatch(document)) {
                 return true;
             }
@@ -40,7 +40,7 @@ public class UnfilteredCombinationIterator extends ScoreCombinationIterator {
     }
     
     public boolean isDone() {
-        for (ScoreIterator iterator : iterators) {
+        for (DocumentOrderedIterator iterator : iterators) {
             if (!iterator.isDone()) {
                 return false;
             }

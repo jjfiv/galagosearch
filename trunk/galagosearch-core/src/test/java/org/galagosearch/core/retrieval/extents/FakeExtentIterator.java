@@ -19,7 +19,7 @@ public class FakeExtentIterator extends ExtentIterator {
         this.index = 0;
     }
 
-    public void nextDocument() {
+    public void nextEntry() {
         index++;
     }
 

@@ -42,7 +42,7 @@ public class StatisticsGatherer {
             documentCount += 1;
             termCount += iterator.count();
 
-            iterator.nextDocument();
+            iterator.nextEntry();
         }
     }
 

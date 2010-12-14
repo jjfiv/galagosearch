@@ -23,7 +23,7 @@ public class DirichletScorerTest extends TestCase {
         assertEquals(1500.0, scorer.mu);
         assertEquals(0.5, scorer.background);
 
-        double score = scorer.scoreCount(15, 100);
+        double score = scorer.score(15, 100);
         assertEquals(-0.73788, score, 0.001);
     }
 
@@ -36,7 +36,7 @@ public class DirichletScorerTest extends TestCase {
         assertEquals(13.0, scorer.mu);
         assertEquals(0.5, scorer.background);
 
-        double score = scorer.scoreCount(5, 100);
+        double score = scorer.score(5, 100);
         assertEquals(-2.28504, score, 0.001);
     }
 
@@ -51,7 +51,7 @@ public class DirichletScorerTest extends TestCase {
         assertEquals(1500.0, scorer.mu);
         assertEquals(1.0 / 256.0, scorer.background);
 
-        double score = scorer.scoreCount(5, 100);
+        double score = scorer.score(5, 100);
         assertEquals(-4.99273, score, 0.0001);
     }
 
@@ -66,7 +66,7 @@ public class DirichletScorerTest extends TestCase {
         assertEquals(1500.0, scorer.mu);
         assertEquals(0.5 / 256.0, scorer.background);
 
-        double score = scorer.scoreCount(5, 100);
+        double score = scorer.score(5, 100);
         assertEquals(-5.307145, score, 0.0001);
     }
 }

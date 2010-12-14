@@ -2,28 +2,29 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
+import org.galagosearch.core.scoring.ScoringFunction;
 
 /**
  *
  * @author trevor
  */
-public abstract class ScoringFunctionIterator implements ScoreIterator {
+public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
     boolean done;
-    CountIterator iterator;
+    DocumentOrderedCountIterator iterator;
+    ScoringFunction function;
 
-    public ScoringFunctionIterator(CountIterator iterator) {
+    public ScoringFunctionIterator(DocumentOrderedCountIterator iterator, ScoringFunction function) {
         this.iterator = iterator;
+        this.function = function;
     }
 
-    public abstract double scoreCount(int count, int length);
-
-    public double score(int document, int length) {
+    public double score() {
         int count = 0;
 
-        if (iterator.document() == document) {
+        if (iterator.document() == documentToScore) {
             count = iterator.count();
         }
-        return scoreCount(count, length);
+        return function.score(count, lengthOfDocumentToScore);
     }
 
     public void moveTo(int document) throws IOException {
@@ -38,7 +39,7 @@ public abstract class ScoringFunctionIterator implements ScoreIterator {
         }
     }
 
-    public int nextCandidate() {
+    public int currentCandidate() {
         if (isDone()) {
             return Integer.MAX_VALUE;
         }
@@ -55,5 +56,9 @@ public abstract class ScoringFunctionIterator implements ScoreIterator {
 
     public void reset() throws IOException {
         iterator.reset();
+    }
+
+    public boolean skipToDocument(int document) throws IOException {
+        return iterator.skipToDocument(document);
     }
 }

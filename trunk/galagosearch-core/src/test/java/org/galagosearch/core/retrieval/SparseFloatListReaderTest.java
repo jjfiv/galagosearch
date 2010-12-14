@@ -73,8 +73,9 @@ public class SparseFloatListReaderTest extends TestCase {
         int i = 0;
 
         for (i = 0; !iter.isDone(); i++) {
-            assertEquals(aDocs[i], iter.nextCandidate());
-            assertEquals(aScores[i], iter.score(aDocs[i], 10), 0.0001);
+            assertEquals(aDocs[i], iter.currentCandidate());
+            iter.setScoringContext(aDocs[i], 100);
+            assertEquals(aScores[i], iter.score(), 0.0001);
             assertTrue(iter.hasMatch(aDocs[i]));
 
             iter.movePast(aDocs[i]);
@@ -92,8 +93,8 @@ public class SparseFloatListReaderTest extends TestCase {
         assertFalse(iter.isDone());
 
         for (i = 0; !iter.isDone(); i++) {
-            assertEquals(bDocs[i], iter.nextCandidate());
-            assertEquals(bScores[i], iter.score(bDocs[i], 10), 0.0001);
+            assertEquals(bDocs[i], iter.currentCandidate());
+            assertEquals(bScores[i], iter.score(bDocs[i], 100), 0.0001);
             assertTrue(iter.hasMatch(bDocs[i]));
 
             iter.movePast(bDocs[i]);
@@ -112,8 +113,9 @@ public class SparseFloatListReaderTest extends TestCase {
         assertFalse(iter.isDone());
 
         for (int i = 0; !iter.isDone(); i++) {
-            assertEquals(iter.nextCandidate(), aDocs[i]);
-            assertEquals(iter.score(aDocs[i], 10), aScores[i], 0.0001);
+            assertEquals(iter.currentCandidate(), aDocs[i]);
+            iter.setScoringContext(aDocs[i], 100);
+            assertEquals(iter.score(), aScores[i], 0.0001);
             assertTrue(iter.hasMatch(aDocs[i]));
 
             iter.movePast(aDocs[i]);
@@ -125,8 +127,8 @@ public class SparseFloatListReaderTest extends TestCase {
         assertFalse(iter.isDone());
 
         for (int i = 0; !iter.isDone(); i++) {
-            assertEquals(iter.nextCandidate(), bDocs[i]);
-            assertEquals(iter.score(bDocs[i], 10), bScores[i], 0.0001);
+            assertEquals(iter.currentCandidate(), bDocs[i]);
+            assertEquals(iter.score(bDocs[i], 100), bScores[i], 0.0001);
             assertTrue(iter.hasMatch(bDocs[i]));
 
             iter.movePast(bDocs[i]);

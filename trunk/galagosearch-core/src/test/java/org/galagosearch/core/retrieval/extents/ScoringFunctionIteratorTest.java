@@ -8,9 +8,10 @@
 package org.galagosearch.core.retrieval.extents;
 
 import org.galagosearch.core.retrieval.structured.ScoringFunctionIterator;
-import org.galagosearch.core.retrieval.structured.CountIterator;
 import junit.framework.*;
 import java.io.IOException;
+import org.galagosearch.core.retrieval.structured.DocumentOrderedCountIterator;
+import org.galagosearch.core.scoring.ScoringFunction;
 
 /**
  *
@@ -21,9 +22,15 @@ public class ScoringFunctionIteratorTest extends TestCase {
         super(testName);
     }
 
+    public static class FakeScorer implements ScoringFunction {
+        public double score(int count, int length) {
+            return count + length;
+        }
+    }
+
     public static class FakeScoreIterator extends ScoringFunctionIterator {
-        public FakeScoreIterator( CountIterator iter ) { 
-            super(iter);
+        public FakeScoreIterator( DocumentOrderedCountIterator iter ) {
+            super(iter, new FakeScorer());
         }
         
         public double scoreCount(int count, int length) {
@@ -41,16 +48,16 @@ public class ScoringFunctionIteratorTest extends TestCase {
         
         assertFalse( instance.isDone() );
         
-        assertEquals( instance.nextCandidate(), 1 );
-        assertEquals( 4.0, instance.score( 1, 3 ) );
+        assertEquals( instance.currentCandidate(), 1 );
+        assertEquals( 4.0, instance.score(1, 3) );
         instance.movePast( 1 );
 
         assertFalse( instance.isDone() );
-        assertEquals( instance.nextCandidate(), 5 );
-        assertEquals( 5.0, instance.score( 2, 5 ) );
+        assertEquals( instance.currentCandidate(), 5 );
+        assertEquals( 5.0, instance.score(2, 5) );
         
         assertFalse( instance.isDone() );
-        assertEquals( 12.0, instance.score( 5, 10 ) );
+        assertEquals( 12.0, instance.score(5, 10) );
         instance.movePast( 5 );
 
         assertTrue( instance.isDone() );

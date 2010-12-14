@@ -37,11 +37,11 @@ public abstract class ExtentDisjunctionIterator extends ExtentIterator {
     
     public abstract void loadExtents();
 
-    public void nextDocument() throws IOException {
+    public void nextEntry() throws IOException {
         // find all iterators on the current document and move them forward
         while (iterators.size() > 0 && iterators.peek().document() == document) {
             ExtentIterator iter = iterators.poll();
-            iter.nextDocument();
+            iter.nextEntry();
 
             if (!iter.isDone()) {
                 iterators.offer(iter);

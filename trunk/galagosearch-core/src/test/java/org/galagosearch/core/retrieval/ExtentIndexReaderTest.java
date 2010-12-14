@@ -87,7 +87,7 @@ public class ExtentIndexReaderTest extends TestCase {
         iter.next();
         assertTrue(iter.isDone());
 
-        extents.nextDocument();
+        extents.nextEntry();
         assertFalse(extents.isDone());
 
         e = extents.extents();
@@ -98,7 +98,7 @@ public class ExtentIndexReaderTest extends TestCase {
         assertEquals(5, iter.current().begin);
         assertEquals(10, iter.current().end);
 
-        extents.nextDocument();
+        extents.nextEntry();
         assertTrue(extents.isDone());
 
         reader.close();
@@ -118,7 +118,7 @@ public class ExtentIndexReaderTest extends TestCase {
         assertEquals(9, iter.current().begin);
         assertEquals(11, iter.current().end);
 
-        extents.nextDocument();
+        extents.nextEntry();
         assertTrue(extents.isDone());
 
         reader.close();

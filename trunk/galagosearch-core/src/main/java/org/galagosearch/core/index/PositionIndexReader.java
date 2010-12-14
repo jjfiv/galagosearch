@@ -34,7 +34,9 @@ import org.galagosearch.tupleflow.VByteInput;
  * @author trevor
  */
 public class PositionIndexReader implements StructuredIndexPartReader {
+
     public class Iterator extends ExtentIndexIterator {
+
         int documentCount;
         int totalPositionCount;
         VByteInput documents;
@@ -99,10 +101,10 @@ public class PositionIndexReader implements StructuredIndexPartReader {
                 extentArray.add(currentDocument, position, position + 1);
             }
         }
-        
+
         public String getRecordString() {
             StringBuilder builder = new StringBuilder();
-            
+
             builder.append(getKey());
             builder.append(",");
             builder.append(currentDocument);
@@ -110,7 +112,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
                 builder.append(",");
                 builder.append(extentArray.getBuffer()[i].begin);
             }
-            
+
             return builder.toString();
         }
 
@@ -130,7 +132,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             return Utility.toString(iterator.getKey());
         }
 
-        public void nextDocument() throws IOException {
+        public void nextEntry() throws IOException {
             documentIndex += 1;
 
             if (!isDone()) {
@@ -139,8 +141,10 @@ public class PositionIndexReader implements StructuredIndexPartReader {
         }
 
         public boolean nextRecord() throws IOException {
-            nextDocument();
-            if (!isDone()) return true;
+            nextEntry();
+            if (!isDone()) {
+                return true;
+            }
             if (iterator.nextKey()) {
                 reset();
                 return true;
@@ -164,12 +168,14 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             return currentCount;
         }
 
+        // TODO: Make this hack more refined
         public int totalDocuments() {
-          return documentCount;
+            return documentCount;
         }
 
+        // TODO: Declare in an interface
         public int totalPositions() {
-          return totalPositionCount;
+            return totalPositionCount;
         }
     }
     IndexReader reader;
@@ -177,7 +183,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
     public PositionIndexReader(IndexReader reader) throws IOException {
         this.reader = reader;
     }
-    
+
     public PositionIndexReader(String pathname) throws FileNotFoundException, IOException {
         reader = new IndexReader(pathname);
     }
@@ -224,5 +230,50 @@ public class PositionIndexReader implements StructuredIndexPartReader {
     public IndexIterator getIterator(Node node) throws IOException {
         // TODO(strohman): handle stemming!!
         return getTermExtents(node.getDefaultParameter("term"));
+    }
+
+
+    // I add these in order to return document frequency and collection frequency
+    // information for terms. Any other way from the iterators are SLOW
+    // unless the headers have already been loaded. 
+    // We need a better interface for these.
+    // TODO:: Clean abstraction for this
+    public int documentCount(String term) throws IOException {
+        IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+        if (iterator == null) {
+            return 0;
+        }
+
+        long startPosition = iterator.getValueStart();
+        long endPosition = iterator.getValueEnd();
+
+        RandomAccessFile input = reader.getInput();
+        input.seek(startPosition);
+        DataInput stream = new VByteInput(reader.getInput());
+
+        // header information - have to read b/c it's compressed
+        stream.readInt(); // skip option information
+        int documentCount = stream.readInt();
+        return documentCount;
+    }
+
+    // TODO: Clean abstraction for this
+    public int termCount(String term) throws IOException {
+        IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+        if (iterator == null) {
+            return 0;
+        }
+        long startPosition = iterator.getValueStart();
+        long endPosition = iterator.getValueEnd();
+
+        RandomAccessFile input = reader.getInput();
+        input.seek(startPosition);
+        DataInput stream = new VByteInput(reader.getInput());
+
+        // Can't just seek b/c the numbers are compressed
+        stream.readInt();
+        stream.readInt();
+        int totalPositionCount = stream.readInt();
+        return totalPositionCount;
     }
 }

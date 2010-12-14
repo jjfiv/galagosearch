@@ -23,9 +23,9 @@ public abstract class ExtentConjunctionIterator extends ExtentIterator {
 
     public abstract void loadExtents();
 
-    public void nextDocument() throws IOException {
+    public void nextEntry() throws IOException {
         if (!done) {
-            extentIterators[0].nextDocument();
+            extentIterators[0].nextEntry();
             findDocument();
         }
     }
@@ -49,7 +49,7 @@ public abstract class ExtentConjunctionIterator extends ExtentIterator {
             if (extents.getPosition() > 0) {
                 break;
             }
-            extentIterators[0].nextDocument();
+            extentIterators[0].nextEntry();
         }
     }
 

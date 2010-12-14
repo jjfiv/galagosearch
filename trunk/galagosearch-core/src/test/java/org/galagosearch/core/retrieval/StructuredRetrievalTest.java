@@ -57,7 +57,7 @@ public class StructuredRetrievalTest extends TestCase {
 
         // write positions!
         Parameters pp = new Parameters();
-        pp.add("filename", partsPath + File.separator + "terms");
+        pp.add("filename", partsPath + File.separator + "postings");
         TupleFlowParameters posParameters = new FakeParameters(pp);
 
         PositionIndexWriter pwriter = new PositionIndexWriter(posParameters);

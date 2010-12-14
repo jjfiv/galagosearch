@@ -34,13 +34,13 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
         UnfilteredCombinationIterator instance = new UnfilteredCombinationIterator(anyParameters,
                                                                                    iterators);
 
-        assertEquals(2, instance.nextCandidate());
+        assertEquals(2, instance.currentCandidate());
         instance.movePast(2);
-        assertEquals(4, instance.nextCandidate());
+        assertEquals(4, instance.currentCandidate());
         instance.movePast(4);
-        assertEquals(5, instance.nextCandidate());
+        assertEquals(5, instance.currentCandidate());
         instance.movePast(5);
-        assertEquals(6, instance.nextCandidate());
+        assertEquals(6, instance.currentCandidate());
     }
 
     public void testHasMatch() {
@@ -69,7 +69,8 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
         for (int i = 0; i < 12; i++) {
             assertFalse(instance.isDone());
             assertTrue(instance.hasMatch(docsTogether[i]));
-            assertEquals(scoresTogether[i], instance.score(docsTogether[i], 100));
+            instance.setScoringContext(docsTogether[i], 100);
+            assertEquals(scoresTogether[i], instance.score());
 
             instance.movePast(docsTogether[i]);
         }
@@ -87,7 +88,7 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
                                                                                    iterators);
 
         instance.movePast(5);
-        assertEquals(6, instance.nextCandidate());
+        assertEquals(6, instance.currentCandidate());
     }
 
     public void testMoveTo() throws Exception {
@@ -100,6 +101,6 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
                                                                                    iterators);
 
         instance.moveTo(5);
-        assertEquals(5, instance.nextCandidate());
+        assertEquals(5, instance.currentCandidate());
     }
 }

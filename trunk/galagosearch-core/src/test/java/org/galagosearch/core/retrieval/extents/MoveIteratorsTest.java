@@ -34,7 +34,7 @@ public class MoveIteratorsTest extends TestCase {
      */
     public void testMoveAllToSameDocument() throws Exception {
         assertEquals(3, MoveIterators.moveAllToSameDocument(iterators));
-        iterators[0].nextDocument();
+        iterators[0].nextEntry();
         assertEquals(Integer.MAX_VALUE, MoveIterators.moveAllToSameDocument(iterators));
     }
 
@@ -43,7 +43,7 @@ public class MoveIteratorsTest extends TestCase {
      */
     public void testAllSameDocument() throws IOException {
         assertFalse(MoveIterators.allSameDocument(iterators));
-        iterators[0].nextDocument();
+        iterators[0].nextEntry();
         assertTrue(MoveIterators.allSameDocument(iterators));
     }
 
@@ -52,13 +52,13 @@ public class MoveIteratorsTest extends TestCase {
      */
     public void testFindMaximumDocument() throws IOException {
         assertEquals(3, MoveIterators.findMaximumDocument(iterators));
-        iterators[0].nextDocument();
+        iterators[0].nextEntry();
         assertEquals(3, MoveIterators.findMaximumDocument(iterators));
-        iterators[1].nextDocument();
+        iterators[1].nextEntry();
         assertEquals(6, MoveIterators.findMaximumDocument(iterators));
-        iterators[1].nextDocument();
+        iterators[1].nextEntry();
         assertEquals(7, MoveIterators.findMaximumDocument(iterators));
-        iterators[1].nextDocument();
+        iterators[1].nextEntry();
         assertEquals(Integer.MAX_VALUE, MoveIterators.findMaximumDocument(iterators));
     }
 }

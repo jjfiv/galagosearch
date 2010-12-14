@@ -34,7 +34,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         assertEquals(array.getBuffer()[0].begin, 3);
         assertEquals(array.getBuffer()[0].end, 5);
 
-        instance.nextDocument();
+        instance.nextEntry();
         assertTrue(instance.isDone());
     }
 
@@ -56,7 +56,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         assertEquals(array.getBuffer()[0].begin, 3);
         assertEquals(array.getBuffer()[0].end, 5);
 
-        instance.nextDocument();
+        instance.nextEntry();
         assertTrue(instance.isDone());
     }
 
@@ -95,7 +95,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         assertEquals(array.getBuffer()[0].begin, 3);
         assertEquals(array.getBuffer()[0].end, 5);
 
-        instance.nextDocument();
+        instance.nextEntry();
         assertFalse(instance.isDone());
 
         assertEquals(array.getPosition(), 1);
@@ -103,7 +103,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         assertEquals(array.getBuffer()[0].begin, 9);
         assertEquals(array.getBuffer()[0].end, 12);
 
-        instance.nextDocument();
+        instance.nextEntry();
         assertTrue(instance.isDone());
     }
 }

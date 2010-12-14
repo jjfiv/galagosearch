@@ -80,23 +80,23 @@ public class PositionIndexReaderTest extends TestCase {
             int[][] data) throws IOException {
         assertNotNull(termExtents);
         assertFalse(termExtents.isDone());
-
+        assertEquals(data.length, termExtents.totalDocuments());
+        int totalPositions = 0;
         for (int[] doc : data) {
             assertFalse(termExtents.isDone());
             ExtentArray e = termExtents.extents();
             ExtentArrayIterator iter = new ExtentArrayIterator(e);
-
+            totalPositions += (doc.length-1); // first entry in doc array is docid
             for (int i = 1; i < doc.length; i++) {
                 assertFalse(iter.isDone());
                 assertEquals(doc[i], iter.current().begin);
                 assertEquals(doc[i] + 1, iter.current().end);
                 iter.next();
             }
-
             assertTrue(iter.isDone());
-            termExtents.nextDocument();
+            termExtents.nextEntry();
         }
-
+        assertEquals(termExtents.totalPositions(), totalPositions);
         assertTrue(termExtents.isDone());
     }
 
@@ -105,6 +105,8 @@ public class PositionIndexReaderTest extends TestCase {
         PositionIndexReader.Iterator termExtents = reader.getTermExtents("a");
 
         internalTestIterator(termExtents, dataA);
+        assertEquals(2, reader.documentCount("a"));
+        assertEquals(4, reader.termCount("a"));
         reader.close();
     }
 
@@ -113,6 +115,8 @@ public class PositionIndexReaderTest extends TestCase {
         PositionIndexReader.Iterator termExtents = reader.getTermExtents("b");
 
         internalTestIterator(termExtents, dataB);
+        assertEquals(2, reader.documentCount("b"));
+        assertEquals(3, reader.termCount("b"));
         reader.close();
     }
 }

@@ -24,10 +24,16 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public class SequentialDependenceTraversal implements Traversal {
     private int levels;
+    private String unigramDefault;
+    private String orderedDefault;
+    private String unorderedDefault;
 
 
     public SequentialDependenceTraversal(Parameters parameters, Retrieval retrieval) {
         levels = 0;
+        unigramDefault = parameters.get("uniw", "0.8");
+        orderedDefault = parameters.get("odw", "0.15");
+        unorderedDefault = parameters.get("uww", "0.05");
     }
 
     public void beforeNode(Node original) throws Exception {
@@ -70,26 +76,27 @@ public class SequentialDependenceTraversal implements Traversal {
 
                 // now get the weights for each component, and add to immediate children
                 Parameters parameters = original.getParameters();
-                String uni = parameters.get("uniw", "0.8");
-                String odw = parameters.get("odw", "0.15");
-                String uww = parameters.get("uww", "0.05");
+                String uni = parameters.get("uniw", unigramDefault);
+                String odw = parameters.get("odw", orderedDefault);
+                String uww = parameters.get("uww", unorderedDefault);
 
+                Parameters weights = new Parameters();
                 ArrayList<Node> immediateChildren = new ArrayList<Node>();
                 
                 // unigrams - 0.80
-                immediateChildren.add(new Node("text", uni));
+                weights.set("0", uni);
                 immediateChildren.add(unigramNode);
 
                 // ordered
-                immediateChildren.add(new Node("text", odw));
+                weights.set("1", odw);
                 immediateChildren.add(orderedWindowNode);
 
                 // unordered
-                immediateChildren.add(new Node("text", uww));
+                weights.set("2", uww);
                 immediateChildren.add(unorderedWindowNode);
 
-                // Finally put them all inside a weight node
-                Node outerweight = new Node("weight", immediateChildren);
+                // Finally put them all inside a comine node w/ the weights
+                Node outerweight = new Node("combine", weights, immediateChildren, original.getPosition());
                 return outerweight;
         } else {
             return original;

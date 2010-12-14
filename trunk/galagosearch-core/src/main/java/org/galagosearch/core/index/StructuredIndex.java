@@ -221,7 +221,7 @@ public class StructuredIndex {
     if (i instanceof ExtentIndexIterator) {
       return (ExtentIndexIterator) i;
     }
-    throw new RuntimeException("part " + part + " does not have offer an Extent Index Iterator");
+    throw new RuntimeException("part " + part + " does not offer an Extent Index Iterator");
   }
 
   public Set<String> getPartNames() {

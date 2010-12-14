@@ -9,17 +9,21 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor
  */
-public class ScaleIterator implements ScoreIterator {
-    ScoreIterator iterator;
+public class ScaleIterator extends DocumentOrderedScoreIterator {
+    DocumentOrderedScoreIterator iterator;
     double weight;
 
-    public ScaleIterator(Parameters parameters, ScoreIterator iterator) throws IllegalArgumentException {
+    public ScaleIterator(Parameters parameters, DocumentOrderedScoreIterator iterator) throws IllegalArgumentException {
         this.iterator = iterator;
         weight = parameters.get("default", 1.0);
     }
 
-    public int nextCandidate() {
-        return iterator.nextCandidate();
+    public boolean skipToDocument(int document) throws IOException {
+        return iterator.skipToDocument(document);
+    }
+
+    public int currentCandidate() {
+        return iterator.currentCandidate();
     }
 
     public boolean hasMatch(int document) {
@@ -34,8 +38,8 @@ public class ScaleIterator implements ScoreIterator {
         iterator.movePast(document);
     }
 
-    public double score(int document, int length) {
-        return weight * iterator.score(document, length);
+    public double score() {
+        return weight * iterator.score();
     }
 
     public boolean isDone() {

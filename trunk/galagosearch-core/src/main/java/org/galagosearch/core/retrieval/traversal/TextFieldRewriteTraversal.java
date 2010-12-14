@@ -24,7 +24,6 @@ public class TextFieldRewriteTraversal implements Traversal {
 
   public TextFieldRewriteTraversal(Parameters parameters, Retrieval retrieval) throws IOException {
     this.availableParts = retrieval.getAvailiableParts(parameters.get("retrievalGroup"));
-
   }
 
   public void beforeNode(Node object) throws Exception {

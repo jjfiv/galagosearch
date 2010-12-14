@@ -10,7 +10,7 @@ import org.galagosearch.core.util.ExtentArray;
 public class NullExtentIterator extends ExtentIterator {
     ExtentArray array = new ExtentArray();
 
-    public void nextDocument() {
+    public void nextEntry() {
     }
 
     public boolean isDone() {

@@ -35,6 +35,7 @@ public class ImplicitFeatureCastTraversalTest extends TestCase {
         Utility.deleteDirectory(indexPath);
     }
 
+    // Also tests the TextFieldRewriteTraversal
     public void testTraversal() throws Exception {
         StructuredIndex index = new StructuredIndex(indexPath.getAbsolutePath());
         StructuredRetrieval retrieval = new StructuredRetrieval(index, new Parameters());
@@ -42,8 +43,15 @@ public class ImplicitFeatureCastTraversalTest extends TestCase {
         Parameters p = new Parameters();
         p.add("retrievalGroup","test");
         ImplicitFeatureCastTraversal traversal = new ImplicitFeatureCastTraversal(p, retrieval);
-        Node tree = StructuredQuery.parse("#combine(cat dog.title)");
-        // Just a smoke test for now, verifies that no exceptions are thrown
-        //Node result = StructuredQuery.copy(traversal, tree);
+        TextFieldRewriteTraversal precedes = new TextFieldRewriteTraversal(p, retrieval);
+        Node tree = StructuredQuery.parse("#combine( cat dog.title)");
+        tree = StructuredQuery.copy(precedes, tree); // converts #text to #extents...
+        StringBuilder transformed = new StringBuilder();
+        transformed.append("#combine( ");
+        transformed.append("#feature:dirichlet( #extents:cat:part=postings() ) ");
+        transformed.append("#feature:dirichlet( #inside( #extents:dog:part=postings() ");
+        transformed.append("#extents:title:part=extents() ) ) )");
+        Node result = StructuredQuery.copy(traversal, tree);
+        assertEquals(transformed.toString(), result.toString());
     }
 }

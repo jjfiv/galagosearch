@@ -6,14 +6,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
+import org.galagosearch.core.retrieval.structured.DocumentOrderedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.FeatureFactory;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
@@ -220,7 +219,7 @@ public class MultiRetrieval extends Retrieval {
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
       retrievalParts.put(retGroup, mergeParts(stats));
 
-      featureFactories.put(retGroup, new FeatureFactory(retrievalStatistics.get(retGroup)));
+      featureFactories.put(retGroup, new DocumentOrderedFeatureFactory(retrievalStatistics.get(retGroup)));
     }
   }
 

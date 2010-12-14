@@ -7,11 +7,10 @@
 package org.galagosearch.core.retrieval.extents;
 
 import org.galagosearch.core.retrieval.structured.ScoreCombinationIterator;
-import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
 import java.io.IOException;
 import junit.framework.TestCase;
-import org.galagosearch.core.retrieval.structured.ScoreIterator;
+import org.galagosearch.core.retrieval.structured.DocumentOrderedScoreIterator;
 
 /**
  *
@@ -33,10 +32,10 @@ public class ScoreCombinationIteratorTest extends TestCase {
     super(testName);
   }
 
-  public ScoreCombinationIterator mockIterator(Parameters parameters, ScoreIterator[] iterators) {
+  public ScoreCombinationIterator mockIterator(Parameters parameters, DocumentOrderedScoreIterator[] iterators) {
     return new ScoreCombinationIterator(parameters, iterators) {
 
-      public int nextCandidate() {
+      public int currentCandidate() {
         throw new UnsupportedOperationException("Abstract method.");
       }
 

@@ -21,9 +21,32 @@ public class AppTest extends TestCase {
     super(testName);
   }
 
-  public String trecDocument(String docno, String text) {
+  public static String trecDocument(String docno, String text) {
     return "<DOC>\n<DOCNO>" + docno + "</DOCNO>\n"
             + "<TEXT>\n" + text + "</TEXT>\n</DOC>\n";
+  }
+
+  public static void verifyIndexStructures(File indexPath) {
+      // Check main path
+      assertTrue(indexPath.exists());
+
+      // Manifest
+      File childPath = new File(indexPath, "manifest");
+      assertTrue(childPath.exists());
+
+      // doc lengths
+      childPath = new File(indexPath, "documentLengths");
+      assertTrue(childPath.exists());
+
+      // doc names -- there are two files
+      childPath = new File(indexPath, "documentNames.fl");
+      assertTrue(childPath.exists());
+      childPath = new File(indexPath, "documentNames.rl");
+      assertTrue(childPath.exists());
+
+      // parts directory
+      childPath = new File(indexPath, "parts");
+      assertTrue(childPath.exists() && childPath.isDirectory());
   }
 
   public void testMakeCorpora() throws Exception {
@@ -124,7 +147,8 @@ public class AppTest extends TestCase {
       App.main(new String[]{"build", indexFile.getAbsolutePath(),
                 corpusFile.getAbsolutePath()});
 
-      assertTrue(indexFile.exists());
+      // Checks path and components
+      verifyIndexStructures(indexFile);
 
       // try to batch search that index with a no-match string
       String queries =

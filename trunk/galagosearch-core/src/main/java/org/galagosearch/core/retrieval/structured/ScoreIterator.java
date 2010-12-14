@@ -4,15 +4,22 @@ package org.galagosearch.core.retrieval.structured;
 import java.io.IOException;
 
 /**
+ * 12/11/2010 (irmarc): Refactored to represent anything that
+ * iterates and produces scores.
  *
- * @author trevor
+ * @author trevor, irmarc
  */
 public interface ScoreIterator extends StructuredIterator {
-    public int nextCandidate();
-    public boolean hasMatch(int document);
-    public void moveTo(int document) throws IOException;
-    public void movePast(int document) throws IOException;
-    public double score(int document, int length);
-    public boolean isDone();
-    public void reset() throws IOException;
+
+    /**
+     * Produce a score for the current candidate
+     * @return
+     */
+    public double score();
+
+    /**
+     * The next document to be scored by this iterator
+     * @return
+     */
+    public int currentCandidate();
 }

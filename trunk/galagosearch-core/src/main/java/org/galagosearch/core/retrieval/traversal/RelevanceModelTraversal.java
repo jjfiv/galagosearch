@@ -115,8 +115,8 @@ public class RelevanceModelTraversal implements Traversal {
       expansionNode = newRoot;
     } else {
       expParams = new Parameters();
-      expParams.set("0", Double.toString(fbOrigWt));
-      expParams.set("1", Double.toString(1-fbOrigWt));
+      expParams.set("1", Double.toString(fbOrigWt));
+      expParams.set("2", Double.toString(1-fbOrigWt));
       newChildren = new ArrayList<Node>();
       newChildren.add(combineNode);
       newChildren.add(expansionNode);
@@ -148,7 +148,7 @@ public class RelevanceModelTraversal implements Traversal {
     for (ScoredDocument sd : results) {
       sd.score /= sum;
       scores.put(sd.document, sd.score);
-    }
+     }
     return scores;
   }
 
@@ -202,8 +202,16 @@ public class RelevanceModelTraversal implements Traversal {
       score = 0.0;
     }
 
+    // The secondary sort is to have defined behavior for statistically tied samples.
     public int compareTo(Gram that) {
-      return (this.score > that.score ? -1 : (this.score < that.score ? 1 : 0));
+      int result =  this.score > that.score ? -1 : (this.score < that.score ? 1 : 0);
+      if (result != 0) return result;
+      result = (this.term.compareTo(that.term));
+      return result;
+    }
+
+    public String toString() {
+        return "<" + term + "," + score + ">";
     }
   }
 }

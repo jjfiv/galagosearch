@@ -8,7 +8,7 @@ import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.structured.CountIterator;
 import org.galagosearch.core.retrieval.structured.ScoreIterator;
 import org.galagosearch.core.retrieval.Retrieval;
-import org.galagosearch.core.retrieval.structured.FeatureFactory;
+import org.galagosearch.core.retrieval.structured.DocumentOrderedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.tupleflow.Parameters;
