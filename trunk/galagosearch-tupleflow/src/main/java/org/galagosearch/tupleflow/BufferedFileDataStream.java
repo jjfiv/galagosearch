@@ -1,4 +1,4 @@
-// BSD License (http://www.galagosearch.org/license)
+    // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.tupleflow;
 
 import java.io.EOFException;

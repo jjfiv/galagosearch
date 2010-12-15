@@ -18,4 +18,8 @@ public class Extent {
     public boolean contains(Extent other) {
         return begin <= other.begin && end >= other.end;
     }
+
+    public String toString() {
+        return ("[" + document + "," + begin + "," + end + "," + weight + "]");
+    }
 }

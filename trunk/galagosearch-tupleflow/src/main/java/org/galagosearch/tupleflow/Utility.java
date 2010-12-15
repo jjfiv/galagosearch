@@ -595,20 +595,17 @@ public class Utility {
         return set;
     }
 
-    public static File getResourceFile(Class caller, String identifier) throws IOException {
-        URI uri = null;
-        try {
-            uri = caller.getResource(identifier).toURI();
-            return new File(uri);
-        } catch (Exception e) {
-            if (uri == null) {
-                throw new IOException("Unable to retrieve resource " + identifier, e);
-            } else {
-                throw new IOException("Bad URI: " + uri.toString(), e);
-            }
-        }
-    }
+    public static long skipLongBytes(DataInput in, long skipAmt) throws IOException {
+        if (skipAmt < Integer.MAX_VALUE) return in.skipBytes((int) skipAmt);
 
+        long skipped = 0;
+        while (skipAmt >= Integer.MAX_VALUE) {
+            skipped += in.skipBytes(Integer.MAX_VALUE);
+            skipAmt -= Integer.MAX_VALUE;
+        }
+        skipped += in.skipBytes((int) skipAmt);
+        return skipped;
+    }
 
     /*
      * Functions to translate:

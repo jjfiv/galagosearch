@@ -10,6 +10,8 @@ import java.io.IOException;
  * @author irmarc
  */
 public interface DocumentOrderedIterator extends StructuredIterator {
+    public static final int HAS_SKIPS = 0x01;
+
     public boolean isDone();
     public int currentCandidate();
     public boolean hasMatch(int document);

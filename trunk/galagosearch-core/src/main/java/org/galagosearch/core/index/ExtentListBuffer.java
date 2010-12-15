@@ -23,7 +23,6 @@ public class ExtentListBuffer implements IndexElement {
 
   public void write(final OutputStream output) throws IOException {
     output.write(header.getBytes(), 0, header.length());
-    //output.write(data.getBytes(), 0, data.length());
     data.write(output);
     header.clear();
     data.clear();

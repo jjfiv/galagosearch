@@ -5,10 +5,11 @@ import java.io.IOException;
 import org.galagosearch.core.util.ExtentArray;
 
 /**
- * This is base interface for all inverted lists that return count information.
- * See the CountIterator class for documentation on most of these methods.
+ * This extends a document-ordered navigable count iterator by returning
+ * arrays of extents, each of which is a position range (start - end), docid, and
+ * weight.
  * 
- * @author trevor
+ * @author trevor, irmarc
  */
 public abstract class ExtentIterator extends DocumentOrderedCountIterator {
     public abstract ExtentArray extents();

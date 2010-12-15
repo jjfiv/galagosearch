@@ -15,13 +15,16 @@ import org.galagosearch.core.util.ExtentArray;
 import java.io.File;
 import java.io.IOException;
 import junit.framework.TestCase;
+import org.galagosearch.core.retrieval.structured.Extent;
 
 /**
  *
  * @author trevor
  */
 public class PositionIndexReaderTest extends TestCase {
+
     File tempPath;
+    File skipPath = null;
     static int[][] dataA = {
         {5, 7, 9},
         {19, 27, 300}
@@ -40,6 +43,9 @@ public class PositionIndexReaderTest extends TestCase {
         // make a spot for the index
         tempPath = File.createTempFile("galago-test-index", null);
         tempPath.delete();
+
+        skipPath = Utility.createTemporary();
+        skipPath.delete();
 
         Parameters p = new Parameters();
         p.add("filename", tempPath.toString());
@@ -73,6 +79,7 @@ public class PositionIndexReaderTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         tempPath.delete();
+        skipPath.delete();
     }
 
     public void internalTestIterator(
@@ -86,7 +93,7 @@ public class PositionIndexReaderTest extends TestCase {
             assertFalse(termExtents.isDone());
             ExtentArray e = termExtents.extents();
             ExtentArrayIterator iter = new ExtentArrayIterator(e);
-            totalPositions += (doc.length-1); // first entry in doc array is docid
+            totalPositions += (doc.length - 1); // first entry in doc array is docid
             for (int i = 1; i < doc.length; i++) {
                 assertFalse(iter.isDone());
                 assertEquals(doc[i], iter.current().begin);
@@ -118,5 +125,62 @@ public class PositionIndexReaderTest extends TestCase {
         assertEquals(2, reader.documentCount("b"));
         assertEquals(3, reader.termCount("b"));
         reader.close();
+    }
+
+    public void testSkipLists() throws Exception {
+        // internally fill the skip file
+        Parameters p = new Parameters();
+        p.add("filename", skipPath.toString());
+        p.add("skipping", "true");
+        p.add("skipDistance", "20");
+        p.add("skipResetDistance", "5");
+
+        PositionIndexWriter writer =
+                new PositionIndexWriter(new org.galagosearch.tupleflow.FakeParameters(p));
+
+        writer.processWord(Utility.fromString("a"));
+        for (int docid = 1; docid < 5000; docid += 3) {
+            writer.processDocument(docid);
+            for (int pos = 1; pos < ((docid/50)+2); pos++) {
+                writer.processPosition(pos);
+            }
+        }
+        writer.close();
+
+        // Now read it
+        PositionIndexReader reader = new PositionIndexReader(skipPath.toString());
+        PositionIndexReader.Iterator termExtents = reader.getTermExtents("a");
+        assertEquals("a", termExtents.getKey());
+
+        // Read first document
+        assertEquals(1, termExtents.document());
+        assertEquals(1, termExtents.count());
+
+        termExtents.moveTo(7);
+        assertTrue(termExtents.hasMatch(7));
+
+        // Now move to a doc, but not one we have
+        termExtents.moveTo(90);
+        assertFalse(termExtents.hasMatch(90));
+
+        // Now move forward one
+        termExtents.nextEntry();
+        assertEquals(94, termExtents.document());
+        assertEquals(2, termExtents.count());
+
+        // One more time, then we read extents
+        termExtents.movePast(2543);
+        assertEquals(2545, termExtents.document());
+        assertEquals(51, termExtents.count());
+        ExtentArray ea = termExtents.extents();
+        Extent[] buffer = ea.getBuffer();
+        assertEquals(51, ea.getPosition());
+        for (int i = 0; i < ea.getPosition(); i++) {
+            assertEquals(2545, buffer[i].document);
+            assertEquals(i+1, buffer[i].begin);
+        }
+        termExtents.skipToDocument(10005);
+        assertFalse(termExtents.hasMatch(10005));
+        assertTrue(termExtents.isDone());
     }
 }

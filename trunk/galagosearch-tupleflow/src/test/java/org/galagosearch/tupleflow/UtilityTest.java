@@ -126,13 +126,4 @@ public class UtilityTest extends TestCase {
 	convLong = Utility.uncompressLong(buffer, 0);
 	assertEquals(testLong, convLong);
     }
-
-    public void testResourceFinding() throws Exception {
-        File dummy = Utility.getResourceFile(Utility.class, "/test/dummy.txt");
-        assertTrue(dummy.exists());
-        BufferedReader reader = new BufferedReader(new FileReader(dummy));
-        String line = reader.readLine();
-        reader.close();
-        assertEquals("This is a dummy file for testing.", line);
-    }
 }

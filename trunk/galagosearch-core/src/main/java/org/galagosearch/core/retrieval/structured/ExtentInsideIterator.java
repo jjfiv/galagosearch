@@ -44,7 +44,7 @@ public class ExtentInsideIterator extends ExtentConjunctionIterator {
     /**
      * This method is called whenever the ExtentConjunctionIterator has verified
      * that both the inner and outer iterators match this document.  This method's job
-     * is to find all matchin extents within the document, if they exist.
+     * is to find all matching extents within the document, if they exist.
      */
 
     public void loadExtents() {
