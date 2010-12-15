@@ -4,8 +4,12 @@
  */
 package org.galagosearch.core.index;
 
+import java.io.ByteArrayInputStream;
 import junit.framework.TestCase;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import org.galagosearch.tupleflow.VByteInput;
+
 /**
  *
  * @author irmarc
@@ -22,13 +26,13 @@ public class CompressedRawByteBufferTest extends TestCase {
             instance.addRaw(i);
         }
 
-        assertEquals(instance.length(),400L);
+        assertEquals(instance.length(), 400L);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         instance.write(stream);
         byte[] result = stream.toByteArray();
         assertEquals(result.length, 400);
         for (int i = 0; i < 400; i++) {
-            assertEquals(result[i],(byte)i);
+            assertEquals(result[i], (byte) i);
         }
 
         // now delete the spill file
@@ -84,5 +88,33 @@ public class CompressedRawByteBufferTest extends TestCase {
         assertEquals(result[1], (byte) (floatBits >> 16));
         assertEquals(result[2], (byte) (floatBits >> 8));
         assertEquals(result[3], (byte) (floatBits >> 0));
+    }
+
+    public void testSpecial() throws Exception {
+        CompressedRawByteBuffer instance = new CompressedRawByteBuffer();
+        int[] numbers = {1, 2, 2, 1, 0, 8, 1, 0, 8, 5, 5, 0};
+
+        for (int i = 0; i < numbers.length; i++) {
+            instance.add(numbers[i]);
+        }
+
+        assertEquals(numbers.length, instance.length());
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        instance.write(stream);
+        byte[] written = stream.toByteArray();
+        VByteInput input = new VByteInput(new DataInputStream(new ByteArrayInputStream(written)));
+        // do it with read int
+        for (int i = 0; i < numbers.length; i++) {
+            int read = input.readInt();
+            assertEquals(numbers[i], read);
+        }
+
+        // Now with longs
+        input = new VByteInput(new DataInputStream(new ByteArrayInputStream(written)));
+        // do it with read int
+        for (int i = 0; i < numbers.length; i++) {
+            long read = input.readLong();
+            assertEquals((long) numbers[i], read);
+        }
     }
 }

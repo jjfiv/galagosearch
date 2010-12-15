@@ -155,7 +155,7 @@ public class PositionIndexWriter implements
                
                 // if we're skipping check that
                 if (skips != null) {
-                    updateSkipInformation(documentID);
+                    updateSkipInformation();
                 }
             }
             documents.add(documentID - lastDocument);
@@ -174,13 +174,13 @@ public class PositionIndexWriter implements
             lastPosition = position;
         }
 
-        private void updateSkipInformation(long documentID) {
+        private void updateSkipInformation() {
             // There are already docs entered and we've gone skipDistance docs -- make a skip
             docsSinceLastSkip = (docsSinceLastSkip + 1) % skipDistance;
             if (documents.length() > 0 && docsSinceLastSkip == 0) {
-                skips.add(documentID - lastDocumentSkipped);
+                skips.add(lastDocument - lastDocumentSkipped);
                 skips.add(skipPositions.length() - lastSkipPosition);
-                lastDocumentSkipped = documentID;
+                lastDocumentSkipped = lastDocument;
                 lastSkipPosition = skipPositions.length();
 
                 // Now we decide whether we're storing an abs. value d-gapped value

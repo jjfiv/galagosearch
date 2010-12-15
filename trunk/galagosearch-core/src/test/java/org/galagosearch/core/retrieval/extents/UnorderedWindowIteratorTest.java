@@ -29,7 +29,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         ExtentArray array = instance.extents();
         assertFalse(instance.isDone());
 
-        assertEquals(array.getPosition(), 1);
+        assertEquals(array.getPositionCount(), 1);
         assertEquals(array.getBuffer()[0].document, 1);
         assertEquals(array.getBuffer()[0].begin, 3);
         assertEquals(array.getBuffer()[0].end, 5);
@@ -51,7 +51,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         ExtentArray array = instance.extents();
         assertFalse(instance.isDone());
 
-        assertEquals(array.getPosition(), 1);
+        assertEquals(array.getPositionCount(), 1);
         assertEquals(array.getBuffer()[0].document, 1);
         assertEquals(array.getBuffer()[0].begin, 3);
         assertEquals(array.getBuffer()[0].end, 5);
@@ -72,7 +72,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
 
         UnorderedWindowIterator instance = new UnorderedWindowIterator(twoParam, iters);
         ExtentArray array = instance.extents();
-        assertEquals(0, array.getPosition());
+        assertEquals(0, array.getPositionCount());
         assertTrue(instance.isDone());
     }
 
@@ -90,7 +90,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         ExtentArray array = instance.extents();
         assertFalse(instance.isDone());
 
-        assertEquals(array.getPosition(), 1);
+        assertEquals(array.getPositionCount(), 1);
         assertEquals(array.getBuffer()[0].document, 1);
         assertEquals(array.getBuffer()[0].begin, 3);
         assertEquals(array.getBuffer()[0].end, 5);
@@ -98,7 +98,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         instance.nextEntry();
         assertFalse(instance.isDone());
 
-        assertEquals(array.getPosition(), 1);
+        assertEquals(array.getPositionCount(), 1);
         assertEquals(array.getBuffer()[0].document, 5);
         assertEquals(array.getBuffer()[0].begin, 9);
         assertEquals(array.getBuffer()[0].end, 12);

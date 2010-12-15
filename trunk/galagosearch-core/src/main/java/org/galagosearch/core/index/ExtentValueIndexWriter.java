@@ -19,8 +19,6 @@ import org.galagosearch.core.types.NumberedValuedExtent;
 @InputClass(className = "org.galagosearch.core.types.NumberedValuedExtent", order = {"+extentName", "+number", "+begin"})
 @Verified
 public class ExtentValueIndexWriter implements NumberedValuedExtent.ExtentNameNumberBeginOrder.ShreddedProcessor {
-    long minimumSkipListLength = 2048;
-    int skipByteLength = 128;
     byte[] lastWord;
     long lastPosition = 0;
     long lastDocument = 0;

@@ -21,7 +21,9 @@ import junit.framework.TestCase;
  * @author trevor
  */
 public class ExtentIndexReaderTest extends TestCase {
+
     File tempPath;
+    File skipPath;
 
     public ExtentIndexReaderTest(String testName) {
         super(testName);
@@ -32,6 +34,9 @@ public class ExtentIndexReaderTest extends TestCase {
         // make a spot for the index
         tempPath = File.createTempFile("galago-test-index", null);
         tempPath.delete();
+
+        skipPath = Utility.createTemporary();
+        skipPath.delete();
 
         Parameters p = new Parameters();
         p.add("filename", tempPath.toString());
@@ -61,6 +66,9 @@ public class ExtentIndexReaderTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         tempPath.delete();
+        if (skipPath != null) {
+            skipPath.delete();
+        }
     }
 
     public void testReadTitle() throws Exception {
@@ -70,6 +78,7 @@ public class ExtentIndexReaderTest extends TestCase {
         assertFalse(extents.isDone());
 
         ExtentArray e = extents.extents();
+        assertEquals(2, e.getPositionCount());
         ExtentArrayIterator iter = new ExtentArrayIterator(e);
         assertFalse(iter.isDone());
 
@@ -133,5 +142,51 @@ public class ExtentIndexReaderTest extends TestCase {
         assertTrue(extents.isDone());
 
         reader.close();
+    }
+
+    public void testSkipList() throws Exception {
+        Parameters p = new Parameters();
+        p.add("filename", tempPath.toString());
+        p.add("skipDistance", "10");
+
+        ExtentIndexWriter writer =
+                new ExtentIndexWriter(new org.galagosearch.tupleflow.FakeParameters(p));
+
+        writer.processExtentName(Utility.fromString("skippy"));
+        for (int docid = 1; docid < 1000; docid += 3) {
+            writer.processNumber(docid);
+            for (int begin = 5; begin < (20 + (docid / 5)); begin += 4) {
+                writer.processBegin(begin);
+                writer.processTuple(begin + 2);
+            }
+        }
+        writer.close();
+
+        ExtentIndexReader reader = new ExtentIndexReader(new IndexReader(tempPath.toString()));
+        ExtentIndexReader.Iterator extents = reader.getExtents("skippy");
+
+        assertFalse(extents.isDone());
+        assertFalse(extents.skipToDocument(453));
+        assertEquals(454, extents.document());
+        extents.nextEntry();
+        assertEquals(457, extents.document());
+        assertEquals(27, extents.count());
+        ExtentArray ea = extents.extents();
+        ExtentArrayIterator eait = new ExtentArrayIterator(ea);
+        int begin = 5;
+        while (!eait.isDone()) {
+            assertEquals(begin, eait.current().begin);
+            assertEquals(begin + 2, eait.current().end);
+            begin += 4;
+            eait.next();
+        }
+        extents.moveTo(1299);
+        assertFalse(extents.hasMatch(1299));
+        extents.movePast(2100);
+        assertTrue(extents.isDone());
+        reader.close();
+
+        skipPath.delete();
+        skipPath = null;
     }
 }

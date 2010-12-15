@@ -65,12 +65,14 @@ public class PositionIndexReader implements StructuredIndexPartReader {
 
         Iterator(IndexReader.Iterator iterator) throws IOException {
             this.iterator = iterator;
-            load();
+            initialize();
         }
 
+        // Initialization method.
+        //
         // Even though we check for skips multiple times, in terms of how the data is loaded
         // its easier to do the parts when appropriate
-        private void load() throws IOException {
+        private void initialize() throws IOException {
             long startPosition = iterator.getValueStart();
             long endPosition = iterator.getValueEnd();
 
@@ -153,6 +155,8 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             loadExtents();
         }
 
+        // Loads up a single set of positions for a document. Basically it's the
+        // load that needs to be done when moving forward one in the posting list.
         private void loadExtents() throws IOException {
             currentDocument += documents.readInt();
             currentCount = counts.readInt();
@@ -171,7 +175,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             builder.append(getKey());
             builder.append(",");
             builder.append(currentDocument);
-            for (int i = 0; i < extentArray.getPosition(); ++i) {
+            for (int i = 0; i < extentArray.getPositionCount(); ++i) {
                 builder.append(",");
                 builder.append(extentArray.getBuffer()[i].begin);
             }
@@ -184,7 +188,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             currentCount = 0;
             extentArray.reset();
 
-            load();
+            initialize();
         }
 
         public long getByteLength() throws IOException {
@@ -199,13 +203,15 @@ public class PositionIndexReader implements StructuredIndexPartReader {
         }
 
         public void nextEntry() throws IOException {
-            documentIndex += 1;
-
+                documentIndex = Math.min(documentIndex+1, documentCount);
             if (!isDone()) {
                 loadExtents();
             }
         }
 
+        // Moves foward in a posting list, but if it's at the end of the current
+        // list, moves on to the next list. Useful for iterating over all posting lists,
+        // vs. nextEntry, which is bounded by a single posting list.
         public boolean nextRecord() throws IOException {
             nextEntry();
             if (!isDone()) {
@@ -226,19 +232,12 @@ public class PositionIndexReader implements StructuredIndexPartReader {
             }
 
             // if we're here, we're skipping
-            int lastDocumentSkipped = (int) nextSkipDocument;
             while (skipsRead < numSkips
                     && document > nextSkipDocument) {
-                lastDocumentSkipped = (int) nextSkipDocument;
                 skipOnce();
             }
             repositionMainStreams();
-            if (lastDocumentSkipped == document) {
-                loadExtents();
-                return true;
-            } else {
-                return super.skipToDocument(document); // linear from here
-            }
+            return super.skipToDocument(document); // linear from here
         }
 
         // This only moves forward in tier 1, reads from tier 2 only when
@@ -266,7 +265,6 @@ public class PositionIndexReader implements StructuredIndexPartReader {
                 nextSkipDocument += skips.readInt();
             }
             skipsRead++;
-            documentIndex += skipDistance;
             lastSkipPosition = currentSkipPosition;
          }
 
@@ -282,6 +280,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
                 countsStream.seek(countsByteFloor + skipPositions.readInt());
                 positionsStream.seek(positionsByteFloor + skipPositions.readLong());
             }
+            documentIndex = (int) (skipDistance * skipsRead) -1;
         }
 
         public boolean isDone() {

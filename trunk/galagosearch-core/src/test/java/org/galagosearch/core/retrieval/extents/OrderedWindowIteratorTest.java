@@ -34,7 +34,7 @@ public class OrderedWindowIteratorTest extends TestCase {
 
         ExtentArray array = instance.extents();
 
-        assertEquals(array.getPosition(), 1);
+        assertEquals(array.getPositionCount(), 1);
         assertEquals(array.getBuffer()[0].document, 1);
         assertEquals(array.getBuffer()[0].begin, 3);
         assertEquals(array.getBuffer()[0].end, 5);
@@ -52,6 +52,6 @@ public class OrderedWindowIteratorTest extends TestCase {
         OrderedWindowIterator instance = new OrderedWindowIterator(oneParam, iters);
 
         ExtentArray array = instance.extents();
-        assertEquals(0, array.getPosition());
+        assertEquals(0, array.getPositionCount());
     }
 }

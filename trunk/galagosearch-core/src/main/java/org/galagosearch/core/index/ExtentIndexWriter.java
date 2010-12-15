@@ -49,7 +49,7 @@ public class ExtentIndexWriter implements NumberedExtent.ExtentNameNumberBeginOr
             invertedList = null;
         }
 
-        invertedList = new ExtentListBuffer();
+        invertedList = new ExtentListBuffer(header);
         invertedList.setWord(wordBytes);
 
         assert lastWord == null || 0 != Utility.compare(lastWord, wordBytes) : "Duplicate word";

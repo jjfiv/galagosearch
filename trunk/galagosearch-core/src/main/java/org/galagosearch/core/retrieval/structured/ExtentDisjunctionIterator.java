@@ -67,7 +67,7 @@ public abstract class ExtentDisjunctionIterator extends ExtentIterator {
     }
 
     public int count() {
-        return extents.getPosition();
+        return extents.getPositionCount();
     }
 
     public void reset() throws IOException {

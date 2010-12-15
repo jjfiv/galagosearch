@@ -174,8 +174,8 @@ public class PositionIndexReaderTest extends TestCase {
         assertEquals(51, termExtents.count());
         ExtentArray ea = termExtents.extents();
         Extent[] buffer = ea.getBuffer();
-        assertEquals(51, ea.getPosition());
-        for (int i = 0; i < ea.getPosition(); i++) {
+        assertEquals(51, ea.getPositionCount());
+        for (int i = 0; i < ea.getPositionCount(); i++) {
             assertEquals(2545, buffer[i].document);
             assertEquals(i+1, buffer[i].begin);
         }

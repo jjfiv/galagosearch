@@ -46,7 +46,7 @@ public abstract class ExtentConjunctionIterator extends ExtentIterator {
             loadExtents();
 
             // were we successful? if so, quit, otherwise keep looking for documents
-            if (extents.getPosition() > 0) {
+            if (extents.getPositionCount() > 0) {
                 break;
             }
             extentIterators[0].nextEntry();
@@ -62,7 +62,7 @@ public abstract class ExtentConjunctionIterator extends ExtentIterator {
     }
 
     public int count() {
-        return extents().getPosition();
+        return extents().getPositionCount();
     }
 
     public boolean isDone() {

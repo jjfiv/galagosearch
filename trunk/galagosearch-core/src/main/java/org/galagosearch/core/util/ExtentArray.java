@@ -55,7 +55,7 @@ public class ExtentArray {
         return _array;
     }
 
-    public int getPosition() {
+    public int getPositionCount() {
         return _position;
     }
 

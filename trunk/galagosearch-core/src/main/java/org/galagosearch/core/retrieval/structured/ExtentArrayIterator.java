@@ -21,11 +21,11 @@ public class ExtentArrayIterator implements Comparable<ExtentArrayIterator> {
 
     public boolean next() {
         index += 1;
-        return index < array.getPosition();
+        return index < array.getPositionCount();
     }
 
     public boolean isDone() {
-        return array.getPosition() <= index;
+        return array.getPositionCount() <= index;
     }
 
     public int compareTo(ExtentArrayIterator iterator) {

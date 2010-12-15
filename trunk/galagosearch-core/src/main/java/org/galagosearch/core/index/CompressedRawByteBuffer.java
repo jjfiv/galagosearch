@@ -29,9 +29,8 @@ import java.io.FileOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import org.galagosearch.tupleflow.Utility;
-import gnu.trove.TByteArrayList;
 
-public class CompressedRawByteBuffer {
+public class CompressedRawByteBuffer extends OutputStream {
     ArrayList<byte[]> values = null;
     ArrayList<Integer> sizes = null;
     FileOutputStream spillStream = null;
@@ -67,6 +66,9 @@ public class CompressedRawByteBuffer {
      *
      * @param value The byte value to add.
      */
+    public void write(int value) {
+        addRaw(value);
+    }
     public void addRaw(int value) {
 	if (position == currentBufferSize) {
 	    values.add(currentBuffer);
@@ -97,10 +99,16 @@ public class CompressedRawByteBuffer {
      * Adds a series of bytes to the buffer. Just iterates over
      * 
      */
+    public void write(byte[] bytes) {
+        add(bytes);
+    }
     public void add(byte[] bytes) {
 	add(bytes, 0, bytes.length);
     }
-    
+
+    public void write(byte[] bytes, int offset, int length) {
+        add(bytes, offset, length);
+    }
     public void add(byte[] bytes, int offset, int length) {
 	assert(offset + length < bytes.length);
 	for (int i = offset; i < (offset+length); i++) {
@@ -151,30 +159,8 @@ public class CompressedRawByteBuffer {
      *
      * @param other The buffer to copy.
      */
-    public void add(CompressedRawByteBuffer other) {
-      // Two cases w.r.t. the current open buffer
-
-      if (currentBuffer != null && position > 0) {
-          // Add it
-          values.add(currentBuffer);
-          sizes.add(position);
-	  memoryLength += position;
-
-	  // spill if necessary
-	  if (memoryLength >= spillThreshold) spill();
-      }
-
-      // Add external buffers -- need to check for spill every iteration
-      for (int i = 0; i < other.values.size(); i++) {
-	  values.add(other.values.get(i));
-	  sizes.add(other.sizes.get(i));
-	  memoryLength += other.sizes.get(i);
-	  if (memoryLength >= spillThreshold) spill();
-      }
-
-      // Lazy-make the next buffer
-      currentBuffer = null;
-      position = 0;
+    public void add(CompressedRawByteBuffer other) throws IOException {
+        other.write(this);
     }
 
     public void add(CompressedByteBuffer other) {
