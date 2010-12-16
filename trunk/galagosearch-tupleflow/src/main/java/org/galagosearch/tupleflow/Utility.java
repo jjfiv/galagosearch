@@ -30,6 +30,8 @@ import org.galagosearch.tupleflow.execution.Step;
  * @author trevor
  */
 public class Utility {
+  private static Logger LOG = Logger.getLogger(Utility.class.getName());
+
 
   /**
    * <p>If the parent directories for this file don't exist, this function creates them.</p>
@@ -434,7 +436,7 @@ public class Utility {
   }
 
   public static File createTemporary(long requiredSpace) throws IOException {
-  File temporary;
+    File temporary;
     String root = getBestTemporaryLocation(requiredSpace);
     if (root != null) {
       temporary = File.createTempFile("tupleflow", "", new File(root));
@@ -442,7 +444,7 @@ public class Utility {
       temporary = File.createTempFile("tupleflow", "");
     }
 
-    Logger.getLogger(Utility.class.toString()).info("UTILITY_CREATED: " + temporary.getAbsolutePath());
+    LOG.info("UTILITY_CREATED: " + temporary.getAbsolutePath());
     return temporary;
   }
   // So that we're not reading the file containing these OVER and OVER
@@ -453,7 +455,6 @@ public class Utility {
       // try to find a prefs file for this
       String homeDirectory = System.getProperty("user.home");
       File prefsFile = new File(homeDirectory + "/" + ".galagotmp");
-      ArrayList<String> roots = new ArrayList<String>();
 
       if (prefsFile.exists()) {
         BufferedReader reader = new BufferedReader(new FileReader(prefsFile));
@@ -472,7 +473,7 @@ public class Utility {
       if (freeSpace >= requiredSpace) {
         String logString = String.format("Found %6.3fMB >= %6.3fMB left on %s",
                 freeSpace / 1048576.0, requiredSpace / 1048576.0, root);
-        Logger.getLogger(Utility.class.toString()).info(logString);
+        LOG.info(logString);
         return root;
       }
     }
@@ -607,22 +608,24 @@ public class Utility {
   // poor coding is involved.
   public static File createResourceFile(Class requestingClass, String resourcePath) throws IOException {
     String tmpPath = getBestTemporaryLocation(1024 * 1024 * 100);
-    if (tmpPath == null) tmpPath = "";
-    String fileName;
-    try {
-      fileName = new File(requestingClass.getResource(resourcePath).toURI()).getName();
-    } catch (URISyntaxException use) {
-      // try again
-      String[] parts = resourcePath.split(File.separator);
-      fileName = parts[parts.length-1];
+    if (tmpPath == null) {
+      tmpPath = "";
     }
+
+    String[] parts = resourcePath.split(File.separator);
+    String fileName = parts[parts.length - 1];
+
+    LOG.info(String.format("Creating resource file: %s/%s", tmpPath, fileName));
     File tmp = new File(tmpPath, fileName);
-    if (tmp.exists()) return tmp;
+    if (tmp.exists()) {
+      return tmp;
+    }
 
     InputStream resourceStream = requestingClass.getResourceAsStream(resourcePath);
     if (resourceStream == null) {
       return null;
     }
+
     copyStreamToFile(resourceStream, tmp);
     return tmp;
   }
