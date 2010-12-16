@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.structured.Extent;
+import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 
 /**
  *
@@ -79,15 +80,15 @@ public class PositionIndexReaderTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         tempPath.delete();
-        skipPath.delete();
+        if (skipPath != null) skipPath.delete();
     }
 
     public void internalTestIterator(
-            PositionIndexReader.Iterator termExtents,
+            ExtentIndexIterator termExtents,
             int[][] data) throws IOException {
         assertNotNull(termExtents);
         assertFalse(termExtents.isDone());
-        assertEquals(data.length, termExtents.totalDocuments());
+        assertEquals(data.length, ((PositionIndexReader.Iterator) termExtents).totalDocuments());
         int totalPositions = 0;
         for (int[] doc : data) {
             assertFalse(termExtents.isDone());
@@ -103,13 +104,13 @@ public class PositionIndexReaderTest extends TestCase {
             assertTrue(iter.isDone());
             termExtents.nextEntry();
         }
-        assertEquals(termExtents.totalPositions(), totalPositions);
+        assertEquals(((PositionIndexReader.Iterator) termExtents).totalPositions(), totalPositions);
         assertTrue(termExtents.isDone());
     }
 
     public void testA() throws Exception {
         PositionIndexReader reader = new PositionIndexReader(tempPath.toString());
-        PositionIndexReader.Iterator termExtents = reader.getTermExtents("a");
+        ExtentIndexIterator termExtents = reader.getTermExtents("a");
 
         internalTestIterator(termExtents, dataA);
         assertEquals(2, reader.documentCount("a"));
@@ -119,7 +120,7 @@ public class PositionIndexReaderTest extends TestCase {
 
     public void testB() throws Exception {
         PositionIndexReader reader = new PositionIndexReader(tempPath.toString());
-        PositionIndexReader.Iterator termExtents = reader.getTermExtents("b");
+        ExtentIndexIterator termExtents = reader.getTermExtents("b");
 
         internalTestIterator(termExtents, dataB);
         assertEquals(2, reader.documentCount("b"));
@@ -149,7 +150,7 @@ public class PositionIndexReaderTest extends TestCase {
 
         // Now read it
         PositionIndexReader reader = new PositionIndexReader(skipPath.toString());
-        PositionIndexReader.Iterator termExtents = reader.getTermExtents("a");
+        ExtentIndexIterator termExtents = reader.getTermExtents("a");
         assertEquals("a", termExtents.getKey());
 
         // Read first document
@@ -182,5 +183,25 @@ public class PositionIndexReaderTest extends TestCase {
         termExtents.skipToDocument(10005);
         assertFalse(termExtents.hasMatch(10005));
         assertTrue(termExtents.isDone());
+
+        skipPath.delete();
+        skipPath = null;
+    }
+
+    public void testCountIterator() throws Exception {
+        PositionIndexReader reader = new PositionIndexReader(tempPath.toString());
+        ExtentIndexIterator termCounts = reader.getTermCounts("b");
+
+        assertEquals(dataB[0][0], termCounts.document());
+        assertEquals(dataB[0].length-1, termCounts.count());
+        termCounts.nextEntry();
+
+        assertEquals(dataB[1][0], termCounts.document());
+        assertEquals(dataB[1].length-1, termCounts.count());
+
+        assertEquals(2, reader.documentCount("b"));
+        assertEquals(3, reader.termCount("b"));
+
+        reader.close();
     }
 }

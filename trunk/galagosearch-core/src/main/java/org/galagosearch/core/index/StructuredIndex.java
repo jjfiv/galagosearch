@@ -212,10 +212,6 @@ public class StructuredIndex {
     return manifest.clone();
   }
 
-  public IndexIterator getPartIterator(String part) throws IOException {
-    return (IndexIterator) parts.get(part).getIterator();
-  }
-
   public ExtentIndexIterator getExtentIterator(String part) throws IOException {
     IndexIterator i = parts.get(part).getIterator();
     if (i instanceof ExtentIndexIterator) {

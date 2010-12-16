@@ -11,13 +11,15 @@ import org.galagosearch.tupleflow.Parameters;
  * 
  * <p>Traversals that modify a tree may want to know what type of iterator will be generated
  * when a Node is converted into a StructuredIterator.  For instance, a Node with a
- * "counts" operator will turn into a ExtentListIterator.  This is important to know because
- * a ScoreCombinationIterator can't take an ExtentListIterator as an argument; it needs an
+ * "counts" operator will turn into a TermCountIterator.  This is important to know because
+ * a ScoreCombinationIterator can't take a TermCountIterator as an argument; it needs an
  * iterator between them to convert extents into scores.  A Traversal can check the types
  * of "counts" and "combine", notice the type mismatch, and add a "#feature" node between
- * them so that the types match.</p>
- * 
- * @author trevor
+ * them so that the types match. This is important because raw counts have to be transformed into
+ * a score space, i.e. (# term occurrences in doc D) -->  (#term occurrences) / (|D|) </p>
+ *
+ *
+ * @author trevor, irmarc
  */
 public class NodeType {
     private Class<? extends StructuredIterator> nodeClass;
