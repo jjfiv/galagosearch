@@ -595,6 +595,20 @@ public class Utility {
         return set;
     }
 
+    // A workaround to make File versions of packaged resources. We register the tmp files to
+    // delete on exit b/c we don't want to keep all that clutter.
+    public static File createResourceFile(Class requestingClass, String resourcePath) throws IOException {
+        File tmp = createTemporary();
+        tmp.delete();
+
+        InputStream resourceStream = requestingClass.getResourceAsStream(resourcePath);
+        if (resourceStream == null) return null;
+        copyStreamToFile(resourceStream, tmp);
+        tmp.deleteOnExit();
+        return tmp;
+    }
+
+
     public static long skipLongBytes(DataInput in, long skipAmt) throws IOException {
         if (skipAmt < Integer.MAX_VALUE) return in.skipBytes((int) skipAmt);
 
