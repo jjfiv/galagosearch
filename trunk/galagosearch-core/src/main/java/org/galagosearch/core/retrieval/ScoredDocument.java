@@ -34,5 +34,9 @@ public class ScoredDocument implements Comparable<ScoredDocument> {
   public String documentName;
   public String source; // lets us know where this scored doc came from
   public int document;
+  public int rank;
   public double score;
+
+  // keeps track of the parameters that were used to score this document - only used for parameterSweeping
+  public String params;
 }

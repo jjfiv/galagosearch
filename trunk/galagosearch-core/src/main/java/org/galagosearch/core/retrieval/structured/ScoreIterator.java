@@ -2,6 +2,7 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * 12/11/2010 (irmarc): Refactored to represent anything that
@@ -22,4 +23,11 @@ public interface ScoreIterator extends StructuredIterator {
      * @return
      */
     public int currentCandidate();
+
+    /**
+     * Produce a set of scores for the current candidate
+     *  - the set of scores correspond to the set of parameters input by the user.
+     *
+     */
+    public Map<String,Double> parameterSweepScore();
 }

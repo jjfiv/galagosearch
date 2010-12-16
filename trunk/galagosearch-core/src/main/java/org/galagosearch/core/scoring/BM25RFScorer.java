@@ -55,4 +55,9 @@ public class BM25RFScorer implements ScoringFunction {
     public double score(int count, int length) {
         return value;
     }
+
+    public String getParameterString(){
+      return "bm25rf.value=" + value;
+    }
+
 }

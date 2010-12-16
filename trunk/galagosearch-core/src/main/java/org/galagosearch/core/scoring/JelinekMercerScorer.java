@@ -48,4 +48,9 @@ public class JelinekMercerScorer implements ScoringFunction {
         double foreground = (double) count / (double) length;
         return Math.log((lambda * foreground) + ((1 - lambda) * background));
     }
+
+    public String getParameterString(){
+      return "jm.lambda=" + lambda;
+    }
 }
+

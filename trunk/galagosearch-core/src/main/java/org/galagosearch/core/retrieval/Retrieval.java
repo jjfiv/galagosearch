@@ -45,6 +45,9 @@ public abstract class Retrieval implements Runnable {
   public abstract void runAsynchronousQuery(Node root, Parameters parameters, List<ScoredDocument> queryResults) throws Exception;
   public abstract void waitForAsynchronousQuery() throws InterruptedException;
 
+  // This function allows parameter sweep queries to be run
+  public abstract ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception;
+
   static public Retrieval instance(String indexPath, Parameters parameters) throws IOException {
     // May need something smarter here in the future
     if (indexPath.startsWith("http://")) {

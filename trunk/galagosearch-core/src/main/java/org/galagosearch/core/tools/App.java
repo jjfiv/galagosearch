@@ -38,6 +38,7 @@ public class App {
 
   private void commandHelpBatchSearch() {
     output.println("galago batch-search <args>");
+    output.println("galago parameter-sweep <args>");
     output.println();
     output.println("  Runs a batch of queries against an index and produces TREC-formatted");
     output.println("  output.  The output can be used with retrieval evaluation tools like");
@@ -481,6 +482,15 @@ public class App {
 
     BatchSearch.run(Utility.subarray(args, 1), output);
   }
+  
+  private void handleParameterSweep(String[] args) throws Exception {
+    if (args.length <= 1) {
+      commandHelpBatchSearch();
+      return;
+    }
+
+    BatchParameterSweep.run(Utility.subarray(args, 1), output);
+  }
 
 
   private void handleSearch(Parameters p) throws Exception {
@@ -545,7 +555,7 @@ public class App {
     output.println();
 
     output.println("Popular commands:");
-    output.println("   build");
+    output.println("   build-fast");
     output.println("   search");
     output.println("   batch-search");
     output.println();
@@ -567,11 +577,14 @@ public class App {
     output.println("   ngram");
     output.println("   ngram-se");
     output.println("   pagerank");
+    output.println("   parameter-sweep");
     output.println("   search");
   }
 
   public void commandHelp(String command) throws IOException {
     if (command.equals("batch-search")) {
+      commandHelpBatchSearch();
+    } else if (command.equals("parameter-sweep")) {
       commandHelpBatchSearch();
     } else if (command.startsWith("build")) {
       commandHelpBuild();
@@ -754,6 +767,8 @@ public class App {
       handleNgram(args);
     } else if (command.equals("pagerank")) {
       PageRankApp.main(args);
+    } else if (command.equals("parameter-sweep")) {
+      handleParameterSweep(args);
     } else if (command.equals("search")) {
       handleSearch(args);
     } else if (command.equals("eval")) {

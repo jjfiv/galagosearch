@@ -26,6 +26,10 @@ public class ScoringFunctionIteratorTest extends TestCase {
         public double score(int count, int length) {
             return count + length;
         }
+
+        public String getParameterString() {
+          return "fake";
+        }
     }
 
     public static class FakeScoreIterator extends ScoringFunctionIterator {

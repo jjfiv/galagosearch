@@ -47,6 +47,10 @@ public class DirichletScorer implements ScoringFunction {
         double numerator = count + (mu * background);
         double denominator = length + mu;
         return Math.log(numerator / denominator);
-
     }
+
+    public String getParameterString(){
+      return "dir.mu=" + mu;
+    }
+
 }

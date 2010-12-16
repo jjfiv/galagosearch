@@ -3,6 +3,7 @@ package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 import org.galagosearch.tupleflow.Parameters;
 
 /**

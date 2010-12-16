@@ -13,4 +13,5 @@ package org.galagosearch.core.scoring;
  */
 public interface ScoringFunction {
     public double score(int count, int length);
+    public String getParameterString();
 }

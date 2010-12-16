@@ -183,6 +183,10 @@ public class MultiRetrieval extends Retrieval {
     }
   }
 
+  public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception{
+    throw new UnsupportedOperationException("Parameter Sweep not yet implemented");
+  }
+
   // private functions
   private Node parseQuery(String query, Parameters parameters) {
     String queryType = parameters.get("queryType", "complex");

@@ -6,6 +6,7 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  *
@@ -38,4 +39,9 @@ public abstract class DocumentOrderedScoreIterator implements DocumentOrderedIte
     public abstract boolean skipToDocument(int document) throws IOException;
     public abstract void reset() throws IOException;
     public abstract double score();
+
+    // by default parameterSweeping is unsupported by any score iterator
+    public Map<String, Double> parameterSweepScore() {
+      throw new UnsupportedOperationException("Parameter sweep not supported for this score iterator.");
+    }
 }

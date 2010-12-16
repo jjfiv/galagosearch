@@ -211,6 +211,10 @@ public class StructuredRetrievalProxy extends Retrieval {
     }
   }
 
+  public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception{
+    throw new UnsupportedOperationException("Parameter Sweep not yet implemented");
+  }
+
   @Override
   public long xcount(String nodeString) throws Exception {
 

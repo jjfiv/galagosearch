@@ -53,4 +53,8 @@ public class BM25Scorer implements ScoringFunction {
         double denominator = count + (k * (1 - b + (b * length / avgDocLength)));
         return idf * numerator / denominator;
     }
+
+    public String getParameterString(){
+      return "bm25.b=" + b + ",bm25.k="+k;
+    }
 }

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
 import org.galagosearch.core.index.StructuredIndex;
@@ -135,6 +136,7 @@ public class StructuredRetrieval extends Retrieval {
         return getArrayResults(queue, indexId);
     }
 
+
     /**
      *
      * @param query - query to be evaluated
@@ -183,6 +185,57 @@ public class StructuredRetrieval extends Retrieval {
         }
     }
 
+
+
+ /**
+   * Evaluates a query using document-at-a-time evaluation.
+   *  - allowing user to sweep accross parameters specified within the query
+   *
+   * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
+   * @param parameters - query parameters (indexId, # requested, query type, transform)
+   * @return
+   * @throws java.lang.Exception
+   */
+  public ScoredDocument[] runParameterSweep(Node queryTree, Parameters parameters) throws Exception {
+
+    // construct the query iterators
+    DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
+    int requested = (int) parameters.get("requested", 1000);
+
+    // now there should be an iterator at the root of this tree
+    HashMap<String, PriorityQueue<ScoredDocument>> queues = new HashMap();
+    NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
+
+    while (!iterator.isDone()) {
+      int document = iterator.currentCandidate();
+      lengthsIterator.skipTo(document);
+      int length = lengthsIterator.getDocumentData().textLength;
+
+      // This context is shared among all scorers
+      iterator.setScoringContext(document, length);
+      Map<String, Double> scores = iterator.parameterSweepScore();
+
+      for (String params : scores.keySet()) {
+        if (!queues.containsKey(params)) {
+          queues.put(params, new PriorityQueue());
+        }
+        ScoredDocument scoredDocument = new ScoredDocument(document, scores.get(params));
+        PriorityQueue q = queues.get(params);
+        q.add(scoredDocument);
+        if (q.size() > requested) {
+          q.poll();
+        }
+      }
+
+      iterator.movePast(document);
+    }
+
+    String indexId = parameters.get("indexId", "0");
+    return getPSArrayResults(queues, indexId);
+  }
+
+
+
   /*
    * getArrayResults annotates a queue of scored documents
    * returns an array
@@ -196,6 +249,7 @@ public class StructuredRetrieval extends Retrieval {
     for (int i = scores.size() - 1; i >= 0; i--) {
       results[i] = scores.poll();
       results[i].source = indexId;
+      results[i].rank = i + 1;
       //results[i].documentName = getDocumentName(results[i].document);
       docIds.put(results[i].document, i);
     }
@@ -213,6 +267,31 @@ public class StructuredRetrieval extends Retrieval {
 
     return results;
   }
+
+    /*
+   * getArrayResults annotates a queue of scored documents
+   * returns an array
+   *
+   */
+  protected ScoredDocument[] getPSArrayResults(Map<String, PriorityQueue<ScoredDocument>> scoreMap, String indexId) throws IOException {
+    ArrayList<ScoredDocument> results = new ArrayList();
+
+    for (String params : scoreMap.keySet()) {
+      PriorityQueue<ScoredDocument> queue = scoreMap.get(params);
+      ScoredDocument[] qresults = new ScoredDocument[queue.size()];
+      for (int i = queue.size() - 1; i >= 0; i--) {
+        qresults[i] = queue.poll();
+        qresults[i].rank = i + 1;
+        qresults[i].source = indexId;
+        qresults[i].documentName = getDocumentName(qresults[i].document);
+        qresults[i].params = params;
+      }
+      results.addAll(Arrays.asList(qresults));
+    }
+
+    return results.toArray(new ScoredDocument[0]);
+  }
+
 
     protected String getDocumentName(int document) throws IOException {
         return index.getDocumentName(document);
