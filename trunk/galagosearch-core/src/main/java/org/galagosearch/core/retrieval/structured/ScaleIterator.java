@@ -3,6 +3,7 @@ package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -13,10 +14,18 @@ import org.galagosearch.tupleflow.Parameters;
 public class ScaleIterator extends DocumentOrderedScoreIterator {
     DocumentOrderedScoreIterator iterator;
     double weight;
+    double[] weights;
 
     public ScaleIterator(Parameters parameters, DocumentOrderedScoreIterator iterator) throws IllegalArgumentException {
         this.iterator = iterator;
-        weight = parameters.get("default", 1.0);
+        String[] weightStrings = parameters.get("default", "1.0").split(",");
+        weight = Double.parseDouble( weightStrings[0] );
+
+        // parameter sweep init
+        weights = new double[weightStrings.length];
+        for(int i=0; i < weightStrings.length ; i++){
+          weights[i] = Double.parseDouble( weightStrings[i] );
+        }
     }
 
     public boolean skipToDocument(int document) throws IOException {
@@ -41,6 +50,22 @@ public class ScaleIterator extends DocumentOrderedScoreIterator {
 
     public double score() {
         return weight * iterator.score();
+    }
+
+    /**
+     *  Parameter Sweep Code
+     */
+    public Map<String, Double> parameterSweepScore(){
+      HashMap<String,Double> results = new HashMap();
+      Map<String,Double> childResults = iterator.parameterSweepScore();
+      for( int i=0 ; i < weights.length ; i++ ){
+        for( String childParam : childResults.keySet() ){
+          double r = weights[i] * childResults.get(childParam);
+          String p = "#scale:"+weights[i]+"("+childParam+")";
+          results.put( p , r );
+        }
+      }
+      return results;
     }
 
     public boolean isDone() {

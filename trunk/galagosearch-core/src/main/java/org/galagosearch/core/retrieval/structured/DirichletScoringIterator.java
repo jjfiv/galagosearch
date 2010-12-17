@@ -23,6 +23,9 @@ public class DirichletScoringIterator extends ScoringFunctionIterator {
     super(it, makeFunctions(p, it));
   }
 
+  /** Parameter Sweep Code
+   *  - returns a set of functions : 1 for each mu parameter
+   */
   public static DirichletScorer[] makeFunctions(Parameters p, DocumentOrderedCountIterator it) throws IOException {
     // Extract the set of mus
     String[] muSet = p.get("mu", "1500").split(",");

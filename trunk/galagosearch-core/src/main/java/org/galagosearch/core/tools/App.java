@@ -38,7 +38,6 @@ public class App {
 
   private void commandHelpBatchSearch() {
     output.println("galago batch-search <args>");
-    output.println("galago parameter-sweep <args>");
     output.println();
     output.println("  Runs a batch of queries against an index and produces TREC-formatted");
     output.println("  output.  The output can be used with retrieval evaluation tools like");
@@ -65,6 +64,50 @@ public class App {
     output.println("     <query>");
     output.println("        <number>WIKI-410</number>");
     output.println("        <text>#combine(another query)</text>");
+    output.println("     </query>");
+    output.println("  </parameters>");
+  }
+
+  private void commandHelpParameterSweep() {
+    output.println("galago parameter-sweep <args>");
+    output.println();
+    output.println("  This command allows parameter sweeping to be performed in parallel.");
+    output.println("  A range of parameters may be input for selected operators. ");
+    output.println("  This replaces the traditional method of submitting queries over and over with various different parameters.");
+    output.println("     #operator : mu = 0.5 ( term )");
+    output.println("     #operator : mu = 1 ( term )");
+    output.println("     #operator : mu = 2 ( term )");
+    output.println("     #operator : mu = 3 ( term )");
+    output.println("     #operator : mu = 4 ( term )");
+    output.println("  is replaced by the single operator: ");
+    output.println("     #operator : mu = 0.5,1,2,3,4 ( term )");
+    output.println();
+    output.println("  Command actually runs a batch of queries against an index and produces TREC-formatted");
+    output.println("  output.  The output can be used with retrieval evaluation tools like");
+    output.println("  galago eval (org.galagosearch.core.eval).");
+    output.println();
+    output.println();
+    output.println("  Sample invocation:");
+    output.println("     galago parameter-sweep --index=/tmp/myindex --count=200 /tmp/queries");
+    output.println();
+    output.println("  Args:");
+    output.println("     --index=path_to_your_index");
+    output.println("     --count : Number of results to return for each query, default=1000");
+    output.println();
+    output.println("  Query file format:");
+    output.println("    The query file is an XML file containing a set of queries.  Each query");
+    output.println("    has text tag, which contains the text of the query, and a number tag, ");
+    output.println("    which uniquely identifies the query in the output.");
+    output.println();
+    output.println("  Example query file:");
+    output.println("  <parameters>");
+    output.println("     <query>");
+    output.println("        <number>CACM-408</number>");
+    output.println("        <text>#combine : 0 = 1,2,3 : 1 = 3,2,1 ( my query )</text>");
+    output.println("     </query>");
+    output.println("     <query>");
+    output.println("        <number>WIKI-410</number>");
+    output.println("        <text>#combine( #feature:dirichlet:mu=100,500,1000 ( another )  #feature:dirichlet:mu=100,500,1000( query ))</text>");
     output.println("     </query>");
     output.println("  </parameters>");
   }
@@ -485,7 +528,7 @@ public class App {
   
   private void handleParameterSweep(String[] args) throws Exception {
     if (args.length <= 1) {
-      commandHelpBatchSearch();
+      commandHelp("parameter-sweep");
       return;
     }
 
@@ -585,7 +628,7 @@ public class App {
     if (command.equals("batch-search")) {
       commandHelpBatchSearch();
     } else if (command.equals("parameter-sweep")) {
-      commandHelpBatchSearch();
+      commandHelpParameterSweep();
     } else if (command.startsWith("build")) {
       commandHelpBuild();
     } else if (command.startsWith("ngram")) {

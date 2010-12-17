@@ -109,10 +109,10 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
       childScoreMaps[i] = iterators[i].parameterSweepScore();
     }
 
-    // case 1: parallel child lists
+    // special case : parallel child lists of smoothing nodes
     //  - each child has returned a matching set of scores
     //  - eg: each child has been dirichlet smoothed (where each smoother used the same set of mus)
-    if (checkForParallelScoreMaps(childScoreMaps)) {
+    if (checkForParallelSmoothingScoreMaps(childScoreMaps)) {
       HashMap<String, Double> results = new HashMap();
 
       // for each set of combination weights
@@ -133,7 +133,7 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
       return results;
     }
 
-    // case 2: non-matching children
+    // more common case: non-matching children
     //  - eg: #combine( w1 #combine( 3 children ) w2 #combine( 2 children ) )
     //  - this option tries to do the complete cross product of the children
     //  + with the parameter sweep of the current node
@@ -174,7 +174,7 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
     return results;
   }
 
-  private boolean checkForParallelScoreMaps(Map<String, Double>[] childScoreMaps) {
+  private boolean checkForParallelSmoothingScoreMaps(Map<String, Double>[] childScoreMaps) {
     int maxChildSetSize = 0;
     Set<String> intersection = null;
     for (Map<String, Double> childScoreSet : childScoreMaps) {
@@ -186,9 +186,17 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
       maxChildSetSize = Math.max(maxChildSetSize, childScoreSet.size());
     }
 
-    // if the intersection is the same size as the largest child set
-    //  then we have parallel child maps
-    return (intersection.size() == maxChildSetSize);
+    // if the intersection is not the same size as the largest child set
+    //  then we do not have parallel child maps
+    if (intersection.size() != maxChildSetSize)
+      return false;
+
+    // if any string contains a '#' then it was created by an operator not a smoothing node
+    for(String parameter : intersection){
+      if(parameter.contains("#"))
+        return false;
+    }
+    return true;
   }
 }
 
