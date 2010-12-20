@@ -87,14 +87,17 @@ public class DocumentOrderedFeatureFactory extends FeatureFactory {
     {UnorderedWindowIterator.class.getName(), "uw"},
     {ScaleIterator.class.getName(), "scale"},
     {UnfilteredCombinationIterator.class.getName(), "rm"},
-    {UnfilteredCombinationIterator.class.getName(), "seqdep"}
+    {UnfilteredCombinationIterator.class.getName(), "seqdep"},
+    {UnfilteredCombinationIterator.class.getName(), "bm25rf"},
+    {MaxScoreCombinationIterator.class.getName(), "maxscore"}
   };
   static String[][] sFeatureLookup = {
     {DirichletScoringIterator.class.getName(), "dirichlet"},
     {JelinekMercerScoringIterator.class.getName(), "linear"},
     {JelinekMercerScoringIterator.class.getName(), "jm"},
     {BM25ScoringIterator.class.getName(), "bm25"},
-    {BM25RFScoringIterator.class.getName(), "bm25rf"}
+    {BM25RFScoringIterator.class.getName(), "bm25rf"},
+    {TopDocsScoringIterator.class.getName(), "topdocs"}
   };
   static String[] sTraversalList = {
     SequentialDependenceTraversal.class.getName(),

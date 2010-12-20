@@ -131,11 +131,15 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
             return this.hasMatch(document);
         }
 
-        public double score() {
-            if (currentDocument == documentToScore) {
+        public double score(int document, int length) {
+            if (currentDocument == document) {
                 return currentScore;
             }
             return Double.NEGATIVE_INFINITY;
+        }
+
+        public double score() {
+            return score(documentToScore, lengthOfDocumentToScore);
         }
 
         public boolean isDone() {

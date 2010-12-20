@@ -461,7 +461,9 @@ public class Utility {
         String line;
 
         while ((line = reader.readLine()) != null) {
-          roots.add(line.trim());
+            synchronized(roots) {
+              if (!roots.contains(line.trim())) roots.add(line.trim());
+            }
         }
         reader.close();
       }

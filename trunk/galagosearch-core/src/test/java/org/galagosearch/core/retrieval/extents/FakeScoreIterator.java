@@ -46,7 +46,13 @@ public class FakeScoreIterator extends DocumentOrderedScoreIterator {
     }
 
     public double score() {
-        if (docs[index] == documentToScore) return scores[index];
+        return score(documentToScore, lengthOfDocumentToScore);
+    }
+
+    public double score(int document, int length) {
+        if (docs[index] == document) {
+            return scores[index];
+        }
         return 0;
     }
 

@@ -35,4 +35,16 @@ public class JelinekMercerScoringIterator extends ScoringFunctionIterator {
     }
     return fns;
   }
+
+  /**
+   * Maximize the probability
+   * @return
+   */
+  public double maximumScore() {
+      return function.score(1,1);
+  }
+
+  public double minimumScore() {
+      return function.score(0,1);
+  }
 }

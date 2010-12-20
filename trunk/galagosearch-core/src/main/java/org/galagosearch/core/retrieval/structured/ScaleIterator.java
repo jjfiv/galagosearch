@@ -52,6 +52,10 @@ public class ScaleIterator extends DocumentOrderedScoreIterator {
         return weight * iterator.score();
     }
 
+    public double score(int document, int length) {
+        return weight * iterator.score(document, length);
+    }
+
     /**
      *  Parameter Sweep Code
      */

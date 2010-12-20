@@ -36,4 +36,16 @@ public class BM25RFScoringIterator extends ScoringFunctionIterator {
             return 0;
         }
     }
+
+    /**
+     * For this particular scoring function, the parameters are irrelevant
+     * @return
+     */
+    public double maximumScore() {
+        return function.score(0, 0);
+    }
+
+    public double minimumScore() {
+        return function.score(0, 0);
+    }
 }

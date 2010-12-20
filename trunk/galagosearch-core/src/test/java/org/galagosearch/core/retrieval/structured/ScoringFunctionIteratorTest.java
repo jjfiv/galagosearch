@@ -46,7 +46,7 @@ public class ScoringFunctionIteratorTest extends TestCase {
     assertEquals(102.0, iterator.score(34, 99));
     iterator.movePast(44);
     assertTrue(iterator.hasMatch(110));
-    assertEquals(99.0, iterator.score()); // length hasn't been reset
+    assertEquals(0.0, iterator.score()); // length hasn't been reset
     assertEquals(44.0, iterator.score(110, 41));
     iterator.skipToDocument(120);
     assertTrue(iterator.isDone());

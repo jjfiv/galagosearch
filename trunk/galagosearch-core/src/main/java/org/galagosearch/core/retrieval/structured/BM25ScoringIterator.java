@@ -19,4 +19,21 @@ public class BM25ScoringIterator extends ScoringFunctionIterator {
         throws IOException {
         super( it, new BM25Scorer(p, it));
     }
+
+    /**
+     * Score is maxed by having count = length, but having both numbers be as high
+     * as possible.
+     * @return
+     */
+    public double maximumScore() {
+        return function.score(Integer.MAX_VALUE, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Minimized by having no occurrences.
+     * @return
+     */
+    public double minimumScore() {
+        return function.score(0, Integer.MAX_VALUE);
+    }
 }

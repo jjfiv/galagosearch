@@ -39,4 +39,12 @@ public class DirichletScoringIterator extends ScoringFunctionIterator {
     }
     return fns;
   }
+
+  public double maximumScore() {
+      return function.score(Integer.MAX_VALUE, Integer.MAX_VALUE);
+  }
+
+  public double minimumScore() {
+      return function.score(0, Integer.MAX_VALUE);
+  }
 }

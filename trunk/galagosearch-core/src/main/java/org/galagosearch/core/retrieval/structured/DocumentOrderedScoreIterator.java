@@ -26,9 +26,21 @@ public abstract class DocumentOrderedScoreIterator implements DocumentOrderedIte
         lengthOfDocumentToScore = length;
     }
 
-    public double score(int document, int length) {
-        setScoringContext(document, length);
-        return score();
+    /**
+     * Backoff method.
+     * @return
+     */
+    public double maximumScore() {
+        return Double.MAX_VALUE;
+    }
+
+    /**
+     * Backoff method.
+     *
+     * @return
+     */
+    public double minimumScore() {
+        return Double.MIN_VALUE;
     }
 
     public abstract boolean isDone();
@@ -39,6 +51,7 @@ public abstract class DocumentOrderedScoreIterator implements DocumentOrderedIte
     public abstract boolean skipToDocument(int document) throws IOException;
     public abstract void reset() throws IOException;
     public abstract double score();
+    public abstract double score(int document, int length); // use context defined by these variables
 
     // by default parameterSweeping is unsupported by any score iterator
     public Map<String, Double> parameterSweepScore() {

@@ -7,8 +7,11 @@ import java.util.Map;
 import org.galagosearch.core.scoring.ScoringFunction;
 
 /**
+ * An iterator that converts a count iterator's count into a score.
+ * This is usually composed w/ a scoring function in order to produce an
+ * appropriate score
  *
- * @author trevor
+ * @author irmarc
  */
 public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
 
@@ -31,13 +34,21 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
     this.functions = functions;
   }
 
+  public ScoringFunction getScoringFunction() {
+      return function;
+  }
+
   public double score() {
+      return score(documentToScore, lengthOfDocumentToScore);
+  }
+
+  public double score(int document, int length) {
     int count = 0;
 
-    if (iterator.document() == documentToScore) {
+    if (iterator.document() == document) {
       count = iterator.count();
     }
-    return function.score(count, lengthOfDocumentToScore);
+    return function.score(count, length);
   }
 
   @Override
