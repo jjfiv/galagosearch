@@ -86,7 +86,7 @@ public class FeatureFactory {
         if (StructuredIterator.class.isAssignableFrom(c)) {
             return (Class<StructuredIterator>) c;
         } else {
-            throw new Exception("Found a class, but it's not a DocumentDataIterator: " + className);
+            throw new Exception("Found a class, but it's not a StructuredIterator: " + className);
         }
     }
 
@@ -151,7 +151,7 @@ public class FeatureFactory {
                 }
 
                 StructuredIterator iterator = childIterators.get(iteratorIndex);
-                if (!currentType.isAssignableFrom(iterator.getClass())) {
+                if (!currentType.isAssignableFrom(iterator.getClass())) {		    
                     return false;
                 }
             }

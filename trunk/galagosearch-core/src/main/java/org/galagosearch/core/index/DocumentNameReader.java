@@ -82,6 +82,17 @@ public class DocumentNameReader {
       current = new KeyValuePair(key, value);
     }
 
+    public boolean skipTo(byte[] k) throws IOException {
+      iterator.skipTo(k);
+      if (Utility.compare(k, iterator.getKey()) == 0) {
+       byte[] key = iterator.getKey();
+       byte[] value = iterator.getValueBytes();
+       current = new KeyValuePair(key, value);
+        return true;
+      }
+      return false;
+    }
+
     public String getRecordString() {
       if (forwardLookup) {
         return Utility.toInt(current.key) + ", " + Utility.toString(current.value);

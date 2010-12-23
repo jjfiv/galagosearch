@@ -77,8 +77,14 @@ public class PageRankReader {
       return false;
     }
 
+    public boolean skipTo(byte[] key) throws IOException {
+      throw new UnsupportedOperationException("This iterator does not support skipping.");
+    }
+
     public void skipTo(int key) {
-      if (key >= totalDocuments) throw new IndexOutOfBoundsException("Index " + key +" < " + totalDocuments);
+      if (key >= totalDocuments) {
+        throw new IndexOutOfBoundsException("Index " + key + " < " + totalDocuments);
+      }
       current = key;
     }
 

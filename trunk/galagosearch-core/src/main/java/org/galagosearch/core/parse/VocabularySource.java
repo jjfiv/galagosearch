@@ -5,10 +5,10 @@
 
 package org.galagosearch.core.parse;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import org.galagosearch.core.index.IndexReader;
+import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.ExNihiloSource;
@@ -35,7 +35,7 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
 
     public VocabularySource(TupleFlowParameters parameters) throws Exception {
         String indexPath = parameters.getXML().get("directory");
-        String partPath = indexPath + File.separator + parameters.getXML().get("part");
+        String partPath = StructuredIndex.getPartPath(indexPath, parameters.getXML().get("part"));
         IndexReader reader = new IndexReader(partPath);
         iterator = reader.getIterator();
     }
@@ -45,6 +45,7 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
         while (!iterator.isDone()) {
             kvp = new KeyValuePair();
             kvp.key = iterator.getKey();
+            kvp.value = new byte[0];
             processor.process(kvp);
             iterator.nextKey();
         }
@@ -61,8 +62,7 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
             handler.addError("Need a part to read from.");
         }
 
-        String partPath = parameters.getXML().get("directory") + File.separator +
-                parameters.getXML().get("part");
+        String partPath = StructuredIndex.getPartPath(parameters.getXML().get("directory"), parameters.getXML().get("part"));
         try {
             if (!IndexReader.isIndexFile(partPath)) {
                 handler.addError(partPath + " is not an index file.");

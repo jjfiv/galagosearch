@@ -56,6 +56,14 @@ public class DocumentLengthsReader {
       iterator = reader.getIterator();
     }
 
+    public boolean skipTo(byte[] key) throws IOException {
+      iterator.skipTo(key);
+      if (Utility.compare(key, iterator.getKey()) == 0) {
+        return true;
+      }
+      return false;
+    }
+
     public String getRecordString() {
       try {
         StringBuilder sb = new StringBuilder();
@@ -73,12 +81,7 @@ public class DocumentLengthsReader {
 
     public void skipTo(int key) throws IOException {
       byte[] bkey = Utility.fromInt(key);
-      //while( Utility.compare( bkey, iterator.getKey()) != 0 ){
-      //  nextRecord();
-      //}
-      // too slow:
       iterator.skipTo(bkey);
-      //assert (Arrays.equals(bkey, iterator.key));
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {

@@ -46,6 +46,10 @@ public class StructuredIndex {
     initializeIndexOperators();
   }
 
+  public static String getPartPath(String index, String part) {
+    return (index + File.separator + "parts" + File.separator + part);
+  }
+
   public static StructuredIndexPartReader openIndexPart(String path) throws IOException {
     if (!IndexReader.isIndexFile(path)) {
       return null;

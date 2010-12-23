@@ -68,6 +68,7 @@ public class BuildTopDocs {
                 new TopDocsEntry.WordDocumentOrder()));
         Parameters p = new Parameters();
         p.set("directory", this.indexPath);
+        p.set("part", this.partName);
         stage.add(new InputStep("topdocs"));
         stage.add(new Step(TopDocsWriter.class, p));
         return stage;
@@ -79,6 +80,9 @@ public class BuildTopDocs {
         this.partName = p.get("part");
         this.topdocs_size = p.get("size", Integer.toString(Integer.MAX_VALUE));
         this.list_min_size = p.get("minlength", Long.toString(Long.MAX_VALUE));
+
+        System.out.printf("Creating topdocs for part %s. Minimum list length: %s. Topdocs lists size: %s\n",
+                this.partName, this.list_min_size, this.topdocs_size);
 
         job.add(getReadIndexStage());
         job.add(getIterateOverPostingListsStage());

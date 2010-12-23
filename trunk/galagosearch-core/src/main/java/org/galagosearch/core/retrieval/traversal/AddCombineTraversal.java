@@ -11,6 +11,8 @@ import org.galagosearch.tupleflow.Parameters;
 /**
  * Adds a #combine at the top level of the query.
  * @author trevor
+ *
+ * TODO: This only looks for combines - it should really verify that the top node is not a ScoreCombinationIterator. But the change breaks other stuff for now.
  */
 public class AddCombineTraversal implements Traversal {
     int levels = 0;

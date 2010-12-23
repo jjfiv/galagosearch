@@ -11,11 +11,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.logging.Logger;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.PositionIndexReader;
+import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.core.types.KeyValuePair;
+import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.types.TopDocsEntry;
 import org.galagosearch.tupleflow.FileSource;
 import org.galagosearch.tupleflow.InputClass;
@@ -32,7 +35,8 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
 @InputClass(className="org.galagosearch.core.types.KeyValuePair", order={"+key"})
 @OutputClass(className="org.galagosearch.core.types.TopDocsEntry", order={"+word", "+document"})
 public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
-
+    private Logger LOG = Logger.getLogger(getClass().toString());
+  
     public static class NWPComparator implements Comparator<TopDocsEntry> {
         public int compare(TopDocsEntry a, TopDocsEntry b) {
             int result = (a.probability > b.probability) ? 1 :
@@ -60,8 +64,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         docReader = new DocumentLengthsReader(indexLocation +
                 File.separator + "documentLengths");
         docLengths = docReader.getIterator();
-        partReader = new PositionIndexReader(indexLocation + File.separator +
-                parameters.getXML().get("part"));
+        partReader = new PositionIndexReader(StructuredIndex.getPartPath(indexLocation, parameters.getXML().get("part")));
     }
 
     @Override
@@ -72,14 +75,19 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         extentIterator = partReader.getTermCounts(Utility.toString(object.key));
         if (extentIterator instanceof PositionIndexReader.Iterator) {
             count = ((PositionIndexReader.Iterator) extentIterator).totalDocuments();
-            if (count < minlength) return; //skip this
+            if (count < minlength) return; //short-circuit out
         }
 
+        count = 0; // need to reset b/c we're going to count anyhow.
+
         // And iterate
+        docLengths.reset();
         while (!extentIterator.isDone()) {
             count++;
             docLengths.skipTo(extentIterator.currentCandidate());
-            int length = docLengths.getDocumentData().textLength;
+            NumberedDocumentData ndd = docLengths.getDocumentData();
+            assert (ndd.number == extentIterator.currentCandidate());
+            int length = ndd.textLength;
             double probability = (0.0+extentIterator.count())
                     / (0.0+length);
             tde = new TopDocsEntry();
@@ -102,21 +110,25 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
             return;
         }
 
-        // Now emit based on our top docs (have to reverse first)
-        TopDocsEntry[] resort = new TopDocsEntry[size];
-
-        for (int i = size-1; i > -1; i--) {
-            resort[i] = topdocs.poll();
+        while (topdocs.size() > size) {
+          topdocs.poll();
         }
 
-        for (int i = 0; i < resort.length; i++) {
-            TopDocsEntry entry = resort[i];
+        // Now emit based on our top docs (have to reverse first)
+        ArrayList<TopDocsEntry> resort = new ArrayList<TopDocsEntry>(topdocs);
+        Collections.sort(resort, new Comparator<TopDocsEntry>() {
+           public int compare(TopDocsEntry a, TopDocsEntry b) {
+              return (a.document - b.document);
+          }
+        });
+
+        for (TopDocsEntry entry : resort) {
             entry.word = object.key;
             processor.process(entry);
         }
     }
 
-    public void verify(TupleFlowParameters parameters, ErrorHandler handler) {
+    public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
         FileSource.verify(parameters, handler);
         if (!parameters.getXML().containsKey("size")) handler.addError("Need size.");
         if (!parameters.getXML().containsKey("minlength")) handler.addError("Need minlength");
