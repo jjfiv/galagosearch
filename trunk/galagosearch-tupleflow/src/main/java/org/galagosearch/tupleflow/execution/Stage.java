@@ -73,5 +73,9 @@ public class Stage extends Locatable implements Serializable, Cloneable {
     public void add(Step step) {
         steps.add(step);
     }
+
+    public void remove(String connectionName) {
+        connections.remove(connectionName);
+    }
 }
     

@@ -5,7 +5,7 @@ import java.io.Serializable;
 import org.xml.sax.Locator;
 
 /**
- *
+ * TODO: If the execution plan isn't from an XML file, this is useless. What to do?
  * @author trevor
  */
 public class FileLocation implements Serializable, Comparable<FileLocation> {

@@ -110,7 +110,7 @@ public class CompressedRawByteBuffer extends OutputStream {
         add(bytes, offset, length);
     }
     public void add(byte[] bytes, int offset, int length) {
-	assert(offset + length < bytes.length);
+	assert(offset + length <= bytes.length);
 	for (int i = offset; i < (offset+length); i++) {
 	    addRaw(bytes[i]);
 	}
@@ -151,6 +151,18 @@ public class CompressedRawByteBuffer extends OutputStream {
         addRaw((bits >>> 16) & 0xFF);
         addRaw((bits >>> 8) & 0xFF);
         addRaw(bits & 0xFF);
+    }
+
+    public void addDouble(double value) {
+        long bits = Double.doubleToRawLongBits(value);
+        addRaw((int) (bits >>> 56) & 0xFF);
+        addRaw((int) (bits >>> 48) & 0xFF);
+        addRaw((int) (bits >>> 40) & 0xFF);
+        addRaw((int) (bits >>> 32) & 0xFF);
+        addRaw((int) (bits >>> 24) & 0xFF);
+        addRaw((int) (bits >>> 16) & 0xFF);
+        addRaw((int) (bits >>> 8) & 0xFF);
+        addRaw((int) bits & 0xFF);
     }
 
     /**

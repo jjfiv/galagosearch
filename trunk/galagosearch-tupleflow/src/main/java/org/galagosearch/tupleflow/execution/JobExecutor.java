@@ -766,10 +766,10 @@ public class JobExecutor {
         store.addError(endPoint.location,
                 "The endpoint '" + endPoint.getPointName() + "' is in this stage, but it's going the wrong direction.");
       } else if (!point.getClassName().equals(connection.connection.getClassName())) {
-        store.addError(endPoint.location, "This " + point.getType() + " has a different class name '" + point.getClassName()
+        store.addError(endPoint.location, "In " + endPoint.getStageName() + ": This " + point.getType() + " has a different class name '" + point.getClassName()
                 + " than the connection that connects to it: " + connection.connection.getClassName() + ".");
       } else if (!Arrays.equals(point.getOrder(), connection.connection.getOrder())) {
-        store.addError(endPoint.location, "This " + point.getType() + " has a different order " + Arrays.toString(point.getOrder())
+        store.addError(endPoint.location, "In " + endPoint.getStageName() + ": This " + point.getType() + " has a different order " + Arrays.toString(point.getOrder())
                 + " than the connection that connects to it: " + Arrays.toString(
                 connection.connection.getOrder()));
       } else {
