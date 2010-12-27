@@ -761,7 +761,6 @@ public class Utility {
         for (int position = 0; true; position++) {
             assert position < 6;
             b = input.readUnsignedByte();
-
             if ((b & 0x80) == 0x80) {
                 result |= ((b & 0x7f) << (7 * position));
                 break;
@@ -849,5 +848,65 @@ public class Utility {
         }
 
         return result;
+    }
+
+    /*
+     * The following methods are used to display bytes as strings
+     */
+        public static String binaryString(double d) {
+	return binaryString(Double.doubleToLongBits(d));
+    }
+
+    public static String binaryString(long l) {
+	StringBuilder sb = new StringBuilder();
+	long mask = 0x8000000000000000L;
+	while (mask != 0) {
+	    if ((mask & l) != 0) {
+		sb.append("1");
+	    } else {
+		sb.append("0");
+	    }
+	    mask >>>= 1;
+	}
+	return sb.toString();
+    }
+
+    public static String binaryString(int i) {
+	StringBuilder sb = new StringBuilder();
+	int mask = 0x80000000;
+	while (mask != 0) {
+	    if ((mask & i) != 0) {
+		sb.append("1");
+	    } else {
+		sb.append("0");
+	    }
+	    mask >>>= 1;
+	}
+	return sb.toString();
+    }
+
+    public static String intsToString(int[] ints) {
+	StringBuilder sb = new StringBuilder();
+	for (int i = 0; i < ints.length; i++) {
+	    sb.append(ints[i]).append(" ");
+	}
+	return sb.toString();
+    }
+
+    public static String byteString(byte[] bytes) {
+	return byteString(bytes, bytes.length);
+    }
+
+    public static String byteString(byte[] bytes, int l) {
+	StringBuilder sb = new StringBuilder();
+	for (int j = 0; j < l; j++) {
+	    int mask = 0x80;
+	    while (mask != 0) {
+		sb.append(((((byte)mask) & bytes[j]) != 0) ? 1 : 0);
+		mask >>>= 1;
+	    }
+	    sb.append(" ");
+	}
+	return sb.toString();
     }
 }
