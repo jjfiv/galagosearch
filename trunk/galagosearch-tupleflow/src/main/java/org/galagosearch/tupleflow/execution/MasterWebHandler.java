@@ -207,6 +207,10 @@ public class MasterWebHandler extends AbstractHandler {
 
     // The first table contains format information:
     writer.append("<table>");
+
+    if (status.fullcmd != null) {
+      writer.append(String.format("<tr><td>Arguments</td><td>%s</td></tr>\n", status.fullcmd));
+    } 
     writer.append(String.format("<tr><td>Start</td><td>%s</td></tr>\n",
             status.getStartDate().toString()));
     writer.append(String.format("<tr><td>Elapsed</td><td>%s</td></tr>\n",

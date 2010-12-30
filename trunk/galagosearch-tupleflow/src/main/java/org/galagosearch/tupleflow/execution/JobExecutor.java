@@ -960,6 +960,7 @@ public class JobExecutor {
     StageExecutor executor;
     Date startDate;
     String masterURL;
+    String fullcmd = null;
     // (irmarc)
     // We're going to do something a little nutso here - accept user input!
     // Wrap System.in and poll for characters. If we see a space+<enter>, print the
@@ -967,12 +968,13 @@ public class JobExecutor {
     BufferedReader poller = new BufferedReader(new InputStreamReader(System.in));
 
     public JobExecutionStatus(HashMap<String, StageGroupDescription> stages,
-            String temporaryStorage, StageExecutor executor, String masterURL) {
+            String temporaryStorage, StageExecutor executor, String masterURL, String cmd) {
       this.stages = stages;
       this.temporaryStorage = temporaryStorage;
       this.executor = executor;
       this.startDate = new Date();
       this.masterURL = masterURL;
+      this.fullcmd = cmd;
 
       for (StageGroupDescription description : stages.values()) {
         // build a list of dependencies from pipe inputs to stage names
@@ -1239,11 +1241,15 @@ public class JobExecutor {
   }
 
   public void runWithServer(StageExecutor executor, Server server) throws ExecutionException, InterruptedException, UnknownHostException {
+    runWithServer(executor, server, null);
+  }
+
+  public void runWithServer(StageExecutor executor, Server server, String command) throws ExecutionException, InterruptedException, UnknownHostException {
     // FIXME: all of this needs to be refactored.
     InetAddress address = java.net.InetAddress.getLocalHost();
     int port = server.getConnectors()[0].getPort();
     String masterURL = String.format("http://%s:%d", address.getHostAddress(), port);
-    JobExecutionStatus status = new JobExecutionStatus(stages, temporaryStorage, executor, masterURL);
+    JobExecutionStatus status = new JobExecutionStatus(stages, temporaryStorage, executor, masterURL, command);
     MasterWebHandler handler = new MasterWebHandler(status);
     server.addHandler(handler);
     status.run();
@@ -1285,6 +1291,13 @@ public class JobExecutor {
       }
     }
 
+    String command;
+    if (p.containsKey("command")) {
+      command = p.get("command");
+    } else {
+      command = null;
+    }
+
     StageExecutor executor = StageExecutorFactory.newInstance(mode, params);
 
     JobExecutor jobExecutor = new JobExecutor(job, tempFolder.getAbsolutePath(), store);
@@ -1297,8 +1310,9 @@ public class JobExecutor {
     Server server = new Server(port);
     server.start();
     System.out.println("Status: http://localhost:" + port);
+
     try {
-      jobExecutor.runWithServer(executor, server);
+      jobExecutor.runWithServer(executor, server, command);
     } finally {
       server.stop();
       executor.shutdown();

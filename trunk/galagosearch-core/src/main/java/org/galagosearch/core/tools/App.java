@@ -25,7 +25,7 @@ import org.galagosearch.tupleflow.execution.JobExecutor;
 import org.mortbay.jetty.Server;
 
 /**
- *
+ * TODO: Make distributed jobs generate their own tmp directories, to avoid collisions.
  * @author trevor, sjh, irmarc
  */
 public class App {
@@ -221,6 +221,7 @@ public class App {
     job = build.getIndexJob(toJob);
 
     Parameters toServer = new Parameters(flags);
+    toServer.set("command", Utility.join(args, " "));
     String printJob = toServer.get("printJob", "none");
     if (printJob.equals("plan")) {
       System.out.println(job.toString());
@@ -256,6 +257,7 @@ public class App {
     String[] docs = Utility.subarray(nonFlags, 2);
 
     Parameters p = new Parameters(flags);
+    p.set("command", Utility.join(args, " "));
     p.add("indexPath", indexName);
     for (String doc : docs) {
       p.add("inputPaths", doc);
@@ -454,6 +456,7 @@ public class App {
     String[] docs = Utility.subarray(nonFlags, 2);
 
     Parameters p = new Parameters(flags);
+    p.set("command", Utility.join(args, " "));
     p.add("corpusPath", outputCorpus);
     for (String doc : docs) {
       p.add("inputPaths", doc);
@@ -498,6 +501,7 @@ public class App {
     String[] oldIndexes = Utility.subarray(nonFlags, 1);
 
     Parameters p = new Parameters(flags);
+    p.set("command", Utility.join(args, " "));
     p.set("outputIndex", newIndex);
     for (String input : oldIndexes) {
       p.add("inputIndexes", input);
