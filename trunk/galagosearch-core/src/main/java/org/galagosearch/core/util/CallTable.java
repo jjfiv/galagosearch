@@ -14,6 +14,12 @@ public class CallTable {
     private static boolean on = true;
     private CallTable() {}
 
+    public static void increment(String counterName, int inc) {
+        if (on) {
+            counts.adjustOrPutValue(counterName, inc, inc);
+        }
+    }
+
     public static void increment(String counterName) {
         if (on) {
             counts.adjustOrPutValue(counterName, 1, 1);
