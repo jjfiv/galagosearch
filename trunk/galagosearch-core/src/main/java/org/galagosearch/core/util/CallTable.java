@@ -32,7 +32,7 @@ public class CallTable {
         }
 
         public boolean execute(Object a, long b) {
-            out.printf("%s: %d\n", ((String) a), b);
+            out.printf("CALL_TABLE:\t%s\t%d\n", ((String) a), b);
             return true;
         }
     }

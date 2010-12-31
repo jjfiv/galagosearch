@@ -61,41 +61,33 @@ public class BM25RelevanceFeedbackTraversal implements Traversal {
 
         // while that's running, extract the feedback parameters
         int fbTerms = (int) parameters.get("fbTerms", 10);
+        double fbOrigWt = parameters.get("fbOrigWt", 0.5);
         Parameters tsvParameters = queryParameters.clone();
         tsvParameters.set("fbDocs", Integer.toString(fbDocs));
         tsvParameters.add("part", availableParts.list("part"));
         TermSelectionValueModel tsvModel = new TermSelectionValueModel(tsvParameters);
         tsvModel.initialize();
-        // Now we wait
-        retrieval.waitForAsynchronousQuery();
-        ArrayList<Gram> scored = tsvModel.generateGrams(initialResults);
-        tsvModel.cleanup();
-        Node newRoot = null;
-
-        // Time to construct the modified query - start with the expansion since we always have it
-        // make sure we filter stopwords
         HashSet<String> stopwords = Utility.readStreamToStringSet(getClass().getResourceAsStream("/stopwords/inquery"));
         Set<String> queryTerms = StructuredQuery.findQueryTerms(combineNode, "extents");
         stopwords.addAll(queryTerms);
-        Parameters expParams = new Parameters();
-        ArrayList<Node> initialChildren = original.getInternalNodes();
-        int expanded = 0;
-        for (int i = 0; i < scored.size() && expanded < fbTerms; i++) {
-            Gram g = scored.get(i);
-            if (stopwords.contains(g.term)) {
-                continue;
-            }
-            Node inner = TextPartAssigner.assignPart(new Node("text", g.term), availableParts);
-            ArrayList<Node> innerChild = new ArrayList<Node>();
-            innerChild.add(inner);
-            Parameters weightParameters = new Parameters();
-            weightParameters.set("default", "bm25rf");
-            weightParameters.set("rt", Integer.toString(g.rt));
-            weightParameters.set("R", Integer.toString(g.R));
-            initialChildren.add(new Node("feature", weightParameters, innerChild, 0));
-            expanded++;
+
+        // Now we wait
+        retrieval.waitForAsynchronousQuery();
+        Node newRoot = null;
+        Node expansionNode = tsvModel.generateExpansionQuery(initialResults, fbTerms, stopwords);
+        tsvModel.cleanup();
+
+        if (fbOrigWt == 0.0) {
+            newRoot = expansionNode;
+        } else {
+            Parameters expParams = new Parameters();
+            expParams.set("1", Double.toString(fbOrigWt));
+            expParams.set("2", Double.toString(1 - fbOrigWt));
+            ArrayList<Node> newChildren = new ArrayList<Node>();
+            newChildren.add(combineNode);
+            newChildren.add(expansionNode);
+            newRoot = new Node("combine", expParams, newChildren, 0);
         }
-        newRoot = new Node("combine", expParams, initialChildren, 0);
         return newRoot;
     }
 
