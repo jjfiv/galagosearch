@@ -13,6 +13,10 @@ import org.galagosearch.core.retrieval.query.Node;
  * @author irmarc
  */
 public interface ExpansionModel {
+
+    public void initialize() throws Exception;
+    public void cleanup() throws Exception;
+
     public List<? extends Object> generateGrams(List<ScoredDocument> initialResults)
             throws IOException;
 

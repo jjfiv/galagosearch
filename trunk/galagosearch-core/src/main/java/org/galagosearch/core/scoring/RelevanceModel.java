@@ -50,30 +50,36 @@ public class RelevanceModel implements ExpansionModel {
         }
     }
     Parameters parameters;
-    CorpusReader cReader;
-    DocumentLengthsReader docLengths;
-    TagTokenizer tokenizer;
+    CorpusReader cReader = null;
+    DocumentLengthsReader docLengths = null;
+    TagTokenizer tokenizer = null;
 
     public RelevanceModel(Parameters parameters) {
         this.parameters = parameters;
     }
 
     /*
-     * This should be run while we're waiting for the results.
+     * This should be run while we're waiting for the results. It either creates the
+     * required data structures for the model, or resets them to be used for another query.
      *
      */
     public void initialize() throws Exception {
-        // Let's make a corpus reader
-        String corpusLocation = parameters.get("corpus", null);
-        if (corpusLocation == null) { // keep trying
-            corpusLocation = parameters.get("index") + File.separator + "corpus";
+        if (cReader == null) {
+            // Let's make a corpus reader
+            String corpusLocation = parameters.get("corpus", null);
+            if (corpusLocation == null) { // keep trying
+                corpusLocation = parameters.get("index") + File.separator + "corpus";
+            }
+            cReader = new CorpusReader(corpusLocation);
         }
-        cReader = new CorpusReader(corpusLocation);
-
         // We also need the document lengths
-        docLengths = new DocumentLengthsReader(parameters.get("index") + File.separator + "documentLengths");
-        tokenizer = new TagTokenizer();
+        if (docLengths == null) {
+           docLengths = new DocumentLengthsReader(parameters.get("index") + File.separator + "documentLengths");            
+        } 
 
+        if (tokenizer == null) {
+            tokenizer = new TagTokenizer();
+        }
     }
 
     /*
@@ -82,6 +88,9 @@ public class RelevanceModel implements ExpansionModel {
     public void cleanup() throws Exception {
         cReader.close();
         docLengths.close();
+        cReader = null;
+        docLengths = null;
+        tokenizer = null;
     }
 
     public ArrayList<Gram> generateGrams(List<ScoredDocument> initialResults) throws IOException {

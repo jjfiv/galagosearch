@@ -53,9 +53,9 @@ public class TermSelectionValueModel implements ExpansionModel {
         }
     }
     Parameters parameters;
-    CorpusReader cReader;
-    TagTokenizer tokenizer;
-    StructuredIndexPartReader reader;
+    CorpusReader cReader = null;
+    TagTokenizer tokenizer = null;
+    StructuredIndexPartReader reader = null;
     long N = 0;
     int fbDocs;
 
@@ -66,13 +66,19 @@ public class TermSelectionValueModel implements ExpansionModel {
     public void initialize() throws IOException {
         this.N = parameters.get("documentCount", 0L);
         this.fbDocs = (int) parameters.get("fbDocs", 10L);
-        // Let's make a corpus reader
-        String corpusLocation = parameters.get("corpus", null);
-        if (corpusLocation == null) { // keep trying
+
+        if (cReader == null) {
+            // Let's make a corpus reader
+          String corpusLocation = parameters.get("corpus", null);
+          if (corpusLocation == null) { // keep trying
             corpusLocation = parameters.get("index") + File.separator + "corpus";
+          }
+          cReader = new CorpusReader(corpusLocation);
         }
-        cReader = new CorpusReader(corpusLocation);
-        tokenizer = new TagTokenizer();
+
+        if (tokenizer == null) {
+            tokenizer = new TagTokenizer();
+        }
 
         // Finally, we need an iterator from the index for the doc. frequencies
         // For now we only take PositionIndexReader.Iterators, meaning we need
@@ -86,6 +92,8 @@ public class TermSelectionValueModel implements ExpansionModel {
     public void cleanup() throws IOException {
         cReader.close();
         reader.close();
+        cReader = null;
+        reader = null;
     }
 
     public ArrayList<Gram> generateGrams(List<ScoredDocument> initialResults) throws IOException {
