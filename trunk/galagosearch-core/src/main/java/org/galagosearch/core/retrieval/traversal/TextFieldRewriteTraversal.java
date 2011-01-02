@@ -23,7 +23,7 @@ public class TextFieldRewriteTraversal implements Traversal {
   Parameters availableParts;
 
   public TextFieldRewriteTraversal(Parameters parameters, Retrieval retrieval) throws IOException {
-    this.availableParts = retrieval.getAvailiableParts(parameters.get("retrievalGroup"));
+    this.availableParts = retrieval.getAvailableParts(parameters.get("retrievalGroup"));
   }
 
   public void beforeNode(Node object) throws Exception {

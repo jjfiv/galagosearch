@@ -83,7 +83,7 @@ public class StructuredRetrieval extends Retrieval {
    * </parameters>
    */
 
-  public Parameters getAvailiableParts(String _retGroup) throws IOException {
+  public Parameters getAvailableParts(String _retGroup) throws IOException {
     Parameters p = new Parameters();
     for (String partName : index.getPartNames()) {
       p.add("part", partName);
@@ -303,7 +303,7 @@ public class StructuredRetrieval extends Retrieval {
     return StructuredQuery.parse(query);
   }
 
-  protected StructuredIterator createIterator(Node node) throws Exception {
+  public StructuredIterator createIterator(Node node) throws Exception {
     ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
     StructuredIterator iterator;
     try {

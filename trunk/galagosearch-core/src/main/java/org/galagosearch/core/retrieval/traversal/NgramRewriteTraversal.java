@@ -28,7 +28,7 @@ public class NgramRewriteTraversal implements Traversal {
   Parameters availiableParts;
 
   public NgramRewriteTraversal(Parameters parameters, Retrieval retrieval) throws IOException {
-      this.availiableParts = retrieval.getAvailiableParts(parameters.get("retrievalGroup"));
+      this.availiableParts = retrieval.getAvailableParts(parameters.get("retrievalGroup"));
   }
 
   /*

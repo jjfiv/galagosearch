@@ -89,12 +89,16 @@ public class MultiRetrieval extends Retrieval {
     }
   }
 
-  public Parameters getAvailiableParts(String retGroup) throws IOException {
+  public Parameters getAvailableParts(String retGroup) throws IOException {
     if (retrievalParts.containsKey(retGroup)) {
       return retrievalParts.get(retGroup);
     } else {
       return null;
     }
+  }
+
+  public StructuredIterator createIterator(Node node) throws Exception {
+      throw new UnsupportedOperationException("Semantics to instantiate iterator are unclear");
   }
 
   /**
@@ -217,7 +221,7 @@ public class MultiRetrieval extends Retrieval {
       ArrayList<Parameters> parts = new ArrayList();
       for (Retrieval r : retrievals.get(retGroup)) {
         stats.add(r.getRetrievalStatistics(retGroup));
-        parts.add(r.getAvailiableParts(retGroup));
+        parts.add(r.getAvailableParts(retGroup));
       }
       retrievalStatistics.put(retGroup, mergeStats(stats));
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
@@ -302,7 +306,7 @@ public class MultiRetrieval extends Retrieval {
 
   private NodeType getIndexNodeType(Node node, String retrievalGroup) throws Exception {
     if (node.getParameters().containsKey("part")) {
-      Parameters parts = this.getAvailiableParts(retrievalGroup);
+      Parameters parts = this.getAvailableParts(retrievalGroup);
       String partName = node.getParameters().get("part");
 
       if (!parts.stringList("part").contains(partName)) {

@@ -58,7 +58,7 @@ public class Search {
   }
 
   public Parameters getAvailiableParts(String retGroup) throws IOException{
-    return retrieval.getAvailiableParts(retGroup);
+    return retrieval.getAvailableParts(retGroup);
   }
 
   public void close() throws IOException {

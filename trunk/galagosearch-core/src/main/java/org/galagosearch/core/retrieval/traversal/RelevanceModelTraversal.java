@@ -40,7 +40,7 @@ public class RelevanceModelTraversal implements Traversal {
     public RelevanceModelTraversal(Parameters parameters, Retrieval retrieval) throws IOException {
         this.retrieval = retrieval;
         this.queryParameters = parameters;
-        this.availableParts = retrieval.getAvailiableParts(parameters.get("retrievalGroup"));
+        this.availableParts = retrieval.getAvailableParts(parameters.get("retrievalGroup"));
     }
 
     public Node afterNode(Node newNode) throws Exception {

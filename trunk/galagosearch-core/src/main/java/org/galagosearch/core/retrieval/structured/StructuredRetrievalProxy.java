@@ -93,7 +93,7 @@ public class StructuredRetrievalProxy extends Retrieval {
    *  </part>
    * </parameters>
    */
-  public Parameters getAvailiableParts(String retGroup) throws IOException {
+  public Parameters getAvailableParts(String retGroup) throws IOException {
     StringBuilder request = new StringBuilder(indexUrl);
     String encoded = URLEncoder.encode(query.toString(), "UTF-8"); // need to web-escape
     request.append("/parts?retGroup=").append(retGroup);
@@ -113,6 +113,10 @@ public class StructuredRetrievalProxy extends Retrieval {
     connection.disconnect();
 
     return new Parameters(array.toByteArray());
+  }
+
+  public StructuredIterator createIterator(Node node) throws Exception {
+      throw new UnsupportedOperationException("cannot create proxy iterator");
   }
 
   public ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception {
