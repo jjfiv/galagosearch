@@ -47,6 +47,7 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
             kvp.key = iterator.getKey();
             kvp.value = new byte[0];
             processor.process(kvp);
+            if (vocabCounter != null) vocabCounter.increment();
             iterator.nextKey();
         }
         processor.close();

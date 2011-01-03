@@ -20,6 +20,7 @@ import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.types.TopDocsEntry;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.FileSource;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.OutputClass;
@@ -49,6 +50,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
     protected int size;
     protected long minlength;
     protected long count;
+    Counter counter;
     PriorityQueue<TopDocsEntry> topdocs;
     PositionIndexReader partReader;
     NumberedDocumentDataIterator docLengths;
@@ -65,10 +67,12 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
                 File.separator + "documentLengths");
         docLengths = docReader.getIterator();
         partReader = new PositionIndexReader(StructuredIndex.getPartPath(indexLocation, parameters.getXML().get("part")));
+        counter = parameters.getCounter("lists scanned");
     }
 
     @Override
     public void process(KeyValuePair object) throws IOException {
+        if (counter != null) counter.increment();
         // Get out posting list
         count = 0;
         topdocs.clear();
