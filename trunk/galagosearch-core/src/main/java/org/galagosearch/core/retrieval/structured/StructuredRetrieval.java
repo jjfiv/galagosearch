@@ -1,6 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.structured;
 
+import gnu.trove.TObjectDoubleHashMap;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -212,9 +213,9 @@ public class StructuredRetrieval extends Retrieval {
 
       // This context is shared among all scorers
       iterator.setScoringContext(document, length);
-      Map<String, Double> scores = iterator.parameterSweepScore();
+      TObjectDoubleHashMap<String> scores = iterator.parameterSweepScore();
 
-      for (String params : scores.keySet()) {
+      for (String params : scores.keys( new String[0] )) {
         if (!queues.containsKey(params)) {
           queues.put(params, new PriorityQueue());
         }

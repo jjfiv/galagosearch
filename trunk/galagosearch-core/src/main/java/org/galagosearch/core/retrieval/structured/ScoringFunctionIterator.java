@@ -1,6 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.structured;
 
+import gnu.trove.TObjectDoubleHashMap;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
   }
 
   @Override
-  public Map<String, Double> parameterSweepScore() {
+  public TObjectDoubleHashMap<String> parameterSweepScore() {
     if (functions == null) {
       throw new UnsupportedOperationException("Parameter sweep not supported for this score iterator.");
     }
@@ -61,7 +62,7 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
     if (iterator.document() == documentToScore) {
       count = iterator.count();
     }
-    HashMap<String, Double> results = new HashMap();
+    TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
     for (ScoringFunction f : functions) {
       results.put(f.getParameterString(), f.score(count, lengthOfDocumentToScore));
     }

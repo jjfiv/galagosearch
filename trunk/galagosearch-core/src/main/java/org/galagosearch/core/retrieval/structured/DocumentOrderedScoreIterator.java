@@ -5,6 +5,7 @@
 
 package org.galagosearch.core.retrieval.structured;
 
+import gnu.trove.TObjectDoubleHashMap;
 import java.io.IOException;
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public abstract class DocumentOrderedScoreIterator implements DocumentOrderedIte
     public abstract double score(int document, int length); // use context defined by these variables
 
     // by default parameterSweeping is unsupported by any score iterator
-    public Map<String, Double> parameterSweepScore() {
+    public TObjectDoubleHashMap<String> parameterSweepScore() {
       throw new UnsupportedOperationException("Parameter sweep not supported for this score iterator.");
     }
 }

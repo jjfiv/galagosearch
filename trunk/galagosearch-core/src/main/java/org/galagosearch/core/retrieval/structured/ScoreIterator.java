@@ -1,6 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.structured;
 
+import gnu.trove.TObjectDoubleHashMap;
 import java.io.IOException;
 import java.util.Map;
 
@@ -46,5 +47,5 @@ public interface ScoreIterator extends StructuredIterator {
      *  - the set of scores correspond to the set of parameters input by the user.
      *
      */
-    public Map<String,Double> parameterSweepScore();
+    public TObjectDoubleHashMap<String> parameterSweepScore();
 }

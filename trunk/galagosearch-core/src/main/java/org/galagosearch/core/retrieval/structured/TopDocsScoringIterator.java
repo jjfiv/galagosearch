@@ -4,6 +4,7 @@
  */
 package org.galagosearch.core.retrieval.structured;
 
+import gnu.trove.TObjectDoubleHashMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -132,7 +133,7 @@ public class TopDocsScoringIterator extends DocumentOrderedScoreIterator {
     return function;
   }
 
-  public Map<String, Double> parameterSweepScore() {
+  public TObjectDoubleHashMap<String> parameterSweepScore() {
     return mainIterator.parameterSweepScore();
   }
 }
