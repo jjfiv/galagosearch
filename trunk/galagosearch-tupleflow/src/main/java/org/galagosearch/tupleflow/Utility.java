@@ -34,6 +34,35 @@ public class Utility {
     private static Logger LOG = Logger.getLogger(Utility.class.getName());
 
     /**
+     * Put all initialization here
+     */
+    static {
+	// Initialization of the tmp locations 
+
+	// try to find a prefs file for it
+	HashSet<String> holder = new HashSet<String>();
+	try {
+	    String homeDirectory = System.getProperty("user.home");
+	    File prefsFile = new File(homeDirectory + "/" + ".galagotmp");
+	    if (prefsFile.exists()) {
+		BufferedReader reader = new BufferedReader(new FileReader(prefsFile));
+		String line;
+		
+		while ((line = reader.readLine()) != null) {
+		    String trimmed = line.trim();
+		    if (!holder.contains(trimmed)) {
+			holder.add(trimmed);
+		    }
+		}
+		reader.close();
+	    }
+	} catch (IOException ioe) {
+	    LOG.warning("Unable to locate pref file. Using default temp location."); 
+	}
+	roots = holder.toArray(new String[0]);
+    }
+
+    /**
      * <p>If the parent directories for this file don't exist, this function creates them.</p>
      *
      * <p>Often we want to create a file, but we don't yet know if the parent path has been
@@ -449,29 +478,8 @@ public class Utility {
         return temporary;
     }
     // So that we're not reading the file containing these OVER and OVER
-    private static ArrayList<String> roots = new ArrayList<String>();
-
+    private static String[] roots;
     public static String getBestTemporaryLocation(long requiredSpace) throws IOException {
-        if (roots.isEmpty()) {
-            // try to find a prefs file for this
-            String homeDirectory = System.getProperty("user.home");
-            File prefsFile = new File(homeDirectory + "/" + ".galagotmp");
-
-            if (prefsFile.exists()) {
-                BufferedReader reader = new BufferedReader(new FileReader(prefsFile));
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    synchronized (roots) {
-                        if (!roots.contains(line.trim())) {
-                            roots.add(line.trim());
-                        }
-                    }
-                }
-                reader.close();
-            }
-        }
-
         for (String root : roots) {
             long freeSpace = getFreeSpace(root);
 
