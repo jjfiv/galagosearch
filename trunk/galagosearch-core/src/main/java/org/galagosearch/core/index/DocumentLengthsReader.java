@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.core.types.NumberedDocumentData;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -85,9 +86,14 @@ public class DocumentLengthsReader {
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {
+      CallTable.increment("doclength_read");
       int docNum = Utility.toInt(iterator.getKey());
       int length = Utility.uncompressInt(iterator.getValueBytes(), 0);
       return new NumberedDocumentData("", "", docNum, length);
+    }
+
+    public int getCurrentDocument() {
+      return Utility.toInt(iterator.getKey()); 
     }
 
     public String getKey() {

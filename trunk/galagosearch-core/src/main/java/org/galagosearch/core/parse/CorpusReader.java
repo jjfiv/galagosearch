@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.util.zip.GZIPInputStream;
 import org.galagosearch.core.index.IndexReader;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.StreamCreator;
 import org.galagosearch.tupleflow.Utility;
@@ -56,6 +57,7 @@ public class CorpusReader extends DocumentReader {
     if (iterator == null) {
       return null;
     }
+    CallTable.increment("corpus_read");
     return new Iterator(iterator).getDocument();
   }
 

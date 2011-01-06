@@ -14,6 +14,7 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.DocumentOrderedIterator;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
@@ -116,6 +117,7 @@ public class TopDocsReader implements StructuredIndexPartReader {
         currentTopDoc.count = data.readInt();
         currentTopDoc.length = data.readInt();
         index++;
+	CallTable.increment("topdoc_read");
       } else {
         currentTopDoc = null;
       }

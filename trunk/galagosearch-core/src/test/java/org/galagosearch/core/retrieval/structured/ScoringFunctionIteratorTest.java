@@ -41,6 +41,7 @@ public class ScoringFunctionIteratorTest extends TestCase {
     assertEquals(extents[0][0], iterator.currentCandidate());
     iterator.moveTo(extents[0][0]);
     assertEquals(extents[0][0], iterator.currentCandidate());
+    iterator.setScoringContext(0, 0);
     // score without context
     assertEquals(0.0, iterator.score());
     assertEquals(102.0, iterator.score(34, 99));

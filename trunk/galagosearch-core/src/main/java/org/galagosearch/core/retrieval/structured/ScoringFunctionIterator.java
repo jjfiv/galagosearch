@@ -5,6 +5,7 @@ import gnu.trove.TObjectDoubleHashMap;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.scoring.ScoringFunction;
 
 /**
@@ -21,18 +22,27 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
   ScoringFunction function;
   // parameter sweep functions
   ScoringFunction[] functions;
+  long total;
 
   public ScoringFunctionIterator(DocumentOrderedCountIterator iterator, ScoringFunction function) {
     this.iterator = iterator;
     this.function = function;
     this.functions = null; // null implies that we can not perform a parameter sweep
+    if (PositionIndexReader.Iterator.class.isAssignableFrom(iterator.getClass())) {
+	total = ((PositionIndexReader.Iterator) iterator).totalDocuments();
+    } else {
+	total = Long.MAX_VALUE;
+    }
   }
 
   // if we have a set of functions -> (for parameter sweeping)
   public ScoringFunctionIterator(DocumentOrderedCountIterator iterator, ScoringFunction[] functions) {
-    this.iterator = iterator;
-    this.function = functions[0];
+    this(iterator, functions[0]);
     this.functions = functions;
+  }
+    
+  public long totalCandidates() {
+      return total;
   }
 
   public ScoringFunction getScoringFunction() {

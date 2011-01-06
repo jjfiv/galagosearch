@@ -4,14 +4,17 @@
  */
 package org.galagosearch.core.retrieval.structured;
 
+import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TIntDoubleHashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectDoubleHashMap;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -19,49 +22,67 @@ import java.util.PriorityQueue;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.TopDocsReader;
 import org.galagosearch.core.index.TopDocsReader.TopDocument;
+import org.galagosearch.core.scoring.ScoringFunction;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
  * Galago's implementation of the max_score algorithm for document-at-a-time processing.
- * This current implementation unfortunately does not make use of the "shortest list first"
- * paradigm, as currently the children DocumentOrderedScoreIterators aren't required to report
- * length.
- *
  * The implementation is as follows:
  *
  * Init) Scan children for topdocs. If they exist, iterate over those first to bootstrap bounds.
- *       otherwise while the number of scored docs from this iterator is under requested, make no
+ *       Otherwise while the number of scored docs from this iterator is under requested, make no
  *       adjustments.
  *
  * For each candidate document:
+ *
+ * If scored is less than requested, fully score the document, add it to the best seen queue, and return
+ * score.
+ * Otherwise,
+ * While we have not found a candidate with a score above max_score:
  *  For all iterators:
- *      1) Choose the iterator with the highest estimated max scores, and score the candidate.
- *      2) Determine if the score + remaining upper bounds &#060; max_score. If so (and we've seen
- *          at least the requested number of docs), stop scoring and move on. Else, continue.
- *      3) When all iterators have been used, if the score of the document is higher than the
- *          current max_score, then set max_score to that value.
+ *      1) Choose the iterator with the shortest estimated list of candidates
+ *      2) Determine if the score + remaining upper bounds is less than max_score. If so, stop scoring and move to the next candidate.
+ *         Else move to next iterator.
  *
+ *      3) If all iterators are used, mark that document as the scored document, and update max_score if needed.
  *
+ * In order to utilize the optimization properly, we need to lazy-move the iterators involved in scoring.
+ * Therefore, moveTo and movePast will only set the "nextDocumentToScore" variable to indicate where the first
+ * iterator should move to if we're required to score.
  *
- *
+ * Things are a bit trickier when information is requested of the iterator. The semantics are:
+ *  hasMatch(doc): Does the iterator have 'doc' in its candidate list? In order to answer this accurately, we need to
+ *                 attempt to score. Given that this is usually called after a move call, we score forward until we reach
+ *                 nextDocumentToScore. If lastDocumentScored == doc, return true, meaning it made the cut.
+ *  currentCandidate(): What is the next candidate according to this iterator? Once again, we need to attempt to score.
+ *                 however in this case we need to continue iterating until we find a winner. There is no external bound.
+ *  score(doc, length): We need to score. If doc == 		   
  * @author irmarc
  */
 @RequiredStatistics(statistics = {"index"})
 public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
-  private static class Placeholder implements Comparable<Placeholder> {
-
-    int document;
-    double score;
-
-    public int compareTo(Placeholder that) {
-      return (this.document - that.document);
-    }
-
-    public String toString() {
-      return String.format("<%d, %f>", document, score);
-    }
-  }
+    private class Placeholder implements Comparable<Placeholder> {
+	
+	int document;
+	double score;
+	
+	public Placeholder() {
+	}
+	
+	public Placeholder(int d, double s) {
+	    document = d;
+	    score = s;
+	}
+	
+	public int compareTo(Placeholder that) {
+	    return this.score > that.score ? -1 : this.score < that.score ? 1 : 0;
+	}
+	
+	public String toString() {
+	    return String.format("<%d,%f>", document, score);
+	}
+    }    
 
   private static class DocumentOrderComparator implements Comparator<DocumentOrderedScoreIterator> {
 
@@ -70,63 +91,93 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     }
   }
 
-  private static class ScoreOrderComparator implements Comparator<DocumentOrderedScoreIterator> {
+  private static class TotalCandidateComparator implements Comparator<DocumentOrderedScoreIterator> {
 
     public int compare(DocumentOrderedScoreIterator a, DocumentOrderedScoreIterator b) {
-      return (a.maximumScore() > b.maximumScore() ? -1
-              : (a.maximumScore() < b.maximumScore() ? 1 : 0));
+	if (!a.isDone() && b.isDone()) return -1;
+	if (a.isDone() && !b.isDone()) return 1;
+	return (a.totalCandidates() < b.totalCandidates() ? -1 : a.totalCandidates() > b.totalCandidates() ? 1 : 0);
     }
   }
   int requested;
-  int scored;
-  double max_score = 0;
+  double threshold = 0;
   double potential;
   double minimum;
-  double currentScore;
-  int currentDocument;
   TObjectDoubleHashMap weightLookup;
-  TIntHashSet topdocsCandidates;
-  PriorityQueue<DocumentOrderedScoreIterator> topdocs;
-  PriorityQueue<DocumentOrderedScoreIterator> normal;
-  PriorityQueue<Placeholder> cache;
-  PriorityQueue<DocumentOrderedScoreIterator> scoreQueue;
-  PriorityQueue<Double> bestScores;
-  NumberedDocumentDataIterator docLengths;
+  TIntArrayList topdocsCandidates;
+  int lastReportedCandidate = 0;
+  int candidatesIndex;
+  int quorumIndex;
+  ArrayList<DocumentOrderedScoreIterator> scoreList;
+  ArrayList<Placeholder> R;
+    TIntHashSet ids;
 
   public MaxScoreCombinationIterator(Parameters parameters,
           DocumentOrderedScoreIterator[] childIterators) throws IOException {
     super(parameters, childIterators);
-    String location = parameters.get("index") + File.separator + "documentLengths";
-    DocumentLengthsReader reader = new DocumentLengthsReader(location);
-    docLengths = reader.getIterator();
     requested = (int) parameters.get("requested", 100);
-    topdocs = new PriorityQueue<DocumentOrderedScoreIterator>(5, new DocumentOrderComparator());
-    normal = new PriorityQueue<DocumentOrderedScoreIterator>(5, new DocumentOrderComparator());
-    cache = new PriorityQueue<Placeholder>();
-    bestScores = new PriorityQueue<Double>();
-    topdocsCandidates = new TIntHashSet();
-    scoreQueue = new PriorityQueue<DocumentOrderedScoreIterator>(iterators.length,
-								 new ScoreOrderComparator());
+    R = new ArrayList<Placeholder>();
+    ids = new TIntHashSet();
+    topdocsCandidates = new TIntArrayList();
+    scoreList = new ArrayList<DocumentOrderedScoreIterator>(iterators.length);   	
     weightLookup = new TObjectDoubleHashMap();
+    ArrayList<DocumentOrderedScoreIterator> topdocs = new ArrayList<DocumentOrderedScoreIterator>();
     for (int i = 0; i < iterators.length; i++) {
       DocumentOrderedScoreIterator dosi = iterators[i];
       weightLookup.put(dosi, weights[i]);
       if (TopDocsScoringIterator.class.isAssignableFrom(dosi.getClass())) {
         topdocs.add(dosi);
-      } else {
-        normal.add(dosi);
       }
     }
-    cacheScores();
+    cacheScores(topdocs);
+    scoreList.addAll(Arrays.asList(iterators));
+    Collections.sort(scoreList, new TotalCandidateComparator());
     for (int i = 0; i < iterators.length; i++) {
       DocumentOrderedScoreIterator dosi = iterators[i];
       potential += weights[i] * dosi.maximumScore();
       minimum += weights[i] * dosi.minimumScore();
       // don't normalize
     }
+    //    System.err.printf("Done caching. threshold=%f, R size=%d, potential=%f, minimum=%f\n", threshold,
+    //	      R.size(), potential, minimum);
+  }
+    
+    @Override
+    public double maximumScore() {
+	double s = 0;
+	for (DocumentOrderedScoreIterator it : iterators) {
+	    s = Math.max(it.maximumScore(), s);
+	}
+	if (s == Double.MAX_VALUE || s == Double.POSITIVE_INFINITY) return s;
 
-    // to make sure we have a doc ready to go
-    selectNextDocument(0);
+	// Not infinity/max
+	s = 0;
+	for (DocumentOrderedScoreIterator it : iterators) {
+	    s += it.maximumScore();
+	}
+	return s;
+    }
+
+    @Override
+    public double minimumScore() {
+	double s = 0;
+	for (DocumentOrderedScoreIterator it : iterators) {
+	    s += it.minimumScore();
+	}
+	return s;
+    }
+   
+  /**
+   * Resets all iterators, does not perform caching again
+   * @throws IOException
+   */
+   @Override
+   public void reset() throws IOException {
+    for (DocumentOrderedScoreIterator dosi : iterators) {
+      dosi.reset();
+    }
+    candidatesIndex = 0;
+    computeQuorum();
   }
 
   /**
@@ -138,135 +189,193 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    */
   @Override
   public boolean isDone() {
-    double remainingPotential = 0.0;
-    boolean haveOpenIterators = false;
-    for (DocumentOrderedScoreIterator dosi : iterators) {
-      if (!dosi.isDone()) {
-        haveOpenIterators = true;
-        remainingPotential += dosi.maximumScore();
-      }
-    }
-
-    if (!haveOpenIterators) {
-      return true;
-    }
-    if (scored >= requested && remainingPotential < max_score && topdocsCandidates.size() == 0) {
-      return true;
-    }
-    return false;
+      return (currentCandidate() == Integer.MAX_VALUE);
   }
 
-  /**
-   * This will be set after selection. If requested > scored, it's simply the
-   * next document across all iterators. Otherwise it had to make the cut.
-   * @return
-   */
   @Override
   public int currentCandidate() {
-    return currentDocument;
+      int candidate = Integer.MAX_VALUE;
+
+      // first check the topdocs
+      if (candidatesIndex < topdocsCandidates.size()) {
+	  candidate = topdocsCandidates.get(candidatesIndex);
+      }
+      
+      // Now look among the quorum iterators
+      for (int i = 0; i < quorumIndex; i++) {
+	  candidate = Math.min(candidate, scoreList.get(i).currentCandidate());
+      }
+      //System.err.printf("Returning currentCandidate=%d\n", candidate);
+      lastReportedCandidate = candidate;
+      return candidate;
   }
 
-  /**
-   * True if the currentDocument equals the parameter. False otherwise.
-   * @param document
-   * @return
-   */
   @Override
   public boolean hasMatch(int document) {
-    return (currentDocument == document);
+      return (currentCandidate() == document);
+  }
+
+  @Override
+  public void movePast(int document) throws IOException {
+      skipToDocument(document+1);
+  }
+
+  @Override
+  public void moveTo(int document) throws IOException {
+      skipToDocument(document);      
+  }
+
+
+
+  @Override
+  public boolean skipToDocument(int document) throws IOException {
+      // Move topdocs candidate list forward
+      while (candidatesIndex < topdocsCandidates.size() &&
+	     document > topdocsCandidates.get(candidatesIndex)) {
+	  candidatesIndex++;
+      }
+
+      // Now only skip the quorum forward
+      for (int i = 0; i < quorumIndex; i++) {
+	  scoreList.get(i).skipToDocument(document);
+      }
+
+      return hasMatch(document);
   }
 
   /**
-   *  We proactively score in order to prune, so
-   * we only use this opportunity to update the bookkeeping
+   * Just sets context for scoring
    */
   public double score() {
     return score(documentToScore, lengthOfDocumentToScore);
   }
 
   public double score(int document, int length) {
-    if (document == currentDocument) {
-      adjustMaxScore(currentScore);
-      scored = Math.min(scored + 1, requested);
-      return currentScore / weightSum;
-    } else {
-      // We didn't match, and we think the document being asked for is
-      // garbage.
-      return minimum;
-    }
+      try {
+	  //System.err.printf("Scoring %d, length %d\n", document, length);
+	  if ((candidatesIndex < topdocsCandidates.size() &&
+	       document == topdocsCandidates.get(candidatesIndex)) ||
+	      (R.size() < requested)) {
+	      // Make sure the iterators are lined up
+	      for (DocumentOrderedScoreIterator it : iterators) {
+		  it.skipToDocument(lastReportedCandidate);
+	      }
+	      double score = fullyScore(document, length);
+	      //	      System.err.printf("Fully scored: %d=%f (topdocs=%b, R.size=%d, req=%d)\n", document, score,
+	      //		(document == topdocsCandidates.get(candidatesIndex)), R.size(), requested);
+	      adjustThreshold(document, score);
+	      return score / weightSum;
+	  } else {
+	      // First score the quorum, then as we score the rest, skip it forward.	  
+	      double adjustedPotential = potential;
+	      double inc;
+	      int i;
+	      for (i = 0; i < quorumIndex; i++) {
+		  DocumentOrderedScoreIterator it = scoreList.get(i);
+		  inc = weightLookup.get(it) * (it.score(document, length) - it.maximumScore());
+		  adjustedPotential += inc;
+	      }
+	      while (adjustedPotential > threshold && i < scoreList.size()) {
+		  DocumentOrderedScoreIterator it = scoreList.get(i);
+		  it.skipToDocument(lastReportedCandidate);
+		  adjustedPotential += weightLookup.get(it) * (it.score(document, length) - it.maximumScore());
+		  i++;
+	      }
+	 
+	      // fully scored!
+	      if (i == scoreList.size()) {
+		  adjustThreshold(document, adjustedPotential);
+		  //System.err.printf("Successfully scored %d=%f\n", document, adjustedPotential);
+		  return adjustedPotential / weightSum; 
+	      } else {
+		  // didn't make the cut
+		  return minimum / weightSum;
+	      }
+	  }
+      } catch (IOException ioe) {
+	  throw new RuntimeException(ioe);
+      }	  
   }
+    
+    private double fullyScore(int document, int length) {
+	double total = 0;	  
+	for (int i = 0; i < iterators.length; i++) {
+	    total += weights[i] * iterators[i].score(document, length);
+	}
+	return total;
+    }
 
   /**
-   * Uses context-free scoring (i.e. the parameters are explicitly passed in)
-   * @return
-   */
-  private double fullyScore(int document, int length) {
-    double total = 0;
-
-    for (int i = 0; i < iterators.length; i++) {
-        total += weights[i] * iterators[i].score(document, length);
-    }
-    return total;
-  }
-
-  private double partialScore(Collection<DocumentOrderedScoreIterator> scorers, int document,
-          int length) {
-    double total = 0;
-    for (DocumentOrderedScoreIterator dosi : scorers) {
-      double weight = weightLookup.get(dosi);
-      total += (weight * dosi.score(document, length));
-    }
-    return total;
-  }
-
-  /**
-   * Moves past the parameter supplied. If scored > requested,
-   * also tries to find the next viable document via max_score pruning,
-   * otherwise behavior is unchanged.
-   * @param document
-   * @throws IOException
-   */
-  public void movePast(int document) throws IOException {
-    selectNextDocument(document + 1);
-  }
-
-  public void moveTo(int document) throws IOException {
-    selectNextDocument(document);
-  }
-
-  public boolean skipToDocument(int document) throws IOException {
-    selectNextDocument(document);
-    return (hasMatch(document));
-  }
-
-  /**
-   * Resets all iterators, including the topdocs iterators
-   * @throws IOException
-   */
-  public void reset() throws IOException {
-    for (DocumentOrderedScoreIterator dosi : iterators) {
-      dosi.reset();
-    }
-  }
- 
-  /**
-   * While we haven't scored enough docs yet, we look for the lowest
-   * score we've produced. Otherwise we look for the highest score in the incoming stream.
+   * Determines if the top candidates list has changed. 
+   * Note that R is just a queue of doubles - if you add
+   * a score of a single doc multiple times, it won't know any better.
    * @param newscore
    */
-  protected void adjustMaxScore(double newscore) {
-      bestScores.add(newscore);
-      if (bestScores.size() > requested) bestScores.poll();
-      max_score = bestScores.peek();
+  protected void adjustThreshold(int document, double newscore) {
+      boolean recompute = false;
+      if (ids.contains(document)) {
+	  for (Placeholder p : R) {
+	      if (p.document == document) {
+		  //System.err.printf("Adjusting R score: %d=%f --> %f\n", document, p.score, newscore);
+		  p.score = newscore;
+		  break;
+	      }
+	  }
+      } else {
+	  if (R.size() < requested) {
+	      R.add(new Placeholder(document, newscore));	      
+	      ids.add(document);
+	      if (R.size() == requested) recompute = true;
+	      //System.err.printf("Added <%d, %f>\n", document, newscore);
+	  } else {
+	      if (newscore > R.get(requested-1).score) {
+		  recompute = true;
+		  Placeholder old = R.remove(requested-1);
+		  R.add(new Placeholder(document, newscore));
+		  ids.remove(old.document);
+		  ids.add(document);
+		  //System.err.printf("Replaced R member. <%d, %f> removed, <%d, %f> added.\n",
+		  //	    old.document, old.score, document, newscore);
+	      }
+	  }
+      }
+      if (R.size() == requested) {
+	  Collections.sort(R);
+	  threshold = R.get(requested-1).score;
+      }
+      if (recompute) {
+	  computeQuorum();
+      }
   }
 
+    /**
+     * Determines which iterators we need to worry about to produce a valid
+     * candidate score. If scored < requested, it defaults to all of them.
+     */
+  protected void computeQuorum() {
+      double adjustedPotential = 0;
+      if (R.size() < requested) {
+	  quorumIndex = scoreList.size();
+      } else {
+	  // Now we try
+	  adjustedPotential = potential;
+	  int i = 0;
+	  for (; i < scoreList.size() && adjustedPotential > threshold; i++) {
+	      DocumentOrderedScoreIterator it = scoreList.get(i);
+	      adjustedPotential += (it.minimumScore() - it.maximumScore());
+	  }
+	  quorumIndex = i;
+      }
+      //      System.err.printf("New quorum index is %d. adjustedpot=%f, pot=%f, threshold=%f\n", quorumIndex,
+      //		adjustedPotential, potential, threshold);
+  }
   /**
    * We pre-evaluate the the topdocs lists by scoring them against all iterators
    * that have topdocs, giving us a partial evaluation, and therefore a better
-   * max_score bound - we also move the scored count up in order to activate
-   * max_score sooner.
+   * threshold bound - we also move the scored count up in order to activate
+   * threshold sooner.
    */
-  protected void cacheScores() throws IOException {
+  protected void cacheScores(ArrayList<DocumentOrderedScoreIterator> topdocs) throws IOException {
     // Iterate over the lists, scoring as we go - they are doc-ordered after all
     TObjectIntHashMap loweredCount = new TObjectIntHashMap();
     PriorityQueue<TopDocsReader.Iterator> toScore = new PriorityQueue<TopDocsReader.Iterator>();
@@ -285,135 +394,51 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     if (toScore.size() == 0) return;
 
     double score;
-    boolean fullMatch;
+
     // Now we can simply iterate until done
     while (!toScore.peek().isDone()) {
-      fullMatch = true;
       TopDocsReader.Iterator it = toScore.poll();
       TopDocument td = it.getCurrentTopDoc();
-      // Score it using this iterator
-      score = weightLookup.get(lookup.get(it))
-              * lookup.get(it).getScoringFunction().score(td.count, td.length);
-      scores.put(td.document, score);
-      if (!loweredCount.containsKey(it) || loweredCount.get(it) < requested) {
-	  loweredCount.adjustOrPutValue(it, 1, 1);
-	  lookup.get(it).lowerMaximumScore(score);
+
+      // Need the background score first
+      score = 0;
+      for (DocumentOrderedScoreIterator dosi: iterators) {
+	  score += weightLookup.get(dosi) * dosi.score(0, td.length);
       }
+
+      scores.put(td.document, score);
+      // Score it using this iterator
+      ScoringFunction fn = lookup.get(it).getScoringFunction();
+      score = weightLookup.get(lookup.get(it))
+	  * (fn.score(td.count, td.length) - fn.score(0, td.length));
+      scores.adjustValue(td.document, score);
+      lookup.get(it).lowerMaximumScore(score);
       it.movePast(td.document);
       // Now score w/ the others
       for (TopDocsReader.Iterator tdrit : toScore) {
         if (tdrit.hasMatch(td.document)) {
           TopDocument other = tdrit.getCurrentTopDoc();
+	  fn = lookup.get(tdrit).getScoringFunction();
           score = weightLookup.get(lookup.get(tdrit))
-                  * lookup.get(tdrit).getScoringFunction().score(other.count, other.length);
+	      * (fn.score(other.count, other.length) - fn.score(0, other.length));
           scores.adjustValue(other.document, score);
-	  if (!loweredCount.containsKey(tdrit) || loweredCount.get(tdrit) < requested) {
-	      loweredCount.adjustOrPutValue(tdrit, 1, 1);
-	      lookup.get(tdrit).lowerMaximumScore(score);
-	  }
+	  lookup.get(tdrit).lowerMaximumScore(score);
           tdrit.movePast(other.document); // scored - move on
-        } else {
-          // background
-	    score = weightLookup.get(lookup.get(tdrit)) * lookup.get(tdrit).getScoringFunction().score(0, td.length);
-	    scores.adjustValue(td.document, score); 
-          fullMatch = false;
         }
       }
       toScore.add(it); // put it back in, do it again
       topdocsCandidates.add(td.document);
-
-      if (fullMatch) { // we can cache this score
-        Placeholder p = new Placeholder();
-        p.document = td.document;
-        p.score = scores.get(td.document);
-        cache.add(p);
-      }
     }
 
     double[] values = scores.getValues();
-    for (int i = 0; i < values.length; i++) bestScores.add(values[i]);
-    while (bestScores.size() > requested) bestScores.poll();
-    max_score = bestScores.peek();
-    scored += scores.size(); // bump up the bound
-  }
-
-  /**
-   * Method used to move all children iterators forward to the next viable
-   * candidate. When we are below threshold, we move forward to the next candidate
-   * without prejudice, and score it proactively. Otherwise, we move forward through
-   * candidates until we find one that can be fully scored. The hope is that we can omit
-   * a large number of unnecessary documents during this pruning period.
-   *
-   * @param startingPoint
-   * @throws IOException
-   */
-  private void selectNextDocument(int startingPoint) throws IOException {
-    boolean outcome;
-    int idx = startingPoint;
-    do {
-      outcome = foundNextDocument(idx);
-      idx = currentDocument + 1; // in case we need it for the next round
-    } while (outcome == false && !isDone());
-  }
-
-  /**
-   * One iteration of trying to score the "next" document. Returns true if
-   * the document was fully scored successfully, otherwise false.
-   * @param startingPoint
-   * @return
-   * @throws IOException
-   */
-  private boolean foundNextDocument(int startingPoint) throws IOException {
-    // move all the iterators forward
-    double runningScore;
-    currentDocument = Integer.MAX_VALUE;
-    boolean continuable = false;
-    for (DocumentOrderedScoreIterator dosi : iterators) {
-      dosi.moveTo(startingPoint);
-      currentDocument = Math.min(currentDocument, dosi.currentCandidate());
-      if (!dosi.isDone()) continuable = true;
+    int[] keys = scores.keys();
+    for (int i = 0; i < keys.length; i++) {	
+	R.add(new Placeholder(keys[i], scores.get(keys[i])));
     }
-
-    if (!continuable) return false;
-
-    // Move the lengths iterator and pull out the length
-    docLengths.skipTo(currentDocument);
-    int length = docLengths.getDocumentData().textLength;
-
-    // First check the cache
-    if (cache.size() > 0 && cache.peek().document == currentDocument) {
-      // Success - can score fast, and it's a topdocs candidate
-      Placeholder p = cache.poll();
-      currentScore = p.score + partialScore(normal, currentDocument, length);
-      // done
-      return true;
-    } else if (topdocsCandidates.contains(currentDocument)
-            || scored < requested) {
-      // either we have to do it, or we don't have enough evidence yet
-	currentScore = fullyScore(currentDocument, length);
-      if (topdocsCandidates.contains(currentDocument)) topdocsCandidates.remove(currentDocument);
-      return true;
-    } else { // MAX_SCORE PRUNING
-      scoreQueue.clear();
-      scoreQueue.addAll(topdocs);
-      scoreQueue.addAll(normal);
-      runningScore = potential;
-      double weight;
-      while (!scoreQueue.isEmpty() && runningScore > max_score) {
-        DocumentOrderedScoreIterator top = scoreQueue.poll();
-        weight = weightLookup.get(top);
-        // We have to remove the default score in there, effectively lowering
-        // the potential for this document
-         double score = (weight * (top.score(currentDocument, length) - top.maximumScore()));
-	 runningScore += score;
-      }
-
-      if (!scoreQueue.isEmpty()) {
-        return false;
-      } else {
-        currentScore = runningScore;
-        return true;
-      }
-    }
+    Collections.sort(R);
+    while (R.size() > requested) R.remove(R.size()-1);
+    threshold = R.get(R.size()-1).score;
+    R.trimToSize();
+    candidatesIndex = 0;
   }
 }

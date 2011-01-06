@@ -26,7 +26,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor, irmarc
  */
-@RequiredStatistics(statistics = {"retrievalGroup", "index","scorer"})
+@RequiredStatistics(statistics = {"retrievalGroup", "index","scorer","topdocs"})
 public class ImplicitFeatureCastTraversal implements Traversal {
     Retrieval retrieval;
     String retrievalGroup;
@@ -38,11 +38,34 @@ public class ImplicitFeatureCastTraversal implements Traversal {
 	this.parameters = parameters;
     }
     
-    Node createSmoothingNode(Node child) {
+    Node createSmoothingNode(Node child) throws Exception {
         ArrayList<Node> data = new ArrayList<Node>();
         data.add(child);
 	String scorerType = parameters.get("scorer", "dirichlet");
-        return new Node("feature", scorerType, data, child.getPosition());
+        Node smoothed = new Node("feature", scorerType, data, child.getPosition());
+	if (!parameters.get("topdocs", false)) return smoothed;
+	
+	// If we're here, we should be adding a topdocs node
+	return createTopdocsNode(smoothed);
+    }
+
+    Node createTopdocsNode(Node child) throws Exception {
+	// First (and only) child should be a scoring function iterator node
+	if (!isScoringFunctionNode(child)) return child;
+
+	// The replacement
+	ArrayList<Node> children = new ArrayList<Node>();
+	children.add(child);
+	Node workingNode = new Node("feature", "topdocs", children, child.getPosition());	
+
+	// count node, with the information we need
+	Node grandchild = child.getInternalNodes().get(0);
+	Parameters descendantParameters = grandchild.getParameters();
+	Parameters workingParameters = workingNode.getParameters();
+	workingParameters.set("term", descendantParameters.get("default"));
+	workingParameters.set("loc", descendantParameters.get("part"));
+	workingParameters.set("index", parameters.get("index"));
+	return workingNode;
     }
     
     public boolean isCountNode(Node node) throws Exception {
@@ -66,44 +89,7 @@ public class ImplicitFeatureCastTraversal implements Traversal {
     public Node afterNode(Node node) throws Exception {
 	// Determine if we need to add a scoring node
 	Node scored = addScorers(node);
-
-	// Add a topdocs wrapper node if necessary
-	Node topped = addTopDocs(scored);
-	return topped;
-    }
-
-    public Node addTopDocs(Node node) throws Exception {
-	Node workingNode = node;
-
-	// If this isn't a topdocs node, are we adding one?
-	if (!workingNode.getParameters().get("default","none").equals("topdocs")) {
-	    // Only wrap ScoringFunctionIterators
-	    if (!isScoringFunctionNode(node)) return node;
-	    
-	    // if not adding topdocs, short-circuit out
-	    if (!parameters.get("topdocs", false)) return node;
-	    ArrayList<Node> child = new ArrayList<Node>();
-	    child.add(workingNode);
-	    workingNode = new Node("feature", "topdocs", child, workingNode.getPosition());
-	}
-
-	// At this point, we only annotate the node if it's a topdocs node
-	if (workingNode.getOperator().equals("feature") &&
-	    workingNode.getParameters().get("default","none").equals("topdocs")) {
-	    // First (and only) child should be a scoring function iterator node
-	    Node child = node.getInternalNodes().get(0);
-	    if (!isScoringFunctionNode(child)) return node;
-
-	    // count node, with the information we need
-	    Node grandchild = child.getInternalNodes().get(0);
-	    Parameters descendantParameters = grandchild.getParameters();
-	    Parameters workingParameters = workingNode.getParameters();
-	    workingParameters.set("term", descendantParameters.get("default"));
-	    workingParameters.set("loc", descendantParameters.get("part"));
-	    workingParameters.set("index", parameters.get("index"));
-	}
-
-	return workingNode;
+	return scored;
     }
 
     public Node addScorers(Node node) throws Exception {

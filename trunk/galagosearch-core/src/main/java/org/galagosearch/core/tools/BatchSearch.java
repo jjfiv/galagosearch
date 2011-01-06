@@ -9,6 +9,7 @@ import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -55,9 +56,9 @@ public class BatchSearch {
       p.add("requested", Integer.toString(requested));
       Node root = StructuredQuery.parse(queryText);
       Node transformed = retrieval.transformQuery(root, "all");
+      System.err.printf("Running query: %s\n", transformed.toString());
       ScoredDocument[] results = retrieval.runQuery(transformed, p);
       for (int i = 0; i < results.length; i++) {
-        //String document = retrieval.getDocumentName(results[i].document);
         double score = results[i].score;
         int rank = i + 1;
 
@@ -65,6 +66,7 @@ public class BatchSearch {
                 formatScore(score));
       }
     }
+    if (parameters.get("print_calls", "false").equals("true")) CallTable.print(System.out);
   }
 
   public static void main(String[] args) throws Exception {

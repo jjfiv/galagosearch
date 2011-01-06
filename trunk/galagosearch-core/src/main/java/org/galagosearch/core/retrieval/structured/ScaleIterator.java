@@ -46,6 +46,10 @@ public class ScaleIterator extends DocumentOrderedScoreIterator {
   public void moveTo(int document) throws IOException {
     iterator.moveTo(document);
   }
+ 
+    public long totalCandidates() {
+	return iterator.totalCandidates();
+    }
 
   public void movePast(int document) throws IOException {
     iterator.movePast(document);

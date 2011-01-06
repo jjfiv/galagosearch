@@ -86,6 +86,11 @@ public class TopDocsScoringIterator extends DocumentOrderedScoreIterator {
   }
 
   @Override
+  public long totalCandidates() {
+      return mainIterator.totalCandidates();
+  }
+
+  @Override
   public boolean isDone() {
     return mainIterator.isDone();
   }

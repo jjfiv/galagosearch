@@ -9,6 +9,7 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.DocumentOrderedScoreIterator;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
@@ -56,6 +57,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
       if (index < documentCount) {
         currentDocument += stream.readInt();
         currentScore = stream.readFloat();
+	CallTable.increment("sparse_float_read");
       }
     }
 
@@ -154,6 +156,10 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
 
     public boolean isDone() {
       return index >= documentCount;
+    }
+
+    public long totalCandidates() {
+      return documentCount;
     }
   }
   IndexReader reader;

@@ -31,6 +31,7 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
     double[][] weightLists = null; // double[parameterID][nodeID]
     double[] weightSums = null; // double[parameterID]
     String[] parameterStrings = null; // String[parameterID]
+    long total;
 
     public ScoreCombinationIterator(Parameters parameters,
             DocumentOrderedScoreIterator[] childIterators) {
@@ -38,7 +39,7 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
         weights = new double[childIterators.length];
         weightSum = 0.0;
         int parameterSetSize = 1;
-
+	total = 0;
         String[] weightStrings = parameters.get(Integer.toString(0), "1.0").split(",");
         // check if we need to initialize our arrays
         parameterSetSize = weightStrings.length;
@@ -52,6 +53,7 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
             weightStrings = parameters.get(Integer.toString(i), "1.0").split(",");
             weights[i] = Double.parseDouble(weightStrings[0]);
             weightSum += weights[i];
+	    total = Math.max(total, childIterators[i].totalCandidates());
 
             assert parameterSetSize == weightStrings.length : "COMBINE NODE ERROR : all weight lists need to be the same size";
 
@@ -70,13 +72,24 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
         }
 
         this.iterators = childIterators;
+	if (total < Long.MAX_VALUE) { // do this if none of our children are "infinity"
+	    total = 0;
+	    for (DocumentOrderedScoreIterator it : childIterators) {
+		total += it.totalCandidates();
+	    }
+	}
+    }
+
+    public long totalCandidates() {
+	return total;
     }
 
     public double score() {
         double total = 0;
 
         for (int i = 0; i < iterators.length; i++) {
-            total += weights[i] * iterators[i].score();
+	    double score = iterators[i].score();
+            total += weights[i] * score;
         }
         return total / weightSum;
     }

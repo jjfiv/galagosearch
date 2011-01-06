@@ -15,6 +15,7 @@ import org.galagosearch.core.retrieval.structured.DocumentOrderedIterator;
 import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.core.util.ExtentArray;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Processor;
@@ -169,6 +170,8 @@ public class PositionIndexReader implements StructuredIndexPartReader {
     private void loadExtents() throws IOException {
       currentDocument += documents.readInt();
       currentCount = counts.readInt();
+      CallTable.increment("pir_read");
+      CallTable.increment("pos_read", currentCount);
       extentArray.reset();
 
       int position = 0;
@@ -285,6 +288,7 @@ public class PositionIndexReader implements StructuredIndexPartReader {
       }
       skipsRead++;
       lastSkipPosition = currentSkipPosition;
+      CallTable.increment("pir_skip");
     }
 
     private void repositionMainStreams() throws IOException {

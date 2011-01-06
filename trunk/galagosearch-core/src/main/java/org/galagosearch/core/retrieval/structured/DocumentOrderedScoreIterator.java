@@ -54,6 +54,11 @@ public abstract class DocumentOrderedScoreIterator implements DocumentOrderedIte
     public abstract double score();
     public abstract double score(int document, int length); // use context defined by these variables
 
+    // This provides an estimate of how many entries there are in the underlying iterator - implementation is optional
+    public long totalCandidates() {
+	return Long.MAX_VALUE;
+    }
+
     // by default parameterSweeping is unsupported by any score iterator
     public TObjectDoubleHashMap<String> parameterSweepScore() {
       throw new UnsupportedOperationException("Parameter sweep not supported for this score iterator.");

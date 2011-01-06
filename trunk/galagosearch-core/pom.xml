@@ -31,6 +31,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.7</version>
         <configuration>
           <excludePackageNames>org.galagosearch.core.types</excludePackageNames>
         </configuration>
@@ -38,8 +39,10 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>jxr-maven-plugin</artifactId>
+        <version>2.2</version>
       </plugin>
       <plugin>
+        <version>2.7.1</version>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <forkMode>pertest</forkMode>
@@ -49,6 +52,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>cobertura-maven-plugin</artifactId>
+        <version>2.4</version>
       </plugin>
     </plugins>
   </reporting>
@@ -95,6 +99,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>2.3.1</version>
         <configuration>
           <archive>
             <manifest>
@@ -113,6 +118,7 @@
         </configuration>
       </plugin>
       <plugin>
+        <version>1.1</version>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>appassembler-maven-plugin</artifactId>
         <executions>

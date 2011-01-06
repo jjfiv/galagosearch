@@ -20,8 +20,8 @@ public class ScoredDocument implements Comparable<ScoredDocument> {
     if (score != other.score) {
       return Double.compare(score, other.score);
     }
-    if( (source != null) &&
-        (! source.equals(other.source))){
+    if( (source != null) && (other.source != null) &&
+        (! source.equals(other.source))) {
       return source.compareTo(other.source);
     }
     return other.document - document;

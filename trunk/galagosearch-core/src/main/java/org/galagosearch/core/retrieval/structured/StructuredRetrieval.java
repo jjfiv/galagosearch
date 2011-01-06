@@ -114,7 +114,7 @@ public class StructuredRetrieval extends Retrieval {
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
     NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
-
+    
     while (!iterator.isDone()) {
       int document = iterator.currentCandidate();
       lengthsIterator.skipTo(document);
@@ -122,7 +122,7 @@ public class StructuredRetrieval extends Retrieval {
       // This context is shared among all scorers
       iterator.setScoringContext(document, length);
       double score = iterator.score();
-
+      CallTable.increment("scored");
       if (queue.size() <= requested || queue.peek().score < score) {
         ScoredDocument scoredDocument = new ScoredDocument(document, score);
         queue.add(scoredDocument);

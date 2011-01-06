@@ -13,7 +13,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author marc
  */
-@RequiredStatistics(statistics = {"collectionLength"})
+@RequiredStatistics(statistics = {"collectionLength","lambda"})
 public class JelinekMercerScoringIterator extends ScoringFunctionIterator {
     public JelinekMercerScoringIterator(Parameters p, DocumentOrderedCountIterator it)
             throws IOException {

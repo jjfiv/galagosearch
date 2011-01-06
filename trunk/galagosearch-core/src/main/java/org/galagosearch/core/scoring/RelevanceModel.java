@@ -76,7 +76,8 @@ public class RelevanceModel implements ExpansionModel {
         if (docLengths == null) {
            docLengths = new DocumentLengthsReader(parameters.get("index") + File.separator + "documentLengths");            
         } 
-
+	assert(cReader != null);
+	assert(docLengths != null);
         if (tokenizer == null) {
             tokenizer = new TagTokenizer();
         }
