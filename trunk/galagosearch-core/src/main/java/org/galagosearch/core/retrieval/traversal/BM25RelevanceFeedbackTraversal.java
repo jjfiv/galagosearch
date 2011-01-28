@@ -16,6 +16,7 @@ import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.core.scoring.TermSelectionValueModel;
 import org.galagosearch.core.scoring.TermSelectionValueModel.Gram;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.core.util.TextPartAssigner;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
@@ -49,8 +50,11 @@ public class BM25RelevanceFeedbackTraversal implements Traversal {
 
         // Kick off the inner query
         Parameters parameters = original.getParameters();
+	boolean usingMaxScore = parameters.get("maxscore", false);
+	boolean usingRefine = parameters.get("refine", false);
         int fbDocs = (int) parameters.get("fbDocs", 10);
-        Node combineNode = new Node("combine", original.getInternalNodes());
+	String operator = usingMaxScore ? "maxscore" : (usingRefine ? "refine" : "combine");
+        Node combineNode = new Node(operator, original.getInternalNodes());
         ArrayList<ScoredDocument> initialResults = new ArrayList<ScoredDocument>();
 
         // Only get as many as we need
@@ -61,7 +65,6 @@ public class BM25RelevanceFeedbackTraversal implements Traversal {
 
         // while that's running, extract the feedback parameters
         int fbTerms = (int) parameters.get("fbTerms", 10);
-        double fbOrigWt = parameters.get("fbOrigWt", 0.5);
         Parameters tsvParameters = queryParameters.clone();
         tsvParameters.set("fbDocs", Integer.toString(fbDocs));
         tsvParameters.add("part", availableParts.list("part"));
@@ -71,23 +74,20 @@ public class BM25RelevanceFeedbackTraversal implements Traversal {
         Set<String> queryTerms = StructuredQuery.findQueryTerms(combineNode, "extents");
         stopwords.addAll(queryTerms);
 
+	// Start constructing the final query
+	ArrayList<Node> newChildren = new ArrayList<Node>();
+	newChildren.addAll(original.getInternalNodes());
+
         // Now we wait
         retrieval.waitForAsynchronousQuery();
         Node newRoot = null;
         Node expansionNode = tsvModel.generateExpansionQuery(initialResults, fbTerms, stopwords);
         tsvModel.cleanup();
 
-        if (fbOrigWt == 0.0) {
-            newRoot = expansionNode;
-        } else {
-            Parameters expParams = new Parameters();
-            expParams.set("1", Double.toString(fbOrigWt));
-            expParams.set("2", Double.toString(1 - fbOrigWt));
-            ArrayList<Node> newChildren = new ArrayList<Node>();
-            newChildren.add(combineNode);
-            newChildren.add(expansionNode);
-            newRoot = new Node("combine", expParams, newChildren, 0);
-        }
+	// The easiest thing to do really is extract the children and combine them w/ the existing
+	// query nodes, b/c the expansion is unweighted and flat.
+	newChildren.addAll(expansionNode.getInternalNodes());	
+	newRoot = new Node(operator, new Parameters(), newChildren, original.getPosition());
         return newRoot;
     }
 
