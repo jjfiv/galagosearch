@@ -337,17 +337,27 @@ public class Sorter<T> extends StandardStep<T, T> implements NotificationListene
    * aren't sorted, we have to sort them first before writing them to disk.
    * The sorting process can take extra memory and time, which makes us
    * risk running out of RAM while trying to get data out onto the disk.
+   *
+   * [1/8/2011, irmarc]: Switched the order of the reduce/sort. This invalidates the last point
+   *                     above, however the reducer is largely useless if it can't make
+   *                     the assumption that the input is coming in sorted. After some
+   *                     discussion, we determined this would make the reducer much more palatable as
+   *                     as a tool.
    */
   private synchronized void reduce() throws IOException {
     if (size() == 0) {
       return;
     }
-    List<T> results = objects;
+    List<T> results;
+
+    Collections.sort(objects, lessThanCompare);
 
     if (reducer != null) {
       results = reducer.reduce(objects);
+    } else {
+	results = objects;
     }
-    Collections.sort(results, lessThanCompare);
+
     runs.add(results);
     runsCount += results.size();
 
