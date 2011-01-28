@@ -103,7 +103,7 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         Node transformed = StructuredQuery.copy(traversal, parsedTree);
         // truth data
         StringBuilder correct = new StringBuilder();
-        correct.append("#combine:2=@/0.5/:1=@/0.5/( ");
+        correct.append("#combine:1=@/0.5/:0=@/0.5/( ");
         correct.append("#combine( #feature:dirichlet( #extents:fits:part=postings() ) ) ");
         correct.append("#combine:2=@/0.041611258865248225/:1=@/0.041611258865248225/:0=@/0.12516622340425534/( ");
         correct.append("#feature:dirichlet( #extents:program:part=postings() ) ");
@@ -125,10 +125,9 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         Node transformed = StructuredQuery.copy(traversal, parsedTree);
         //truth data
         StringBuilder correct = new StringBuilder();
-        correct.append("#combine:2=@/0.5/:1=@/0.5/( ");
-        correct.append("#combine( #feature:bm25( #extents:cat:part=postings() ) ) ");
-        correct.append("#combine( #feature:bm25rf:R=3:rt=2( #extents:moon:part=postings() ) ");
-        correct.append("#feature:bm25rf:R=3:rt=1( #extents:jumped:part=postings() ) ) )");
+        correct.append("#combine( #feature:bm25( #extents:cat:part=postings() ) ");
+        correct.append("#feature:bm25rf:R=3:rt=2( #extents:moon:part=postings() ) ");
+        correct.append("#feature:bm25rf:R=3:rt=1( #extents:jumped:part=postings() ) )");
         assertEquals(correct.toString(), transformed.toString());
         retrieval.close();
     }

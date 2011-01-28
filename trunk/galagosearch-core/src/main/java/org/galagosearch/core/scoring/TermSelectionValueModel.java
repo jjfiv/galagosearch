@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.galagosearch.core.index.PositionIndexReader;
+import org.galagosearch.core.index.AggregateReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.parse.CorpusReader;
@@ -36,7 +36,7 @@ public class TermSelectionValueModel implements ExpansionModel {
     // This version of the gram contains all contextual information
     // for the modified scoring algorithm.
 
-    public static class Gram implements Comparable<Gram> {
+    public static class Gram implements WeightedTerm {
 
         public String term;
         public double score;
@@ -48,7 +48,11 @@ public class TermSelectionValueModel implements ExpansionModel {
             score = 0.0;
         }
 
-        public int compareTo(Gram that) {
+	public String getTerm() { return term; }
+	public double getWeight() { return score; }
+
+        public int compareTo(WeightedTerm other) {
+	    Gram that = (Gram) other;
             return (this.score > that.score ? -1 : (this.score < that.score ? 1 : 0));
         }
     }
@@ -81,9 +85,9 @@ public class TermSelectionValueModel implements ExpansionModel {
         }
 
         // Finally, we need an iterator from the index for the doc. frequencies
-        // For now we only take PositionIndexReader.Iterators, meaning we need
-        // a dummy text node
-        Node dummy = TextPartAssigner.assignPart(new Node(), parameters);
+        // For now we only take AggregateReader objects, which can report that number. Meaning we need
+        // a dummy text node to get the part assignment
+        Node dummy = TextPartAssigner.assignPart(new Node("text", "dummy"), parameters);
         String indexPart = parameters.get("index") + File.separator + "parts"
                 + File.separator + dummy.getParameters().get("part");
         reader = StructuredIndex.openIndexPart(indexPart);
@@ -96,25 +100,25 @@ public class TermSelectionValueModel implements ExpansionModel {
         reader = null;
     }
 
-    public ArrayList<Gram> generateGrams(List<ScoredDocument> initialResults) throws IOException {
+    public List<WeightedTerm> generateGrams(List<ScoredDocument> initialResults) throws IOException {
         // Count the dfs of the terms relative to the fb docs
         TObjectIntHashMap counts = countRFDF(initialResults);
 
         // now get collection-wide dfs, and calculate the TSVs.
-        ArrayList<Gram> scored = scoreGrams(counts);
+        ArrayList<WeightedTerm> scored = scoreGrams(counts);
         Collections.sort(scored);
         return scored;
     }
 
     public Node generateExpansionQuery(List<ScoredDocument> initialResults, int fbTerms,
-            Set<String> exclusionTerms) throws IOException {
-        List<Gram> scored = generateGrams(initialResults);
+				       Set<String> exclusionTerms) throws IOException {
+        List<WeightedTerm> scored = (List<WeightedTerm>) generateGrams(initialResults);
 
         ArrayList<Node> children = new ArrayList<Node>();
         Parameters expParams = new Parameters();
         int expanded = 0;
         for (int i = 0; i < scored.size() && expanded < fbTerms; i++) {
-            Gram g = scored.get(i);
+            Gram g = (Gram) scored.get(i);
             if (exclusionTerms.contains(g.term)) {
                 continue;
             }
@@ -150,8 +154,8 @@ public class TermSelectionValueModel implements ExpansionModel {
         return counts;
     }
 
-    protected ArrayList<Gram> scoreGrams(TObjectIntHashMap counts) {
-        ArrayList<Gram> grams = new ArrayList<Gram>();
+    protected ArrayList<WeightedTerm> scoreGrams(TObjectIntHashMap counts) {
+        ArrayList<WeightedTerm> grams = new ArrayList<WeightedTerm>();
         TObjectIntProcedure gramGenerator = new GramGenerator(grams, reader);
         counts.forEachEntry(gramGenerator);
         return grams;
@@ -159,14 +163,14 @@ public class TermSelectionValueModel implements ExpansionModel {
 
     public class GramGenerator implements TObjectIntProcedure {
 
-        ArrayList<Gram> grams;
+        ArrayList<WeightedTerm> grams;
         int R;
-        PositionIndexReader reader;
+        AggregateReader reader;
 
-        public GramGenerator(ArrayList<Gram> g, StructuredIndexPartReader reader) {
+        public GramGenerator(ArrayList<WeightedTerm> g, StructuredIndexPartReader reader) {
             this.grams = g;
             this.R = fbDocs;
-            this.reader = (PositionIndexReader) reader;
+            this.reader = (AggregateReader) reader;
         }
 
         // Variable naming is consistent w/ the formula for TSV in the paper.

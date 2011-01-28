@@ -17,7 +17,7 @@ public interface ExpansionModel {
     public void initialize() throws Exception;
     public void cleanup() throws Exception;
 
-    public List<? extends Object> generateGrams(List<ScoredDocument> initialResults)
+    public List<WeightedTerm> generateGrams(List<ScoredDocument> initialResults)
             throws IOException;
 
     public Node generateExpansionQuery(List<ScoredDocument> initialResults, int fbTerms, 

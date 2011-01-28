@@ -48,15 +48,14 @@ public class BatchSearch {
     int requested = (int) parameters.get("count", 1000);
 
     // for each query, run it, get the results, print in TREC format
+    int index = 0;
     for (Parameters.Value query : queries) {
 
       String queryText = query.get("text");
-
       Parameters p = new Parameters();
       p.add("requested", Integer.toString(requested));
-      Node root = StructuredQuery.parse(queryText);
+      Node root = StructuredQuery.parse(queryText);      
       Node transformed = retrieval.transformQuery(root, "all");
-      System.err.printf("Running query: %s\n", transformed.toString());
       ScoredDocument[] results = retrieval.runQuery(transformed, p);
       for (int i = 0; i < results.length; i++) {
         double score = results[i].score;
@@ -65,8 +64,11 @@ public class BatchSearch {
         out.format("%s Q0 %s %d %s galago\n", query.get("number"), results[i].documentName, rank,
                 formatScore(score));
       }
+      index++;
+      if (parameters.get("print_calls", "false").equals("true")) CallTable.print(System.err, Integer.toString(index));
+      CallTable.reset();
     }
-    if (parameters.get("print_calls", "false").equals("true")) CallTable.print(System.out);
+
   }
 
   public static void main(String[] args) throws Exception {

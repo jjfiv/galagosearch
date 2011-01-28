@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.parse.CorpusReader;
@@ -25,7 +26,7 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class RelevanceModel implements ExpansionModel {
 
-    public static class Gram implements Comparable<Gram> {
+    public static class Gram implements WeightedTerm {
 
         public String term;
         public double score;
@@ -35,8 +36,12 @@ public class RelevanceModel implements ExpansionModel {
             score = 0.0;
         }
 
+	public String getTerm() { return term; }
+	public double getWeight() { return score; }
+
         // The secondary sort is to have defined behavior for statistically tied samples.
-        public int compareTo(Gram that) {
+        public int compareTo(WeightedTerm other) {
+	    Gram that = (Gram) other;
             int result = this.score > that.score ? -1 : (this.score < that.score ? 1 : 0);
             if (result != 0) {
                 return result;
@@ -94,17 +99,17 @@ public class RelevanceModel implements ExpansionModel {
         tokenizer = null;
     }
 
-    public ArrayList<Gram> generateGrams(List<ScoredDocument> initialResults) throws IOException {
+    public ArrayList<WeightedTerm> generateGrams(List<ScoredDocument> initialResults) throws IOException {
         HashMap<Integer, Double> scores = logstoposteriors(initialResults);
         HashMap<String, HashMap<Integer, Integer>> counts = countGrams(initialResults, cReader);
-        ArrayList<Gram> scored = scoreGrams(counts, scores, docLengths);
+        ArrayList<WeightedTerm> scored = scoreGrams(counts, scores, docLengths);
         Collections.sort(scored);
         return scored;
     }
 
     public Node generateExpansionQuery(List<ScoredDocument> initialResults, int fbTerms,
             Set<String> exclusionTerms) throws IOException {
-        List<Gram> scored = generateGrams(initialResults);
+        List<WeightedTerm> scored = generateGrams(initialResults);
         ArrayList<Node> newChildren = new ArrayList<Node>();
         Parameters expParams = new Parameters();
         int expanded = 0;
@@ -112,14 +117,15 @@ public class RelevanceModel implements ExpansionModel {
         // Time to construct the modified query - start with the expansion since we always have it
         // make sure we filter stopwords
         for (int i = 0; i < scored.size() && expanded < fbTerms; i++) {
-            Gram g = scored.get(i);
+            Gram g = (Gram) scored.get(i);
             if (exclusionTerms.contains(g.term)) {
                 continue;
             }
             Node inner = TextPartAssigner.assignPart(new Node("text", g.term), parameters);
             ArrayList<Node> innerChild = new ArrayList<Node>();
             innerChild.add(inner);
-            newChildren.add(new Node("feature", "dirichlet", innerChild));
+	    String scorerType = parameters.get("scorer", "dirichlet");
+            newChildren.add(new Node("feature", scorerType, innerChild));
             expParams.set(Integer.toString(expanded), Double.toString(g.score));
             expanded++;
         }
@@ -141,14 +147,14 @@ public class RelevanceModel implements ExpansionModel {
         // First pass to get the sum
         double sum = 0;
         for (ScoredDocument sd : results) {
-            sd.score = Math.exp(K + sd.score);
-            sum += sd.score;
+	    double recovered = Math.exp(K+ sd.score);
+	    scores.put(sd.document, recovered);
+            sum += recovered;
         }
 
         // Normalize
-        for (ScoredDocument sd : results) {
-            sd.score /= sum;
-            scores.put(sd.document, sd.score);
+	for (Map.Entry<Integer, Double> entry : scores.entrySet()) {
+	    entry.setValue(entry.getValue() / sum);
         }
         return scores;
     }
@@ -157,7 +163,9 @@ public class RelevanceModel implements ExpansionModel {
         HashMap<String, HashMap<Integer, Integer>> counts = new HashMap<String, HashMap<Integer, Integer>>();
         HashMap<Integer, Integer> termCounts;
         Document doc;
+	assert(reader != null);
         for (ScoredDocument sd : results) {
+	    assert (sd.documentName != null);
             doc = reader.getDocument(sd.documentName);
             tokenizer.tokenize(doc);
             for (String term : doc.terms) {
@@ -175,9 +183,9 @@ public class RelevanceModel implements ExpansionModel {
         return counts;
     }
 
-    protected ArrayList<Gram> scoreGrams(HashMap<String, HashMap<Integer, Integer>> counts,
-            HashMap<Integer, Double> scores, DocumentLengthsReader docLengths) throws IOException {
-        ArrayList<Gram> grams = new ArrayList<Gram>();
+    protected ArrayList<WeightedTerm> scoreGrams(HashMap<String, HashMap<Integer, Integer>> counts,
+						 HashMap<Integer, Double> scores, DocumentLengthsReader docLengths) throws IOException {
+        ArrayList<WeightedTerm> grams = new ArrayList<WeightedTerm>();
         HashMap<Integer, Integer> termCounts;
         HashMap<Integer, Integer> lengthCache = new HashMap<Integer, Integer>();
 
