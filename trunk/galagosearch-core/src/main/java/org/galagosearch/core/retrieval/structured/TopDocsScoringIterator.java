@@ -49,8 +49,10 @@ public class TopDocsScoringIterator extends DocumentOrderedScoreIterator {
         }
 
         tdIterator = reader.getTopDocs(p.get("term"));
-        TopDocument td = tdIterator.getCurrentTopDoc();
-        maxscore = function.score(td.count, td.length);
+        
+	// Assumes score-sorted order. It's not currently.
+	//TopDocument td = tdIterator.getCurrentTopDoc();
+        //maxscore = function.score(td.count, td.length);
       } catch (Exception e) {
         tdIterator = null;
       }

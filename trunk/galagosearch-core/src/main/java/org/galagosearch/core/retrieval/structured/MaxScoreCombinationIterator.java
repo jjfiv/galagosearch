@@ -23,6 +23,7 @@ import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.TopDocsReader;
 import org.galagosearch.core.index.TopDocsReader.TopDocument;
 import org.galagosearch.core.scoring.ScoringFunction;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -91,6 +92,16 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     }
   }
 
+  private class WeightComparator implements Comparator<DocumentOrderedScoreIterator> {
+      public int compare(DocumentOrderedScoreIterator a, DocumentOrderedScoreIterator b) {
+	  if (!a.isDone() && b.isDone()) return -1;
+	  if (a.isDone() && !b.isDone()) return 1;
+	  double w1 = weightLookup.get(a);
+	  double w2 = weightLookup.get(b);
+	  return (w1 > w2 ? -1 : (w1 < w2 ? 1 : 0));
+      }
+  }
+
   private static class TotalCandidateComparator implements Comparator<DocumentOrderedScoreIterator> {
 
     public int compare(DocumentOrderedScoreIterator a, DocumentOrderedScoreIterator b) {
@@ -131,15 +142,18 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     }
     cacheScores(topdocs);
     scoreList.addAll(Arrays.asList(iterators));
-    Collections.sort(scoreList, new TotalCandidateComparator());
+    String sort = parameters.get("sort", "length");
+    if (sort.equals("weight")) {
+	Collections.sort(scoreList, new WeightComparator());
+    } else {
+	Collections.sort(scoreList, new TotalCandidateComparator());
+    }
     for (int i = 0; i < iterators.length; i++) {
       DocumentOrderedScoreIterator dosi = iterators[i];
       potential += weights[i] * dosi.maximumScore();
       minimum += weights[i] * dosi.minimumScore();
-      // don't normalize
     }
-    //    System.err.printf("Done caching. threshold=%f, R size=%d, potential=%f, minimum=%f\n", threshold,
-    //	      R.size(), potential, minimum);
+    computeQuorum();
   }
     
     @Override
@@ -152,19 +166,20 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
 	// Not infinity/max
 	s = 0;
-	for (DocumentOrderedScoreIterator it : iterators) {
-	    s += it.maximumScore();
+	for (int i = 0; i < iterators.length; i++) {
+	    s += weights[i] * iterators[i].maximumScore();
 	}
-	return s;
+	return s / weightSum;
     }
+
 
     @Override
     public double minimumScore() {
 	double s = 0;
-	for (DocumentOrderedScoreIterator it : iterators) {
-	    s += it.minimumScore();
+	for (int i = 0; i < iterators.length; i++) {
+	    s += weights[i] * iterators[i].minimumScore();
 	}
-	return s;
+	return s / weightSum;
     }
    
   /**
@@ -205,7 +220,6 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
       for (int i = 0; i < quorumIndex; i++) {
 	  candidate = Math.min(candidate, scoreList.get(i).currentCandidate());
       }
-      //System.err.printf("Returning currentCandidate=%d\n", candidate);
       lastReportedCandidate = candidate;
       return candidate;
   }
@@ -252,7 +266,6 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
   public double score(int document, int length) {
       try {
-	  //System.err.printf("Scoring %d, length %d\n", document, length);
 	  if ((candidatesIndex < topdocsCandidates.size() &&
 	       document == topdocsCandidates.get(candidatesIndex)) ||
 	      (R.size() < requested)) {
@@ -261,8 +274,6 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 		  it.skipToDocument(lastReportedCandidate);
 	      }
 	      double score = fullyScore(document, length);
-	      //	      System.err.printf("Fully scored: %d=%f (topdocs=%b, R.size=%d, req=%d)\n", document, score,
-	      //		(document == topdocsCandidates.get(candidatesIndex)), R.size(), requested);
 	      adjustThreshold(document, score);
 	      return score / weightSum;
 	  } else {
@@ -275,20 +286,21 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 		  inc = weightLookup.get(it) * (it.score(document, length) - it.maximumScore());
 		  adjustedPotential += inc;
 	      }
+
 	      while (adjustedPotential > threshold && i < scoreList.size()) {
 		  DocumentOrderedScoreIterator it = scoreList.get(i);
 		  it.skipToDocument(lastReportedCandidate);
 		  adjustedPotential += weightLookup.get(it) * (it.score(document, length) - it.maximumScore());
 		  i++;
 	      }
-	 
+	      
 	      // fully scored!
 	      if (i == scoreList.size()) {
 		  adjustThreshold(document, adjustedPotential);
-		  //System.err.printf("Successfully scored %d=%f\n", document, adjustedPotential);
 		  return adjustedPotential / weightSum; 
 	      } else {
 		  // didn't make the cut
+		  CallTable.increment("iterator_pruned", (scoreList.size()-i));
 		  return minimum / weightSum;
 	      }
 	  }
@@ -312,11 +324,9 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    * @param newscore
    */
   protected void adjustThreshold(int document, double newscore) {
-      boolean recompute = false;
       if (ids.contains(document)) {
 	  for (Placeholder p : R) {
 	      if (p.document == document) {
-		  //System.err.printf("Adjusting R score: %d=%f --> %f\n", document, p.score, newscore);
 		  p.score = newscore;
 		  break;
 	      }
@@ -325,25 +335,18 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 	  if (R.size() < requested) {
 	      R.add(new Placeholder(document, newscore));	      
 	      ids.add(document);
-	      if (R.size() == requested) recompute = true;
-	      //System.err.printf("Added <%d, %f>\n", document, newscore);
 	  } else {
 	      if (newscore > R.get(requested-1).score) {
-		  recompute = true;
 		  Placeholder old = R.remove(requested-1);
 		  R.add(new Placeholder(document, newscore));
 		  ids.remove(old.document);
 		  ids.add(document);
-		  //System.err.printf("Replaced R member. <%d, %f> removed, <%d, %f> added.\n",
-		  //	    old.document, old.score, document, newscore);
 	      }
 	  }
       }
       if (R.size() == requested) {
 	  Collections.sort(R);
 	  threshold = R.get(requested-1).score;
-      }
-      if (recompute) {
 	  computeQuorum();
       }
   }
@@ -359,20 +362,19 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
       } else {
 	  // Now we try
 	  adjustedPotential = potential;
-	  int i = 0;
-	  for (; i < scoreList.size() && adjustedPotential > threshold; i++) {
+	  int i;
+	  for (i = 0; i < scoreList.size() && adjustedPotential > threshold; i++) {
 	      DocumentOrderedScoreIterator it = scoreList.get(i);
-	      adjustedPotential += (it.minimumScore() - it.maximumScore());
+	      double inc = weightLookup.get(it) * (it.minimumScore() - it.maximumScore());
+		      adjustedPotential += inc;
 	  }
-	  quorumIndex = i;
+	  quorumIndex = i;	  
       }
-      //      System.err.printf("New quorum index is %d. adjustedpot=%f, pot=%f, threshold=%f\n", quorumIndex,
-      //		adjustedPotential, potential, threshold);
   }
   /**
    * We pre-evaluate the the topdocs lists by scoring them against all iterators
    * that have topdocs, giving us a partial evaluation, and therefore a better
-   * threshold bound - we also move the scored count up in order to activate
+   * threshold bound - we also move the scored count up in order to activate the
    * threshold sooner.
    */
   protected void cacheScores(ArrayList<DocumentOrderedScoreIterator> topdocs) throws IOException {
@@ -439,6 +441,9 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     while (R.size() > requested) R.remove(R.size()-1);
     threshold = R.get(R.size()-1).score;
     R.trimToSize();
+    for (int i = 0; i < R.size(); i++) {
+	ids.add(R.get(i).document);
+    }
     candidatesIndex = 0;
   }
 }

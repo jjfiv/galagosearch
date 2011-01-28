@@ -86,7 +86,6 @@ public class DocumentLengthsReader {
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {
-      CallTable.increment("doclength_read");
       int docNum = Utility.toInt(iterator.getKey());
       int length = Utility.uncompressInt(iterator.getValueBytes(), 0);
       return new NumberedDocumentData("", "", docNum, length);

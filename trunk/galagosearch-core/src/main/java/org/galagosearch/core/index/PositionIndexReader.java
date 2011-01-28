@@ -35,7 +35,7 @@ import org.galagosearch.tupleflow.VByteInput;
  *
  * @author trevor, irmarc
  */
-public class PositionIndexReader implements StructuredIndexPartReader {
+public class PositionIndexReader implements StructuredIndexPartReader, AggregateReader {
 
   public static interface Iterator {
 
@@ -170,8 +170,6 @@ public class PositionIndexReader implements StructuredIndexPartReader {
     private void loadExtents() throws IOException {
       currentDocument += documents.readInt();
       currentCount = counts.readInt();
-      CallTable.increment("pir_read");
-      CallTable.increment("pos_read", currentCount);
       extentArray.reset();
 
       int position = 0;
@@ -288,7 +286,6 @@ public class PositionIndexReader implements StructuredIndexPartReader {
       }
       skipsRead++;
       lastSkipPosition = currentSkipPosition;
-      CallTable.increment("pir_skip");
     }
 
     private void repositionMainStreams() throws IOException {

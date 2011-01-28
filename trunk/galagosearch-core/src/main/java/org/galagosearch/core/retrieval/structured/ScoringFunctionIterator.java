@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.scoring.ScoringFunction;
+import org.galagosearch.core.util.CallTable;
 
 /**
  * An iterator that converts a count iterator's count into a score.
@@ -56,6 +57,8 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
   public double score(int document, int length) {
     int count = 0;
 
+    // Used in counting # of score calls. Uncomment if you want to track that.
+    //CallTable.increment("score_req");
     if (iterator.document() == document) {
       count = iterator.count();
     }

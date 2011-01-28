@@ -95,12 +95,12 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
     }
 
     public double score(int document, int length) {
-        double total = 0;
+        double score = 0;
 
         for (int i = 0; i < iterators.length; i++) {
-            total += weights[i] * iterators[i].score(document, length);
+            score += weights[i] * iterators[i].score(document, length);
         }
-        return total / weightSum;
+        return score / weightSum;
     }
 
     public void movePast(int document) throws IOException {
@@ -127,6 +127,23 @@ public abstract class ScoreCombinationIterator extends DocumentOrderedScoreItera
             iterator.reset();
         }
     }
+
+    public double minimumScore() {
+	double min = 0;
+	for (int i = 0; i < iterators.length; i++) {
+	    min += weights[i] * iterators[i].minimumScore();
+	}
+	return (min / weightSum);
+    }
+
+    public double maximumScore() {
+	double max = 0;
+	for (int i = 0; i < iterators.length; i++) {
+	    max += weights[i] * iterators[i].maximumScore();
+	}
+	return (max / weightSum);
+    }
+
 
     //***********************//
     //  parameter sweep code //

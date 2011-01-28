@@ -57,7 +57,6 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
       if (index < documentCount) {
         currentDocument += stream.readInt();
         currentScore = stream.readFloat();
-	CallTable.increment("sparse_float_read");
       }
     }
 

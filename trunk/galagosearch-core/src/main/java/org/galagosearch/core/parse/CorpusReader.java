@@ -57,7 +57,6 @@ public class CorpusReader extends DocumentReader {
     if (iterator == null) {
       return null;
     }
-    CallTable.increment("corpus_read");
     return new Iterator(iterator).getDocument();
   }
 

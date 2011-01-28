@@ -117,7 +117,6 @@ public class TopDocsReader implements StructuredIndexPartReader {
         currentTopDoc.count = data.readInt();
         currentTopDoc.length = data.readInt();
         index++;
-	CallTable.increment("topdoc_read");
       } else {
         currentTopDoc = null;
       }

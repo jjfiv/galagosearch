@@ -30,25 +30,32 @@ public class CallTable {
         counts.clear();
     }
 
-    private static class Printer implements TObjectLongProcedure {
-        PrintStream out;
-
-        public Printer(PrintStream out) {
-            this.out = out;
-        }
-
-        public boolean execute(Object a, long b) {
-            out.printf("CALL_TABLE:\t%s\t%d\n", ((String) a), b);
-            return true;
-        }
+    public static void print(PrintStream out) {
+	print(out, "");
     }
 
-    public static void print(PrintStream out) {
-        Printer p = new Printer(out);
+    public static void print(PrintStream out, String prefix) {
+        Printer p = new Printer(out, prefix);
         counts.forEachEntry(p);
     }
 
     public static void turnOn() { on = true; }
     public static void turnOff() { on = false; }
     public static boolean getStatus() { return on; }
+
+    private static class Printer implements TObjectLongProcedure {
+        PrintStream out;
+	String prefix;
+
+        public Printer(PrintStream out, String prefix) {
+            this.out = out;
+	    this.prefix = prefix;
+        }
+	
+        public boolean execute(Object a, long b) {
+            out.printf("CALL_TABLE:%s\t%s\t%d\n", (prefix == null ? "" : "\t"+prefix), 
+		       ((String) a), b);
+            return true;
+        }
+    }
 }
