@@ -100,6 +100,10 @@ public class Verification {
         public Parameters getXML() {
             return step.getParameters();
         }
+
+        public int getInstanceId() {
+            return 0;
+        }
     }
 
     /**

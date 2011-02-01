@@ -73,6 +73,10 @@ public class StageInstanceFactory {
         public Parameters getXML() {
             return xml;
         }
+
+        public int getInstanceId() {
+            return instance.index;
+        }
     }
 
     public ExNihiloSource instantiate(StageInstanceDescription instance)

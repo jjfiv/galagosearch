@@ -37,4 +37,8 @@ public class FakeParameters implements TupleFlowParameters {
     public boolean writerExists(String specification, String className, String[] order) {
         return false;
     }
+
+    public int getInstanceId() {
+        return 0;
+    }
 }

@@ -6,4 +6,5 @@ type NumberWordPosition {
     int position;
     
     order: +word +document +position;
+    order: +word;
 }

@@ -15,4 +15,6 @@ public interface TupleFlowParameters {
 
     public boolean readerExists(String specification, String className, String[] order);
     public boolean writerExists(String specification, String className, String[] order);
+
+    public int getInstanceId();
 }

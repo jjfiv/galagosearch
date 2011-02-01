@@ -185,6 +185,10 @@ public class Job implements Serializable {
      * making connections between sub-jobs.
      */
     public void connect(String sourceName, String destinationName, ConnectionAssignmentType assignment) {
+      connect(sourceName, destinationName, assignment, null, -1);
+    }
+
+    public void connect(String sourceName, String destinationName, ConnectionAssignmentType assignment, String[] hashType, int hashCount) {
         // scan the stages, looking for sources
         Map<String, Stage> sources = findStagesWithPrefix(sourceName);
         Map<String, Stage> destinations = findStagesWithPrefix(destinationName);
@@ -217,19 +221,19 @@ public class Job implements Serializable {
                 assert outputMap.get(destinationPoint.pointName).size() == 1;
                 StagePoint sourcePoint = outputMap.get(destinationPoint.pointName).get(0);
 
-                connect(sourcePoint, destinationPoint, assignment);
+                String[] tmpHashType = null;
+                int tmpHashCount = -1;
+                if( assignment != ConnectionAssignmentType.Combined ){
+                  if( hashCount > 0 )
+                    tmpHashCount = 0;
+                  if( hashType != null )
+                    tmpHashType = hashType;
+                  else
+                    tmpHashType = sourcePoint.point.getOrder();
+                }
+                connect(sourcePoint, destinationPoint, assignment, tmpHashType, hashCount);
             }
         }
-    }
-
-    public void connect(StagePoint source, StagePoint destination, ConnectionAssignmentType assignment) {
-        int hashCount = -1;
-        String[] hashType = null;
-
-        if (assignment != ConnectionAssignmentType.Combined) {
-            hashType = source.point.getOrder();
-        }
-        connect(source, destination, assignment, hashType, hashCount);
     }
 
     public void connect(StagePoint source, StagePoint destination, ConnectionAssignmentType assignment, String[] hashType, int hashCount) {
