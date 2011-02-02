@@ -177,7 +177,10 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
             || extension.equals("arc")
             || extension.equals("txt")
             || extension.equals("html")
-            || extension.equals("xml")) {
+            || extension.equals("xml")
+            || extension.equals("wiki"))
+
+    {
       fileType = extension;
     } else {
       // Oh well, we need to autodetect the file type.

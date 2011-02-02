@@ -109,6 +109,8 @@ public class UniversalParser extends StandardStep<DocumentSplit, Document> {
       parser = new TwitterParser(getBufferedReader(split));
     } else if (split.fileType.equals("corpus")) {
       parser = new IndexReaderSplitParser(split);
+    } else if (split.fileType.equals("wiki")) {
+      parser = new WikiParser(getBufferedReader(split));
     } else {
       throw new IOException("Unknown fileType: " + split.fileType +
           " for fileName: "  + split.fileName);
