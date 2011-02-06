@@ -1,6 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.parse;
 
+import org.galagosearch.core.index.corpus.DocumentReader;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -87,18 +88,18 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
   private void processCorpusFile(String fileName, String fileType) throws IOException {
 
     // we want to divde the corpus up into ~100MB chunks
-    long chunkSize = 100 * 1024 * 1024;
+    long chunkSize = 50 * 1024 * 1024;
     long corpusSize = 0L;
 
+    // if we have a corpus folder
     if (DocumentReader.isCorpus(fileName)) {
       File folder = new File(fileName).getParentFile();
       for (File f : folder.listFiles()) {
         corpusSize += f.length();
       }
-    } else { // must be a corpus file.
+    } else { // else must be a corpus file.
       corpusSize = new File(fileName).length();
     }
-
 
     IndexReader reader = new IndexReader(fileName);
     VocabularyReader vocabulary = reader.getVocabulary();
@@ -184,10 +185,8 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
       fileType = extension;
     } else {
       // Oh well, we need to autodetect the file type.
-      if (fileName.endsWith(".cds.z") || fileName.endsWith(".cds")) {
-        // do nothing: file is a corpus document store
-        return;
-      } else if (IndexReader.isIndexFile(fileName)) {
+
+      if (IndexReader.isIndexFile(fileName)) {
         // perhaps the user has renamed the corpus index
         fileType = "corpus";
       } else {

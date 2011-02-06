@@ -4,15 +4,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.galagosearch.core.parse.CorpusDocumentWriter;
-import org.galagosearch.core.parse.CorpusIndexWriter;
 import org.galagosearch.core.parse.DocumentSource;
 import org.galagosearch.core.parse.UniversalParser;
-import org.galagosearch.core.parse.DocumentToKeyValuePair;
-import org.galagosearch.core.parse.KeyValuePairToDocument;
-import org.galagosearch.core.parse.DocumentIndexWriter;
+import org.galagosearch.core.index.parallel.ParallelIndexKeyWriter;
+import org.galagosearch.core.index.parallel.ParallelIndexValueWriter;
+import org.galagosearch.core.index.corpus.CorpusReader;
+import org.galagosearch.core.index.corpus.CorpusWriter;
+import org.galagosearch.core.index.corpus.DocumentToKeyValuePair;
+import org.galagosearch.core.index.corpus.DocumentIndexWriter;
+import org.galagosearch.core.index.corpus.KeyValuePairToDocument;
 import org.galagosearch.core.types.KeyValuePair;
-import org.galagosearch.core.types.CorpusIndexItem;
 import org.galagosearch.core.types.DocumentSplit;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
@@ -37,159 +38,152 @@ import org.galagosearch.tupleflow.execution.Step;
  */
 public class MakeCorpus {
 
-  String corpusPath;
-  String indexunit;
-  boolean compressed;
+    String indexunit;
+    Parameters corpusParameters;
 
-  public Stage getSplitStage(ArrayList<String> inputs) throws IOException {
-    Stage stage = new Stage("inputSplit");
-    stage.add(new StageConnectionPoint(ConnectionPointType.Output, "splits",
-            new DocumentSplit.FileIdOrder()));
+    public Stage getSplitStage(ArrayList<String> inputs) throws IOException {
+        Stage stage = new Stage("inputSplit");
+        stage.add(new StageConnectionPoint(ConnectionPointType.Output, "splits",
+                new DocumentSplit.FileIdOrder()));
 
-    Parameters p = new Parameters();
-    for (String input : inputs) {
-      File inputFile = new File(input);
+        Parameters p = new Parameters();
+        for (String input : inputs) {
+            File inputFile = new File(input);
 
-      if (inputFile.isFile()) {
-        p.add("filename", inputFile.getAbsolutePath());
-      } else if (inputFile.isDirectory()) {
-        p.add("directory", inputFile.getAbsolutePath());
-      } else {
-        throw new IOException("Couldn't find file/directory: " + input);
-      }
+            if (inputFile.isFile()) {
+                p.add("filename", inputFile.getAbsolutePath());
+            } else if (inputFile.isDirectory()) {
+                p.add("directory", inputFile.getAbsolutePath());
+            } else {
+                throw new IOException("Couldn't find file/directory: " + input);
+            }
+        }
+
+        stage.add(new Step(DocumentSource.class, p));
+        stage.add(Utility.getSorter(new DocumentSplit.FileIdOrder()));
+        stage.add(new OutputStep("splits"));
+
+        return stage;
     }
 
-    stage.add(new Step(DocumentSource.class, p));
-    stage.add(Utility.getSorter(new DocumentSplit.FileIdOrder()));
-    stage.add(new OutputStep("splits"));
+    public Stage getParseWriteDocumentsStage() {
+        Stage stage = new Stage("parserWriter");
 
-    return stage;
-  }
+        stage.add(new StageConnectionPoint(
+                ConnectionPointType.Input,
+                "splits", new DocumentSplit.FileIdOrder()));
 
-  public Stage getParseWriteDocumentsStage() {
-    Stage stage = new Stage("parserWriter");
+        stage.add(new StageConnectionPoint(
+                ConnectionPointType.Output,
+                "indexData", new KeyValuePair.KeyOrder()));
 
-    stage.add(new StageConnectionPoint(
-            ConnectionPointType.Input,
-            "splits", new DocumentSplit.FileIdOrder()));
+        stage.add(new InputStep("splits"));
 
-    stage.add(new StageConnectionPoint(
-            ConnectionPointType.Output,
-            "indexData", new CorpusIndexItem.IdentifierOrder()));
+        Parameters p = new Parameters();
+        p.add("indexunit", this.indexunit);
+        stage.add(new Step(UniversalParser.class, p));
 
-    stage.add(new InputStep("splits"));
+        stage.add( new Step( CorpusWriter.class, corpusParameters.clone() ));
+        stage.add(Utility.getSorter(new KeyValuePair.KeyOrder()));
+        stage.add(new OutputStep("indexData"));
 
-    Parameters p = new Parameters();
-    p.add("indexunit", this.indexunit);
-    stage.add(new Step(UniversalParser.class, p));
-
-    Parameters p2 = new Parameters();
-    p2.add("filename", corpusPath);
-    p2.add("compressed", Boolean.toString(compressed));
-    stage.add(new Step(CorpusDocumentWriter.class, p2));
-
-    stage.add(Utility.getSorter(new CorpusIndexItem.IdentifierOrder()));
-    stage.add(new OutputStep("indexData"));
-
-    return stage;
-  }
-
-  public Stage getIndexWriterStage() {
-    Stage stage = new Stage("indexWriter");
-
-    stage.add(new StageConnectionPoint(ConnectionPointType.Input,
-            "indexData", new CorpusIndexItem.IdentifierOrder()));
-
-    stage.add(new InputStep("indexData"));
-    Parameters p = new Parameters();
-    p.add("filename", corpusPath);
-    stage.add(new Step(CorpusIndexWriter.class, p));
-
-    return stage;
-  }
-
-  public static Job getDocumentConverter(String outputCorpus, ArrayList<String> inputs) throws IOException {
-    Job job = new Job();
-
-    Stage stage = new Stage("split");
-    stage.add(new StageConnectionPoint(ConnectionPointType.Output, "docs",
-            new KeyValuePair.KeyOrder()));
-    Parameters p = new Parameters();
-    for (String input : inputs) {
-      File inputFile = new File(input);
-
-      if (inputFile.isFile()) {
-        p.add("filename", input);
-      } else if (inputFile.isDirectory()) {
-        p.add("directory", input);
-      } else {
-        throw new IOException("Couldn't find file/directory: " + input);
-      }
+        return stage;
     }
 
-    stage.add(new Step(DocumentSource.class, p));
-    p = new Parameters();
-    p.add("identifier", "stripped");
-    stage.add(new Step(UniversalParser.class, p));
-    stage.add(new Step(DocumentToKeyValuePair.class));
-    stage.add(Utility.getSorter(new KeyValuePair.KeyOrder()));
-    stage.add(new OutputStep("docs"));
-    job.add(stage);
+    public Stage getIndexWriterStage() {
+        Stage stage = new Stage("indexWriter");
 
-    stage = new Stage("docwrite");
-    stage.add(new StageConnectionPoint(ConnectionPointType.Input, "docs",
-            new KeyValuePair.KeyOrder()));
-    stage.add(new InputStep("docs"));
-    stage.add(new Step(KeyValuePairToDocument.class));
-    p = new Parameters();
-    p.add("filename", outputCorpus);
-    stage.add(new Step(DocumentIndexWriter.class, p));
+        stage.add(new StageConnectionPoint(ConnectionPointType.Input,
+                "indexData", new KeyValuePair.KeyOrder()));
 
-    job.add(stage);
-    job.connect("split", "docwrite", ConnectionAssignmentType.Combined);
-    return job;
-  }
+        stage.add(new InputStep("indexData"));
+        stage.add(new Step(ParallelIndexKeyWriter.class, corpusParameters.clone()));
 
-  public Job getMakeCorpusJob(Parameters p) throws IOException {
-
-    this.indexunit = p.get("indexunit", "");
-    this.corpusPath = p.get("corpusPath");
-    this.compressed = p.get("compressed", true);
-
-    System.err.print(compressed);
-
-    ArrayList<String> inputPaths = new ArrayList();
-    List<Value> vs = p.list("inputPaths");
-    for (Value v : vs) {
-      inputPaths.add(v.toString());
+        return stage;
     }
 
+    public static Job getCorpusFileJob(String outputCorpus, ArrayList<String> inputs) throws IOException {
+        Job job = new Job();
 
-    File corpus = new File(corpusPath);
+        Stage stage = new Stage("split");
+        stage.add(new StageConnectionPoint(ConnectionPointType.Output, "docs",
+                new KeyValuePair.KeyOrder()));
+        Parameters p = new Parameters();
+        for (String input : inputs) {
+            File inputFile = new File(input);
 
-    // check if we're creating a single file corpus
-    if (p.get("corpusFormat", "folder").equals("file")) {
-      return getDocumentConverter(corpus.getAbsolutePath(), inputPaths);
+            if (inputFile.isFile()) {
+                p.add("filename", input);
+            } else if (inputFile.isDirectory()) {
+                p.add("directory", input);
+            } else {
+                throw new IOException("Couldn't find file/directory: " + input);
+            }
+        }
+
+        stage.add(new Step(DocumentSource.class, p));
+        p = new Parameters();
+        p.add("identifier", "stripped");
+        stage.add(new Step(UniversalParser.class, p));
+        stage.add(new Step(DocumentToKeyValuePair.class));
+        stage.add(Utility.getSorter(new KeyValuePair.KeyOrder()));
+        stage.add(new OutputStep("docs"));
+        job.add(stage);
+
+        stage = new Stage("docwrite");
+        stage.add(new StageConnectionPoint(ConnectionPointType.Input, "docs",
+                new KeyValuePair.KeyOrder()));
+        stage.add(new InputStep("docs"));
+        stage.add(new Step(KeyValuePairToDocument.class));
+        p = new Parameters();
+        p.add("filename", outputCorpus);
+        stage.add(new Step(DocumentIndexWriter.class, p));
+
+        job.add(stage);
+        job.connect("split", "docwrite", ConnectionAssignmentType.Combined);
+        return job;
     }
 
-    // otherwise we're creating a folder corpus
-    if (corpus.isFile()) {
-      corpus.delete();
-    } else if (corpus.isDirectory()) {
-      Utility.deleteDirectory(corpus);
+    public Job getMakeCorpusJob(Parameters p) throws IOException {
+
+        ArrayList<String> inputPaths = new ArrayList();
+        List<Value> vs = p.list("inputPaths");
+        for (Value v : vs) {
+            inputPaths.add(v.toString());
+        }
+
+        File corpus = new File(p.get("corpusPath"));
+
+
+        // check if we're creating a single file corpus
+        if (p.get("corpusFormat", "folder").equals("file")) {
+            return getCorpusFileJob(corpus.getAbsolutePath(), inputPaths);
+        }
+
+
+        // otherwise we're creating a folder corpus
+        if (corpus.isFile()) {
+            corpus.delete();
+        } else if (corpus.isDirectory()) {
+            Utility.deleteDirectory(corpus);
+        }
+
+        this.indexunit = p.get("indexunit", "");
+        this.corpusParameters = new Parameters();
+        this.corpusParameters.add("compressed", p.get("compressed", "true"));
+        this.corpusParameters.add("filename", corpus.getAbsolutePath());
+        this.corpusParameters.add("readerClass", CorpusReader.class.getName());
+        this.corpusParameters.add("writerClass", CorpusWriter.class.getName());
+
+        Job job = new Job();
+
+        job.add(getSplitStage(inputPaths));
+        job.add(getParseWriteDocumentsStage());
+        job.add(getIndexWriterStage());
+
+        job.connect("inputSplit", "parserWriter", ConnectionAssignmentType.Each);
+        job.connect("parserWriter", "indexWriter", ConnectionAssignmentType.Combined);
+
+        return job;
     }
-    corpus.mkdir();
-    this.corpusPath = corpus.getAbsolutePath();
-
-    Job job = new Job();
-
-    job.add(getSplitStage(inputPaths));
-    job.add(getParseWriteDocumentsStage());
-    job.add(getIndexWriterStage());
-
-    job.connect("inputSplit", "parserWriter", ConnectionAssignmentType.Each);
-    job.connect("parserWriter", "indexWriter", ConnectionAssignmentType.Combined);
-
-    return job;
-  }
 }

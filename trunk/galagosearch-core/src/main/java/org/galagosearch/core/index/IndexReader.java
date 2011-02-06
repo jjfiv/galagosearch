@@ -273,10 +273,7 @@ public class IndexReader {
          * Returns the value as a string.
          */
         public String getValueString() throws IOException {
-            DataStream stream = getValueStream();
-            assert stream.length() < Integer.MAX_VALUE;
-            byte[] data = new byte[(int) stream.length()];
-            stream.readFully(data);
+            byte[] data = getValueBytes();
             return Utility.toString(data);
         }
 
@@ -407,6 +404,7 @@ public class IndexReader {
      * @throws java.io.IOException
      */
     public static boolean isIndexFile(String pathname) throws FileNotFoundException, IOException {
+        
         RandomAccessFile f = new RandomAccessFile(pathname, "r");
         long length = f.length();
         long magicNumber = 0;

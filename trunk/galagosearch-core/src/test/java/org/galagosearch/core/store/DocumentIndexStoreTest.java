@@ -4,11 +4,11 @@ package org.galagosearch.core.store;
 import java.io.IOException;
 import junit.framework.TestCase;
 
-import org.galagosearch.core.parse.CorpusReader;
+import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.parse.Document;
-import org.galagosearch.core.parse.DocumentIndexReader;
+import org.galagosearch.core.index.corpus.DocumentIndexReader;
 import org.galagosearch.core.index.IndexReader;
-import org.galagosearch.core.parse.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReader;
 
 public class DocumentIndexStoreTest extends TestCase {
 

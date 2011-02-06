@@ -1,10 +1,11 @@
 
-package org.galagosearch.core.parse;
+package org.galagosearch.core.index.corpus;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import junit.framework.TestCase;
+import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.tupleflow.Utility;
 

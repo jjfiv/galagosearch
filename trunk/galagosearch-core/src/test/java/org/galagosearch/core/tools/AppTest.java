@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import junit.framework.TestCase;
+import org.galagosearch.core.index.parallel.ParallelIndexReader;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.Job;
@@ -185,7 +186,7 @@ public class AppTest extends TestCase {
       byteArrayStream = new ByteArrayOutputStream();
       printStream = new PrintStream(byteArrayStream);
 
-      new App(printStream).run(new String[]{"dump-keys", corpusFile.getAbsolutePath() + File.separator + "index.corpus"});
+      new App(printStream).run(new String[]{"dump-keys", corpusFile.getAbsolutePath() + File.separator + "key.index"});
       output = byteArrayStream.toString();
       assertEquals("55\n59\n", output);
 

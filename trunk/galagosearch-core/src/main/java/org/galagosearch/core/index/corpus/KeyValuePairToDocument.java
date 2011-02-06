@@ -1,14 +1,18 @@
 // BSD License (http://www.galagosearch.org/license)
-
-package org.galagosearch.core.parse;
+package org.galagosearch.core.index.corpus;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
+import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.OutputClass;
 import org.galagosearch.tupleflow.StandardStep;
+import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.execution.Verified;
 
 /**
@@ -22,18 +26,32 @@ import org.galagosearch.tupleflow.execution.Verified;
 @InputClass(className = "org.galagosearch.core.types.KeyValuePair")
 @OutputClass(className = "org.galagosearch.core.parse.Document")
 public class KeyValuePairToDocument extends StandardStep<KeyValuePair, Document> {
-    @Override
+
+    boolean compressed;
+
+    public KeyValuePairToDocument() {
+        compressed = false; // used for testing
+    }
+
+    public KeyValuePairToDocument(TupleFlowParameters parameters) {
+        compressed = parameters.getXML().get("compressed", true);
+    }
+
     public void process(KeyValuePair object) throws IOException {
         ByteArrayInputStream stream = new ByteArrayInputStream(object.value);
-        ObjectInputStream input = new ObjectInputStream(stream);
         Document document;
+
         try {
-            document = (Document) input.readObject();
+            if (compressed) {
+                ObjectInputStream input = new ObjectInputStream(new GZIPInputStream(stream));
+                document = (Document) input.readObject();
+            } else {
+                ObjectInputStream input = new ObjectInputStream(stream);
+                document = (Document) input.readObject();
+            }
         } catch (ClassNotFoundException ex) {
-            IOException e = new IOException("Expected to find a serialized document here, " +
-                                            "but found something else instead.");
-            e.initCause(ex);
-            throw e;
+            System.err.println(ex.toString());
+            throw new RuntimeException("Unable to extract document from KeyValuePair.");
         }
 
         processor.process(document);

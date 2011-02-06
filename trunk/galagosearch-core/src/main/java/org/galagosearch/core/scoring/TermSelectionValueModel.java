@@ -16,7 +16,7 @@ import java.util.Set;
 import org.galagosearch.core.index.AggregateReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
-import org.galagosearch.core.parse.CorpusReader;
+import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.parse.TagTokenizer;
 import org.galagosearch.core.retrieval.ScoredDocument;

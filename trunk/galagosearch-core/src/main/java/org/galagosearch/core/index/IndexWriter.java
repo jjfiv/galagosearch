@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.TupleFlowParameters;

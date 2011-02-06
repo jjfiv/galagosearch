@@ -1,11 +1,12 @@
 // BSD License (http://www.galagosearch.org/license)
 
-package org.galagosearch.core.parse;
+package org.galagosearch.core.index.corpus;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import org.galagosearch.core.index.IndexReader;
+import org.galagosearch.core.parse.Document;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;

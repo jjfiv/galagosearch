@@ -13,7 +13,7 @@ import org.galagosearch.core.pagerank.program.PageRankApp;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.mergeindex.parallel.MergeParallelIndexShards;
-import org.galagosearch.core.parse.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.tupleflow.Parameters;
@@ -462,8 +462,14 @@ public class App {
       p.add("inputPaths", doc);
     }
 
-    MakeCorpus mc = new MakeCorpus();
-    Job job = mc.getMakeCorpusJob(p);
+    Job job;
+    if(p.get("1", true)){
+        MakeCorpus mc = new MakeCorpus();
+        job = mc.getMakeCorpusJob(p);
+    } else {
+        MakeCorpus mc = new MakeCorpus();
+        job = mc.getMakeCorpusJob(p);
+      }
 
     boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
     if (printJob) {

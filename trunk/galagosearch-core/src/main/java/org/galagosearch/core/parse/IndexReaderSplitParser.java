@@ -4,7 +4,8 @@ package org.galagosearch.core.parse;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import org.galagosearch.core.parse.DocumentReader.DocumentIterator;
+import org.galagosearch.core.index.corpus.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 import org.galagosearch.core.types.DocumentSplit;
 import org.galagosearch.tupleflow.Utility;
 

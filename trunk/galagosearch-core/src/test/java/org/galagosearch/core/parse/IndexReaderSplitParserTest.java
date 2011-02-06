@@ -5,17 +5,14 @@
 
 package org.galagosearch.core.parse;
 
-import org.galagosearch.core.parse.IndexReaderSplitParser;
-import org.galagosearch.core.parse.Document;
-import org.galagosearch.core.parse.DocumentIndexWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import junit.framework.TestCase;
+import org.galagosearch.core.index.parallel.ParallelIndexKeyWriter;
+import org.galagosearch.core.index.parallel.ParallelIndexValueWriter;
+import org.galagosearch.core.index.corpus.DocumentToKeyValuePair;
 import org.galagosearch.tupleflow.Parameters;
-import org.galagosearch.core.index.IndexWriter;
-import org.galagosearch.core.index.GenericElement;
-import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.tupleflow.FakeParameters;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.Utility;
@@ -47,6 +44,8 @@ public class IndexReaderSplitParserTest extends TestCase {
     File temporary = Utility.createTemporary();
     temporary.delete();
     temporary.mkdirs();
+
+    temporaryName = temporary.getAbsolutePath();
     
     // Build an encoded document:
     document = new Document();
@@ -57,14 +56,16 @@ public class IndexReaderSplitParserTest extends TestCase {
 
     Parameters parameters = new Parameters();
     parameters.add("filename", temporary.getAbsolutePath());
+    parameters.add("compressed", "true");
 
-    CorpusDocumentWriter writer = new CorpusDocumentWriter(new FakeParameters(parameters));
-    writer.setProcessor( new CorpusIndexWriter(new FakeParameters(parameters)));
-    writer.process(document);
-    writer.close();
+    DocumentToKeyValuePair converter = new DocumentToKeyValuePair(new FakeParameters(parameters));
+    ParallelIndexValueWriter vWriter = new ParallelIndexValueWriter(new FakeParameters(parameters));
+    ParallelIndexKeyWriter kWriter = new ParallelIndexKeyWriter(new FakeParameters(parameters));
 
-    temporaryName = temporary.getAbsolutePath();
-    //assertTrue(IndexReader.isIndexFile(temporaryName));
+    converter.setProcessor( vWriter );
+    vWriter.setProcessor( kWriter );
+    converter.process(document);
+    converter.close();
   }
 
   /**

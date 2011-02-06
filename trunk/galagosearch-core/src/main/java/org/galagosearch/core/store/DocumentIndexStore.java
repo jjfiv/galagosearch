@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.galagosearch.core.parse.Document;
-import org.galagosearch.core.parse.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReader;
 
 /**
  * <p>A DocumentStore that reads document data from corpus files.</p>

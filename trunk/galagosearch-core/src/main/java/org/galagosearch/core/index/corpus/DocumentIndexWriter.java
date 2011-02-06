@@ -1,6 +1,6 @@
 // BSD License (http://www.galagosearch.org/license)
 
-package org.galagosearch.core.parse;
+package org.galagosearch.core.index.corpus;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.galagosearch.core.index.GenericElement;
 import org.galagosearch.core.index.IndexWriter;
+import org.galagosearch.core.parse.Document;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Parameters;
@@ -34,6 +35,9 @@ public class DocumentIndexWriter implements Processor<Document> {
     public DocumentIndexWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
         Parameters p = new Parameters();
         p.add("isCompressed", "true");
+        p.add("writerClass", getClass().getName());
+        p.add("readerClass", DocumentIndexReader.class.getName());
+
         writer = new IndexWriter(parameters.getXML().get("filename"), p);
         documentsWritten = parameters.getCounter("Documents Written");
     }
