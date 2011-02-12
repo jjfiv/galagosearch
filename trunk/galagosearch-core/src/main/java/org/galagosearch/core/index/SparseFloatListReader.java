@@ -23,14 +23,14 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
 
   public class Iterator extends DocumentOrderedScoreIterator implements IndexIterator {
 
-    IndexReader.Iterator iterator;
+    GenericIndexReader.Iterator iterator;
     VByteInput stream;
     int documentCount;
     int index;
     int currentDocument;
     double currentScore;
 
-    public Iterator(IndexReader.Iterator iterator) throws IOException {
+    public Iterator(GenericIndexReader.Iterator iterator) throws IOException {
       this.iterator = iterator;
       documentCount = 0;
       index = 0;
@@ -161,10 +161,11 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
       return documentCount;
     }
   }
-  IndexReader reader;
+
+  GenericIndexReader reader;
 
   public SparseFloatListReader(String pathname) throws FileNotFoundException, IOException {
-    reader = new IndexReader(pathname);
+    reader = GenericIndexReader.getIndexReader(pathname);
   }
 
   public Iterator getIterator() throws IOException {
@@ -172,7 +173,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
   }
 
   public Iterator getScores(String term) throws IOException {
-    IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
     return new Iterator(iterator);
   }
 

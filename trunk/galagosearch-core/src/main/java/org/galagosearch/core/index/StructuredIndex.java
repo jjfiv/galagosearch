@@ -51,10 +51,11 @@ public class StructuredIndex {
   }
 
   public static StructuredIndexPartReader openIndexPart(String path) throws IOException {
-    if (!IndexReader.isIndexFile(path)) {
+    GenericIndexReader reader = GenericIndexReader.getIndexReader(path);
+    if (reader == null) {
       return null;
     }
-    IndexReader reader = new IndexReader(path);
+
     if (!reader.getManifest().containsKey("readerClass")) {
       throw new IOException("Tried to open an index part at " + path + ", but the "
               + "file has no readerClass specified in its manifest. "
@@ -77,7 +78,7 @@ public class StructuredIndex {
 
     Constructor c;
     try {
-      c = readerClass.getConstructor(IndexReader.class);
+      c = readerClass.getConstructor(GenericIndexReader.class);
     } catch (NoSuchMethodException ex) {
       throw new IOException(className + " has no constructor that takes a single "
               + "IndexReader argument.");

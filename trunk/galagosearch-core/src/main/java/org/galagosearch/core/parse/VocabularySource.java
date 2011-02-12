@@ -7,13 +7,9 @@ package org.galagosearch.core.parse;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
-import org.galagosearch.core.index.IndexReader;
-import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.index.VocabularyReader;
-import org.galagosearch.core.index.VocabularyReader.TermSlot;
+import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.ExNihiloSource;
@@ -27,7 +23,6 @@ import org.galagosearch.tupleflow.Step;
 import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorHandler;
-import org.tartarus.snowball.ext.englishStemmer;
 
 /**
  *
@@ -40,15 +35,14 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
 
     public Processor<KeyValuePair> processor;
     TupleFlowParameters parameters;
-    IndexReader reader;
-    IndexReader.Iterator iterator;
+    GenericIndexReader reader;
+    GenericIndexReader.Iterator iterator;
     HashSet<String> inclusions = null;    
     HashSet<String> exclusions = null;
 
     public VocabularySource(TupleFlowParameters parameters) throws Exception {
         String partPath = parameters.getXML().get("filename");
-        reader = new IndexReader(partPath);
-        //VocabularyReader vocabReader = reader.getVocabulary();
+        reader = GenericIndexReader.getIndexReader(partPath);
 	vocabCounter = parameters.getCounter("terms read");
 	skipCounter = parameters.getCounter("terms skipped");
 	iterator = reader.getIterator();
@@ -112,7 +106,7 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
 
         String partPath = parameters.getXML().get("filename");
         try {
-            if (!IndexReader.isIndexFile(partPath)) {
+            if (!GenericIndexReader.isIndex(partPath)){
                 handler.addError(partPath + " is not an index file.");
             }
         } catch (FileNotFoundException fnfe) {

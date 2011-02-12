@@ -5,9 +5,16 @@ import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
 import org.galagosearch.core.retrieval.structured.DocumentOrderedIterator;
+import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberWordPosition;
+import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.InputClass;
+import org.galagosearch.tupleflow.Linkage;
+import org.galagosearch.tupleflow.OutputClass;
+import org.galagosearch.tupleflow.Source;
+import org.galagosearch.tupleflow.Step;
 import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorHandler;
@@ -37,10 +44,11 @@ import org.galagosearch.tupleflow.execution.Verification;
  * @author trevor, irmarc
  */
 @InputClass(className = "org.galagosearch.core.types.NumberWordPosition", order = {"+word", "+document", "+position"})
+@OutputClass(className = "org.galagosearch.core.types.KeyValuePair", order = {"+key"})
 public class PositionIndexWriter implements
-        NumberWordPosition.WordDocumentPositionOrder.ShreddedProcessor {
-
-    byte[] lastWord;
+        NumberWordPosition.WordDocumentPositionOrder.ShreddedProcessor,
+        Source<KeyValuePair> // parallel index data output
+{
 
     public class PositionsList implements IndexElement {
 
@@ -152,7 +160,7 @@ public class PositionIndexWriter implements
             // add the last document's counts
             if (documents.length() > 0) {
                 counts.add(positionCount);
-               
+
                 // if we're skipping check that
                 if (skips != null) {
                     updateSkipInformation();
@@ -228,20 +236,29 @@ public class PositionIndexWriter implements
     PositionsList invertedList;
     DataOutputStream output;
     long filePosition;
-    IndexWriter writer;
+    GenericIndexWriter writer;
     long documentCount = 0;
     long collectionLength = 0;
     int options = 0;
     int skipDistance;
     int skipResetDistance;
+    byte[] lastWord;
+    // parallel index stuff
+    boolean parallel;
 
     /**
      * Creates a new instance of BinnedListWriter
      */
     public PositionIndexWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
-        writer = new IndexWriter(parameters);
-        writer.getManifest().add("writerClass", getClass().getName());
-        writer.getManifest().add("readerClass", PositionIndexReader.class.getName());
+        parameters.getXML().add("writerClass", getClass().getName());
+        parameters.getXML().add("readerClass", PositionIndexReader.class.getName());
+        parallel = parameters.getXML().get("parallel", false);
+
+        if (parallel) {
+            writer = new SplitIndexValueWriter(parameters);
+        } else {
+            writer = new IndexWriter(parameters);
+        }
 
         // look for skips
         boolean skip = Boolean.parseBoolean(parameters.getXML().get("skipping", "true"));
@@ -255,6 +272,7 @@ public class PositionIndexWriter implements
         if (invertedList != null) {
             invertedList.close();
             writer.add(invertedList);
+
             invertedList = null;
         }
 
@@ -311,5 +329,9 @@ public class PositionIndexWriter implements
 
         String index = parameters.getXML().get("filename");
         Verification.requireWriteableFile(index, handler);
+    }
+
+    public void setProcessor(Step processor) throws IncompatibleProcessorException {
+        writer.setProcessor(processor);
     }
 }

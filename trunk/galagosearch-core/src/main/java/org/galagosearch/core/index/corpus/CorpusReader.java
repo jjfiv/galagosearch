@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.zip.GZIPInputStream;
-import org.galagosearch.core.index.parallel.ParallelIndexReader;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.tupleflow.Utility;
 
@@ -22,11 +21,11 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class CorpusReader extends DocumentReader {
 
-    ParallelIndexReader indexReader;
+    SplitIndexReader indexReader;
     boolean compressed;
 
     public CorpusReader(String fileName) throws FileNotFoundException, IOException {
-        indexReader = new ParallelIndexReader(fileName);
+        indexReader = new SplitIndexReader(fileName);
         compressed = indexReader.getManifest().get("compressed", true);
     }
 
@@ -44,7 +43,7 @@ public class CorpusReader extends DocumentReader {
     }
 
     public Document getDocument(String key) throws IOException {
-        ParallelIndexReader.Iterator iterator = indexReader.getIterator(Utility.fromString(key));
+        SplitIndexReader.Iterator iterator = indexReader.getIterator(Utility.fromString(key));
         if (iterator == null) {
             return null;
         }
@@ -53,10 +52,10 @@ public class CorpusReader extends DocumentReader {
 
     public class Iterator implements DocumentReader.DocumentIterator {
 
-        ParallelIndexReader.Iterator iterator;
+        SplitIndexReader.Iterator iterator;
         Document document;
 
-        Iterator(ParallelIndexReader.Iterator iterator) throws IOException {
+        Iterator(SplitIndexReader.Iterator iterator) throws IOException {
             this.iterator = iterator;
         }
 

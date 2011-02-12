@@ -19,7 +19,6 @@ public class VocabularyReader {
     }
     ArrayList<TermSlot> slots;
 
-    /** Creates a new instance of DocumentNameReader */
     public VocabularyReader(RandomAccessFile input, long invertedFileLength,
                             long vocabularyLength) throws IOException {
         slots = new ArrayList<TermSlot>();

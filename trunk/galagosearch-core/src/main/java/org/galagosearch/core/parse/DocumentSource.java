@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
+import org.galagosearch.core.index.GenericIndexReader;
 
 import org.galagosearch.core.index.VocabularyReader;
 import org.galagosearch.core.index.VocabularyReader.TermSlot;
@@ -101,7 +102,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
       corpusSize = new File(fileName).length();
     }
 
-    IndexReader reader = new IndexReader(fileName);
+    GenericIndexReader reader = GenericIndexReader.getIndexReader(fileName);
     VocabularyReader vocabulary = reader.getVocabulary();
     List<TermSlot> slots = vocabulary.getSlots();
     int pieces = Math.max(2, (int) (corpusSize / chunkSize));

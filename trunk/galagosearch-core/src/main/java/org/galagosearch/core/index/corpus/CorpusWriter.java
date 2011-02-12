@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.zip.GZIPOutputStream;
 import org.galagosearch.core.index.GenericElement;
-import org.galagosearch.core.index.parallel.ParallelIndexValueWriter;
 import org.galagosearch.core.parse.Document;
 
 import org.galagosearch.core.types.KeyValuePair;
@@ -35,13 +34,15 @@ import org.galagosearch.tupleflow.execution.Verified;
 public class CorpusWriter implements Processor<Document>, Source<KeyValuePair> {
 
     boolean compressed;
-    ParallelIndexValueWriter writer;
+    SplitIndexValueWriter writer;
 
     public CorpusWriter(TupleFlowParameters parameters) throws IOException, IncompatibleProcessorException {
         compressed = parameters.getXML().get("compressed", true);
 
         // create a writer;
-        writer = new ParallelIndexValueWriter( parameters );
+        parameters.getXML().add("readerClass", CorpusReader.class.getName());
+        parameters.getXML().add("writerClass", CorpusWriter.class.getName());
+        writer = new SplitIndexValueWriter( parameters );
         // note that the setProcessor function needs to be modified!
     }
 

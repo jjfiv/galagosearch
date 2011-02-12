@@ -9,8 +9,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import junit.framework.TestCase;
-import org.galagosearch.core.index.parallel.ParallelIndexKeyWriter;
-import org.galagosearch.core.index.parallel.ParallelIndexValueWriter;
+import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
+import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
 import org.galagosearch.core.index.corpus.DocumentToKeyValuePair;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.FakeParameters;
@@ -59,8 +59,8 @@ public class IndexReaderSplitParserTest extends TestCase {
     parameters.add("compressed", "true");
 
     DocumentToKeyValuePair converter = new DocumentToKeyValuePair(new FakeParameters(parameters));
-    ParallelIndexValueWriter vWriter = new ParallelIndexValueWriter(new FakeParameters(parameters));
-    ParallelIndexKeyWriter kWriter = new ParallelIndexKeyWriter(new FakeParameters(parameters));
+    SplitIndexValueWriter vWriter = new SplitIndexValueWriter(new FakeParameters(parameters));
+    SplitIndexKeyWriter kWriter = new SplitIndexKeyWriter(new FakeParameters(parameters));
 
     converter.setProcessor( vWriter );
     vWriter.setProcessor( kWriter );

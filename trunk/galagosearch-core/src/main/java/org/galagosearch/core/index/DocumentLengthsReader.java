@@ -19,11 +19,11 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class DocumentLengthsReader {
 
-  IndexReader reader;
+  GenericIndexReader reader;
 
   public DocumentLengthsReader(String filename) throws FileNotFoundException, IOException {
 
-    reader = new IndexReader(filename);
+    reader = GenericIndexReader.getIndexReader(filename);
   }
 
   public void close() throws IOException {
@@ -45,10 +45,10 @@ public class DocumentLengthsReader {
    */
   public class Iterator extends NumberedDocumentDataIterator {
 
-    IndexReader.Iterator iterator;
-    IndexReader reader;
+    GenericIndexReader.Iterator iterator;
+    GenericIndexReader reader;
 
-    public Iterator(IndexReader reader) throws IOException {
+    public Iterator(GenericIndexReader reader) throws IOException {
       this.reader = reader;
       reset();
     }

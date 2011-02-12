@@ -1,13 +1,8 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.index.corpus;
 
-import org.galagosearch.core.index.corpus.DocumentIndexReader;
-import org.galagosearch.core.index.corpus.CorpusReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import org.galagosearch.core.index.IndexReader;
-import org.galagosearch.core.index.parallel.ParallelIndexReader;
 import org.galagosearch.core.parse.Document;
 
 /**
@@ -39,10 +34,8 @@ public abstract class DocumentReader {
 
     public static DocumentReader getInstance(String path) throws IOException {
         if (isCorpus(path)) {
-            System.err.println("Folder Corpus");
             return new CorpusReader(path);
         } else if (IndexReader.isIndexFile(path)) {
-            System.err.println("File Corpus");
             return new DocumentIndexReader(path);
         } else {
             throw new IOException("Path is not a known corpus format: " + path);
@@ -54,6 +47,6 @@ public abstract class DocumentReader {
      *  - file structure can be checked using isIndexFile(path)
      */
     public static boolean isCorpus(String fileName) throws IOException {
-        return ParallelIndexReader.isParallelIndex(fileName);
+        return SplitIndexReader.isParallelIndex(fileName);
     }
 }

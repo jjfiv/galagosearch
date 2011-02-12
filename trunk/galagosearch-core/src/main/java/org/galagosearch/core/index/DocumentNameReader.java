@@ -19,8 +19,8 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class DocumentNameReader {
 
-  IndexReader flIndex;
-  IndexReader rlIndex;
+  GenericIndexReader flIndex;
+  GenericIndexReader rlIndex;
 
   /** Creates a new instance of DocumentNameReader */
   public DocumentNameReader(String fileName) throws IOException {
@@ -29,8 +29,8 @@ public class DocumentNameReader {
       fileName = fileName.substring(0, fileName.lastIndexOf("."));
     }
 
-    flIndex = new IndexReader(fileName + ".fl");
-    rlIndex = new IndexReader(fileName + ".rl");
+    flIndex = GenericIndexReader.getIndexReader(fileName + ".fl");
+    rlIndex = GenericIndexReader.getIndexReader(fileName + ".rl");
   }
 
   // gets the document name of the internal id index.
@@ -64,11 +64,11 @@ public class DocumentNameReader {
   public class Iterator extends NumberedDocumentDataIterator {
 
     boolean forwardLookup;
-    IndexReader input;
-    IndexReader.Iterator iterator;
+    GenericIndexReader input;
+    GenericIndexReader.Iterator iterator;
     KeyValuePair current;
 
-    public Iterator(IndexReader input, boolean forwardLookup) throws IOException {
+    public Iterator(GenericIndexReader input, boolean forwardLookup) throws IOException {
       this.forwardLookup = forwardLookup;
       this.input = input;
       reset();

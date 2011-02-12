@@ -8,6 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
+ * [sjh] this class could cause problems for VERY large vocabularies
  *
  * @author trevor
  */

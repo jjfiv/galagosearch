@@ -79,9 +79,9 @@ public class TopDocsReader implements StructuredIndexPartReader {
       long startPosition = iterator.getValueStart();
       long endPosition = iterator.getValueEnd();
 
-      RandomAccessFile input = reader.getInput();
+      RandomAccessFile input = iterator.getInput();
       input.seek(startPosition);
-      DataInput stream = new VByteInput(reader.getInput());
+      DataInput stream = new VByteInput(input);
 
       // header info
       numEntries = stream.readInt();

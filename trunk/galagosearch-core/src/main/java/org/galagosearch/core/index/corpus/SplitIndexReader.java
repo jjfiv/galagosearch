@@ -2,11 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.galagosearch.core.index.parallel;
+package org.galagosearch.core.index.corpus;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.index.VocabularyReader;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
@@ -16,16 +17,30 @@ import org.galagosearch.tupleflow.StreamCreator;
 import org.galagosearch.tupleflow.Utility;
 
 /**
+ * Split index reader
+ *  - Index is a mapping from byte[] to byte[]
+ *
+ *  - allows values to be written out of order to a set of files
+ *  - a unified ordered key structure should be kept in a folder
+ *    with these value files, as created by SplitIndexKeyWriter
+ *  - SplitIndexReader will read this data
+ *
+ *  This class if useful for writing a corpus structure
+ *  - documents can be written to disk in any order
+ *  - the key structure allows the documents to be found quickly
+ *  - class is more efficient if the
+ *    documents are inserted in sorted order
  *
  * @author sjh
  */
-public class ParallelIndexReader {
+public class SplitIndexReader extends GenericIndexReader {
+    public static final long VALUE_FILE_MAGIC_NUMBER = 0x2b3c4d5e6f7a8b9cL;
 
     IndexReader vocabIndex;
     String indexFolder;
     int hashMod;
 
-    public class Iterator {
+    public class Iterator extends GenericIndexReader.Iterator {
 
         IndexReader.Iterator vocabIterator;
         RandomAccessFile[] dataFiles = new RandomAccessFile[hashMod];
@@ -36,8 +51,29 @@ public class ParallelIndexReader {
 
         public Iterator(IndexReader.Iterator vocabIterator) {
             this.vocabIterator = vocabIterator;
+            assert (this.vocabIterator != null);
         }
 
+        /**
+         * Returns the data file containing the current value
+         */
+        public RandomAccessFile getInput() throws IOException {
+            if (!valueLoaded) {
+                loadValue();
+            }
+            return dataFiles[file];
+        }
+
+        /**
+         * Returns the key associated with the current inverted list.
+         */
+        public byte[] getKey() {
+            return vocabIterator.getKey();
+        }
+
+        /*
+         * Skip iterator to the provided key
+         */
         public void skipTo(byte[] key) throws IOException {
             vocabIterator.skipTo(key);
             valueLoaded = false;
@@ -45,20 +81,10 @@ public class ParallelIndexReader {
 
         /**
          * Advances to the next key in the index.
-         *
-         * @return true if the advance was successful, false if no more keys remain.
-         * @throws java.io.IOException
          */
         public boolean nextKey() throws IOException {
             valueLoaded = false;
             return vocabIterator.nextKey();
-        }
-
-        public RandomAccessFile getInput() throws IOException {
-            if (!valueLoaded) {
-                loadValue();
-            }
-            return dataFiles[file];
         }
 
         /**
@@ -76,13 +102,6 @@ public class ParallelIndexReader {
                 loadValue();
             }
             return valueOffset;
-        }
-
-        /**
-         * Returns the key associated with the current inverted list.
-         */
-        public byte[] getKey() {
-            return vocabIterator.getKey();
         }
 
         /**
@@ -105,26 +124,6 @@ public class ParallelIndexReader {
             }
 
             return new BufferedFileDataStream(dataFiles[file], getValueStart(), getValueEnd());
-        }
-
-        /**
-         * Returns the value as a string.
-         */
-        public String getValueString() throws IOException {
-            byte[] data = getValueBytes();
-            return Utility.toString(data);
-
-        }
-
-        /**
-         * Returns the value as a string.
-         */
-        public byte[] getValueBytes() throws IOException {
-            DataStream stream = getValueStream();
-            assert stream.length() < Integer.MAX_VALUE;
-            byte[] data = new byte[(int) stream.length()];
-            stream.readFully(data);
-            return data;
         }
 
         /**
@@ -151,12 +150,16 @@ public class ParallelIndexReader {
             return valueOffset + valueLength;
         }
 
+
+        //**********************//
+        // local functions
+
         /**
          * Reads the header information for a data value
          *
          * @throws IOException
          */
-        void loadValue() throws IOException {
+        private void loadValue() throws IOException {
             valueLoaded = true;
             DataStream stream = vocabIterator.getValueStream();
 
@@ -167,11 +170,14 @@ public class ParallelIndexReader {
             if (dataFiles[file] == null) {
                 dataFiles[file] = StreamCreator.inputStream(indexFolder + File.separator + file);
             }
-            dataFiles[file].seek(valueOffset);
+            // dataFiles[file].seek(valueOffset);
         }
     }
 
-    public ParallelIndexReader(String filename) throws IOException {
+    /*
+     * Constructors
+     */
+    public SplitIndexReader(String filename) throws IOException {
         File f = new File(filename);
         if (f.isDirectory()) {
             f = new File(filename + File.separator + "key.index");
@@ -183,24 +189,14 @@ public class ParallelIndexReader {
         hashMod = f.getParentFile().list().length - 1;
     }
 
-    public static boolean isParallelIndex(String pathname) throws IOException {
-        File f = new File(pathname);
-
-        assert f.exists() : "Path not found: " + f.getAbsolutePath();
-
-        if (!f.isDirectory()) {
-            f = f.getParentFile();
-        }
-
-        File index = new File(f.getAbsolutePath() + File.separator + "key.index");
-        File data = new File(f.getAbsolutePath() + File.separator + "0");
-        if (index.exists() &&
-            data.exists() &&
-            IndexReader.isIndexFile(index.getAbsolutePath())) {
-
-            return true;
-        }
-        return false;
+    /**
+     * Returns a Parameters object that contains metadata about
+     * the contents of the index.  This is the place to store important
+     * data about the index contents, like what stemmer was used or the
+     * total number of terms in the collection.
+     */
+    public Parameters getManifest() {
+        return vocabIndex.getManifest();
     }
 
     /**
@@ -226,91 +222,42 @@ public class ParallelIndexReader {
      * null if the key is not found in the index.
      */
     public Iterator getIterator(byte[] key) throws IOException {
-        Iterator i = new Iterator(vocabIndex.getIterator(key));
+        IndexReader.Iterator i = vocabIndex.getIterator(key);
         if (i == null) {
             return null;
         } else {
-            return i;
+            return new Iterator(i);
         }
-    }
-
-    /**
-     * Gets the value stored in the index associated with this key.
-     * @param key
-     * @return The index value for this key, or null if there is no such value.
-     * @throws java.io.IOException
-     */
-    public String getValueString(byte[] key) throws IOException {
-        Iterator iter = getIterator(key);
-
-        if (iter == null) {
-            return null;
-        }
-        return iter.getValueString();
-    }
-
-    /**
-     * Gets the value stored in the index associated with this key.
-     * @param key
-     * @return The index value for this key, or null if there is no such value.
-     * @throws java.io.IOException
-     */
-    public byte[] getValueBytes(byte[] key) throws IOException {
-        Iterator iter = getIterator(key);
-
-        if (iter == null) {
-            return null;
-        }
-        return iter.getValueBytes();
-    }
-
-    /**
-     * Gets the value stored in the index associated with this key.
-     *
-     * @param key
-     * @return The index value for this key, or null if there is no such value.
-     * @throws java.io.IOException
-     */
-    public DataStream getValueStream(byte[] key) throws IOException {
-        Iterator iter = getIterator(key);
-
-        if (iter == null) {
-            return null;
-        }
-        return iter.getValueStream();
-    }
-
-    /**
-     * Returns a Parameters object that contains metadata about
-     * the contents of the index.  This is the place to store important
-     * data about the index contents, like what stemmer was used or the
-     * total number of terms in the collection.
-     */
-    public Parameters getManifest() {
-        return vocabIndex.getManifest();
     }
 
     public void close() throws IOException {
         vocabIndex.close();
     }
 
-    /**
-     *
-     * TESTING FUNCTION -- TO BE DELETED
-     */
-    public static void main(String[] args) throws Exception {
-        String folder = args[0];
-        System.err.println(folder);
+    //*********************//
+    // static functions
+    
 
-        ParallelIndexReader reader = new ParallelIndexReader(folder);
-        Iterator i = reader.getIterator();
-        while (!i.isDone()) {
-            String key = Utility.toString(i.getKey());
-            // manual forced loading
-            i.loadValue();
+    public static boolean isParallelIndex(String pathname) throws IOException {
+        File f = new File(pathname);
 
-            System.err.println(key + "\t" + i.file + "\t" + i.valueOffset + "\t" + i.valueLength);
-            i.nextKey();
+        assert f.exists() : "Path not found: " + f.getAbsolutePath();
+
+        if (!f.isDirectory()) {
+            f = f.getParentFile();
         }
+
+        File index = new File(f.getAbsolutePath() + File.separator + "key.index");
+        File data = new File(f.getAbsolutePath() + File.separator + "0");
+        if (index.exists() &&
+            data.exists() &&
+            IndexReader.isIndexFile(index.getAbsolutePath())) {
+            RandomAccessFile reader = StreamCreator.inputStream(data.getAbsolutePath());
+            reader.seek( reader.length() - 8 );
+            if(reader.readLong() == VALUE_FILE_MAGIC_NUMBER){
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -5,14 +5,10 @@
 
 package org.galagosearch.core.index;
 
-import org.galagosearch.core.index.IndexWriter;
-import org.galagosearch.core.index.GenericElement;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import junit.framework.TestCase;
-import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 
@@ -48,7 +44,7 @@ public class IndexWriterTest extends TestCase {
 
         assertTrue(IndexReader.isIndexFile(temporary.getAbsolutePath()));
         IndexReader reader = new IndexReader(temporary.getAbsolutePath());
-        
+
         assertEquals("value", reader.getValueString(Utility.fromString("key")));
         reader.close();
     }

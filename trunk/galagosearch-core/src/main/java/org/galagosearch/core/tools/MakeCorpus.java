@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.galagosearch.core.parse.DocumentSource;
 import org.galagosearch.core.parse.UniversalParser;
-import org.galagosearch.core.index.parallel.ParallelIndexKeyWriter;
-import org.galagosearch.core.index.parallel.ParallelIndexValueWriter;
+import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
+import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
 import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.index.corpus.CorpusWriter;
 import org.galagosearch.core.index.corpus.DocumentToKeyValuePair;
@@ -97,7 +97,7 @@ public class MakeCorpus {
                 "indexData", new KeyValuePair.KeyOrder()));
 
         stage.add(new InputStep("indexData"));
-        stage.add(new Step(ParallelIndexKeyWriter.class, corpusParameters.clone()));
+        stage.add(new Step(SplitIndexKeyWriter.class, corpusParameters.clone()));
 
         return stage;
     }
@@ -170,10 +170,9 @@ public class MakeCorpus {
 
         this.indexunit = p.get("indexunit", "");
         this.corpusParameters = new Parameters();
+        this.corpusParameters.add("parallel", "true");
         this.corpusParameters.add("compressed", p.get("compressed", "true"));
         this.corpusParameters.add("filename", corpus.getAbsolutePath());
-        this.corpusParameters.add("readerClass", CorpusReader.class.getName());
-        this.corpusParameters.add("writerClass", CorpusWriter.class.getName());
 
         Job job = new Job();
 

@@ -55,7 +55,8 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     int currentDocument;
     int currentCount;
     ExtentArray extentArray;
-    IndexReader.Iterator iterator;
+    GenericIndexReader.Iterator iterator;
+
     // to support skipping
     VByteInput skips;
     VByteInput skipPositions;
@@ -73,7 +74,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     long countsByteFloor;
     long positionsByteFloor;
 
-    TermExtentIterator(IndexReader.Iterator iterator) throws IOException {
+    TermExtentIterator(GenericIndexReader.Iterator iterator) throws IOException {
       this.iterator = iterator;
       initialize();
     }
@@ -86,9 +87,9 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       long startPosition = iterator.getValueStart();
       long endPosition = iterator.getValueEnd();
 
-      RandomAccessFile input = reader.getInput();
+      RandomAccessFile input = iterator.getInput();
       input.seek(startPosition);
-      DataInput stream = new VByteInput(reader.getInput());
+      DataInput stream = new VByteInput(input);
 
       // metadata
       int options = stream.readInt();
@@ -344,7 +345,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     int documentIndex;
     int currentDocument;
     int currentCount;
-    IndexReader.Iterator iterator;
+    GenericIndexReader.Iterator iterator;
     // to support skipping
     VByteInput skips;
     VByteInput skipPositions;
@@ -360,7 +361,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     long documentsByteFloor;
     long countsByteFloor;
 
-    TermCountIterator(IndexReader.Iterator iterator) throws IOException {
+    TermCountIterator(GenericIndexReader.Iterator iterator) throws IOException {
       this.iterator = iterator;
       initialize();
     }
@@ -373,9 +374,9 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       long startPosition = iterator.getValueStart();
       long endPosition = iterator.getValueEnd();
 
-      RandomAccessFile input = reader.getInput();
+      RandomAccessFile input = iterator.getInput();
       input.seek(startPosition);
-      DataInput stream = new VByteInput(reader.getInput());
+      DataInput stream = new VByteInput(input);
 
       // metadata
       int options = stream.readInt();
@@ -597,16 +598,16 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       return collectionCount;
     }
   }
-  IndexReader reader;
+  GenericIndexReader reader;
 
   public PositionIndexReader(
-          IndexReader reader) throws IOException {
+          GenericIndexReader reader) throws IOException {
     this.reader = reader;
   }
 
   public PositionIndexReader(
           String pathname) throws FileNotFoundException, IOException {
-    reader = new IndexReader(pathname);
+    reader = GenericIndexReader.getIndexReader(pathname);
   }
 
   /**
@@ -621,7 +622,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
    * null if the term doesn't exist in the inverted file.
    */
   public ExtentIndexIterator getTermExtents(String term) throws IOException {
-    IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
       return new TermExtentIterator(iterator);
@@ -630,7 +631,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
   }
 
   public ExtentIndexIterator getTermCounts(String term) throws IOException {
-    IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
       return new TermCountIterator(iterator);
@@ -672,7 +673,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
   // We need a better interface for these.
   // TODO:: Clean abstraction for this
   public int documentCount(String term) throws IOException {
-    IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
     if (iterator == null) {
       return 0;
     }
@@ -680,9 +681,9 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     long startPosition = iterator.getValueStart();
     long endPosition = iterator.getValueEnd();
 
-    RandomAccessFile input = reader.getInput();
+    RandomAccessFile input = iterator.getInput();
     input.seek(startPosition);
-    DataInput stream = new VByteInput(reader.getInput());
+    DataInput stream = new VByteInput(input);
 
     // header information - have to read b/c it's compressed
     stream.readInt(); // skip option information
@@ -692,16 +693,16 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
 
   // TODO: Clean abstraction for this
   public int termCount(String term) throws IOException {
-    IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
     if (iterator == null) {
       return 0;
     }
     long startPosition = iterator.getValueStart();
     long endPosition = iterator.getValueEnd();
 
-    RandomAccessFile input = reader.getInput();
+    RandomAccessFile input = iterator.getInput();
     input.seek(startPosition);
-    DataInput stream = new VByteInput(reader.getInput());
+    DataInput stream = new VByteInput(input);
 
     // Can't just seek b/c the numbers are compressed
     stream.readInt();

@@ -22,7 +22,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
 
   public class Iterator extends ExtentIndexIterator {
 
-    IndexReader.Iterator iterator;
+    GenericIndexReader.Iterator iterator;
     VByteInput data;
     BufferedFileDataStream dataStream;
     int documentCount;
@@ -38,7 +38,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     int nextSkipDocument;
     long lastSkipPosition;
 
-    public Iterator(IndexReader.Iterator iterator) throws IOException {
+    public Iterator(GenericIndexReader.Iterator iterator) throws IOException {
       this.iterator = iterator;
       this.extents = new ExtentArray();
       initialize();
@@ -95,9 +95,9 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       long startPosition = iterator.getValueStart();
       long endPosition = iterator.getValueEnd();
 
-      RandomAccessFile input = reader.getInput();
+      RandomAccessFile input = iterator.getInput();
       input.seek(startPosition);
-      DataInput stream = new VByteInput(reader.getInput());
+      DataInput stream = new VByteInput(input);
 
       options = stream.readInt();
       documentCount = stream.readInt();
@@ -225,9 +225,10 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       return (documentIndex >= documentCount);
     }
   }
-  IndexReader reader;
 
-  public ExtentIndexReader(IndexReader reader) throws FileNotFoundException, IOException {
+  GenericIndexReader reader;
+
+  public ExtentIndexReader(GenericIndexReader reader) throws FileNotFoundException, IOException {
     this.reader = reader;
   }
 
@@ -236,7 +237,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
   }
 
   public Iterator getExtents(String term) throws IOException {
-    IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
       return new Iterator(iterator);
@@ -245,7 +246,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
   }
 
   public CountIterator getCounts(String term) throws IOException {
-    IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
       return new Iterator(iterator);

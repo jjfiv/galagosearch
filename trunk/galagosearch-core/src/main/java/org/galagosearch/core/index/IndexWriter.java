@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.zip.GZIPOutputStream;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.tupleflow.Counter;
+import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Step;
 import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.Utility;
 
@@ -33,7 +35,7 @@ import org.galagosearch.tupleflow.Utility;
  * 
  * @author trevor
  */
-public class IndexWriter {
+public class IndexWriter extends GenericIndexWriter {
     public static final long MAGIC_NUMBER = 0x1a2b3c4d5e6f7a8bL;
 
     DataOutputStream output;
@@ -179,7 +181,7 @@ public class IndexWriter {
         }
         return true;
     }
-    
+
     interface ListData {
         long length();
         long encodedLength();

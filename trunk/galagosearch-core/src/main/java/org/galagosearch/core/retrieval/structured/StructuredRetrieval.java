@@ -108,7 +108,7 @@ public class StructuredRetrieval extends Retrieval {
   public ScoredDocument[] runQuery(Node queryTree, Parameters parameters) throws Exception {
 
     // construct the query iterators
-    DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
+      DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
     int requested = (int) parameters.get("requested", 1000);
 
     // now there should be an iterator at the root of this tree

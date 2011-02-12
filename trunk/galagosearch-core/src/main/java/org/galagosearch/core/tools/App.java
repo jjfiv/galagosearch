@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.Map.Entry;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.DocumentNameReader;
+import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.pagerank.program.PageRankApp;
@@ -113,7 +114,7 @@ public class App {
   }
 
   private void commandHelpBuild() {
-    output.println("galago build[-fast] [flags] <index> (<input>)+");
+    output.println("galago build[-fast|-parallel] [flags] <index> (<input>)+");
     output.println();
     output.println("  Builds a Galago StructuredIndex with TupleFlow, using one thread ");
     output.println("  for each CPU core on your computer.  While some debugging output ");
@@ -165,7 +166,7 @@ public class App {
     output.println("  appear on a web page.  A URL should appear in the command output ");
     output.println("  that will direct you to the status page.");
     output.println();
-    output.println("  ngram-se will produce an identical ngram index in a space efficient manner.");
+    output.println("  ngram-se will produce an identical ngram index in a temporary-space efficient manner.");
     output.println("  Space efficiency is gained by reading through the corpus twice.");
     output.println();
 
@@ -267,6 +268,11 @@ public class App {
     if (nonFlags[0].contains("fast")) {
       BuildFastIndex build = new BuildFastIndex();
       job = build.getIndexJob(p);
+
+    } else if (nonFlags[0].contains("parallel")) {
+      BuildParallelIndex build = new BuildParallelIndex();
+      job = build.getIndexJob(p);
+
     } else {
       BuildIndex build = new BuildIndex();
       job = build.getIndexJob(p);
@@ -395,8 +401,8 @@ public class App {
       keyType = args[2];
     }
     String key = "";
-    IndexReader reader = new IndexReader(args[1]);
-    IndexReader.Iterator iterator = reader.getIterator();
+    GenericIndexReader reader = GenericIndexReader.getIndexReader(args[1]);
+    GenericIndexReader.Iterator iterator = reader.getIterator();
     while (!iterator.isDone()) {
       if (keyType.equals("string")) {
         key = Utility.toString(iterator.getKey());
@@ -410,8 +416,6 @@ public class App {
         throw new IOException("Key type '" + keyType + "' unsupported.");
       }
       output.println(key);
-      // I don't think this is needed since it's not getting printed.
-      // iterator.getValueString();
       iterator.nextKey();
     }
   }
@@ -673,6 +677,7 @@ public class App {
     output.println("   batch-search");
     output.println("   build");
     output.println("   build-fast");
+    output.println("   build-parallel");
     output.println("   build-topdocs");
     output.println("   doc");
     output.println("   dump-connection");
@@ -697,7 +702,7 @@ public class App {
       commandHelpBatchSearch();
     } else if (command.equals("parameter-sweep")) {
       commandHelpParameterSweep();
-    } else if (command.equals("build") || command.equals("build-fast")) {
+    } else if (command.equals("build") || command.equals("build-fast") || command.equals("build-parallel")) {
       commandHelpBuild();
     } else if (command.startsWith("ngram")) {
       commandHelpNgram();
@@ -864,6 +869,8 @@ public class App {
     } else if (command.equals("build")) {
       handleBuild(args);
     } else if (command.equals("build-fast")) {
+      handleBuild(args);
+    } else if (command.equals("build-parallel")) {
       handleBuild(args);
     } else if (command.equals("build-topdocs")) {
       handleBuildTopdocs(args);

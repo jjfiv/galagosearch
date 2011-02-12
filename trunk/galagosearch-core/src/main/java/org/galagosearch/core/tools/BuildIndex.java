@@ -11,12 +11,12 @@ import org.galagosearch.core.index.DocumentNameWriter;
 import org.galagosearch.core.index.ExtentIndexWriter;
 import org.galagosearch.core.index.ExtentValueIndexWriter;
 import org.galagosearch.core.index.ManifestWriter;
-import org.galagosearch.core.index.parallel.ParallelIndexKeyWriter;
+import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
 import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.index.corpus.CorpusWriter;
 import org.galagosearch.core.index.corpus.DocumentToKeyValuePair;
-import org.galagosearch.core.index.parallel.ParallelIndexValueWriter;
+import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
 import org.galagosearch.core.parse.AdditionalTextCombiner;
 import org.galagosearch.core.parse.AnchorTextCreator;
 import org.galagosearch.core.parse.CollectionLengthCounter;
@@ -374,7 +374,7 @@ public class BuildIndex {
                 new KeyValuePair.KeyOrder()));
         
         stage.add(new InputStep(input));
-        stage.add(new Step(ParallelIndexKeyWriter.class, indexParameters));
+        stage.add(new Step(SplitIndexKeyWriter.class, indexParameters));
 
         return stage;
     }
@@ -454,10 +454,9 @@ public class BuildIndex {
 
         if (makeCorpus) {
             this.corpusParameters = new Parameters();
+            this.corpusParameters.add("parallel", "true");
             this.corpusParameters.add("compressed", p.get("compressed", "true"));
             this.corpusParameters.add("filename", new File(p.get("corpusPath")).getAbsolutePath());
-            this.corpusParameters.add("readerClass", CorpusReader.class.getName());
-            this.corpusParameters.add("writerClass", CorpusWriter.class.getName());
         }
 
         job.add(getSplitStage(inputPaths));

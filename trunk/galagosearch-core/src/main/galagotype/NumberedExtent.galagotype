@@ -7,4 +7,5 @@ type NumberedExtent {
     int end;
 
     order: +extentName +number +begin;
+    order: +extentName;
 }

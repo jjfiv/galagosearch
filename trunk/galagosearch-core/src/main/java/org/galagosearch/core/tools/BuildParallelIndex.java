@@ -16,10 +16,7 @@ import org.galagosearch.core.index.PositionIndexWriter;
 import org.galagosearch.core.parse.AdditionalTextCombiner;
 import org.galagosearch.core.parse.AnchorTextCreator;
 import org.galagosearch.core.parse.CollectionLengthCounterNDD;
-import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.index.corpus.CorpusWriter;
-import org.galagosearch.core.index.corpus.DocumentToKeyValuePair;
-import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
 import org.galagosearch.core.parse.DocumentDataExtractor;
 import org.galagosearch.core.parse.FastDocumentNumberer;
 import org.galagosearch.core.parse.DocumentSource;
@@ -63,13 +60,17 @@ import org.galagosearch.tupleflow.types.XMLFragment;
  *
  * @author sjh
  */
-public class BuildFastIndex {
+public class BuildParallelIndex {
 
     protected String indexPath;
     protected boolean stemming;
     protected boolean useLinks;
     protected boolean makeCorpus;
     protected Parameters corpusParameters;
+    protected Parameters extentParameters;
+    protected Parameters postingsParameters;
+    protected Parameters stemmedParameters;
+    protected int indexShards;
 
     public Stage getSplitStage(ArrayList<String> inputPaths) throws IOException {
         Stage stage = new Stage("inputSplit");
@@ -147,9 +148,9 @@ public class BuildFastIndex {
         if (makeCorpus) {
             ArrayList<Step> corpus = new ArrayList();
             corpus.add(new Step(CorpusWriter.class, corpusParameters.clone()));
+            // we need to sort to ensure key order
             corpus.add(Utility.getSorter(new KeyValuePair.KeyOrder()));
             corpus.add(new OutputStep("corpusKeyData"));
-
             processingForkOne.groups.add(corpus);
         }
 
@@ -268,30 +269,37 @@ public class BuildFastIndex {
         return stage;
     }
 
-    public Stage getWritePostingsStage(String stageName, String inputName, String indexName) {
+    public Stage getWritePostingsStage(String stageName, String inputName, Parameters p) {
         Stage stage = new Stage(stageName);
 
         stage.add(new StageConnectionPoint(
                 ConnectionPointType.Input, inputName,
                 new NumberWordPosition.WordDocumentPositionOrder()));
+        stage.add(new StageConnectionPoint(
+                ConnectionPointType.Output, inputName + "Keys",
+                new KeyValuePair.KeyOrder()));
+
         stage.add(new InputStep(inputName));
-        Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "parts" + File.separator + indexName);
         stage.add(new Step(PositionIndexWriter.class, p));
+        stage.add(new OutputStep(inputName + "Keys"));
+
         return stage;
     }
 
-    public Stage getWriteExtentsStage() {
-        Stage stage = new Stage("writeExtents");
+    public Stage getWriteExtentsStage(String stageName, String inputName, Parameters p) {
+        Stage stage = new Stage(stageName);
 
         stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input, "numberedExtents",
+                ConnectionPointType.Input, inputName,
                 new NumberedExtent.ExtentNameNumberBeginOrder()));
+        stage.add(new StageConnectionPoint(
+                ConnectionPointType.Output, inputName + "Keys",
+                new KeyValuePair.KeyOrder()));
 
-        stage.add(new InputStep("numberedExtents"));
-        Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "parts" + File.separator + "extents");
+        stage.add(new InputStep(inputName));
         stage.add(new Step(ExtentIndexWriter.class, p));
+        stage.add(new OutputStep(inputName + "Keys"));
+
         return stage;
     }
 
@@ -375,6 +383,7 @@ public class BuildFastIndex {
         this.useLinks = p.get("links", false);
         this.indexPath = new File(p.get("indexPath")).getAbsolutePath(); // fail if no path.
         this.makeCorpus = p.containsKey("corpusPath");
+        this.indexShards = (int) p.get("indexShards", 11);
 
         ArrayList<String> inputPaths = new ArrayList();
         List<Value> vs = p.list("inputPaths");
@@ -390,22 +399,40 @@ public class BuildFastIndex {
             this.corpusParameters.add("filename", new File(p.get("corpusPath")).getAbsolutePath());
         }
 
+        this.postingsParameters = new Parameters();
+        this.postingsParameters.add("parallel", "true");
+        this.postingsParameters.add("hashMod", Integer.toString(indexShards));
+        this.postingsParameters.add("filename", indexPath + File.separator + "parts" + File.separator + "postings");
+
+        this.extentParameters = new Parameters();
+        this.extentParameters.add("parallel", "true");
+        this.extentParameters.add("hashMod", Integer.toString(indexShards));
+        this.extentParameters.add("filename", indexPath + File.separator + "parts" + File.separator + "extents");
+
         job.add(getSplitStage(inputPaths));
         job.add(getParsePostingsStage());
-        job.add(getWritePostingsStage("writePostings", "numberedPostings", "postings"));
+        job.add(getWritePostingsStage("writePostings", "numberedPostings", postingsParameters));
         job.add(getWriteManifestStage());
-        job.add(getWriteExtentsStage());
+        job.add(getWriteExtentsStage("writeExtents", "numberedExtents", extentParameters));
         job.add(getWriteDocumentNamesStage());
         job.add(getWriteDocumentLengthsStage());
         job.add(getCollectionLengthStage());
 
+        // parallel writers
+        job.add(getParallelIndexKeyWriterStage("writePostingKeys", "numberedPostingsKeys", postingsParameters));
+        job.add(getParallelIndexKeyWriterStage("writeExtentKeys", "numberedExtentsKeys", extentParameters));
+
         job.connect("inputSplit", "parsePostings", ConnectionAssignmentType.Each);
         job.connect("parsePostings", "writeDocumentLengths", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "writeDocumentNames", ConnectionAssignmentType.Combined);
-        job.connect("parsePostings", "writeExtents", ConnectionAssignmentType.Combined);
-        job.connect("parsePostings", "writePostings", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "collectionLength", ConnectionAssignmentType.Combined);
+        job.connect("parsePostings", "writeExtents", ConnectionAssignmentType.Each, new String[]{"+extentName"}, indexShards);
+        job.connect("parsePostings", "writePostings", ConnectionAssignmentType.Each, new String[]{"+word"}, indexShards);
         job.connect("collectionLength", "writeManifest", ConnectionAssignmentType.Combined);
+
+        // parallel writers
+        job.connect("writePostings", "writePostingKeys", ConnectionAssignmentType.Combined);
+        job.connect("writeExtents", "writeExtentKeys", ConnectionAssignmentType.Combined);
 
         if (useLinks) {
             job.add(getParseLinksStage());
@@ -417,10 +444,19 @@ public class BuildFastIndex {
         }
 
         if (stemming) {
+            this.stemmedParameters = new Parameters();
+            this.stemmedParameters.add("parallel", "true");
+            this.stemmedParameters.add("hashMod", Integer.toString(indexShards));
+            this.stemmedParameters.add("filename", indexPath + File.separator + "parts" + File.separator + "stemmedPostings");
+
             job.add(getWritePostingsStage("writeStemmedPostings",
                     "numberedStemmedPostings",
-                    "stemmedPostings"));
-            job.connect("parsePostings", "writeStemmedPostings", ConnectionAssignmentType.Combined);
+                    stemmedParameters));
+            job.add(getParallelIndexKeyWriterStage("writeStemmedPostingKeys", "numberedStemmedPostingsKeys", stemmedParameters));
+
+            job.connect("parsePostings", "writeStemmedPostings", ConnectionAssignmentType.Each, new String[]{"+word"}, indexShards);
+            job.connect("writeStemmedPostings", "writeStemmedPostingKeys", ConnectionAssignmentType.Combined);
+
         }
 
         if (makeCorpus) {
