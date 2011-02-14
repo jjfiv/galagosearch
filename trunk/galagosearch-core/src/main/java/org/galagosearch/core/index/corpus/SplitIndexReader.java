@@ -36,6 +36,7 @@ import org.galagosearch.tupleflow.Utility;
 public class SplitIndexReader extends GenericIndexReader {
     public static final long VALUE_FILE_MAGIC_NUMBER = 0x2b3c4d5e6f7a8b9cL;
 
+    RandomAccessFile[] dataFiles;
     IndexReader vocabIndex;
     String indexFolder;
     int hashMod;
@@ -43,7 +44,6 @@ public class SplitIndexReader extends GenericIndexReader {
     public class Iterator extends GenericIndexReader.Iterator {
 
         IndexReader.Iterator vocabIterator;
-        RandomAccessFile[] dataFiles = new RandomAccessFile[hashMod];
         boolean valueLoaded = false;
         int file;
         long valueOffset;
@@ -187,6 +187,8 @@ public class SplitIndexReader extends GenericIndexReader {
         indexFolder = f.getParent();
         //  (-1) for the key index
         hashMod = f.getParentFile().list().length - 1;
+
+        dataFiles = new RandomAccessFile[hashMod];
     }
 
     /**
@@ -232,6 +234,10 @@ public class SplitIndexReader extends GenericIndexReader {
 
     public void close() throws IOException {
         vocabIndex.close();
+        for(RandomAccessFile f : dataFiles){
+          if(f != null)
+            f.close();
+        }
     }
 
     //*********************//
