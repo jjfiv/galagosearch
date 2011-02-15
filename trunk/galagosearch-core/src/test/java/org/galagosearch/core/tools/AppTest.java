@@ -6,11 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import junit.framework.TestCase;
-import org.galagosearch.core.index.corpus.SplitIndexReader;
-import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.Utility;
-import org.galagosearch.tupleflow.execution.Job;
-import org.galagosearch.tupleflow.execution.Verification;
 
 /**
  *
@@ -51,7 +47,7 @@ public class AppTest extends TestCase {
     }
 
     public void testMakeCorpora() throws Exception {
-        File trecCorpusFile = null;
+      File trecCorpusFile = null;
         File corpusFile1 = null;
         File corpusFile2 = null;
         File indexFile1 = null;
@@ -118,7 +114,7 @@ public class AppTest extends TestCase {
     }
 
     public void testSimplePipeline() throws Exception {
-        File relsFile = null;
+      File relsFile = null;
         File queryFile = null;
         File scoresFile = null;
         File trecCorpusFile = null;
@@ -250,7 +246,7 @@ public class AppTest extends TestCase {
     }
 
     public void testBuildFast() throws IOException, Exception {
-        File trecCorpusFile = null;
+      File trecCorpusFile = null;
         File indexFile = null;
         File queryFile = null;
 
@@ -262,8 +258,6 @@ public class AppTest extends TestCase {
 
             indexFile = Utility.createGalagoTempDir();
             // now, try to build an index from that
-            indexFile = Utility.createTemporary();
-            indexFile.delete();
             App.main(new String[]{"build-fast", indexFile.getAbsolutePath(),
                         trecCorpusFile.getAbsolutePath()});
 
@@ -315,7 +309,7 @@ public class AppTest extends TestCase {
     }
 
     public void testBuildParallel() throws IOException, Exception {
-        File trecCorpusFile = null;
+      File trecCorpusFile = null;
         File indexFile = null;
         File queryFile = null;
         
@@ -327,8 +321,6 @@ public class AppTest extends TestCase {
 
             indexFile = Utility.createGalagoTempDir();
             // now, try to build an index from that
-            indexFile = Utility.createTemporary();
-            indexFile.delete();
             App.main(new String[]{"build-parallel", indexFile.getAbsolutePath(),
                         trecCorpusFile.getAbsolutePath(), "--indexShards=2"});
 
