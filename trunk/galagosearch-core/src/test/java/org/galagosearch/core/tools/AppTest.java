@@ -74,7 +74,7 @@ public class AppTest extends TestCase {
             corpusFile2 = File.createTempFile("galago", ".corpus");
             corpusFile2.delete();
             App.main(new String[]{"make-corpus", corpusFile2.getAbsolutePath(),
-                        trecCorpusFile.getAbsolutePath()});
+                        trecCorpusFile.getAbsolutePath(), "--distrib=2"});
 
             // make sure the corpus folder exists
             assertTrue(corpusFile1.exists());
@@ -136,7 +136,7 @@ public class AppTest extends TestCase {
             corpusFile = File.createTempFile("galago", ".corpus");
             corpusFile.delete();
             App.main(new String[]{"make-corpus", corpusFile.getAbsolutePath(),
-                        trecCorpusFile.getAbsolutePath()});
+                        trecCorpusFile.getAbsolutePath(), "--distrib=2"});
 
 
             // make sure the corpus file exists
@@ -330,10 +330,13 @@ public class AppTest extends TestCase {
             indexFile = Utility.createTemporary();
             indexFile.delete();
             App.main(new String[]{"build-parallel", indexFile.getAbsolutePath(),
-                        trecCorpusFile.getAbsolutePath()});
+                        trecCorpusFile.getAbsolutePath(), "--indexShards=2"});
 
             // Checks path and components
             verifyIndexStructures(indexFile);
+
+            File postings = new File(indexFile + File.separator + "parts" + File.separator + "postings");
+            assert( postings.list().length == 3);
 
             // try to batch search that index with a no-match string
             String queries =
@@ -367,7 +370,6 @@ public class AppTest extends TestCase {
             assertEquals(expectedScores, output);
 
         } finally {
-           /*
             if (trecCorpusFile != null){
                 trecCorpusFile.delete();
             }
@@ -377,7 +379,6 @@ public class AppTest extends TestCase {
             if (indexFile != null) {
                 Utility.deleteDirectory(indexFile);
             }
-           */
         }
     }
 }

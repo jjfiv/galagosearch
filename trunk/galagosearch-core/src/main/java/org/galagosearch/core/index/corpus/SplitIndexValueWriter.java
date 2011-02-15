@@ -47,7 +47,7 @@ import org.galagosearch.tupleflow.execution.Verification;
 @InputClass(className = "org.galagosearch.core.types.KeyValuePair")
 @OutputClass(className = "org.galagosearch.core.types.KeyValuePair")
 public class SplitIndexValueWriter extends GenericIndexWriter
-        implements KeyValuePair.KeyOrder.ShreddedProcessor {
+        implements KeyValuePair.KeyValueOrder.ShreddedProcessor {
 
     public static final long MAGIC_NUMBER = 0x2b3c4d5e6f7a8b9cL;
     public Processor<KeyValuePair> processor;
@@ -118,10 +118,14 @@ public class SplitIndexValueWriter extends GenericIndexWriter
      * TODO: This needs to be changed to use blocks properly
      *  - currently it's identical to the add function above
      */
-    public void processTuple(byte[] value) throws IOException {
+    public void processValue(byte[] value) throws IOException {
         valueOutput.write(value);
         valueLength += value.length;
         valueOffset += value.length;
+    }
+
+    public void processTuple() throws IOException{
+        // nothing //
     }
 
     public void close() throws IOException {

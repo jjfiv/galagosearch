@@ -6,4 +6,5 @@ type KeyValuePair {
   bytes value;
 
   order: +key;
+  order: +key +value;
 }

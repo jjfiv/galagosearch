@@ -37,7 +37,7 @@ import org.galagosearch.tupleflow.Step;
  * 
  * @author sjh
  */
-public abstract class GenericIndexWriter implements KeyValuePair.KeyOrder.ShreddedProcessor, Source<KeyValuePair> {
+public abstract class GenericIndexWriter implements KeyValuePair.KeyValueOrder.ShreddedProcessor, Source<KeyValuePair> {
         
     /**
      * Returns the current copy of the manifest, which will be stored in
@@ -78,11 +78,17 @@ public abstract class GenericIndexWriter implements KeyValuePair.KeyOrder.Shredd
 
     /**
      * Adds a valueBlock to the index (many blocks may be added for any given key)
-     *  - writer waits for all valueBlocks to be added before writing the key
      *  - write will throw an exception if the valueBlock is larger than the ValueBlockSize
      *  - this check can be avoided by using the (add) function above
      */
-    public void processTuple(byte[] valueBlock) throws IOException{
+    public void processValue(byte[] value) throws IOException{
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    /**
+     * Finalizes a key-value pair
+     */
+    public void processTuple() throws IOException{
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
