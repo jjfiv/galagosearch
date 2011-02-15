@@ -35,6 +35,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class Parameters implements Serializable {
 
+
   public static class Variable implements Serializable {
 
     String name;
@@ -247,6 +248,19 @@ public class Parameters implements Serializable {
   }
   Value _data = new Value();
   HashMap<String, String> _variables = new HashMap<String, String>();
+
+  // HAX
+  HashMap<String, Object> _transients = null;
+
+  public Object getTransient(String key) {
+    if (_transients == null) return null;
+    else return _transients.get(key);
+  }
+
+  public void setTransient(String key, Object obj) {
+    if (_transients == null) _transients = new HashMap<String, Object>();
+    _transients.put(key, obj);
+  }
 
   /**
    * This class gathers up a stack of CharSequence objects and makes

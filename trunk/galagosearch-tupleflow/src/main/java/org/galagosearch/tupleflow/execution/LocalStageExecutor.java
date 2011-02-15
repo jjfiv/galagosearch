@@ -57,7 +57,6 @@ public class LocalStageExecutor implements StageExecutor {
           StageInstanceFactory factory = new StageInstanceFactory(manager);
           manager.start();
           ExNihiloSource source = factory.instantiate(instance);
-          logger.info("Instantiated stage source: " + source.toString());
           source.run();
           manager.stop();
           synchronized (this) {

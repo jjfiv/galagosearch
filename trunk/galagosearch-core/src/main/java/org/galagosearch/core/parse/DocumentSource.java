@@ -151,6 +151,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
      * Assumptions: Each line in this file should be a filename, NOT a directory.
      *              List file is either uncompressed or compressed using gzip ONLY.
      */
+
     if (extension.equals("list")) {
       BufferedReader br;
       if (fileName.endsWith("gz")) {
