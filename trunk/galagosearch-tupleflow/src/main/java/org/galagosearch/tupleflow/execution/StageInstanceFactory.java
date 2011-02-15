@@ -8,6 +8,7 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.ExNihiloSource;
 import org.galagosearch.tupleflow.FileOrderedReader;
@@ -58,6 +59,11 @@ public class StageInstanceFactory {
         }
 
         public Processor getTypeWriter(String specification) throws IOException {
+            Set<String> writers = instance.getWriters().keySet();
+            System.err.printf("Asking for %s\nAvailable writers:", specification);
+            for (String spec : writers) {
+              System.err.printf("%s\n", spec);
+            }
             PipeInput pipeInput = instance.getWriters().get(specification);
             return StageInstanceFactory.getTypeWriter(pipeInput);
         }
