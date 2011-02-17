@@ -42,7 +42,7 @@ public class BatchSearch {
     List<Parameters.Value> queries = parameters.list("query");
 
     // open index
-    Retrieval retrieval = Retrieval.instance(parameters.get("index"), parameters);
+    Retrieval retrieval = Retrieval.instance(parameters);
 
     // record results requested
     int requested = (int) parameters.get("count", 1000);

@@ -36,37 +36,9 @@ public class MultiRetrieval extends Retrieval {
   Parameters queryParams;
   List<ScoredDocument> queryResults;
 
-  public MultiRetrieval(Parameters p) throws Exception {
-    this.retrievals = new HashMap<String, ArrayList<Retrieval>>();
-    this.retrievals.put("all", new ArrayList<Retrieval>());
+  public MultiRetrieval(HashMap<String, ArrayList<Retrieval>> indexes, Parameters p) throws Exception {
 
-    // Load up the indexes
-    String id, path;
-    List<Parameters.Value> indexes = p.list("index");
-    for (Parameters.Value value : indexes) {
-      id = "all";
-      if (value.containsKey("path")) {
-        path = value.get("path").toString();
-        if (value.containsKey("id")) {
-          id = value.get("id").toString();
-        }
-      } else {
-        path = value.toString();
-      }
-      if (!retrievals.containsKey(id)) {
-        retrievals.put(id, new ArrayList<Retrieval>());
-      }
-
-      try {
-        Retrieval r = Retrieval.instance(path, p);
-        retrievals.get(id).add(r);
-        if (!id.equals("all")) {
-          retrievals.get("all").add(r); // Always put it in default as well
-        }
-      } catch (Exception e) {
-        System.err.println("Unable to load index (" + id + ") at path " + path + ": " + e.getMessage());
-      }
-    }
+    this.retrievals = indexes;
 
     initRetrieval();
   }

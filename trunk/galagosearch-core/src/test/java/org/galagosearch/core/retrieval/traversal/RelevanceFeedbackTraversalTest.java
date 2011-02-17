@@ -96,7 +96,7 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         p.add("retrievalGroup", "all");
         p.set("index", indexFile.getAbsolutePath());
         p.set("corpus", corpusFile.getAbsolutePath());
-        StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(indexFile.getAbsolutePath(), p);
+        StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(p);
         RelevanceModelTraversal traversal = new RelevanceModelTraversal(p, retrieval);
 
         Node parsedTree = StructuredQuery.parse("#rm:fbTerms=3:fbDocs=2( #feature:dirichlet( #extents:fits:part=postings() ) )");
@@ -119,7 +119,7 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         p.add("retrievalGroup", "all");
         p.set("index", indexFile.getAbsolutePath());
         p.set("corpus", corpusFile.getAbsolutePath());
-        StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(indexFile.getAbsolutePath(), p);
+        StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(p);
         BM25RelevanceFeedbackTraversal traversal = new BM25RelevanceFeedbackTraversal(p, retrieval);
         Node parsedTree = StructuredQuery.parse("#bm25rf:fbDocs=3:fbTerms=2( #feature:bm25( #extents:cat:part=postings() ) )");
         Node transformed = StructuredQuery.copy(traversal, parsedTree);
