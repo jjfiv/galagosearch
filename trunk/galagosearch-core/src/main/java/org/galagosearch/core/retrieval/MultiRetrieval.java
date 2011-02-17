@@ -39,7 +39,7 @@ public class MultiRetrieval extends Retrieval {
   public MultiRetrieval(HashMap<String, ArrayList<Retrieval>> indexes, Parameters p) throws Exception {
 
     this.retrievals = indexes;
-
+    
     initRetrieval();
   }
 
@@ -115,7 +115,10 @@ public class MultiRetrieval extends Retrieval {
 
     // get the best {requested} results
     int requested = (int) parameters.get("requested", 1000);
-    return queryResults.subList(0, requested).toArray(new ScoredDocument[0]);
+
+    System.err.println( queryResults.size() );
+
+    return queryResults.subList(0, Math.min(queryResults.size(), requested)).toArray(new ScoredDocument[0]);
   }
 
   public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
@@ -197,7 +200,7 @@ public class MultiRetrieval extends Retrieval {
       }
       retrievalStatistics.put(retGroup, mergeStats(stats));
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
-      retrievalParts.put(retGroup, mergeParts(stats));
+      retrievalParts.put(retGroup, mergeParts(parts));
 
       featureFactories.put(retGroup, new DocumentOrderedFeatureFactory(retrievalStatistics.get(retGroup)));
     }
