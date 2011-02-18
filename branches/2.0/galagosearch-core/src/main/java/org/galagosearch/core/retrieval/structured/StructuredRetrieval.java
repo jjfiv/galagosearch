@@ -98,7 +98,7 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   /**
-   * Evaluates a query using document-at-a-time evaluation.
+   * Evaluates a query using identifier-at-a-time evaluation.
    *
    * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
    * @param parameters - query parameters (indexId, # requested, query type, transform)
@@ -188,7 +188,7 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   /**
-   * Evaluates a query using document-at-a-time evaluation.
+   * Evaluates a query using identifier-at-a-time evaluation.
    *  - allowing user to sweep accross parameters specified within the query
    *
    * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
@@ -248,7 +248,7 @@ public class StructuredRetrieval extends Retrieval {
       results[i] = scores.poll();
       results[i].source = indexId;
       results[i].rank = i + 1;
-      //results[i].documentName = getDocumentName(results[i].document);
+      //results[i].documentName = getDocumentName(results[i].identifier);
       docIds.put(results[i].document, i);
     }
 

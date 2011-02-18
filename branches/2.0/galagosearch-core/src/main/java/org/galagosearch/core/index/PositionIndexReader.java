@@ -166,7 +166,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       loadExtents();
     }
 
-    // Loads up a single set of positions for a document. Basically it's the
+    // Loads up a single set of positions for a identifier. Basically it's the
     // load that needs to be done when moving forward one in the posting list.
     private void loadExtents() throws IOException {
       currentDocument += documents.readInt();
@@ -312,7 +312,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       return extentArray;
     }
 
-    public int document() {
+    public int identifier() {
       return currentDocument;
     }
 
@@ -580,7 +580,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       throw new UnsupportedOperationException("Extents not supported in the TermCountIterator");
     }
 
-    public int document() {
+    public int identifier() {
       return currentDocument;
     }
 
@@ -667,7 +667,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     }
   }
 
-  // I add these in order to return document frequency and collection frequency
+  // I add these in order to return identifier frequency and collection frequency
   // information for terms. Any other way from the iterators are SLOW
   // unless the headers have already been loaded.
   // We need a better interface for these.

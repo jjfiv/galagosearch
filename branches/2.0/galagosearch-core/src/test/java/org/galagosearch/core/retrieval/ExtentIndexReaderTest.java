@@ -82,7 +82,7 @@ public class ExtentIndexReaderTest extends TestCase {
         ExtentArrayIterator iter = new ExtentArrayIterator(e);
         assertFalse(iter.isDone());
 
-        assertEquals(1, extents.document());
+        assertEquals(1, extents.identifier());
 
         assertEquals(2, iter.current().begin);
         assertEquals(3, iter.current().end);
@@ -102,7 +102,7 @@ public class ExtentIndexReaderTest extends TestCase {
         e = extents.extents();
         iter = new ExtentArrayIterator(e);
 
-        assertEquals(9, extents.document());
+        assertEquals(9, extents.identifier());
 
         assertEquals(5, iter.current().begin);
         assertEquals(10, iter.current().end);
@@ -122,7 +122,7 @@ public class ExtentIndexReaderTest extends TestCase {
         ExtentArray e = extents.extents();
         ExtentArrayIterator iter = new ExtentArrayIterator(e);
 
-        assertEquals(15, extents.document());
+        assertEquals(15, extents.identifier());
 
         assertEquals(9, iter.current().begin);
         assertEquals(11, iter.current().end);
@@ -167,9 +167,9 @@ public class ExtentIndexReaderTest extends TestCase {
 
         assertFalse(extents.isDone());
         assertFalse(extents.skipToDocument(453));
-        assertEquals(454, extents.document());
+        assertEquals(454, extents.identifier());
         extents.nextEntry();
-        assertEquals(457, extents.document());
+        assertEquals(457, extents.identifier());
         assertEquals(27, extents.count());
         ExtentArray ea = extents.extents();
         ExtentArrayIterator eait = new ExtentArrayIterator(ea);

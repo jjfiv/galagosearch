@@ -17,52 +17,28 @@ import org.galagosearch.tupleflow.Utility;
  * 
  * @author trevor, sjh
  */
-public class DocumentLengthsReader {
-
-  GenericIndexReader reader;
+public class DocumentLengthsReader extends KeyDataReader {
 
   public DocumentLengthsReader(String filename) throws FileNotFoundException, IOException {
-
-    reader = GenericIndexReader.getIndexReader(filename);
+    super(filename);
   }
 
-  public void close() throws IOException {
-    reader.close();
+  public DocumentLengthsReader(GenericIndexReader r) {
+    super(r);
   }
 
   public int getLength(int document) throws IOException {
     return Utility.uncompressInt(reader.getValueBytes(Utility.fromInt(document)), 0);
   }
 
-  public NumberedDocumentDataIterator getIterator() throws IOException {
+  public Iterator getIterator() throws IOException {
     return new Iterator(reader);
   }
 
-  /*
-   * Iterator uses the buffer above
-   * Perhaps it would be faster to use a new data stream...
-   *
-   */
-  public class Iterator extends NumberedDocumentDataIterator {
-
-    GenericIndexReader.Iterator iterator;
-    GenericIndexReader reader;
+  public class Iterator extends KeyDataReader.Iterator {
 
     public Iterator(GenericIndexReader reader) throws IOException {
-      this.reader = reader;
-      reset();
-    }
-
-    public void reset() throws IOException {
-      iterator = reader.getIterator();
-    }
-
-    public boolean skipTo(byte[] key) throws IOException {
-      iterator.skipTo(key);
-      if (Utility.compare(key, iterator.getKey()) == 0) {
-        return true;
-      }
-      return false;
+      super(reader);
     }
 
     public String getRecordString() {
@@ -74,10 +50,6 @@ public class DocumentLengthsReader {
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);
       }
-    }
-
-    public boolean nextRecord() throws IOException {
-      return (iterator.nextKey());
     }
 
     public void skipTo(int key) throws IOException {
@@ -92,15 +64,7 @@ public class DocumentLengthsReader {
     }
 
     public int getCurrentDocument() {
-      return Utility.toInt(iterator.getKey()); 
-    }
-
-    public String getKey() {
-      return Utility.toString(iterator.getKey());
-    }
-
-    public byte[] getKeyBytes() {
-      return iterator.getKey();
+      return Utility.toInt(iterator.getKey());
     }
   }
 }

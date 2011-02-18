@@ -14,7 +14,7 @@ import org.galagosearch.tupleflow.Parameters;
  * So, this scoring function is quite nice because it gives a flat score
  * to all requests. It is the responsiblity of the iterator *using* this function
  * to know when to call it (i.e. only for documents in its iteration list), otherwise
- * every document in the collection will get a flat boost, changing nothing. The intention
+ * every identifier in the collection will get a flat boost, changing nothing. The intention
  * is that only the documents in the target term's posting list will get this score
  * increment.
  *

@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.galagosearch.core.util.ExtentArray;
 
 /**
- * This extends a document-ordered navigable count iterator by returning
+ * This extends a identifier-ordered navigable count iterator by returning
  * arrays of extents, each of which is a position range (start - end), docid, and
  * weight.
  * 
@@ -19,9 +19,9 @@ public abstract class ExtentIterator extends DocumentOrderedCountIterator {
         if (isDone()) {
             return false;
         }
-        while (!isDone() && document() < document) {
+        while (!isDone() && identifier() < document) {
             nextEntry();
         }
-        return !isDone() && document == document();
+        return !isDone() && document == identifier();
     }
 }

@@ -23,14 +23,14 @@ public class BM25RFScoringIterator extends ScoringFunctionIterator {
     /**
      * We override the score method here b/c the superclass version will always
      * call score, but with a 0 count, in case the scorer smoothes. In this case,
-     * the count and length are irrelevant, and it's matching on the document
+     * the count and length are irrelevant, and it's matching on the identifier
      * list that matters.
      *
      * @return
      */
     @Override
     public double score() {
-        if (iterator.document() == documentToScore) {
+        if (iterator.identifier() == documentToScore) {
             return function.score(iterator.count(), lengthOfDocumentToScore);
         } else {
             return 0;

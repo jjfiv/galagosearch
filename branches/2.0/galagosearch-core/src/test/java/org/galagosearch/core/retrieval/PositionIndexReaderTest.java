@@ -153,8 +153,8 @@ public class PositionIndexReaderTest extends TestCase {
         ExtentIndexIterator termExtents = reader.getTermExtents("a");
         assertEquals("a", termExtents.getKey());
 
-        // Read first document
-        assertEquals(1, termExtents.document());
+        // Read first identifier
+        assertEquals(1, termExtents.identifier());
         assertEquals(1, termExtents.count());
 
         termExtents.moveTo(7);
@@ -166,12 +166,12 @@ public class PositionIndexReaderTest extends TestCase {
 
         // Now move forward one
         termExtents.nextEntry();
-        assertEquals(94, termExtents.document());
+        assertEquals(94, termExtents.identifier());
         assertEquals(2, termExtents.count());
 
         // One more time, then we read extents
         termExtents.movePast(2543);
-        assertEquals(2545, termExtents.document());
+        assertEquals(2545, termExtents.identifier());
         assertEquals(51, termExtents.count());
         ExtentArray ea = termExtents.extents();
         Extent[] buffer = ea.getBuffer();
@@ -192,11 +192,11 @@ public class PositionIndexReaderTest extends TestCase {
         PositionIndexReader reader = new PositionIndexReader(tempPath.toString());
         ExtentIndexIterator termCounts = reader.getTermCounts("b");
 
-        assertEquals(dataB[0][0], termCounts.document());
+        assertEquals(dataB[0][0], termCounts.identifier());
         assertEquals(dataB[0].length-1, termCounts.count());
         termCounts.nextEntry();
 
-        assertEquals(dataB[1][0], termCounts.document());
+        assertEquals(dataB[1][0], termCounts.identifier());
         assertEquals(dataB[1].length-1, termCounts.count());
 
         assertEquals(2, reader.documentCount("b"));

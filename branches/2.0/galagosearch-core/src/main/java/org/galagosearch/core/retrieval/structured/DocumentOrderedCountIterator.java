@@ -5,7 +5,7 @@ import java.util.PriorityQueue;
 
 /**
  * Partial implementation of an iterator than produce counts and
- * navigate its list based on assumption of increasing document order.
+ * navigate its list based on assumption of increasing identifier order.
  * 
  * @author marc
  */
@@ -15,17 +15,17 @@ public abstract class DocumentOrderedCountIterator implements DocumentOrderedIte
     public abstract void reset() throws IOException;
 
     public int currentCandidate() {
-        return document();
+        return identifier();
     }
     
     public boolean hasMatch(int document) {
-        return (!isDone() && document() == document);
+        return (!isDone() && identifier() == document);
     }
 
     /**
      * Wrapper for convenience (backwards compatibility)
      *
-     * @param document
+     * @param identifier
      * @throws IOException
      */
     public void moveTo(int document) throws IOException {
@@ -35,7 +35,7 @@ public abstract class DocumentOrderedCountIterator implements DocumentOrderedIte
     /**
      * Moves past requested doc
      *
-     * @param document
+     * @param identifier
      * @throws IOException
      */
     public void movePast(int document) throws IOException {
@@ -44,22 +44,22 @@ public abstract class DocumentOrderedCountIterator implements DocumentOrderedIte
 
 
     /**
-     * Skips forward in the list until a document is found that is
+     * Skips forward in the list until a identifier is found that is
      * greater than or equal to the parameter.  If the
-     * iterator is currently pointing to a document that is greater
+     * iterator is currently pointing to a identifier that is greater
      * than or equal to the parameter, nothing happens.
      *
-     * @return true, if the iterator is now pointing at the desired document, or false otherwise.
+     * @return true, if the iterator is now pointing at the desired identifier, or false otherwise.
      */
     public boolean skipToDocument(int document) throws IOException {
-        while (!isDone() && document > document()) {
+        while (!isDone() && document > identifier()) {
             nextEntry();
         }
-        return document == document();
+        return document == identifier();
     }
 
     /**
-     * Compares the current document of two iterators.  This is primarily
+     * Compares the current identifier of two iterators.  This is primarily
      * useful for adding iterators to a PriorityQueue object for use during
      * retrieval.
      *
@@ -75,6 +75,6 @@ public abstract class DocumentOrderedCountIterator implements DocumentOrderedIte
         if (isDone() && other.isDone()) {
             return 0;
         }
-        return document() - other.document();
+        return identifier() - other.identifier();
     }
 }

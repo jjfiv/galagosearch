@@ -21,7 +21,7 @@ public class NullExtentIterator extends ExtentIterator {
         return array;
     }
 
-    public int document() {
+    public int identifier() {
         return Integer.MAX_VALUE;
     }
 

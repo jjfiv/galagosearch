@@ -32,7 +32,7 @@ public abstract class ExtentConjunctionIterator extends ExtentIterator {
 
     public void findDocument() throws IOException {
         while (!done) {
-            // find a document that might have some matches
+            // find a identifier that might have some matches
             document = MoveIterators.moveAllToSameDocument(extentIterators);
 
             // if we're done, quit now
@@ -57,7 +57,7 @@ public abstract class ExtentConjunctionIterator extends ExtentIterator {
         return extents;
     }
 
-    public int document() {
+    public int identifier() {
         return document;
     }
 

@@ -59,7 +59,7 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
 
     // Used in counting # of score calls. Uncomment if you want to track that.
     //CallTable.increment("score_req");
-    if (iterator.document() == document) {
+    if (iterator.identifier() == document) {
       count = iterator.count();
     }
     return function.score(count, length);
@@ -72,7 +72,7 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
     }
 
     int count = 0;
-    if (iterator.document() == documentToScore) {
+    if (iterator.identifier() == documentToScore) {
       count = iterator.count();
     }
     TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
@@ -89,7 +89,7 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
   }
 
   public void movePast(int document) throws IOException {
-    if (!iterator.isDone() && iterator.document() <= document) {
+    if (!iterator.isDone() && iterator.identifier() <= document) {
       iterator.skipToDocument(document + 1);
     }
   }
@@ -98,7 +98,7 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
     if (isDone()) {
       return Integer.MAX_VALUE;
     }
-    return iterator.document();
+    return iterator.identifier();
   }
 
   public boolean isDone() {
@@ -106,7 +106,7 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
   }
 
   public boolean hasMatch(int document) {
-    return !isDone() && iterator.document() == document;
+    return !isDone() && iterator.identifier() == document;
   }
 
   public void reset() throws IOException {

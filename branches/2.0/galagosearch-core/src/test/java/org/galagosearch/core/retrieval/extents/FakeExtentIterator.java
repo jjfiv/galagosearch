@@ -38,7 +38,7 @@ public class FakeExtentIterator extends ExtentIterator {
         return array;
     }
 
-    public int document() {
+    public int identifier() {
         return data[index][0];
     }
 

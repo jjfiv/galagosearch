@@ -9,7 +9,7 @@ import org.galagosearch.tupleflow.Parameters;
  * in the query language, where <tt>a.b</tt> is equivalent to <tt>#inside(a b)</tt>.
  * This is usually used to find terms that occur in fields.  For example,
  * <tt>#1(bruce croft).author</tt>, which finds instances of "bruce croft" occurring
- * in the author field of a document.</p>
+ * in the author field of a identifier.</p>
  *
  * @author trevor
  */
@@ -24,7 +24,7 @@ public class ExtentInsideIterator extends ExtentConjunctionIterator {
      * <p>For example, in the expression <tt>#inside(#1(white house) #extents:title())</tt>,
      * <tt>#1(white house)</tt> is the inner iterator and <tt>#extents:title()</tt>
      * is the outer iterator.  Whenever <tt>#1(white house)</tt> is found in the title of
-     * a document, this is a match.  The extent for <tt>#1(white house)</tt> is returned
+     * a identifier, this is a match.  The extent for <tt>#1(white house)</tt> is returned
      * (not the extent for <tt>#extents:title()</tt> that surrounds it).</tt>
      *
      * @param parameters extra parameters, not used for anything.
@@ -43,8 +43,8 @@ public class ExtentInsideIterator extends ExtentConjunctionIterator {
 
     /**
      * This method is called whenever the ExtentConjunctionIterator has verified
-     * that both the inner and outer iterators match this document.  This method's job
-     * is to find all matching extents within the document, if they exist.
+     * that both the inner and outer iterators match this identifier.  This method's job
+     * is to find all matching extents within the identifier, if they exist.
      */
 
     public void loadExtents() {

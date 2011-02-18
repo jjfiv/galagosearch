@@ -209,7 +209,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       return iterator.getKey();
     }
 
-    public int document() {
+    public int identifier() {
       return currentDocument;
     }
 
