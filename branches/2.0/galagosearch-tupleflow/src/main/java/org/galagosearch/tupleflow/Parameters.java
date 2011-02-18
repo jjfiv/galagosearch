@@ -262,6 +262,10 @@ public class Parameters implements Serializable {
     _transients.put(key, obj);
   }
 
+  public boolean hasTransient(String key) {
+      return (_transients != null && _transients.containsKey(key));
+  }
+
   /**
    * This class gathers up a stack of CharSequence objects and makes
    * them look like a single CharSequence.  The reason we do this is so
@@ -604,6 +608,13 @@ public class Parameters implements Serializable {
     }
     for (String key : other._data._map.keySet()) {
       copy(key, other);
+    }
+
+    // HAX - copyoing transient pointers
+    if (other._transients != null) {	
+	for (String key : other._transients.keySet()) {
+	    setTransient(key, other.getTransient(key));
+	}
     }
   }
 
