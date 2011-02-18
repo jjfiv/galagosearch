@@ -1,0 +1,13 @@
+
+package org.galagosearch.core.types;
+
+type NumberedDocumentData {
+    String identifier;
+    String url;
+    int number;
+    int textLength;
+
+    order: ;
+    order: +number;
+    order: +url;
+}
