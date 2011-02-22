@@ -3,10 +3,12 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
-import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
+import java.util.HashMap;
+import java.util.Map;
+import org.galagosearch.core.index.PositionIndexReader.TermCountIterator;
+import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.types.NumberedDocumentData;
-import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -17,7 +19,7 @@ import org.galagosearch.tupleflow.Utility;
  * 
  * @author trevor, sjh
  */
-public class DocumentLengthsReader extends KeyDataReader {
+public class DocumentLengthsReader extends KeyValueReader {
 
   public DocumentLengthsReader(String filename) throws FileNotFoundException, IOException {
     super(filename);
@@ -35,13 +37,28 @@ public class DocumentLengthsReader extends KeyDataReader {
     return new Iterator(reader);
   }
 
-  public class Iterator extends KeyDataReader.Iterator {
+  public Map<String, NodeType> getNodeTypes() {
+    HashMap<String, NodeType> types = new HashMap<String, NodeType>();
+    types.put("lengths", new NodeType(Iterator.class));
+    return types;
+  }
+
+  public KeyIterator getIterator(Node node) throws IOException {
+    if (node.getOperator().equals("lengths")) {
+      return new Iterator(reader);
+    } else {
+      throw new UnsupportedOperationException(
+              "Index doesn't support operator: " + node.getOperator());
+    }
+  }
+
+  public class Iterator extends KeyValueReader.Iterator {
 
     public Iterator(GenericIndexReader reader) throws IOException {
       super(reader);
     }
 
-    public String getRecordString() {
+    public String getStringValue() {
       try {
         StringBuilder sb = new StringBuilder();
         sb.append(Utility.toInt(iterator.getKey())).append(",");
@@ -52,19 +69,25 @@ public class DocumentLengthsReader extends KeyDataReader {
       }
     }
 
-    public void skipTo(int key) throws IOException {
+    public void skipToKey(int key) throws IOException {
       byte[] bkey = Utility.fromInt(key);
       iterator.skipTo(bkey);
     }
 
-    public NumberedDocumentData getDocumentData() throws IOException {
-      int docNum = Utility.toInt(iterator.getKey());
-      int length = Utility.uncompressInt(iterator.getValueBytes(), 0);
-      return new NumberedDocumentData("", "", docNum, length);
+    public int getIntValue() throws IOException {
+      return (Utility.uncompressInt(iterator.getValueBytes(), 0));
+    }
+
+    public long getLongValue() throws IOException {
+      return ((long) getIntValue());
     }
 
     public int getCurrentDocument() {
       return Utility.toInt(iterator.getKey());
+    }
+
+    public boolean isDone() {
+      return iterator.isDone();
     }
   }
 }

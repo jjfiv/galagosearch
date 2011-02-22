@@ -121,7 +121,7 @@ public class SparseFloatListReaderTest extends TestCase {
             iter.movePast(aDocs[i]);
         }
 
-        assertTrue(iter.nextTerm());
+        assertTrue(iter.nextEntry());
         term = iter.getKey();
         assertEquals(term, "b");
         assertFalse(iter.isDone());
@@ -134,6 +134,6 @@ public class SparseFloatListReaderTest extends TestCase {
             iter.movePast(bDocs[i]);
         }
 
-        assertFalse(iter.nextTerm());
+        assertFalse(iter.nextEntry());
     }
 }

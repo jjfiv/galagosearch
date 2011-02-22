@@ -23,15 +23,4 @@ public interface CountIterator extends StructuredIterator, Comparable<CountItera
      * the current identifier.
      */
     public int count();
-
-    /**
-     * True if this iterator has no more entries, false otherwise
-     * @return
-     */
-    public boolean isDone();
-
-    /**
-     * Advances to the next entry in the iterator
-     */
-    public void nextEntry() throws IOException;
 }

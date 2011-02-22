@@ -15,7 +15,7 @@ import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.mergeindex.parallel.MergeParallelIndexShards;
 import org.galagosearch.core.index.corpus.DocumentReader;
-import org.galagosearch.core.retrieval.structured.IndexIterator;
+import org.galagosearch.core.index.KeyIterator;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
@@ -334,11 +334,11 @@ public class App {
     }
     String key = args[2];
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
-    IndexIterator iterator = reader.getIterator();
-    if (iterator.skipTo(Utility.fromString(key))) {
+    KeyIterator iterator = reader.getIterator();
+    if (iterator.skipToKey(Utility.fromString(key))) {
       do {
-        output.println(iterator.getRecordString());
-      } while (iterator.nextRecord() && iterator.getKey().equals(key));
+        output.println(iterator.getStringValue());
+      } while (iterator.nextKey() && iterator.getKey().equals(key));
     }
   }
 
@@ -349,10 +349,10 @@ public class App {
     }
 
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
-    IndexIterator iterator = reader.getIterator();
+    KeyIterator iterator = reader.getIterator();
     do {
-      output.println(iterator.getRecordString());
-    } while (iterator.nextRecord());
+      output.println(iterator.getStringValue());
+    } while (iterator.nextKey());
   }
 
   private void handleDumpCorpus(String[] args) throws IOException {
@@ -429,8 +429,8 @@ public class App {
     DocumentLengthsReader reader = new DocumentLengthsReader(args[1]);
     NumberedDocumentDataIterator iterator = reader.getIterator();
     do {
-      output.println(iterator.getRecordString());
-    } while (iterator.nextRecord());
+      output.println(iterator.getStringValue());
+    } while (iterator.nextKey());
   }
 
   private void handleDumpNames(String[] args) throws IOException {
@@ -442,8 +442,8 @@ public class App {
     DocumentNameReader reader = new DocumentNameReader(args[1]);
     NumberedDocumentDataIterator iterator = reader.getNumberOrderIterator();
     do {
-      output.println(iterator.getRecordString());
-    } while (iterator.nextRecord());
+      output.println(iterator.getStringValue());
+    } while (iterator.nextKey());
   }
 
   private void handleMakeCorpus(String[] args) throws Exception {

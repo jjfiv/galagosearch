@@ -11,7 +11,7 @@
   <artifactId>galagosearch-tupleflow</artifactId>
   <packaging>jar</packaging>
   <version>2.0-SNAPSHOT</version>
-  <name>galagosearch-tupleflow</name>
+  <name>galagosearch-2.0-tupleflow</name>
   <url>http://www.galagosearch.org</url>
   <description>TupleFlow is the distributed computation layer of Galago.</description>
   <licenses>

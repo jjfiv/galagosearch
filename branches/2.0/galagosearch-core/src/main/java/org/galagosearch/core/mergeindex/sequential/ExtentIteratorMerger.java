@@ -6,7 +6,7 @@ import java.util.PriorityQueue;
 import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 import org.galagosearch.core.mergeindex.KeyExtent;
 import org.galagosearch.core.retrieval.structured.Extent;
-import org.galagosearch.core.retrieval.structured.IndexIterator;
+import org.galagosearch.core.index.KeyIterator;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.InputClass;

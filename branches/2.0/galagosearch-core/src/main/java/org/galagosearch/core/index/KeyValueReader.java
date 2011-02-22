@@ -14,15 +14,15 @@ import org.galagosearch.tupleflow.Utility;
  * 
  * @author irmarc
  */
-public abstract class KeyDataReader {
+public abstract class KeyValueReader implements StructuredIndexPartReader {
 
   protected GenericIndexReader reader;
 
-  public KeyDataReader(String filename) throws FileNotFoundException, IOException {
+  public KeyValueReader(String filename) throws FileNotFoundException, IOException {
     reader = GenericIndexReader.getIndexReader(filename);
   }
 
-  public KeyDataReader(GenericIndexReader r) {
+  public KeyValueReader(GenericIndexReader r) {
     this.reader = r;
   }
 
@@ -32,7 +32,7 @@ public abstract class KeyDataReader {
 
   public abstract Iterator getIterator() throws IOException;
 
-  public abstract class Iterator {
+  public abstract class Iterator implements KeyIterator {
 
     protected GenericIndexReader.Iterator iterator;
     protected GenericIndexReader reader;
@@ -42,7 +42,7 @@ public abstract class KeyDataReader {
       reset();
     }
 
-    public boolean skipTo(byte[] key) throws IOException {
+    public boolean skipToKey(byte[] key) throws IOException {
       iterator.skipTo(key);
       if (Utility.compare(key, iterator.getKey()) == 0) {
         return true;
@@ -50,7 +50,7 @@ public abstract class KeyDataReader {
       return false;
     }
 
-    public boolean nextRecord() throws IOException {
+    public boolean nextKey() throws IOException {
       return (iterator.nextKey());
     }
 
@@ -70,6 +70,23 @@ public abstract class KeyDataReader {
       return Utility.toString(iterator.getKey());
     }
 
-    public abstract String getRecordString();
+    public abstract String getStringValue();
+
+    // These REALLY need to be implemented one level down
+    public int getIntValue() throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    public long getLongValue() throws IOException  {
+      throw new UnsupportedOperationException();
+    }
+
+    public float getFloatValue() throws IOException  {
+      throw new UnsupportedOperationException();
+    }
+
+    public double getDoubleValue() throws IOException  {
+      throw new UnsupportedOperationException();
+    }
   }
 }

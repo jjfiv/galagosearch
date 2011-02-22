@@ -1,15 +1,16 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.index;
 
+import gnu.trove.TObjectDoubleHashMap;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.HashMap;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
-import org.galagosearch.core.retrieval.structured.DocumentOrderedScoreIterator;
-import org.galagosearch.core.retrieval.structured.IndexIterator;
-import org.galagosearch.core.util.CallTable;
+import org.galagosearch.core.retrieval.structured.ScoreIterator;
+import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
@@ -19,11 +20,10 @@ import org.galagosearch.tupleflow.VByteInput;
  * 
  * @author trevor
  */
-public class SparseFloatListReader implements StructuredIndexPartReader {
+public class SparseFloatListReader extends KeyListReader {
 
-  public class Iterator extends DocumentOrderedScoreIterator implements IndexIterator {
+  public class Iterator extends KeyListReader.ListIterator implements ScoreIterator {
 
-    GenericIndexReader.Iterator iterator;
     VByteInput stream;
     int documentCount;
     int index;
@@ -31,24 +31,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
     double currentScore;
 
     public Iterator(GenericIndexReader.Iterator iterator) throws IOException {
-      this.iterator = iterator;
-      documentCount = 0;
-      index = 0;
-      load();
-    }
-
-    void load() throws IOException {
-      if (iterator != null) {
-        DataStream buffered = iterator.getValueStream();
-        stream = new VByteInput(buffered);
-        documentCount = stream.readInt();
-        index = -1;
-        currentDocument = 0;
-
-        if (documentCount > 0) {
-          read();
-        }
-      }
+      super(iterator);
     }
 
     void read() throws IOException {
@@ -60,7 +43,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
       }
     }
 
-    public String getRecordString() {
+    public String getEntry() {
       StringBuilder builder = new StringBuilder();
 
       builder.append(getKey());
@@ -72,53 +55,29 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
       return builder.toString();
     }
 
-    public boolean nextRecord() throws IOException {
+    public boolean nextEntry() throws IOException {
       read();
       if (!isDone()) {
-        return true;
-      }
-      if (iterator.nextKey()) {
-        load();
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    public void reset() throws IOException {
-      currentDocument = 0;
-      currentScore = 0;
-      load();
-    }
-
-    public boolean skipTo(byte[] key) throws IOException {
-      iterator.skipTo(key);
-      if (Utility.compare(key, iterator.getKey()) == 0) {
-        reset();
         return true;
       }
       return false;
     }
 
+    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
+      DataStream buffered = iterator.getValueStream();
+      stream = new VByteInput(buffered);
+      documentCount = stream.readInt();
+      index = -1;
+      currentDocument = 0;
+      if (documentCount > 0) read();
+    }
+
+    public void reset() throws IOException {
+      throw new UnsupportedOperationException("This iterator does not reset without the parent KeyIterator.");
+    }
+
     public int currentCandidate() {
       return currentDocument;
-    }
-
-    public String getKey() {
-      return Utility.toString(iterator.getKey());
-    }
-
-    public byte[] getKeyBytes() {
-      return iterator.getKey();
-    }
-
-    public boolean nextTerm() throws IOException {
-      if (iterator.nextKey()) {
-        load();
-        return true;
-      } else {
-        return false;
-      }
     }
 
     public boolean hasMatch(int document) {
@@ -157,18 +116,29 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
       return index >= documentCount;
     }
 
-    public long totalCandidates() {
+    public long totalEntries() {
       return documentCount;
     }
-  }
 
+    public double maximumScore() {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    public double minimumScore() {
+      return Double.NEGATIVE_INFINITY;
+    }
+
+    public TObjectDoubleHashMap<String> parameterSweepScore() {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+  }
   GenericIndexReader reader;
 
   public SparseFloatListReader(String pathname) throws FileNotFoundException, IOException {
-    reader = GenericIndexReader.getIndexReader(pathname);
+    super(pathname);
   }
 
-  public Iterator getIterator() throws IOException {
+  public Iterator getListIterator() throws IOException {
     return new Iterator(reader.getIterator());
   }
 
@@ -187,7 +157,7 @@ public class SparseFloatListReader implements StructuredIndexPartReader {
     return nodeTypes;
   }
 
-  public IndexIterator getIterator(Node node) throws IOException {
+  public StructuredIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("scores")) {
       return getScores(node.getDefaultParameter());
     } else {

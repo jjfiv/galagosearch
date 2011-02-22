@@ -31,7 +31,7 @@ public class DirichletScorer implements ScoringFunction {
             } else {
                 while (!iterator.isDone()) {
                     count += iterator.count();
-                    iterator.nextEntry();
+                    iterator.next();
                 }
             }
             if (count > 0) {

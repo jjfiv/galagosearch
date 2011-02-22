@@ -355,7 +355,7 @@ public class StructuredRetrieval extends Retrieval {
       long count = 0;
       while (!iterator.isDone()) {
         count += iterator.count();
-        iterator.nextEntry();
+        iterator.next();
       }
       return count;
     } else {

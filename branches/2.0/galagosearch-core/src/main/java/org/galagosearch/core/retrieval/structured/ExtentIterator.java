@@ -1,7 +1,6 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.structured;
 
-import java.io.IOException;
 import org.galagosearch.core.util.ExtentArray;
 
 /**
@@ -11,17 +10,6 @@ import org.galagosearch.core.util.ExtentArray;
  * 
  * @author trevor, irmarc
  */
-public abstract class ExtentIterator extends DocumentOrderedCountIterator {
-    public abstract ExtentArray extents();
-
-    @Override
-    public boolean skipToDocument(int document) throws IOException {
-        if (isDone()) {
-            return false;
-        }
-        while (!isDone() && identifier() < document) {
-            nextEntry();
-        }
-        return !isDone() && document == identifier();
-    }
+public interface ExtentIterator extends CountIterator {
+    public ExtentArray extents();
 }

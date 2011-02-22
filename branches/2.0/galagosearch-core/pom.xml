@@ -11,7 +11,7 @@
   <artifactId>galagosearch-core</artifactId>
   <packaging>jar</packaging>
   <version>2.0-SNAPSHOT</version>
-  <name>galagosearch-core</name>
+  <name>galagosearch-2.0-core</name>
   <url>http://www.galagosearch.org</url>
   <description>Galago is a toolkit for experimenting with search engines and text processing.</description>
   <licenses>

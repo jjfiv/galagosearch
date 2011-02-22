@@ -11,4 +11,5 @@ import java.io.IOException;
  */
 public interface StructuredIterator {
     public void reset() throws IOException;
+    public boolean isDone();
 }

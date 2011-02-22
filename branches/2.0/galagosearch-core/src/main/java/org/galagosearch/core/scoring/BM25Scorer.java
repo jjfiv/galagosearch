@@ -40,7 +40,7 @@ public class BM25Scorer implements ScoringFunction {
             } else {
                 while (!iterator.isDone()) {
                     df++;
-                    iterator.nextEntry();
+                    iterator.next();
                 }
                 iterator.reset();
             }

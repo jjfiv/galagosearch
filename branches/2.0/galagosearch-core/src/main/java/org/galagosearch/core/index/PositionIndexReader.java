@@ -6,19 +6,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.structured.CountIterator;
+import org.galagosearch.core.retrieval.structured.DocumentOrderedCountIterator;
 import org.galagosearch.core.retrieval.structured.DocumentOrderedIterator;
-import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
-import org.galagosearch.core.retrieval.structured.IndexIterator;
+import org.galagosearch.core.retrieval.structured.ExtentIterator;
 import org.galagosearch.core.util.ExtentArray;
-import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.DataStream;
-import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
 
@@ -35,16 +32,9 @@ import org.galagosearch.tupleflow.VByteInput;
  *
  * @author trevor, irmarc
  */
-public class PositionIndexReader implements StructuredIndexPartReader, AggregateReader {
+public class PositionIndexReader extends KeyListReader implements AggregateReader {
 
-  public static interface Iterator {
-
-    public int totalDocuments();
-
-    public int totalPositions();
-  }
-
-  public class TermExtentIterator extends ExtentIndexIterator implements Iterator {
+  public class TermExtentIterator extends KeyListReader.ListIterator implements ExtentIterator {
 
     int documentCount;
     int totalPositionCount;
@@ -55,8 +45,8 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     int currentDocument;
     int currentCount;
     ExtentArray extentArray;
-    GenericIndexReader.Iterator iterator;
-
+    long startPosition, endPosition;
+    RandomAccessFile input;
     // to support skipping
     VByteInput skips;
     VByteInput skipPositions;
@@ -75,8 +65,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     long positionsByteFloor;
 
     TermExtentIterator(GenericIndexReader.Iterator iterator) throws IOException {
-      this.iterator = iterator;
-      initialize();
+      super(iterator);
     }
 
     // Initialization method.
@@ -84,10 +73,6 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     // Even though we check for skips multiple times, in terms of how the data is loaded
     // its easier to do the parts when appropriate
     private void initialize() throws IOException {
-      long startPosition = iterator.getValueStart();
-      long endPosition = iterator.getValueEnd();
-
-      RandomAccessFile input = iterator.getInput();
       input.seek(startPosition);
       DataInput stream = new VByteInput(input);
 
@@ -95,7 +80,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       int options = stream.readInt();
       documentCount = stream.readInt();
       totalPositionCount = stream.readInt();
-      if ((options & DocumentOrderedIterator.HAS_SKIPS) == DocumentOrderedIterator.HAS_SKIPS) {
+      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
         skipDistance = stream.readInt();
         skipResetDistance = stream.readInt();
         numSkips = stream.readLong();
@@ -180,7 +165,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       }
     }
 
-    public String getRecordString() {
+    public String getEntry() {
       StringBuilder builder = new StringBuilder();
 
       builder.append(getKey());
@@ -194,6 +179,16 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       return builder.toString();
     }
 
+    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
+      key = iterator.getKey();
+      dataLength = iterator.getValueLength();
+      startPosition = iterator.getValueStart();
+      endPosition = iterator.getValueEnd();
+
+      input = iterator.getInput();
+      reset();
+    }
+
     public void reset() throws IOException {
       currentDocument = 0;
       currentCount = 0;
@@ -202,54 +197,28 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       initialize();
     }
 
-    public boolean skipTo(byte[] key) throws IOException {
-      iterator.skipTo(key);
-      if (Utility.compare(key, iterator.getKey()) == 0) {
-        reset();
-        return true;
-      }
-      return false;
-    }
-
-    public long getByteLength() throws IOException {
-      return iterator.getValueLength();
-    }
-
-    public String getKey() {
-      return Utility.toString(iterator.getKey());
-    }
-
-    public byte[] getKeyBytes() {
-      return iterator.getKey();
-    }
-
-    public void nextEntry() throws IOException {
+    public boolean nextEntry() throws IOException {
       documentIndex = Math.min(documentIndex + 1, documentCount);
       if (!isDone()) {
         loadExtents();
-      }
-    }
-
-    // Moves foward in a posting list, but if it's at the end of the current
-    // list, moves on to the next list. Useful for iterating over all posting lists,
-    // vs. nextEntry, which is bounded by a single posting list.
-    public boolean nextRecord() throws IOException {
-      nextEntry();
-      if (!isDone()) {
-        return true;
-      }
-      if (iterator.nextKey()) {
-        reset();
         return true;
       }
       return false;
+    }
+
+    public boolean hasMatch(int document) {
+      return (!isDone() && identifier() == document);
+    }
+
+    public void moveTo(int document) throws IOException {
+      skipToEntry(document);
     }
 
     // If we have skips - it's go time
     @Override
-    public boolean skipToDocument(int document) throws IOException {
+    public boolean skipToEntry(int document) throws IOException {
       if (skips == null || document <= nextSkipDocument) {
-        return super.skipToDocument(document);
+        return super.skipToEntry(document);
       }
 
       // if we're here, we're skipping
@@ -258,7 +227,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
         skipOnce();
       }
       repositionMainStreams();
-      return super.skipToDocument(document); // linear from here
+      return super.skipToEntry(document); // linear from here
     }
 
     // This only moves forward in tier 1, reads from tier 2 only when
@@ -320,14 +289,26 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       return currentCount;
     }
 
-    // TODO: Make this hack more refined
-    public int totalDocuments() {
-      return documentCount;
+    public long totalEntries() {
+      return ((long) documentCount);
     }
 
     // TODO: Declare in an interface
     public int totalPositions() {
       return totalPositionCount;
+    }
+
+    public int compareTo(CountIterator other) {
+      if (isDone() && !other.isDone()) {
+        return 1;
+      }
+      if (other.isDone() && !isDone()) {
+        return -1;
+      }
+      if (isDone() && other.isDone()) {
+        return 0;
+      }
+      return identifier() - other.identifier();
     }
   }
 
@@ -336,7 +317,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
    * we don't have to bookkeep the positions buffer. Overall smaller footprint and faster execution.
    *
    */
-  public class TermCountIterator extends ExtentIndexIterator implements Iterator {
+  public class TermCountIterator extends KeyListReader.ListIterator implements ExtentIterator {
 
     int documentCount;
     int collectionCount;
@@ -345,7 +326,9 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     int documentIndex;
     int currentDocument;
     int currentCount;
-    GenericIndexReader.Iterator iterator;
+    // Support for resets
+    long startPosition, endPosition;
+    RandomAccessFile input;
     // to support skipping
     VByteInput skips;
     VByteInput skipPositions;
@@ -362,8 +345,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     long countsByteFloor;
 
     TermCountIterator(GenericIndexReader.Iterator iterator) throws IOException {
-      this.iterator = iterator;
-      initialize();
+      super(iterator);
     }
 
     // Initialization method.
@@ -371,10 +353,6 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     // Even though we check for skips multiple times, in terms of how the data is loaded
     // its easier to do the parts when appropriate
     private void initialize() throws IOException {
-      long startPosition = iterator.getValueStart();
-      long endPosition = iterator.getValueEnd();
-
-      RandomAccessFile input = iterator.getInput();
       input.seek(startPosition);
       DataInput stream = new VByteInput(input);
 
@@ -453,7 +431,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       currentCount = counts.readInt();
     }
 
-    public String getRecordString() {
+    public String getEntry() {
       StringBuilder builder = new StringBuilder();
 
       builder.append(getKey());
@@ -465,60 +443,43 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       return builder.toString();
     }
 
+    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
+      startPosition = iterator.getValueStart();
+      endPosition = iterator.getValueEnd();
+      dataLength = iterator.getValueLength();
+      input = iterator.getInput();
+      key = iterator.getKey();
+      initialize();
+    }
+
     public void reset() throws IOException {
       currentDocument = 0;
       currentCount = 0;
       initialize();
     }
 
-    public boolean skipTo(byte[] key) throws IOException {
-      iterator.skipTo(key);
-      if (Utility.compare(key, iterator.getKey()) == 0) {
-        reset();
-        return true;
-      }
-      return false;
-    }
-
-    public long getByteLength() throws IOException {
-      return iterator.getValueLength();
-    }
-
-    public String getKey() {
-      return Utility.toString(iterator.getKey());
-    }
-
-    public byte[] getKeyBytes() {
-      return iterator.getKey();
-    }
-
-    public void nextEntry() throws IOException {
+    public boolean nextEntry() throws IOException {
       documentIndex = Math.min(documentIndex + 1, documentCount);
       if (!isDone()) {
         load();
-      }
-    }
-
-    // Moves foward in a posting list, but if it's at the end of the current
-    // list, moves on to the next list. Useful for iterating over all posting lists,
-    // vs. nextEntry, which is bounded by a single posting list.
-    public boolean nextRecord() throws IOException {
-      nextEntry();
-      if (!isDone()) {
-        return true;
-      }
-      if (iterator.nextKey()) {
-        reset();
         return true;
       }
       return false;
+    }
+
+    public boolean hasMatch(int document) {
+      return (!isDone() && identifier() == document);
+    }
+
+    public void moveTo(int document) throws IOException {
+      skipToEntry(document);
     }
 
     // If we have skips - it's go time
     @Override
-    public boolean skipToDocument(int document) throws IOException {
+    public boolean skipToEntry(int document) throws IOException {
       if (skips == null || document <= nextSkipDocument) {
-        return super.skipToDocument(document);
+        return super.skipToEntry(document);
       }
 
       // if we're here, we're skipping
@@ -527,7 +488,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
         skipOnce();
       }
       repositionMainStreams();
-      return super.skipToDocument(document); // linear from here
+      return super.skipToEntry(document); // linear from here
     }
 
     // This only moves forward in tier 1, reads from tier 2 only when
@@ -588,8 +549,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       return currentCount;
     }
 
-    // TODO: Make this hack more refined
-    public int totalDocuments() {
+    public long totalEntries() {
       return documentCount;
     }
 
@@ -597,23 +557,44 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     public int totalPositions() {
       return collectionCount;
     }
+
+    public int compareTo(CountIterator other) {
+      if (isDone() && !other.isDone()) {
+        return 1;
+      }
+      if (other.isDone() && !isDone()) {
+        return -1;
+      }
+      if (isDone() && other.isDone()) {
+        return 0;
+      }
+      return identifier() - other.identifier();
+    }
   }
   GenericIndexReader reader;
 
-  public PositionIndexReader(
-          GenericIndexReader reader) throws IOException {
-    this.reader = reader;
+  public PositionIndexReader(GenericIndexReader reader) throws IOException {
+    super(reader);
   }
 
-  public PositionIndexReader(
-          String pathname) throws FileNotFoundException, IOException {
-    reader = GenericIndexReader.getIndexReader(pathname);
+  public PositionIndexReader(String pathname) throws FileNotFoundException, IOException {
+    super(pathname);
+  }
+
+  @Override
+  public Iterator getIterator() throws IOException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public ValueIterator getListIterator() throws IOException {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   /**
    * Returns an iterator pointing at the first term in the index.
    */
-  public ExtentIndexIterator getIterator() throws IOException {
+  public ExtentIterator getIterator() throws IOException {
     return new TermExtentIterator(reader.getIterator());
   }
 
@@ -621,7 +602,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
    * Returns an iterator pointing at the specified term, or
    * null if the term doesn't exist in the inverted file.
    */
-  public ExtentIndexIterator getTermExtents(String term) throws IOException {
+  public ExtentIterator getTermExtents(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
@@ -630,21 +611,13 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     return null;
   }
 
-  public ExtentIndexIterator getTermCounts(String term) throws IOException {
+  public ExtentIterator getTermCounts(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
       return new TermCountIterator(iterator);
     }
     return null;
-  }
-
-  List<Processor<Document>> transformations() {
-    return DocumentTransformationFactory.instance(reader.getManifest());
-  }
-
-  List<Processor<Document>> transformations(String field) {
-    return transformations();
   }
 
   public void close() throws IOException {
@@ -659,7 +632,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     return types;
   }
 
-  public IndexIterator getIterator(Node node) throws IOException {
+  public KeyIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("counts")) {
       return getTermCounts(node.getDefaultParameter("term"));
     } else {

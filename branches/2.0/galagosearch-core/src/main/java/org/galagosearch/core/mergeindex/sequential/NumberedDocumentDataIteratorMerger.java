@@ -66,7 +66,7 @@ public class NumberedDocumentDataIteratorMerger extends
       if(isDone)
         return false;
 
-      if(iterator.nextRecord()){
+      if(iterator.nextKey()){
         ndd = iterator.getDocumentData();
         return true;
       }

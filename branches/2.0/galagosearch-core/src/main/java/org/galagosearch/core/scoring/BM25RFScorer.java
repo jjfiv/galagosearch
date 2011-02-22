@@ -41,7 +41,7 @@ public class BM25RFScorer implements ScoringFunction {
             } else {
                 while (!iterator.isDone()) {
                     ft++;
-                    iterator.nextEntry();
+                    iterator.next();
                 }
                 iterator.reset();
             }

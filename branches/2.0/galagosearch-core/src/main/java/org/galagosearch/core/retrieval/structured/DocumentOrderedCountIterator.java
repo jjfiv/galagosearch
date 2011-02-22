@@ -11,8 +11,6 @@ import java.util.PriorityQueue;
  */
 public abstract class DocumentOrderedCountIterator implements DocumentOrderedIterator,
     CountIterator {
-    public abstract boolean isDone();
-    public abstract void reset() throws IOException;
 
     public int currentCandidate() {
         return identifier();
@@ -53,7 +51,7 @@ public abstract class DocumentOrderedCountIterator implements DocumentOrderedIte
      */
     public boolean skipToDocument(int document) throws IOException {
         while (!isDone() && document > identifier()) {
-            nextEntry();
+            next();
         }
         return document == identifier();
     }

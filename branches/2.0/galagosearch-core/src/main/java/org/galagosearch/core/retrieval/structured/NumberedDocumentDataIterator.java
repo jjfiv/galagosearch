@@ -2,6 +2,7 @@
 
 package org.galagosearch.core.retrieval.structured;
 
+import org.galagosearch.core.index.KeyIterator;
 import java.io.IOException;
 
 import org.galagosearch.core.types.NumberedDocumentData;
@@ -18,7 +19,7 @@ import org.galagosearch.core.types.NumberedDocumentData;
  *
  * @author sjh
  */
-public abstract class NumberedDocumentDataIterator implements IndexIterator {
+public abstract class NumberedDocumentDataIterator implements KeyIterator {
   // useful for merging indexes (and ignored by all other classes)
   public int indexId = 0; 
   

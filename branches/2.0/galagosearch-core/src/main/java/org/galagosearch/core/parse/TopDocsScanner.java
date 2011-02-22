@@ -88,7 +88,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         docLengths.reset();
         while (!extentIterator.isDone()) {
             count++;
-            docLengths.skipTo(extentIterator.currentCandidate());
+            docLengths.skipToKey(extentIterator.currentCandidate());
             NumberedDocumentData ndd = docLengths.getDocumentData();
             assert (ndd.number == extentIterator.currentCandidate());
             int length = ndd.textLength;

@@ -65,7 +65,7 @@ public class NumberedDocumentDataIteratorMerger extends
     }
     
     public boolean next() throws IOException{
-      if(iterator.nextRecord()){
+      if(iterator.nextKey()){
         ndd = iterator.getDocumentData();
         int newDocId = mapping.getNewDocNumber(iterator.indexId, ndd.number);
         ndd.number = newDocId;

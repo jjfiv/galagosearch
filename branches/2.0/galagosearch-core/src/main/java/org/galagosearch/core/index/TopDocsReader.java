@@ -12,9 +12,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
-import org.galagosearch.core.retrieval.structured.DocumentOrderedIterator;
-import org.galagosearch.core.retrieval.structured.IndexIterator;
-import org.galagosearch.core.util.CallTable;
+import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
@@ -23,7 +21,7 @@ import org.galagosearch.tupleflow.VByteInput;
  *
  * @author marc
  */
-public class TopDocsReader implements StructuredIndexPartReader {
+public class TopDocsReader extends KeyListReader {
   private Logger LOG = Logger.getLogger(getClass().toString());
   IndexReader reader;
 
@@ -59,7 +57,7 @@ public class TopDocsReader implements StructuredIndexPartReader {
     }
   }
 
-  public class Iterator implements DocumentOrderedIterator, IndexIterator, Comparable<Iterator> {
+  public class Iterator extends KeyListReader.ListIterator implements Comparable<Iterator> {
 
     IndexReader.Iterator iterator;
     int options;
@@ -69,17 +67,16 @@ public class TopDocsReader implements StructuredIndexPartReader {
     int numEntries;
     VByteInput data;
 
-    public Iterator(IndexReader.Iterator it) throws IOException {
-      iterator = it;
-      options = 0x0; // no options here
-      initialize();
+    // To support resetting
+    long startPosition, endPosition, dataLength;
+    RandomAccessFile input;
+    byte[] key;
+
+    public Iterator(GenericIndexReader.Iterator it) throws IOException {
+      super(it);
     }
 
     private void initialize() throws IOException {
-      long startPosition = iterator.getValueStart();
-      long endPosition = iterator.getValueEnd();
-
-      RandomAccessFile input = iterator.getInput();
       input.seek(startPosition);
       DataInput stream = new VByteInput(input);
 
@@ -91,6 +88,10 @@ public class TopDocsReader implements StructuredIndexPartReader {
       long dataEnd = endPosition;
       data = new VByteInput(new BufferedFileDataStream(input, dataStart, dataEnd));
       nextEntry();
+    }
+
+    public long totalEntries() {
+      return numEntries;
     }
 
     public boolean isDone() {
@@ -109,7 +110,7 @@ public class TopDocsReader implements StructuredIndexPartReader {
       return currentTopDoc;
     }
 
-    public void nextEntry() throws IOException {
+    public boolean nextEntry() throws IOException {
       if (!isDone()) {
         currentTopDoc = new TopDocument();
         currentTopDoc.document = lastDocument + data.readInt();
@@ -117,25 +118,26 @@ public class TopDocsReader implements StructuredIndexPartReader {
         currentTopDoc.count = data.readInt();
         currentTopDoc.length = data.readInt();
         index++;
+        return true;
       } else {
         currentTopDoc = null;
+        return false;
       }
+    }
+
+    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
+      startPosition = iterator.getValueStart();
+      endPosition = iterator.getValueEnd();
+      input = iterator.getInput();
+      key = iterator.getKey();
+      reset();
     }
 
     public void reset() throws IOException {
       initialize();
     }
 
-    public boolean skipTo(byte[] key) throws IOException {
-      iterator.skipTo(key);
-      if (Utility.compare(key, iterator.getKey()) == 0) {
-        reset();
-        return true;
-      }
-      return false;
-    }
-
-    public String getRecordString() {
+    public String getEntry() {
       StringBuilder sb = new StringBuilder();
       sb.append(getKey());
       sb.append(",");
@@ -145,27 +147,6 @@ public class TopDocsReader implements StructuredIndexPartReader {
         sb.append("NULL");
       }
       return sb.toString();
-    }
-
-    public boolean nextRecord() throws IOException {
-      nextEntry();
-      if (!isDone()) {
-        return true;
-      }
-      if (iterator.nextKey()) {
-        reset();
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    public String getKey() {
-      return Utility.toString(iterator.getKey());
-    }
-
-    public byte[] getKeyBytes() throws IOException {
-      return iterator.getKey();
     }
 
     public boolean hasMatch(int document) {
@@ -199,7 +180,7 @@ public class TopDocsReader implements StructuredIndexPartReader {
       moveTo(document + 1);
     }
 
-    public boolean skipToDocument(int document) throws IOException {
+    public boolean skipToEntry(int document) throws IOException {
       moveTo(document);
       return (hasMatch(document));
     }
@@ -209,8 +190,8 @@ public class TopDocsReader implements StructuredIndexPartReader {
     }
   }
 
-  public TopDocsReader(IndexReader r) {
-    reader = r;
+  public TopDocsReader(GenericIndexReader r) {
+    super(r);
   }
 
   public Iterator getTopDocs(String term) throws IOException {
@@ -233,11 +214,11 @@ public class TopDocsReader implements StructuredIndexPartReader {
     return nodeTypes;
   }
 
-  public Iterator getIterator() throws IOException {
+  public Iterator getListIterator() throws IOException {
     return new Iterator(reader.getIterator());
   }
 
-  public IndexIterator getIterator(Node node) throws IOException {
+  public StructuredIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("topdocs")) {
       return getTopDocs(node.getParameters().get("term"));
     } else {

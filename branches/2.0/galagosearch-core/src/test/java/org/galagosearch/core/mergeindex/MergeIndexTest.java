@@ -1,7 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.mergeindex;
 
-import org.galagosearch.core.retrieval.structured.IndexIterator;
+import org.galagosearch.core.index.KeyIterator;
 import org.galagosearch.core.tools.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;

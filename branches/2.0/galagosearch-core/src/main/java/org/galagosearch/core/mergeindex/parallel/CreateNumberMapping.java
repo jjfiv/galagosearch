@@ -26,7 +26,7 @@ public class CreateNumberMapping extends StandardStep<DocumentSplit, MappedDocum
       processor.process(new MappedDocument(newDocumentNumber, index.fileId, ndd.number));
       newDocumentNumber++;
 
-    } while(nddi.nextRecord());
+    } while(nddi.nextKey());
 
     i.close();
   }

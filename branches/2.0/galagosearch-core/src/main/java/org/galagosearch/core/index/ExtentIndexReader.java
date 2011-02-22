@@ -18,13 +18,15 @@ import org.galagosearch.tupleflow.VByteInput;
  *
  * @author trevor
  */
-public class ExtentIndexReader implements StructuredIndexPartReader {
+public class ExtentIndexReader extends KeyListReader {
 
-  public class Iterator extends ExtentIndexIterator {
+  public class Iterator extends KeyListReader.ListIterator implements ExtentIterator {
 
-    GenericIndexReader.Iterator iterator;
     VByteInput data;
     BufferedFileDataStream dataStream;
+    RandomAccessFile input;
+    long startPosition, endPosition, dataLength;
+    byte[] key;
     int documentCount;
     int options;
     int currentDocument;
@@ -39,31 +41,27 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     long lastSkipPosition;
 
     public Iterator(GenericIndexReader.Iterator iterator) throws IOException {
-      this.iterator = iterator;
-      this.extents = new ExtentArray();
-      initialize();
+      super(iterator);
+    }
+
+    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
+      startPosition = iterator.getValueStart();
+      endPosition = iterator.getValueEnd();
+      dataLength = iterator.getValueLength();
+      key = iterator.getKey();
+      RandomAccessFile input = iterator.getInput();
+      reset();
     }
 
     public void reset() throws IOException {
-
       currentDocument = 0;
       extents.reset();
       documentCount = 0;
       documentIndex = 0;
-
       initialize();
     }
 
-    public boolean skipTo(byte[] key) throws IOException {
-      iterator.skipTo(key);
-      if (Utility.compare(key, iterator.getKey()) == 0) {
-        reset();
-        return true;
-      }
-      return false;
-    }
-
-    public String getRecordString() {
+    public String getEntry() {
       StringBuilder builder = new StringBuilder();
       builder.append(getKey());
       builder.append(",");
@@ -78,24 +76,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       return builder.toString();
     }
 
-    public boolean nextRecord() throws IOException {
-      nextEntry();
-      if (!isDone()) {
-        return true;
-      }
-      if (iterator.nextKey()) {
-        reset();
-        return true;
-      } else {
-        return false;
-      }
-    }
-
     private void initialize() throws IOException {
-      long startPosition = iterator.getValueStart();
-      long endPosition = iterator.getValueEnd();
-
-      RandomAccessFile input = iterator.getInput();
       input.seek(startPosition);
       DataInput stream = new VByteInput(input);
 
@@ -108,12 +89,12 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       long dataEnd = 0;
 
       // check for skips
-      if ((options & DocumentOrderedCountIterator.HAS_SKIPS) == DocumentOrderedCountIterator.HAS_SKIPS) {
+      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
         skipDistance = stream.readInt();
         numSkips = stream.readInt();
-        long dataLength = stream.readLong();
+        long remainingLength = stream.readLong();
         dataStart = input.getFilePointer();
-        dataEnd = dataStart + dataLength;
+        dataEnd = dataStart + remainingLength;
       } else {
         skipDistance = 0;
         numSkips = 0;
@@ -138,20 +119,34 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       loadExtents();
     }
 
-    public void nextEntry() throws IOException {
+    public long totalEntries() {
+      return documentCount;
+    }
+
+    public boolean nextEntry() throws IOException {
       extents.reset();
       documentIndex = Math.min(documentIndex + 1, documentCount);
 
       if (!isDone()) {
         loadExtents();
+        return true;
       }
+      return false;
+    }
+
+    public boolean hasMatch(int document) {
+      return (!isDone() && identifier() == document);
+    }
+
+    public void moveTo(int document) throws IOException {
+      skipToEntry(document);
     }
 
     // If we have skips - it's go time
     @Override
-    public boolean skipToDocument(int document) throws IOException {
+    public boolean skipToEntry(int document) throws IOException {
       if (skips == null || document <= nextSkipDocument) {
-        return super.skipToDocument(document);
+        return super.skipToEntry(document);
       }
 
       // if we're here, we're skipping
@@ -164,7 +159,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       dataStream.seek(lastSkipPosition);
       documentIndex = (int) (skipsRead * skipDistance) - 1;
 
-      return super.skipToDocument(document); // linear from here
+      return super.skipToEntry(document); // linear from here
     }
 
     private void skipOnce() throws IOException {
@@ -201,14 +196,6 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       }
     }
 
-    public String getKey() {
-      return Utility.toString(iterator.getKey());
-    }
-
-    public byte[] getKeyBytes() {
-      return iterator.getKey();
-    }
-
     public int identifier() {
       return currentDocument;
     }
@@ -224,15 +211,27 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     public boolean isDone() {
       return (documentIndex >= documentCount);
     }
-  }
 
+    public int compareTo(CountIterator other) {
+      if (isDone() && !other.isDone()) {
+        return 1;
+      }
+      if (other.isDone() && !isDone()) {
+        return -1;
+      }
+      if (isDone() && other.isDone()) {
+        return 0;
+      }
+      return identifier() - other.identifier();
+    }
+  }
   GenericIndexReader reader;
 
-  public ExtentIndexReader(GenericIndexReader reader) throws FileNotFoundException, IOException {
-    this.reader = reader;
+  public ExtentIndexReader(GenericIndexReader reader) throws IOException {
+    super(reader);
   }
 
-  public Iterator getIterator() throws IOException {
+  public Iterator getListIterator() throws IOException {
     return new Iterator(reader.getIterator());
   }
 
@@ -264,7 +263,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     return nodeTypes;
   }
 
-  public IndexIterator getIterator(Node node) throws IOException {
+  public StructuredIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("extents")) {
       return getExtents(node.getDefaultParameter());
     } else {

@@ -218,7 +218,7 @@ public class StructuredIndex {
   }
 
   public ExtentIndexIterator getExtentIterator(String part) throws IOException {
-    IndexIterator i = parts.get(part).getIterator();
+    KeyIterator i = parts.get(part).getIterator();
     if (i instanceof ExtentIndexIterator) {
       return (ExtentIndexIterator) i;
     }

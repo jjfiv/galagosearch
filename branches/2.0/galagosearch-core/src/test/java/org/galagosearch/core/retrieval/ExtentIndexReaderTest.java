@@ -138,7 +138,7 @@ public class ExtentIndexReaderTest extends TestCase {
         ExtentIndexReader.Iterator extents = reader.getExtents("title");
 
         assertFalse(extents.isDone());
-        extents.skipToDocument(10);
+        extents.skipToEntry(10);
         assertTrue(extents.isDone());
 
         reader.close();
@@ -166,7 +166,7 @@ public class ExtentIndexReaderTest extends TestCase {
         ExtentIndexReader.Iterator extents = reader.getExtents("skippy");
 
         assertFalse(extents.isDone());
-        assertFalse(extents.skipToDocument(453));
+        assertFalse(extents.skipToEntry(453));
         assertEquals(454, extents.identifier());
         extents.nextEntry();
         assertEquals(457, extents.identifier());

@@ -31,7 +31,7 @@ public class JelinekMercerScorer implements ScoringFunction {
             } else {
                 while (!iterator.isDone()) {
                     count += iterator.count();
-                    iterator.nextEntry();
+                    iterator.next();
                 }
             }
 

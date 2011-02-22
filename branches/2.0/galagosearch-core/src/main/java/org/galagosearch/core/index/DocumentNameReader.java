@@ -2,7 +2,12 @@
 package org.galagosearch.core.index;
 
 import java.io.IOException;
-import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
+import java.util.HashMap;
+import java.util.Map;
+import org.galagosearch.core.index.PositionIndexReader.TermCountIterator;
+import org.galagosearch.core.index.PositionIndexReader.TermExtentIterator;
+import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.types.KeyValuePair;
 
 import org.galagosearch.core.types.NumberedDocumentData;
@@ -17,51 +22,62 @@ import org.galagosearch.tupleflow.Utility;
  * 
  * @author sjh
  */
-public class DocumentNameReader {
+public class DocumentNameReader extends KeyValueReader {
 
-  GenericIndexReader flIndex;
-  GenericIndexReader rlIndex;
+  boolean isForward;
 
   /** Creates a new instance of DocumentNameReader */
   public DocumentNameReader(String fileName) throws IOException {
-    // Ensure that we are dealing with the correct fileName
-    if (fileName.endsWith(".fl") || fileName.endsWith(".rl")) {
-      fileName = fileName.substring(0, fileName.lastIndexOf("."));
-    }
-
-    flIndex = GenericIndexReader.getIndexReader(fileName + ".fl");
-    rlIndex = GenericIndexReader.getIndexReader(fileName + ".rl");
+    super(fileName);
+    isForward = (reader.getManifest().get("order").equals("forward"));
   }
 
   // gets the document name of the internal id index.
   public String get(int index) throws IOException {
-    byte[] data = flIndex.getValueBytes(Utility.fromInt(index));
-
-    if (data == null) {
-      throw new IOException("Unknown Document Number : " + index);
+    if (isForward) {
+      byte[] data = reader.getValueBytes(Utility.fromInt(index));
+      if (data == null) {
+        throw new IOException("Unknown Document Number : " + index);
+      }
+      return Utility.toString(data);
+    } else {
+      throw new UnsupportedOperationException("This direction does not support int -> name mappings");
     }
-    return Utility.toString(data);
   }
 
   // gets the document id for some document name
   public int getDocumentId(String documentName) throws IOException {
-    byte[] data = rlIndex.getValueBytes(Utility.fromString(documentName));
-
-    if (data == null) {
-      throw new IOException("Unknown Document Name : " + documentName);
+    if (!isForward) {
+      byte[] data = reader.getValueBytes(Utility.fromString(documentName));
+      if (data == null) {
+        throw new IOException("Unknown Document Name : " + documentName);
+      }
+      return Utility.toInt(data);
+    } else {
+      throw new UnsupportedOperationException("This direction does not support name -> int mappings");
     }
-    return Utility.toInt(data);
   }
 
-  public NumberedDocumentDataIterator getNumberOrderIterator() throws IOException {
-    return new Iterator(flIndex, true);
+  public Iterator getIterator() throws IOException {
+    return new Iterator(reader, isForward);
   }
 
-  public NumberedDocumentDataIterator getNameOrderIterator() throws IOException {
-    return new Iterator(rlIndex, false);
+  public Map<String, NodeType> getNodeTypes() {
+    HashMap<String, NodeType> types = new HashMap<String, NodeType>();
+    types.put("names", new NodeType(Iterator.class));
+    return types;
   }
 
-  public class Iterator extends NumberedDocumentDataIterator {
+  public KeyIterator getIterator(Node node) throws IOException {
+    if (node.getOperator().equals("names")) {
+      return new Iterator(reader, isForward);
+    } else {
+      throw new UnsupportedOperationException(
+              "Index doesn't support operator: " + node.getOperator());
+    }
+  }
+
+  public class Iterator extends KeyValueReader.Iterator {
 
     boolean forwardLookup;
     GenericIndexReader input;
@@ -69,50 +85,16 @@ public class DocumentNameReader {
     KeyValuePair current;
 
     public Iterator(GenericIndexReader input, boolean forwardLookup) throws IOException {
+      super(input);
       this.forwardLookup = forwardLookup;
-      this.input = input;
-      reset();
     }
 
-    public void reset() throws IOException {
-      iterator = input.getIterator();
-
-      byte[] key = iterator.getKey();
-      byte[] value = iterator.getValueBytes();
-      current = new KeyValuePair(key, value);
-    }
-
-    public boolean skipTo(byte[] k) throws IOException {
-      iterator.skipTo(k);
-      if (Utility.compare(k, iterator.getKey()) == 0) {
-       byte[] key = iterator.getKey();
-       byte[] value = iterator.getValueBytes();
-       current = new KeyValuePair(key, value);
-        return true;
-      }
-      return false;
-    }
-
-    public String getRecordString() {
+    public String getStringValue() {
       if (forwardLookup) {
         return Utility.toInt(current.key) + ", " + Utility.toString(current.value);
       } else {
         return Utility.toInt(current.value) + ", " + Utility.toString(current.key);
       }
-    }
-
-    public boolean nextRecord() throws IOException {
-      iterator.nextKey();
-
-      if (iterator.isDone()) {
-        return false;
-      }
-
-      byte[] key = iterator.getKey();
-      byte[] value = iterator.getValueBytes();
-      current = new KeyValuePair(key, value);
-
-      return true;
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {
@@ -131,15 +113,8 @@ public class DocumentNameReader {
       }
     }
 
-    public byte[] getKeyBytes() {
-      return current.key;
-    }
-
-    public void skipTo(int key) throws IOException {
-      iterator.skipTo(Utility.fromInt(key));
-      byte[] newkey = iterator.getKey();
-      byte[] newvalue = iterator.getValueBytes();
-      current = new KeyValuePair(newkey, newvalue);
+    public boolean isDone() {
+      return iterator.isDone();
     }
   }
 }

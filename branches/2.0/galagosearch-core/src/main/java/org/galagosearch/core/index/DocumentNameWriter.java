@@ -43,10 +43,10 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     
     Parameters p = new Parameters();
     p.copy(parameters.getXML());
-    //p.set("blockSize", "1048576");
-    
-    IndexWriterProcessor writerFL = new IndexWriterProcessor(fileName + ".fl", p);
-    IndexWriterProcessor writerRL = new IndexWriterProcessor(fileName + ".rl", p);
+    p.set("order", "forward");
+    IndexWriterProcessor writerFL = new IndexWriterProcessor(fileName, p);
+    p.set("order", "backward");
+    IndexWriterProcessor writerRL = new IndexWriterProcessor(fileName + ".reverse", p);
     
     sorterFL = new Sorter<KeyValuePair>(new KeyValuePair.KeyOrder());
     sorterRL = new Sorter<KeyValuePair>(new KeyValuePair.KeyOrder());

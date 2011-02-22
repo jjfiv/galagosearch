@@ -64,12 +64,12 @@ public class PageRankReader {
       current = 0;
     }
 
-    public String getRecordString() {
+    public String getStringValue() {
       int docNum = current + documentNumberOffset;
       return docNum + ", " + getLength(current);
     }
 
-    public boolean nextRecord() throws IOException {
+    public boolean nextKey() throws IOException {
       current++;
       if (current < totalDocuments) {
         return true;
@@ -77,7 +77,7 @@ public class PageRankReader {
       return false;
     }
 
-    public boolean skipTo(byte[] key) throws IOException {
+    public boolean skipToKey(byte[] key) throws IOException {
       throw new UnsupportedOperationException("This iterator does not support skipping.");
     }
 
