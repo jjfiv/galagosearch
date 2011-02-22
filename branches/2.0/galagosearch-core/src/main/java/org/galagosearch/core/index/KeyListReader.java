@@ -120,6 +120,10 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
       reset();
     }
 
+    public boolean isDone() {
+      return iterator.isDone();
+    }
+
     public boolean skipToKey(byte[] key) throws IOException {
       iterator.skipTo(key);
       if (Utility.compare(key, iterator.getKey()) == 0) {
@@ -151,3 +155,4 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
     public abstract String getStringValue();
   }
 }
+

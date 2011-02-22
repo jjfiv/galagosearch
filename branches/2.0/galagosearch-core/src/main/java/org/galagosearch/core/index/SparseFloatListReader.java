@@ -22,7 +22,34 @@ import org.galagosearch.tupleflow.VByteInput;
  */
 public class SparseFloatListReader extends KeyListReader {
 
-  public class Iterator extends KeyListReader.ListIterator implements ScoreIterator {
+  public class KeyIterator extends KeyListReader.Iterator {
+
+    public KeyIterator(GenericIndexReader reader) throws IOException {
+      super(reader);
+    }
+
+    @Override
+    public String getStringValue() {
+      ListIterator it;
+      long count = -1;
+      try {
+        it = new ListIterator(iterator);
+        count = it.totalEntries();
+      } catch (IOException ioe) {
+      }
+
+      StringBuilder sb = new StringBuilder();
+      sb.append(Utility.toString(iterator.getKey())).append(", List Value: size=");
+      if (count > 0) {
+        sb.append(count);
+      } else {
+        sb.append("Unknown");
+      }
+      return sb.toString();
+    }
+  }
+
+  public class ListIterator extends KeyListReader.ListIterator implements ScoreIterator {
 
     VByteInput stream;
     int documentCount;
@@ -30,7 +57,7 @@ public class SparseFloatListReader extends KeyListReader {
     int currentDocument;
     double currentScore;
 
-    public Iterator(GenericIndexReader.Iterator iterator) throws IOException {
+    public ListIterator(GenericIndexReader.Iterator iterator) throws IOException {
       super(iterator);
     }
 
@@ -69,7 +96,9 @@ public class SparseFloatListReader extends KeyListReader {
       documentCount = stream.readInt();
       index = -1;
       currentDocument = 0;
-      if (documentCount > 0) read();
+      if (documentCount > 0) {
+        read();
+      }
     }
 
     public void reset() throws IOException {
@@ -138,13 +167,17 @@ public class SparseFloatListReader extends KeyListReader {
     super(pathname);
   }
 
-  public Iterator getListIterator() throws IOException {
-    return new Iterator(reader.getIterator());
+  public KeyIterator getIterator() throws IOException {
+    return new KeyIterator(reader);
   }
 
-  public Iterator getScores(String term) throws IOException {
+  public ListIterator getListIterator() throws IOException {
+    return new ListIterator(reader.getIterator());
+  }
+
+  public ListIterator getScores(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
-    return new Iterator(iterator);
+    return new ListIterator(iterator);
   }
 
   public void close() throws IOException {

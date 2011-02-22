@@ -57,7 +57,30 @@ public class TopDocsReader extends KeyListReader {
     }
   }
 
-  public class Iterator extends KeyListReader.ListIterator implements Comparable<Iterator> {
+  public class KeyIterator extends KeyListReader.Iterator {
+
+    public KeyIterator(GenericIndexReader reader) throws IOException {
+      super(reader);
+    }
+
+    @Override
+    public String getStringValue() {
+      ListIterator it;
+      long count = -1;
+      try {
+        it = new ListIterator(iterator);
+        count = it.totalEntries();
+      } catch (IOException ioe) {}
+
+      StringBuilder sb = new StringBuilder();
+      sb.append(Utility.toString(iterator.getKey())).append(", List Value: size=");
+      if (count > 0) sb.append(count);
+      else sb.append("Unknown");
+      return sb.toString();
+    }
+  }
+
+  public class ListIterator extends KeyListReader.ListIterator implements Comparable<ListIterator> {
 
     IndexReader.Iterator iterator;
     int options;
@@ -72,7 +95,7 @@ public class TopDocsReader extends KeyListReader {
     RandomAccessFile input;
     byte[] key;
 
-    public Iterator(GenericIndexReader.Iterator it) throws IOException {
+    public ListIterator(GenericIndexReader.Iterator it) throws IOException {
       super(it);
     }
 
@@ -185,7 +208,7 @@ public class TopDocsReader extends KeyListReader {
       return (hasMatch(document));
     }
 
-    public int compareTo(Iterator that) {
+    public int compareTo(ListIterator that) {
       return (this.currentCandidate() - that.currentCandidate());
     }
   }
@@ -194,11 +217,11 @@ public class TopDocsReader extends KeyListReader {
     super(r);
   }
 
-  public Iterator getTopDocs(String term) throws IOException {
+  public ListIterator getTopDocs(String term) throws IOException {
     IndexReader.Iterator it = reader.getIterator(Utility.fromString(term));
 
     if (it != null) {
-      return new Iterator(it);
+      return new ListIterator(it);
     } else {
       return null;
     }
@@ -214,8 +237,12 @@ public class TopDocsReader extends KeyListReader {
     return nodeTypes;
   }
 
-  public Iterator getListIterator() throws IOException {
-    return new Iterator(reader.getIterator());
+  public KeyIterator getIterator() throws IOException {
+    return new KeyIterator(reader);
+  }
+
+  public ListIterator getListIterator() throws IOException {
+    return new ListIterator(reader.getIterator());
   }
 
   public StructuredIterator getIterator(Node node) throws IOException {

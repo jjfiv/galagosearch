@@ -20,7 +20,30 @@ import org.galagosearch.tupleflow.VByteInput;
  */
 public class ExtentIndexReader extends KeyListReader {
 
-  public class Iterator extends KeyListReader.ListIterator implements ExtentIterator {
+  public class KeyIterator extends KeyListReader.Iterator {
+
+    public KeyIterator(GenericIndexReader reader) throws IOException {
+      super(reader);
+    }
+
+    @Override
+    public String getStringValue() {
+      ListIterator it;
+      long count = -1;
+      try {
+        it = new ListIterator(iterator);
+        count = it.totalEntries();
+      } catch (IOException ioe) {}
+
+      StringBuilder sb = new StringBuilder();
+      sb.append(Utility.toString(iterator.getKey())).append(", List Value: size=");
+      if (count > 0) sb.append(count);
+      else sb.append("Unknown");
+      return sb.toString();
+    }
+  }
+
+  public class ListIterator extends KeyListReader.ListIterator implements ExtentIterator {
 
     VByteInput data;
     BufferedFileDataStream dataStream;
@@ -40,7 +63,7 @@ public class ExtentIndexReader extends KeyListReader {
     int nextSkipDocument;
     long lastSkipPosition;
 
-    public Iterator(GenericIndexReader.Iterator iterator) throws IOException {
+    public ListIterator(GenericIndexReader.Iterator iterator) throws IOException {
       super(iterator);
     }
 
@@ -231,15 +254,19 @@ public class ExtentIndexReader extends KeyListReader {
     super(reader);
   }
 
-  public Iterator getListIterator() throws IOException {
-    return new Iterator(reader.getIterator());
+  public KeyIterator getIterator() throws IOException {
+    return new KeyIterator(reader);
   }
 
-  public Iterator getExtents(String term) throws IOException {
+  public ListIterator getListIterator() throws IOException {
+    return new ListIterator(reader.getIterator());
+  }
+
+  public ListIterator getExtents(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
-      return new Iterator(iterator);
+      return new ListIterator(iterator);
     }
     return null;
   }
@@ -248,7 +275,7 @@ public class ExtentIndexReader extends KeyListReader {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
-      return new Iterator(iterator);
+      return new ListIterator(iterator);
     }
     return null;
   }

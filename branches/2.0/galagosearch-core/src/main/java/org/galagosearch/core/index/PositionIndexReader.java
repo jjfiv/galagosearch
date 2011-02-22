@@ -10,9 +10,9 @@ import java.util.Map;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.CountIterator;
-import org.galagosearch.core.retrieval.structured.DocumentOrderedCountIterator;
 import org.galagosearch.core.retrieval.structured.DocumentOrderedIterator;
 import org.galagosearch.core.retrieval.structured.ExtentIterator;
+import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.DataStream;
@@ -33,6 +33,33 @@ import org.galagosearch.tupleflow.VByteInput;
  * @author trevor, irmarc
  */
 public class PositionIndexReader extends KeyListReader implements AggregateReader {
+
+  public class KeyIterator extends KeyListReader.Iterator {
+
+    public KeyIterator(GenericIndexReader reader) throws IOException {
+      super(reader);
+    }
+
+    @Override
+    public String getStringValue() {
+      ListIterator it;
+      long count = -1;
+      try {
+        it = new TermCountIterator(iterator);
+        count = it.totalEntries();
+      } catch (IOException ioe) {
+      }
+
+      StringBuilder sb = new StringBuilder();
+      sb.append(Utility.toString(iterator.getKey())).append(", List Value: size=");
+      if (count > 0) {
+        sb.append(count);
+      } else {
+        sb.append("Unknown");
+      }
+      return sb.toString();
+    }
+  }
 
   public class TermExtentIterator extends KeyListReader.ListIterator implements ExtentIterator {
 
@@ -573,29 +600,23 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
   }
   GenericIndexReader reader;
 
-  public PositionIndexReader(GenericIndexReader reader) throws IOException {
+  public PositionIndexReader(
+          GenericIndexReader reader) throws IOException {
     super(reader);
   }
 
-  public PositionIndexReader(String pathname) throws FileNotFoundException, IOException {
+  public PositionIndexReader(
+          String pathname) throws FileNotFoundException, IOException {
     super(pathname);
   }
 
   @Override
-  public Iterator getIterator() throws IOException {
-    throw new UnsupportedOperationException("Not supported yet.");
+  public TermCountIterator getListIterator() throws IOException {
+    return new TermCountIterator(reader.getIterator());
   }
 
-  @Override
-  public ValueIterator getListIterator() throws IOException {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  /**
-   * Returns an iterator pointing at the first term in the index.
-   */
-  public ExtentIterator getIterator() throws IOException {
-    return new TermExtentIterator(reader.getIterator());
+  public KeyIterator getIterator() throws IOException {
+    return new KeyIterator(reader);
   }
 
   /**
@@ -605,34 +626,47 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
   public ExtentIterator getTermExtents(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
+
+
     if (iterator != null) {
       return new TermExtentIterator(iterator);
+
+
     }
     return null;
+
+
   }
 
   public ExtentIterator getTermCounts(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
+
+
     if (iterator != null) {
       return new TermCountIterator(iterator);
+
+
     }
     return null;
+
+
   }
 
   public void close() throws IOException {
     reader.close();
+
+
   }
 
   public Map<String, NodeType> getNodeTypes() {
     HashMap<String, NodeType> types = new HashMap<String, NodeType>();
     types.put("counts", new NodeType(TermCountIterator.class));
     types.put("extents", new NodeType(TermExtentIterator.class));
-
     return types;
   }
 
-  public KeyIterator getIterator(Node node) throws IOException {
+  public StructuredIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("counts")) {
       return getTermCounts(node.getDefaultParameter("term"));
     } else {
