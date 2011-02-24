@@ -4,11 +4,10 @@
 
 ==Site Map==
 
-[installation Installation]
+[Installation Installation]
 
-[indexing Building Indexes]
+[Indexing Building Indexes]
 
-[batchretrieval Batch Search]
+[Batchretrieval Batch Search]
 
-[liveretrieval Live Search]
-
+[Liveretrieval Live Search]
