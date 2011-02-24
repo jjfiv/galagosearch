@@ -1,0 +1,14 @@
+#summary Wiki Homepage
+
+=Galago Search Engine=
+
+==Site Map==
+
+[installation Installation]
+
+[indexing Building Indexes]
+
+[batchretrieval Batch Search]
+
+[liveretrieval Live Search]
+
