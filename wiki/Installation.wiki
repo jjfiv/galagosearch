@@ -6,7 +6,7 @@ Installing Galago
 
 = Details =
 
-*1. Dependencies*
+==1. Dependencies==
 
 *Java 6 or newer*
 
@@ -19,13 +19,13 @@ but if not:
 Available for most operating systems. This package can be obtained from:
  - http://maven.apache.org/
 
-*2. Obtaining the source code*
+==2. Obtaining the source code==
 
 For the most recent version, please use the svn command from:
  - http://code.google.com/p/galagosearch/source/checkout
 
 
-*3. Compiling*
+==3. Compiling==
 
 Assuming you have installed mvn and checked out the most recent version of galago. Within a terminal, go to the galago directory and run the commands:
 
@@ -59,7 +59,7 @@ Eventually you should see something similar to:
 
 This output indicates success.
 
-*4. Running the Galago application*
+==4. Running the Galago application==
 
 You can now set permissions and run the Galago application:
 
@@ -99,5 +99,3 @@ All commands:
    parameter-sweep
    search
 }}}
-
-
