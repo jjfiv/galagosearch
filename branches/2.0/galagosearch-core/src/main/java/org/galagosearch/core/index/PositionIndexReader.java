@@ -10,7 +10,6 @@ import java.util.Map;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.CountIterator;
-import org.galagosearch.core.retrieval.structured.DocumentOrderedIterator;
 import org.galagosearch.core.retrieval.structured.ExtentIterator;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.core.util.ExtentArray;
@@ -61,7 +60,11 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     }
   }
 
-  public class TermExtentIterator extends KeyListReader.ListIterator implements ExtentIterator {
+  public interface AggregateIterator {
+    public int totalPositions();
+  }
+
+  public class TermExtentIterator extends KeyListReader.ListIterator implements AggregateIterator, ExtentIterator {
 
     int documentCount;
     int totalPositionCount;
@@ -120,7 +123,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long skipsByteLength = 0;
       long skipPositionsByteLength = 0;
 
-      if ((options & DocumentOrderedIterator.HAS_SKIPS) == DocumentOrderedIterator.HAS_SKIPS) {
+      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
         skipsByteLength = stream.readLong();
         skipPositionsByteLength = stream.readLong();
       }
@@ -135,7 +138,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long positionsEnd = positionsStart + positionsByteLength;
 
 
-      if ((options & DocumentOrderedIterator.HAS_SKIPS) == DocumentOrderedIterator.HAS_SKIPS) {
+      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
 
         long skipsStart = positionsEnd;
         long skipsEnd = skipsStart + skipsByteLength;
@@ -178,7 +181,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       loadExtents();
     }
 
-    // Loads up a single set of positions for a identifier. Basically it's the
+    // Loads up a single set of positions for a intID. Basically it's the
     // load that needs to be done when moving forward one in the posting list.
     private void loadExtents() throws IOException {
       currentDocument += documents.readInt();
@@ -234,27 +237,25 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     }
 
     public boolean hasMatch(int document) {
-      return (!isDone() && identifier() == document);
-    }
-
-    public void moveTo(int document) throws IOException {
-      skipToEntry(document);
+      return (!isDone() && intID() == document);
     }
 
     // If we have skips - it's go time
     @Override
-    public boolean skipToEntry(int document) throws IOException {
-      if (skips == null || document <= nextSkipDocument) {
-        return super.skipToEntry(document);
+    public boolean moveTo(int document) throws IOException {
+      if (skips != null && document > nextSkipDocument) {
+
+        // if we're here, we're skipping
+        while (skipsRead < numSkips
+                && document > nextSkipDocument) {
+          skipOnce();
+        }
+        repositionMainStreams();
       }
 
-      // if we're here, we're skipping
-      while (skipsRead < numSkips
-              && document > nextSkipDocument) {
-        skipOnce();
-      }
-      repositionMainStreams();
-      return super.skipToEntry(document); // linear from here
+      // Linear from here
+      while (document > currentDocument && nextEntry());
+      return hasMatch(document);
     }
 
     // This only moves forward in tier 1, reads from tier 2 only when
@@ -304,11 +305,15 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return documentIndex >= documentCount;
     }
 
+    public ExtentArray getData() {
+      return extentArray;
+    }
+
     public ExtentArray extents() {
       return extentArray;
     }
 
-    public int identifier() {
+    public int intID() {
       return currentDocument;
     }
 
@@ -335,7 +340,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       if (isDone() && other.isDone()) {
         return 0;
       }
-      return identifier() - other.identifier();
+      return intID() - other.intID();
     }
   }
 
@@ -344,7 +349,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
    * we don't have to bookkeep the positions buffer. Overall smaller footprint and faster execution.
    *
    */
-  public class TermCountIterator extends KeyListReader.ListIterator implements ExtentIterator {
+  public class TermCountIterator extends KeyListReader.ListIterator implements AggregateIterator, CountIterator {
 
     int documentCount;
     int collectionCount;
@@ -387,7 +392,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       int options = stream.readInt();
       documentCount = stream.readInt();
       collectionCount = stream.readInt();
-      if ((options & DocumentOrderedIterator.HAS_SKIPS) == DocumentOrderedIterator.HAS_SKIPS) {
+      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
         skipDistance = stream.readInt();
         skipResetDistance = stream.readInt();
         numSkips = stream.readLong();
@@ -400,7 +405,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long skipsByteLength = 0;
       long skipPositionsByteLength = 0;
 
-      if ((options & DocumentOrderedIterator.HAS_SKIPS) == DocumentOrderedIterator.HAS_SKIPS) {
+      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
         skipsByteLength = stream.readLong();
         skipPositionsByteLength = stream.readLong();
       }
@@ -416,7 +421,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long positionsEnd = positionsStart + positionsByteLength;
 
 
-      if ((options & DocumentOrderedIterator.HAS_SKIPS) == DocumentOrderedIterator.HAS_SKIPS) {
+      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
 
         long skipsStart = positionsEnd;
         long skipsEnd = skipsStart + skipsByteLength;
@@ -495,27 +500,24 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     }
 
     public boolean hasMatch(int document) {
-      return (!isDone() && identifier() == document);
-    }
-
-    public void moveTo(int document) throws IOException {
-      skipToEntry(document);
+      return (!isDone() && intID() == document);
     }
 
     // If we have skips - it's go time
     @Override
-    public boolean skipToEntry(int document) throws IOException {
-      if (skips == null || document <= nextSkipDocument) {
-        return super.skipToEntry(document);
+    public boolean moveTo(int document) throws IOException {
+      if (skips != null && document > nextSkipDocument) {
+        // if we're here, we're skipping
+        while (skipsRead < numSkips
+                && document > nextSkipDocument) {
+          skipOnce();
+        }
+        repositionMainStreams();
       }
 
-      // if we're here, we're skipping
-      while (skipsRead < numSkips
-              && document > nextSkipDocument) {
-        skipOnce();
-      }
-      repositionMainStreams();
-      return super.skipToEntry(document); // linear from here
+      // linear from here
+      while (document > currentDocument && nextEntry());
+      return hasMatch(document);
     }
 
     // This only moves forward in tier 1, reads from tier 2 only when
@@ -564,11 +566,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return documentIndex >= documentCount;
     }
 
-    public ExtentArray extents() {
-      throw new UnsupportedOperationException("Extents not supported in the TermCountIterator");
-    }
-
-    public int identifier() {
+    public int intID() {
       return currentDocument;
     }
 
@@ -595,18 +593,16 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       if (isDone() && other.isDone()) {
         return 0;
       }
-      return identifier() - other.identifier();
+      return intID() - other.intID();
     }
   }
   GenericIndexReader reader;
 
-  public PositionIndexReader(
-          GenericIndexReader reader) throws IOException {
+  public PositionIndexReader(GenericIndexReader reader) throws IOException {
     super(reader);
   }
 
-  public PositionIndexReader(
-          String pathname) throws FileNotFoundException, IOException {
+  public PositionIndexReader(String pathname) throws FileNotFoundException, IOException {
     super(pathname);
   }
 
@@ -625,38 +621,23 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
    */
   public ExtentIterator getTermExtents(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
-
-
-
     if (iterator != null) {
       return new TermExtentIterator(iterator);
-
-
     }
     return null;
-
-
   }
 
-  public ExtentIterator getTermCounts(String term) throws IOException {
+  public CountIterator getTermCounts(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
-
-
 
     if (iterator != null) {
       return new TermCountIterator(iterator);
-
-
     }
     return null;
-
-
   }
 
   public void close() throws IOException {
     reader.close();
-
-
   }
 
   public Map<String, NodeType> getNodeTypes() {
@@ -674,7 +655,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     }
   }
 
-  // I add these in order to return identifier frequency and collection frequency
+  // I add these in order to return intID frequency and collection frequency
   // information for terms. Any other way from the iterators are SLOW
   // unless the headers have already been loaded.
   // We need a better interface for these.

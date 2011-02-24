@@ -8,9 +8,6 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
- * 12/12/2010 [irmarc]: Due to the refactor for parallel retrieval stacks, all FeatureFactory 
- * references currently point to the DocumentOrderedFeatureFactory.
- * ImpactOrderedFeatureFactory testing, which isn't much, will be added later.
  *
  * @author trevor, irmarc
  */
@@ -24,7 +21,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getClassName method, of class FeatureFactory.
      */
     public void testGetClassName() throws Exception {
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(new Parameters());
+        FeatureFactory f = new FeatureFactory(new Parameters());
         String actual = f.getClassName(new Node("syn", "fakeargument"));
         assertEquals(SynonymIterator.class.getName(), actual);
     }
@@ -33,7 +30,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getFeatureClassName method, of class FeatureFactory.
      */
     public void testGetFeatureClassName() throws Exception {
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(new Parameters());
+        FeatureFactory f = new FeatureFactory(new Parameters());
         Parameters p = new Parameters();
         p.add("default", "dirichlet");
         String actual = f.getFeatureClassName(p);
@@ -44,7 +41,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getClass method, of class FeatureFactory.
      */
     public void testGetClass() throws Exception {
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(new Parameters());
+        FeatureFactory f = new FeatureFactory(new Parameters());
         Class c = f.getClass(new Node("combine", ""));
         assertEquals(UnfilteredCombinationIterator.class.getName(), c.getName());
     }
@@ -53,7 +50,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getNodeType method, of class FeatureFactory.
      */
     public void testGetNodeType() throws Exception {
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(new Parameters());
+        FeatureFactory f = new FeatureFactory(new Parameters());
         NodeType type = f.getNodeType(new Node("combine", ""));
         Class c = type.getIteratorClass();
         assertEquals(UnfilteredCombinationIterator.class.getName(), c.getName());
@@ -63,7 +60,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of isUsableConstructor method, of class FeatureFactory.
      */
     public void testIsUsableConstructor() {
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(new Parameters());
+        FeatureFactory f = new FeatureFactory(new Parameters());
         Class[] types = new Class[] { Parameters.class };
         ArrayList<StructuredIterator> iterators = new ArrayList();
         assertTrue(f.isUsableConstructor(types, iterators));
@@ -78,7 +75,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of argsForConstructor method, of class FeatureFactory.
      */
     public void testArgsForConstructor() {
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(new Parameters());
+        FeatureFactory f = new FeatureFactory(new Parameters());
         Parameters p = new Parameters();
         Class[] types = new Class[] { Parameters.class };
         Object[] args = f.argsForConstructor(types, p, new ArrayList());
@@ -87,7 +84,7 @@ public class FeatureFactoryTest extends TestCase {
     }
 
     public void testArrayArgsForConstructor() {
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(new Parameters());
+        FeatureFactory f = new FeatureFactory(new Parameters());
         ArrayList<StructuredIterator> iterators = new ArrayList();
         iterators.add(new NullExtentIterator());
         ExtentIterator[] fakeArray = new ExtentIterator[1];
@@ -104,7 +101,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getIterator method, of class FeatureFactory.
      */
     public void testGetIterator() throws Exception {
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(new Parameters());
+        FeatureFactory f = new FeatureFactory(new Parameters());
         ArrayList<StructuredIterator> iterators = new ArrayList();
         iterators.add(new NullExtentIterator());
         StructuredIterator iterator = f.getIterator(new Node("od", "5"), iterators);
@@ -122,7 +119,7 @@ public class FeatureFactoryTest extends TestCase {
             "    </operators>\n" +
             "</parameters>";
         Parameters p = new Parameters(config.getBytes("UTF-8"));
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(p);
+        FeatureFactory f = new FeatureFactory(p);
 
         assertEquals("b", f.getClassName(new Node("a", new ArrayList())));
     }
@@ -146,7 +143,7 @@ public class FeatureFactoryTest extends TestCase {
             "    </traversals>\n" +
             "</parameters>";
         Parameters p = new Parameters(config.getBytes("UTF-8"));
-        DocumentOrderedFeatureFactory f = new DocumentOrderedFeatureFactory(p);
+        FeatureFactory f = new FeatureFactory(p);
         List<String> traversalNames = f.getTraversalNames();
 
         assertEquals("a", traversalNames.get(0));

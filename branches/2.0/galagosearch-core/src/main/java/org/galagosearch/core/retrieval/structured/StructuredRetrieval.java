@@ -48,7 +48,7 @@ public class StructuredRetrieval extends Retrieval {
     featureParameters.add("collectionLength", indexStats.get("collectionLength"));
     featureParameters.add("documentCount", indexStats.get("documentCount"));
     featureParameters.add("retrievalGroup", "all"); // the value wont matter here
-    featureFactory = new DocumentOrderedFeatureFactory(featureParameters);
+    featureFactory = new FeatureFactory(featureParameters);
     runner = null;
   }
 
@@ -98,7 +98,7 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   /**
-   * Evaluates a query using identifier-at-a-time evaluation.
+   * Evaluates a query using intID-at-a-time evaluation.
    *
    * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
    * @param parameters - query parameters (indexId, # requested, query type, transform)
@@ -108,7 +108,7 @@ public class StructuredRetrieval extends Retrieval {
   public ScoredDocument[] runQuery(Node queryTree, Parameters parameters) throws Exception {
 
     // construct the query iterators
-      DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
+      ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
     int requested = (int) parameters.get("requested", 1000);
 
     // now there should be an iterator at the root of this tree
@@ -116,7 +116,7 @@ public class StructuredRetrieval extends Retrieval {
     NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
     
     while (!iterator.isDone()) {
-      int document = iterator.currentCandidate();
+      int document = iterator.intID();
       lengthsIterator.skipTo(document);
       int length = lengthsIterator.getDocumentData().textLength;
       // This context is shared among all scorers
@@ -188,7 +188,7 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   /**
-   * Evaluates a query using identifier-at-a-time evaluation.
+   * Evaluates a query using intID-at-a-time evaluation.
    *  - allowing user to sweep accross parameters specified within the query
    *
    * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
@@ -199,7 +199,7 @@ public class StructuredRetrieval extends Retrieval {
   public ScoredDocument[] runParameterSweep(Node queryTree, Parameters parameters) throws Exception {
 
     // construct the query iterators
-    DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
+    ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
     int requested = (int) parameters.get("requested", 1000);
 
     // now there should be an iterator at the root of this tree
@@ -207,7 +207,7 @@ public class StructuredRetrieval extends Retrieval {
     NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
 
     while (!iterator.isDone()) {
-      int document = iterator.currentCandidate();
+      int document = iterator.intID();
       lengthsIterator.skipTo(document);
       int length = lengthsIterator.getDocumentData().textLength;
 
@@ -248,7 +248,7 @@ public class StructuredRetrieval extends Retrieval {
       results[i] = scores.poll();
       results[i].source = indexId;
       results[i].rank = i + 1;
-      //results[i].documentName = getDocumentName(results[i].identifier);
+      //results[i].documentName = getDocumentName(results[i].intID);
       docIds.put(results[i].document, i);
     }
 

@@ -15,7 +15,7 @@ import org.galagosearch.tupleflow.Parameters;
 @RequiredStatistics(statistics = {"documentCount"})
 public class BM25RFScoringIterator extends ScoringFunctionIterator {
 
-    public BM25RFScoringIterator(Parameters p, DocumentOrderedCountIterator it)
+    public BM25RFScoringIterator(Parameters p, CountIterator it)
             throws IOException {
         super(it, new BM25RFScorer(p, it));
     }
@@ -23,14 +23,14 @@ public class BM25RFScoringIterator extends ScoringFunctionIterator {
     /**
      * We override the score method here b/c the superclass version will always
      * call score, but with a 0 count, in case the scorer smoothes. In this case,
-     * the count and length are irrelevant, and it's matching on the identifier
+     * the count and length are irrelevant, and it's matching on the intID
      * list that matters.
      *
      * @return
      */
     @Override
     public double score() {
-        if (iterator.identifier() == documentToScore) {
+        if (iterator.intID() == documentToScore) {
             return function.score(iterator.count(), lengthOfDocumentToScore);
         } else {
             return 0;

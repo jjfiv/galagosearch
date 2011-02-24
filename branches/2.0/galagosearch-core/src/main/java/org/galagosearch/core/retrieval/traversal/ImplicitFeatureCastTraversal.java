@@ -9,9 +9,7 @@ import org.galagosearch.core.retrieval.structured.CountIterator;
 import org.galagosearch.core.retrieval.structured.ScoreIterator;
 import org.galagosearch.core.retrieval.structured.ScoringFunctionIterator;
 import org.galagosearch.core.retrieval.Retrieval;
-import org.galagosearch.core.retrieval.structured.DocumentOrderedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
-import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.tupleflow.Parameters;
 
 /**

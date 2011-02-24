@@ -13,13 +13,13 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor
  */
-public class ScaleIterator extends DocumentOrderedScoreIterator {
+public class ScaleIterator implements ScoreIterator {
 
-  DocumentOrderedScoreIterator iterator;
+  ScoreIterator iterator;
   double weight;
   double[] weights;
 
-  public ScaleIterator(Parameters parameters, DocumentOrderedScoreIterator iterator) throws IllegalArgumentException {
+  public ScaleIterator(Parameters parameters, ScoreIterator iterator) throws IllegalArgumentException {
     this.iterator = iterator;
     String[] weightStrings = parameters.get("default", "1.0").split(",");
     weight = Double.parseDouble(weightStrings[0]);
@@ -31,12 +31,8 @@ public class ScaleIterator extends DocumentOrderedScoreIterator {
     }
   }
 
-  public boolean skipToDocument(int document) throws IOException {
-    return iterator.skipToDocument(document);
-  }
-
-  public int currentCandidate() {
-    return iterator.currentCandidate();
+  public int intID() {
+    return iterator.intID();
   }
 
   public boolean hasMatch(int document) {

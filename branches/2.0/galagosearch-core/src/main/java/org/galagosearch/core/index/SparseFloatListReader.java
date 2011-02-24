@@ -105,7 +105,7 @@ public class SparseFloatListReader extends KeyListReader {
       throw new UnsupportedOperationException("This iterator does not reset without the parent KeyIterator.");
     }
 
-    public int currentCandidate() {
+    public int identifier() {
       return currentDocument;
     }
 
@@ -113,21 +113,17 @@ public class SparseFloatListReader extends KeyListReader {
       return document == currentDocument;
     }
 
-    public void moveTo(int document) throws IOException {
+    public boolean moveTo(int document) throws IOException {
       while (!isDone() && document > currentDocument) {
         read();
       }
+      return hasMatch(document);
     }
 
     public void movePast(int document) throws IOException {
       while (!isDone() && document >= currentDocument) {
         read();
       }
-    }
-
-    public boolean skipToDocument(int document) throws IOException {
-      moveTo(document);
-      return this.hasMatch(document);
     }
 
     public double score(int document, int length) {

@@ -10,6 +10,6 @@ import org.galagosearch.core.util.ExtentArray;
  * 
  * @author trevor, irmarc
  */
-public interface ExtentIterator extends CountIterator {
+public interface ExtentIterator extends DataIterator<ExtentArray> {
     public ExtentArray extents();
 }

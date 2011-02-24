@@ -6,12 +6,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
-import org.galagosearch.core.retrieval.structured.DocumentOrderedIterator;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberWordPosition;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.InputClass;
-import org.galagosearch.tupleflow.Linkage;
 import org.galagosearch.tupleflow.OutputClass;
 import org.galagosearch.tupleflow.Source;
 import org.galagosearch.tupleflow.Step;
@@ -58,7 +56,7 @@ public class PositionIndexWriter implements
             positions = new CompressedRawByteBuffer();
             header = new CompressedByteBuffer();
 
-            if ((options & DocumentOrderedIterator.HAS_SKIPS) == DocumentOrderedIterator.HAS_SKIPS) {
+            if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
                 skips = new CompressedRawByteBuffer();
                 skipPositions = new CompressedRawByteBuffer();
             } else {
@@ -74,7 +72,7 @@ public class PositionIndexWriter implements
 
             if (skips != null && skips.length() == 0) {
                 // not adding skip information b/c its empty
-                options &= (0xffff - DocumentOrderedIterator.HAS_SKIPS);
+                options &= (0xffff - ValueIterator.HAS_SKIPS);
                 header.add(options);
             } else {
                 header.add(options);
@@ -264,7 +262,7 @@ public class PositionIndexWriter implements
         boolean skip = Boolean.parseBoolean(parameters.getXML().get("skipping", "true"));
         skipDistance = (int) parameters.getXML().get("skipDistance", 500);
         skipResetDistance = (int) parameters.getXML().get("skipResetDistance", 20);
-        options |= (skip ? DocumentOrderedIterator.HAS_SKIPS : 0x0);
+        options |= (skip ? ValueIterator.HAS_SKIPS : 0x0);
         // more options here?
     }
 

@@ -33,9 +33,9 @@ public class FilteredCombinationIteratorTest extends TestCase {
         ScoreCombinationIterator instance = new FilteredCombinationIterator(filterParameters,
                                                                             iterators);
 
-        assertEquals(5, instance.currentCandidate());
+        assertEquals(5, instance.identifier());
         instance.movePast(10);
-        assertEquals(15, instance.currentCandidate());
+        assertEquals(15, instance.identifier());
     }
 
     public void testHasMatch() throws IOException {
@@ -85,7 +85,7 @@ public class FilteredCombinationIteratorTest extends TestCase {
         ScoreCombinationIterator instance = new FilteredCombinationIterator(anyParameters, iterators);
 
         instance.movePast(5);
-        assertEquals(10, instance.currentCandidate());
+        assertEquals(10, instance.identifier());
     }
 
     public void testMoveTo() throws Exception {
@@ -97,6 +97,6 @@ public class FilteredCombinationIteratorTest extends TestCase {
         ScoreCombinationIterator instance = new FilteredCombinationIterator(anyParameters, iterators);
 
         instance.moveTo(5);
-        assertEquals(6, instance.currentCandidate());
+        assertEquals(6, instance.identifier());
     }
 }

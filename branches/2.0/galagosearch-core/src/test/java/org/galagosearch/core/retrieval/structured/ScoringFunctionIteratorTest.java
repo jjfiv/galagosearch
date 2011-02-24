@@ -38,9 +38,9 @@ public class ScoringFunctionIteratorTest extends TestCase {
     ScoringFunctionIterator iterator = new ScoringFunctionIterator(extentIterator,
             new FakeScorer());
     assertFalse(iterator.isDone());
-    assertEquals(extents[0][0], iterator.currentCandidate());
+    assertEquals(extents[0][0], iterator.intID());
     iterator.moveTo(extents[0][0]);
-    assertEquals(extents[0][0], iterator.currentCandidate());
+    assertEquals(extents[0][0], iterator.intID());
     iterator.setScoringContext(0, 0);
     // score without context
     assertEquals(0.0, iterator.score());
@@ -64,9 +64,9 @@ public class ScoringFunctionIteratorTest extends TestCase {
     p.set("factor", "0.45");
     BM25RFScoringIterator iterator = new BM25RFScoringIterator(p, extentIterator);
     assertFalse(iterator.isDone());
-    assertEquals(extents[0][0], iterator.currentCandidate());
+    assertEquals(extents[0][0], iterator.intID());
     iterator.moveTo(extents[0][0]);
-    assertEquals(extents[0][0], iterator.currentCandidate());
+    assertEquals(extents[0][0], iterator.intID());
     // score without context
     assertEquals(0.0, iterator.score());
     assertEquals(1.11315, iterator.score(34, 99), 0.0001);

@@ -11,11 +11,11 @@ import org.galagosearch.tupleflow.Parameters;
 
 /**
  *
- * @author marc
+ * @author irmarc
  */
 @RequiredStatistics(statistics = {"collectionLength", "documentCount"})
 public class BM25ScoringIterator extends ScoringFunctionIterator {
-    public BM25ScoringIterator(Parameters p, DocumentOrderedCountIterator it)
+    public BM25ScoringIterator(Parameters p, CountIterator it)
         throws IOException {
         super( it, new BM25Scorer(p, it));
     }

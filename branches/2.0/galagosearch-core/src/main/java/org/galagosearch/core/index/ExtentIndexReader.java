@@ -2,7 +2,6 @@
 package org.galagosearch.core.index;
 
 import java.io.DataInput;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
@@ -43,7 +42,7 @@ public class ExtentIndexReader extends KeyListReader {
     }
   }
 
-  public class ListIterator extends KeyListReader.ListIterator implements ExtentIterator {
+  public class ListIterator extends KeyListReader.ListIterator implements CountIterator, ExtentIterator {
 
     VByteInput data;
     BufferedFileDataStream dataStream;
@@ -158,31 +157,27 @@ public class ExtentIndexReader extends KeyListReader {
     }
 
     public boolean hasMatch(int document) {
-      return (!isDone() && identifier() == document);
-    }
-
-    public void moveTo(int document) throws IOException {
-      skipToEntry(document);
+      return (!isDone() && intID() == document);
     }
 
     // If we have skips - it's go time
     @Override
-    public boolean skipToEntry(int document) throws IOException {
-      if (skips == null || document <= nextSkipDocument) {
-        return super.skipToEntry(document);
+    public boolean moveTo(int document) throws IOException {
+      if (skips != null && document > nextSkipDocument) {
+        // if we're here, we're skipping
+        while (skipsRead < numSkips
+                && document > nextSkipDocument) {
+          skipOnce();
+        }
+
+        // Reposition the data stream
+        dataStream.seek(lastSkipPosition);
+        documentIndex = (int) (skipsRead * skipDistance) - 1;
       }
 
-      // if we're here, we're skipping
-      while (skipsRead < numSkips
-              && document > nextSkipDocument) {
-        skipOnce();
-      }
-
-      // Reposition the data stream
-      dataStream.seek(lastSkipPosition);
-      documentIndex = (int) (skipsRead * skipDistance) - 1;
-
-      return super.skipToEntry(document); // linear from here
+      // linear from here
+      while (document > currentDocument && nextEntry());
+      return hasMatch(document);
     }
 
     private void skipOnce() throws IOException {
@@ -219,12 +214,16 @@ public class ExtentIndexReader extends KeyListReader {
       }
     }
 
-    public int identifier() {
+    public int intID() {
       return currentDocument;
     }
 
     public int count() {
       return extents.getPositionCount();
+    }
+
+    public ExtentArray getData() {
+      return extents;
     }
 
     public ExtentArray extents() {
@@ -245,7 +244,7 @@ public class ExtentIndexReader extends KeyListReader {
       if (isDone() && other.isDone()) {
         return 0;
       }
-      return identifier() - other.identifier();
+      return intID() - other.intID();
     }
   }
   GenericIndexReader reader;

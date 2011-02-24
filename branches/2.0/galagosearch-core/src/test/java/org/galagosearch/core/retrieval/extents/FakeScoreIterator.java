@@ -2,13 +2,13 @@
 package org.galagosearch.core.retrieval.extents;
 
 import java.io.IOException;
-import org.galagosearch.core.retrieval.structured.DocumentOrderedScoreIterator;
+import org.galagosearch.core.retrieval.structured.ScoreIterator;
 
 /**
  *
  * @author trevor
  */
-public class FakeScoreIterator extends DocumentOrderedScoreIterator {
+public class FakeScoreIterator extends ScoreIterator {
 
     int[] docs;
     double[] scores;
@@ -20,7 +20,7 @@ public class FakeScoreIterator extends DocumentOrderedScoreIterator {
         this.index = 0;
     }
 
-    public int currentCandidate() {
+    public int identifier() {
         return docs[index];
     }
 

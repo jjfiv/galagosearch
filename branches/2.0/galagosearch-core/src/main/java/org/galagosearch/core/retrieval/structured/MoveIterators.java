@@ -9,13 +9,13 @@ import java.io.IOException;
  */
 public class MoveIterators {
     /**
-     * Moves all iterators in the array to the same identifier.  This method will only
+     * Moves all iterators in the array to the same intID.  This method will only
      * stop at documents where all of the iterators have a match.
      *
-     * This code assumes that the most selective iterator (the one with the fewest identifier
+     * This code assumes that the most selective iterator (the one with the fewest intID
      * matches) is the first one.
      *
-     * @return The identifier number that the iterators are now pointing to, or Integer.MAX_VALUE
+     * @return The intID number that the iterators are now pointing to, or Integer.MAX_VALUE
      *         if one of the iterators is now done.
      */
     public static int moveAllToSameDocument(ExtentIterator[] iterators) throws IOException {
@@ -25,7 +25,7 @@ public class MoveIterators {
         if (iterators[0].isDone()) {
             return Integer.MAX_VALUE;
         }
-        int currentTarget = iterators[0].identifier();
+        int currentTarget = iterators[0].intID();
         boolean allMatch = false;
 
         retry:
@@ -36,21 +36,21 @@ public class MoveIterators {
                 if (iterator.isDone()) {
                     return Integer.MAX_VALUE;
                 }
-                int thisDocument = iterator.identifier();
+                int thisDocument = iterator.intID();
 
                 // this iterator points somewhere before our
-                // current target identifier, so try to move forward to
+                // current target intID, so try to move forward to
                 // the target
                 if (currentTarget > thisDocument) {
                     iterator.skipToDocument(currentTarget);
                     if (iterator.isDone()) {
                         return Integer.MAX_VALUE;
                     }
-                    thisDocument = iterator.identifier();
+                    thisDocument = iterator.intID();
                 }
 
-                // this iterator points after the target identifier,
-                // so the target identifier is not a match.
+                // this iterator points after the target intID,
+                // so the target intID is not a match.
                 // we break and try again because we don't want to 
                 // touch the longest iterators if we can help it.
                 if (currentTarget < thisDocument) {
@@ -68,10 +68,10 @@ public class MoveIterators {
         if (iterators.length == 0) {
             return true;
         }
-        int document = iterators[0].identifier();
+        int document = iterators[0].intID();
 
         for (ExtentIterator iterator : iterators) {
-            if (document != iterator.identifier()) {
+            if (document != iterator.intID()) {
                 return false;
             }
         }
@@ -86,7 +86,7 @@ public class MoveIterators {
             if (iterator.isDone()) {
                 return Integer.MAX_VALUE;
             }
-            maximumDocument = Math.max(maximumDocument, iterator.identifier());
+            maximumDocument = Math.max(maximumDocument, iterator.intID());
         }
 
         return maximumDocument;
@@ -96,7 +96,7 @@ public class MoveIterators {
         int minimumDocument = Integer.MAX_VALUE;
 
         for (ExtentIterator iterator : iterators) {
-            minimumDocument = Math.min(minimumDocument, iterator.identifier());
+            minimumDocument = Math.min(minimumDocument, iterator.intID());
         }
 
         return minimumDocument;
@@ -106,7 +106,7 @@ public class MoveIterators {
         int minimumDocument = Integer.MAX_VALUE;
 
         for (ScoreIterator iterator : iterators) {
-            minimumDocument = Math.min(minimumDocument, iterator.currentCandidate());
+            minimumDocument = Math.min(minimumDocument, iterator.identifier());
         }
 
         return minimumDocument;

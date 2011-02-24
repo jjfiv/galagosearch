@@ -2,6 +2,7 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import org.galagosearch.core.retrieval.structured.NavigableIterator;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -13,9 +14,10 @@ import org.galagosearch.tupleflow.Utility;
  * @author irmarc
  */
 public abstract class KeyListReader implements StructuredIndexPartReader {
+
   protected GenericIndexReader reader;
 
-    public KeyListReader(String filename) throws FileNotFoundException, IOException {
+  public KeyListReader(String filename) throws FileNotFoundException, IOException {
     reader = GenericIndexReader.getIndexReader(filename);
   }
 
@@ -27,18 +29,19 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
     reader.close();
   }
 
-
   public abstract Iterator getIterator() throws IOException;
+
   public abstract ListIterator getListIterator() throws IOException;
 
-  public abstract class ListIterator implements ValueIterator {
+  public abstract class ListIterator extends NavigableIterator implements ValueIterator {
+
     protected GenericIndexReader.Iterator source;
     protected byte[] key;
     protected long dataLength;
 
     public ListIterator(GenericIndexReader.Iterator it) throws IOException {
-       // implementation of this should load data
-       reset(it);
+      // implementation of this should load data
+      reset(it);
     }
 
     public long getByteLength() throws IOException {
@@ -55,61 +58,11 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
       return key;
     }
 
-    public boolean skipToEntry(int id) throws IOException {
-      moveTo(id);
-      return (hasMatch(id));
-    }
-
-    public boolean skipToEntry(long id) throws IOException {
-      moveTo(id);
-      return (hasMatch(id));
-    }
-
-    public boolean skipToEntry(String id) throws IOException {
-      moveTo(id);
-      return (hasMatch(id));
-    }
-
     public boolean nextEntry() throws IOException {
       throw new UnsupportedOperationException("Not supported yet.");
     }
-    
-    public boolean hasMatch(int id) {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public boolean hasMatch(long id) {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public boolean hasMatch(String id) {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public void moveTo(int id) throws IOException {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public void moveTo(long id) throws IOException {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public void moveTo(String id) throws IOException {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public void movePast(int id) throws IOException {
-      moveTo(id+1);
-    }
-
-    public void movePast(long id) throws IOException {
-      moveTo(id+1);
-    }
-
-    public void movePast(String id) throws IOException {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
   }
+
   public abstract class Iterator implements KeyIterator {
 
     protected GenericIndexReader.Iterator iterator;
@@ -155,4 +108,3 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
     public abstract String getStringValue();
   }
 }
-

@@ -14,17 +14,136 @@ import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.Traversal;
+import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
+import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
+import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
+import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
+import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
+import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
+import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
+import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
+import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Parameters.Value;
 
 /**
- * Base functionality of all feature factories.
- * This implementation will compile, but it will recognize no operators,
- * traversals, or features. Subclass and populate the reference data structures
- * to make this useful.
- *
+ * @author trevor
  * @author irmarc
  */
 public class FeatureFactory {
+  static String[][] sOperatorLookup = {
+    {FilteredCombinationIterator.class.getName(), "filter"},
+    {UnfilteredCombinationIterator.class.getName(), "combine"},
+    {SynonymIterator.class.getName(), "syn"},
+    {SynonymIterator.class.getName(), "synonym"},
+    {ExtentInsideIterator.class.getName(), "inside"},
+    {OrderedWindowIterator.class.getName(), "ordered"},
+    {OrderedWindowIterator.class.getName(), "od"},
+    {UnorderedWindowIterator.class.getName(), "unordered"},
+    {UnorderedWindowIterator.class.getName(), "uw"},
+    {ScaleIterator.class.getName(), "scale"},
+    {UnfilteredCombinationIterator.class.getName(), "rm"},
+    {UnfilteredCombinationIterator.class.getName(), "seqdep"},
+    {UnfilteredCombinationIterator.class.getName(), "bm25rf"},
+    {MaxScoreCombinationIterator.class.getName(), "maxscore"}
+  };
+  static String[][] sFeatureLookup = {
+    {DirichletScoringIterator.class.getName(), "dirichlet"},
+    {JelinekMercerScoringIterator.class.getName(), "linear"},
+    {JelinekMercerScoringIterator.class.getName(), "jm"},
+    {BM25ScoringIterator.class.getName(), "bm25"},
+    {BM25RFScoringIterator.class.getName(), "bm25rf"},
+    {TopDocsScoringIterator.class.getName(), "topdocs"}
+  };
+  static String[] sTraversalList = {
+    SequentialDependenceTraversal.class.getName(),
+    NgramRewriteTraversal.class.getName(),
+    AddCombineTraversal.class.getName(),
+    WeightConversionTraversal.class.getName(),
+    IndriWindowCompatibilityTraversal.class.getName(),
+    TextFieldRewriteTraversal.class.getName(),
+    ImplicitFeatureCastTraversal.class.getName(),
+    RelevanceModelTraversal.class.getName(),
+    BM25RelevanceFeedbackTraversal.class.getName()
+  };
+
+  public FeatureFactory(Parameters parameters) {
+    operatorLookup = new HashMap<String, OperatorSpec>();
+    featureLookup = new HashMap<String, OperatorSpec>();
+    this.parameters = parameters;
+
+    for (String[] item : sFeatureLookup) {
+      OperatorSpec operator = new OperatorSpec();
+      operator.className = item[0];
+      String operatorName = item[1];
+      featureLookup.put(operatorName, operator);
+    }
+
+    for (String[] item : sOperatorLookup) {
+      OperatorSpec operator = new OperatorSpec();
+      operator.className = item[0];
+      String operatorName = item[1];
+      operatorLookup.put(operatorName, operator);
+    }
+
+    ArrayList<TraversalSpec> afterTraversals = new ArrayList<TraversalSpec>();
+    ArrayList<TraversalSpec> beforeTraversals = new ArrayList<TraversalSpec>();
+    ArrayList<TraversalSpec> insteadTraversals = new ArrayList<TraversalSpec>();
+
+    for (Value value : parameters.list("traversals/traversal")) {
+      String className = value.get("class");
+      String order = value.get("order", "after");
+      List<Value> params = value.list("parameters");
+      if (className == null) {
+        throw new RuntimeException("class is required in traversal declarations.");
+      }
+
+      TraversalSpec spec = new TraversalSpec();
+      spec.className = className;
+      if (params != null && params.size() > 0) {
+        spec.parameters.copy(new Parameters(params.get(0)));
+      }
+
+      if (order.equals("before")) {
+        beforeTraversals.add(spec);
+      } else if (order.equals("after")) {
+        afterTraversals.add(spec);
+      } else if (order.equals("instead")) {
+        insteadTraversals.add(spec);
+      } else {
+        throw new RuntimeException("order must be one of {before,after,instead}");
+      }
+    }
+
+    // If the user doesn't want to replace the current pipeline, add in that pipeline
+    if (insteadTraversals.size() == 0) {
+      for (String className : sTraversalList) {
+        TraversalSpec spec = new TraversalSpec();
+        spec.className = className;
+        spec.parameters = new Parameters();
+        insteadTraversals.add(spec);
+      }
+    }
+
+    traversals = new ArrayList<TraversalSpec>();
+    traversals.addAll(beforeTraversals);
+    traversals.addAll(insteadTraversals);
+    traversals.addAll(afterTraversals);
+
+    for (Value value : parameters.list("operators/operator")) {
+      String className = value.get("class");
+      String operatorName = value.get("name");
+      List<Value> params = value.list("parameters");
+      OperatorSpec spec = new OperatorSpec();
+
+      if (params != null && params.size() > 0) {
+        spec.parameters.copy(new Parameters(params.get(0)));
+      }
+
+      spec.className = className;
+      operatorLookup.put(operatorName, spec);
+    }
+  }
 
     public static class OperatorSpec {
 

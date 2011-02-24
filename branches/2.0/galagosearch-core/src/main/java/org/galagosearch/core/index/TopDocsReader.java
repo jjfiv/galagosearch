@@ -176,10 +176,7 @@ public class TopDocsReader extends KeyListReader {
       return (!isDone() && currentTopDoc.document == document);
     }
 
-    public void moveTo(int document) throws IOException {
-      if (isDone() || currentTopDoc.document >= document) {
-        return;
-      }
+    public boolean moveTo(int document) throws IOException {
       int curDoc = currentTopDoc.document;
       int curCount = currentTopDoc.count;
       int curLength = currentTopDoc.length;
@@ -197,15 +194,11 @@ public class TopDocsReader extends KeyListReader {
         currentTopDoc.count = curCount;
         currentTopDoc.length = curLength;
       }
+      return hasMatch(document);
     }
 
     public void movePast(int document) throws IOException {
       moveTo(document + 1);
-    }
-
-    public boolean skipToEntry(int document) throws IOException {
-      moveTo(document);
-      return (hasMatch(document));
     }
 
     public int compareTo(ListIterator that) {

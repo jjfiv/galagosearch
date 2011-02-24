@@ -2,7 +2,6 @@ package org.galagosearch.core.index;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import org.galagosearch.core.retrieval.structured.DocumentOrderedCountIterator;
 import org.galagosearch.tupleflow.Parameters;
 
 public class ExtentListBuffer implements IndexElement {
@@ -26,7 +25,7 @@ public class ExtentListBuffer implements IndexElement {
         if (skipping) {
             skips = new CompressedRawByteBuffer();
             skipDistance = (int) parameters.get("skipDistance", 500);
-            options |= DocumentOrderedCountIterator.HAS_SKIPS;
+            options |= ValueIterator.HAS_SKIPS;
             numSkips = 0;
         } else {
             skips = null;
@@ -130,7 +129,7 @@ public class ExtentListBuffer implements IndexElement {
 
         // remove skip options if the buffer is empty
         if (skips != null && skips.length() == 0) {
-            options = (0xffff - DocumentOrderedCountIterator.HAS_SKIPS) & options;
+            options = (0xffff - ValueIterator.HAS_SKIPS) & options;
         }
 
         header.add(options);

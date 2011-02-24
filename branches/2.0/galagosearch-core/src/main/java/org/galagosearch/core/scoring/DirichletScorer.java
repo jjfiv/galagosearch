@@ -26,12 +26,12 @@ public class DirichletScorer implements ScoringFunction {
             long collectionLength = parameters.get("collectionLength", (long) 0);
             long count = 0;
 
-            if (iterator instanceof PositionIndexReader.Iterator) {
-                count = ((PositionIndexReader.Iterator) iterator).totalPositions();
+            if (iterator instanceof PositionIndexReader.AggregateIterator) {
+                count = ((PositionIndexReader.AggregateIterator) iterator).totalPositions();
             } else {
                 while (!iterator.isDone()) {
                     count += iterator.count();
-                    iterator.next();
+                    iterator.nextEntry();
                 }
             }
             if (count > 0) {

@@ -30,7 +30,7 @@ public class ScaleIteratorTest extends TestCase {
         assertFalse(iterator.isDone());
         assertTrue(iterator.hasMatch(docsA[0]));
         for (int i = 0; i < docsA.length; i++) {
-            assertEquals(docsA[i], iterator.currentCandidate());
+            assertEquals(docsA[i], iterator.identifier());
             assertEquals(scoresA[i], iterator.score(docsA[i], 100));
             iterator.movePast(docsA[i]);
         }
@@ -49,7 +49,7 @@ public class ScaleIteratorTest extends TestCase {
         assertTrue(iterator.hasMatch(docsB[0]));
         for (int i = 0; i < docsB.length; i++) {
             iterator.skipToDocument(docsB[i]);
-            assertEquals(docsB[i], iterator.currentCandidate());
+            assertEquals(docsB[i], iterator.identifier());
             assertEquals(scoresB[i]*weight, iterator.score(docsB[i], 100));
         }
         iterator.reset();

@@ -9,8 +9,8 @@ import org.galagosearch.core.util.ExtentArray;
 /**
  * This class is meant to be a base class for many kinds of
  * iterators that require at least one of their children to be
- * present in the identifier for a match to happen.  This class
- * will call loadExtents once for each identifier that has a
+ * present in the intID for a match to happen.  This class
+ * will call loadExtents once for each intID that has a
  * match on any child iterator.
  * 
  * @author trevor
@@ -38,8 +38,8 @@ public abstract class ExtentDisjunctionIterator extends ExtentIterator {
     public abstract void loadExtents();
 
     public void nextEntry() throws IOException {
-        // find all iterators on the current identifier and move them forward
-        while (iterators.size() > 0 && iterators.peek().identifier() == document) {
+        // find all iterators on the current intID and move them forward
+        while (iterators.size() > 0 && iterators.peek().intID() == document) {
             ExtentIterator iter = iterators.poll();
             iter.nextEntry();
 
@@ -62,7 +62,7 @@ public abstract class ExtentDisjunctionIterator extends ExtentIterator {
         return extents;
     }
 
-    public int identifier() {
+    public int intID() {
         return document;
     }
 

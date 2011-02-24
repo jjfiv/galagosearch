@@ -7,10 +7,8 @@ package org.galagosearch.core.retrieval.structured;
 import gnu.trove.TObjectDoubleHashMap;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.TopDocsReader;
-import org.galagosearch.core.index.TopDocsReader.TopDocument;
 import org.galagosearch.core.scoring.ScoringFunction;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -27,7 +25,7 @@ import org.galagosearch.tupleflow.Parameters;
  * @author irmarc
  */
 @RequiredStatistics(statistics = {"term"})
-public class TopDocsScoringIterator extends DocumentOrderedScoreIterator {
+public class TopDocsScoringIterator implements ScoreIterator {
 
   static TopDocsReader reader = null;
   ScoringFunctionIterator mainIterator;
@@ -88,8 +86,8 @@ public class TopDocsScoringIterator extends DocumentOrderedScoreIterator {
   }
 
   @Override
-  public long totalCandidates() {
-      return mainIterator.totalCandidates();
+  public long totalEntries() {
+      return mainIterator.totalEntries();
   }
 
   @Override
@@ -98,8 +96,8 @@ public class TopDocsScoringIterator extends DocumentOrderedScoreIterator {
   }
 
   @Override
-  public int currentCandidate() {
-    return mainIterator.currentCandidate();
+  public int intID() {
+    return mainIterator.intID();
   }
 
   @Override
@@ -108,18 +106,13 @@ public class TopDocsScoringIterator extends DocumentOrderedScoreIterator {
   }
 
   @Override
-  public void moveTo(int document) throws IOException {
-    mainIterator.moveTo(document);
+  public boolean moveTo(int document) throws IOException {
+    return mainIterator.moveTo(document);
   }
 
   @Override
   public void movePast(int document) throws IOException {
     mainIterator.movePast(document);
-  }
-
-  @Override
-  public boolean skipToDocument(int document) throws IOException {
-    return mainIterator.skipToDocument(document);
   }
 
   @Override

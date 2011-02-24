@@ -9,17 +9,13 @@ import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TIntDoubleHashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectDoubleHashMap;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.PriorityQueue;
-import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.TopDocsReader;
 import org.galagosearch.core.index.TopDocsReader.TopDocument;
 import org.galagosearch.core.scoring.ScoringFunction;
@@ -55,7 +51,7 @@ import org.galagosearch.tupleflow.Parameters;
  *  hasMatch(doc): Does the iterator have 'doc' in its candidate list? In order to answer this accurately, we need to
  *                 attempt to score. Given that this is usually called after a move call, we score forward until we reach
  *                 nextDocumentToScore. If lastDocumentScored == doc, return true, meaning it made the cut.
- *  currentCandidate(): What is the next candidate according to this iterator? Once again, we need to attempt to score.
+ *  identifier(): What is the next candidate according to this iterator? Once again, we need to attempt to score.
  *                 however in this case we need to continue iterating until we find a winner. There is no external bound.
  *  score(doc, length): We need to score. If doc == 		   
  * @author irmarc
@@ -85,15 +81,15 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 	}
     }    
 
-  private static class DocumentOrderComparator implements Comparator<DocumentOrderedScoreIterator> {
+  private static class DocumentOrderComparator implements Comparator<ScoreIterator> {
 
-    public int compare(DocumentOrderedScoreIterator a, DocumentOrderedScoreIterator b) {
-      return (a.currentCandidate() - b.currentCandidate());
+    public int compare(ScoreIterator a, ScoreIterator b) {
+      return (a.intID() - b.intID());
     }
   }
 
-  private class WeightComparator implements Comparator<DocumentOrderedScoreIterator> {
-      public int compare(DocumentOrderedScoreIterator a, DocumentOrderedScoreIterator b) {
+  private class WeightComparator implements Comparator<ScoreIterator> {
+      public int compare(ScoreIterator a, ScoreIterator b) {
 	  if (!a.isDone() && b.isDone()) return -1;
 	  if (a.isDone() && !b.isDone()) return 1;
 	  double w1 = weightLookup.get(a);
@@ -102,12 +98,12 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
       }
   }
 
-  private static class TotalCandidateComparator implements Comparator<DocumentOrderedScoreIterator> {
+  private static class TotalCandidateComparator implements Comparator<ScoreIterator> {
 
-    public int compare(DocumentOrderedScoreIterator a, DocumentOrderedScoreIterator b) {
+    public int compare(ScoreIterator a, ScoreIterator b) {
 	if (!a.isDone() && b.isDone()) return -1;
 	if (a.isDone() && !b.isDone()) return 1;
-	return (a.totalCandidates() < b.totalCandidates() ? -1 : a.totalCandidates() > b.totalCandidates() ? 1 : 0);
+	return (a.totalEntries() < b.totalEntries() ? -1 : a.totalEntries() > b.totalEntries() ? 1 : 0);
     }
   }
   int requested;
@@ -119,22 +115,22 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
   int lastReportedCandidate = 0;
   int candidatesIndex;
   int quorumIndex;
-  ArrayList<DocumentOrderedScoreIterator> scoreList;
+  ArrayList<ScoreIterator> scoreList;
   ArrayList<Placeholder> R;
     TIntHashSet ids;
 
   public MaxScoreCombinationIterator(Parameters parameters,
-          DocumentOrderedScoreIterator[] childIterators) throws IOException {
+          ScoreIterator[] childIterators) throws IOException {
     super(parameters, childIterators);
     requested = (int) parameters.get("requested", 100);
     R = new ArrayList<Placeholder>();
     ids = new TIntHashSet();
     topdocsCandidates = new TIntArrayList();
-    scoreList = new ArrayList<DocumentOrderedScoreIterator>(iterators.length);   	
+    scoreList = new ArrayList<ScoreIterator>(iterators.length);
     weightLookup = new TObjectDoubleHashMap();
-    ArrayList<DocumentOrderedScoreIterator> topdocs = new ArrayList<DocumentOrderedScoreIterator>();
+    ArrayList<ScoreIterator> topdocs = new ArrayList<ScoreIterator>();
     for (int i = 0; i < iterators.length; i++) {
-      DocumentOrderedScoreIterator dosi = iterators[i];
+      ScoreIterator dosi = iterators[i];
       weightLookup.put(dosi, weights[i]);
       if (TopDocsScoringIterator.class.isAssignableFrom(dosi.getClass())) {
         topdocs.add(dosi);
@@ -149,7 +145,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 	Collections.sort(scoreList, new TotalCandidateComparator());
     }
     for (int i = 0; i < iterators.length; i++) {
-      DocumentOrderedScoreIterator dosi = iterators[i];
+      ScoreIterator dosi = iterators[i];
       potential += weights[i] * dosi.maximumScore();
       minimum += weights[i] * dosi.minimumScore();
     }
@@ -159,7 +155,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     @Override
     public double maximumScore() {
 	double s = 0;
-	for (DocumentOrderedScoreIterator it : iterators) {
+	for (ScoreIterator it : iterators) {
 	    s = Math.max(it.maximumScore(), s);
 	}
 	if (s == Double.MAX_VALUE || s == Double.POSITIVE_INFINITY) return s;
@@ -188,7 +184,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    */
    @Override
    public void reset() throws IOException {
-    for (DocumentOrderedScoreIterator dosi : iterators) {
+    for (ScoreIterator dosi : iterators) {
       dosi.reset();
     }
     candidatesIndex = 0;
@@ -204,11 +200,11 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    */
   @Override
   public boolean isDone() {
-      return (currentCandidate() == Integer.MAX_VALUE);
+      return (intID() == Integer.MAX_VALUE);
   }
 
   @Override
-  public int currentCandidate() {
+  public int intID() {
       int candidate = Integer.MAX_VALUE;
 
       // first check the topdocs
@@ -218,7 +214,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
       
       // Now look among the quorum iterators
       for (int i = 0; i < quorumIndex; i++) {
-	  candidate = Math.min(candidate, scoreList.get(i).currentCandidate());
+	  candidate = Math.min(candidate, scoreList.get(i).intID());
       }
       lastReportedCandidate = candidate;
       return candidate;
@@ -226,23 +222,16 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
   @Override
   public boolean hasMatch(int document) {
-      return (currentCandidate() == document);
+      return (intID() == document);
   }
 
   @Override
   public void movePast(int document) throws IOException {
-      skipToDocument(document+1);
+      moveTo(document+1);
   }
 
   @Override
-  public void moveTo(int document) throws IOException {
-      skipToDocument(document);      
-  }
-
-
-
-  @Override
-  public boolean skipToDocument(int document) throws IOException {
+  public boolean moveTo(int document) throws IOException {
       // Move topdocs candidate list forward
       while (candidatesIndex < topdocsCandidates.size() &&
 	     document > topdocsCandidates.get(candidatesIndex)) {
@@ -251,7 +240,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
       // Now only skip the quorum forward
       for (int i = 0; i < quorumIndex; i++) {
-	  scoreList.get(i).skipToDocument(document);
+	  scoreList.get(i).moveTo(document);
       }
 
       return hasMatch(document);
@@ -261,17 +250,15 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    * Just sets context for scoring
    */
   public double score() {
-    return score(documentToScore, lengthOfDocumentToScore);
-  }
-
-  public double score(int document, int length) {
+    int document = context.document;
+    int length = context.length;
       try {
 	  if ((candidatesIndex < topdocsCandidates.size() &&
 	       document == topdocsCandidates.get(candidatesIndex)) ||
 	      (R.size() < requested)) {
 	      // Make sure the iterators are lined up
-	      for (DocumentOrderedScoreIterator it : iterators) {
-		  it.skipToDocument(lastReportedCandidate);
+	      for (ScoreIterator it : iterators) {
+		  it.moveTo(lastReportedCandidate);
 	      }
 	      double score = fullyScore(document, length);
 	      adjustThreshold(document, score);
@@ -282,14 +269,14 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 	      double inc;
 	      int i;
 	      for (i = 0; i < quorumIndex; i++) {
-		  DocumentOrderedScoreIterator it = scoreList.get(i);
+		  ScoreIterator it = scoreList.get(i);
 		  inc = weightLookup.get(it) * (it.score(document, length) - it.maximumScore());
 		  adjustedPotential += inc;
 	      }
 
 	      while (adjustedPotential > threshold && i < scoreList.size()) {
-		  DocumentOrderedScoreIterator it = scoreList.get(i);
-		  it.skipToDocument(lastReportedCandidate);
+		  ScoreIterator it = scoreList.get(i);
+		  it.moveTo(lastReportedCandidate);
 		  adjustedPotential += weightLookup.get(it) * (it.score(document, length) - it.maximumScore());
 		  i++;
 	      }
@@ -364,7 +351,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 	  adjustedPotential = potential;
 	  int i;
 	  for (i = 0; i < scoreList.size() && adjustedPotential > threshold; i++) {
-	      DocumentOrderedScoreIterator it = scoreList.get(i);
+	      ScoreIterator it = scoreList.get(i);
 	      double inc = weightLookup.get(it) * (it.minimumScore() - it.maximumScore());
 		      adjustedPotential += inc;
 	  }
@@ -377,14 +364,14 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    * threshold bound - we also move the scored count up in order to activate the
    * threshold sooner.
    */
-  protected void cacheScores(ArrayList<DocumentOrderedScoreIterator> topdocs) throws IOException {
+  protected void cacheScores(ArrayList<ScoreIterator> topdocs) throws IOException {
     // Iterate over the lists, scoring as we go - they are doc-ordered after all
     TObjectIntHashMap loweredCount = new TObjectIntHashMap();
     PriorityQueue<TopDocsReader.Iterator> toScore = new PriorityQueue<TopDocsReader.Iterator>();
     HashMap<TopDocsReader.Iterator, TopDocsScoringIterator> lookup =
             new HashMap<TopDocsReader.Iterator, TopDocsScoringIterator>();
     TIntDoubleHashMap scores = new TIntDoubleHashMap();
-    for (DocumentOrderedScoreIterator dosi : topdocs) {
+    for (ScoreIterator dosi : topdocs) {
       TopDocsScoringIterator tdsi = (TopDocsScoringIterator) dosi;
       TopDocsReader.Iterator it = tdsi.getTopDocs();
       if (it != null) {
@@ -404,7 +391,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
       // Need the background score first
       score = 0;
-      for (DocumentOrderedScoreIterator dosi: iterators) {
+      for (ScoreIterator dosi: iterators) {
 	  score += weightLookup.get(dosi) * dosi.score(0, td.length);
       }
 

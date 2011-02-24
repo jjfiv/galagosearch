@@ -35,15 +35,7 @@ public class BM25Scorer implements ScoringFunction {
         if (parameters.containsKey("df")) {
             df = parameters.get("df", 0L);
         } else {
-            if (iterator instanceof PositionIndexReader.Iterator) {
-                df = ((PositionIndexReader.Iterator) iterator).totalDocuments();
-            } else {
-                while (!iterator.isDone()) {
-                    df++;
-                    iterator.next();
-                }
-                iterator.reset();
-            }
+          df = iterator.totalEntries();
         }
         idf = Math.log((documentCount - df + 0.5) / (df + 0.5));
     }

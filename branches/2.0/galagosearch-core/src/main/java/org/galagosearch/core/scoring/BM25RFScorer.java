@@ -36,15 +36,7 @@ public class BM25RFScorer implements ScoringFunction {
         if (parameters.containsKey("ft")) {
             ft = (int) parameters.get("ft", 0);
         } else {
-            if (iterator instanceof PositionIndexReader.Iterator) {
-                ft = ((PositionIndexReader.Iterator) iterator).totalDocuments();
-            } else {
-                while (!iterator.isDone()) {
-                    ft++;
-                    iterator.next();
-                }
-                iterator.reset();
-            }
+          ft = iterator.totalEntries();
         }
         assert(ft >= rt); // otherwise they're wrong and/or lying
         double numerator = (rt + 0.5) / (R - rt + 0.5);

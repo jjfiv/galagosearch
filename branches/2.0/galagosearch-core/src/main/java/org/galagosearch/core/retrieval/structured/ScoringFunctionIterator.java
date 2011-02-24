@@ -5,6 +5,7 @@ import gnu.trove.TObjectDoubleHashMap;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.galagosearch.core.index.GenericIndexReader.Iterator;
 import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.scoring.ScoringFunction;
 import org.galagosearch.core.util.CallTable;
@@ -16,28 +17,24 @@ import org.galagosearch.core.util.CallTable;
  *
  * @author irmarc
  */
-public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
+public class ScoringFunctionIterator extends ScoreIterator {
 
   boolean done;
-  DocumentOrderedCountIterator iterator;
+  CountIterator iterator;
   ScoringFunction function;
   // parameter sweep functions
   ScoringFunction[] functions;
   long total;
 
-  public ScoringFunctionIterator(DocumentOrderedCountIterator iterator, ScoringFunction function) {
+  public ScoringFunctionIterator(CountIterator iterator, ScoringFunction function) throws IOException {
     this.iterator = iterator;
     this.function = function;
     this.functions = null; // null implies that we can not perform a parameter sweep
-    if (PositionIndexReader.Iterator.class.isAssignableFrom(iterator.getClass())) {
-	total = ((PositionIndexReader.Iterator) iterator).totalDocuments();
-    } else {
-	total = Long.MAX_VALUE;
-    }
+    total = iterator.totalEntries();
   }
 
   // if we have a set of functions -> (for parameter sweeping)
-  public ScoringFunctionIterator(DocumentOrderedCountIterator iterator, ScoringFunction[] functions) {
+  public ScoringFunctionIterator(CountIterator iterator, ScoringFunction[] functions) throws IOException {
     this(iterator, functions[0]);
     this.functions = functions;
   }
@@ -51,18 +48,14 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
   }
 
   public double score() {
-      return score(documentToScore, lengthOfDocumentToScore);
-  }
-
-  public double score(int document, int length) {
     int count = 0;
 
     // Used in counting # of score calls. Uncomment if you want to track that.
     //CallTable.increment("score_req");
-    if (iterator.identifier() == document) {
+    if (iterator.intID() == context.document) {
       count = iterator.count();
     }
-    return function.score(count, length);
+    return function.score(count, context.length);
   }
 
   @Override
@@ -72,48 +65,102 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
     }
 
     int count = 0;
-    if (iterator.identifier() == documentToScore) {
+    if (iterator.intID() == context.document) {
       count = iterator.count();
     }
     TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
     for (ScoringFunction f : functions) {
-      results.put(f.getParameterString(), f.score(count, lengthOfDocumentToScore));
+      results.put(f.getParameterString(), f.score(count, context.length));
     }
     return results;
   }
 
-  public void moveTo(int document) throws IOException {
-    if (!iterator.isDone()) {
-      iterator.skipToDocument(document);
-    }
+  public boolean moveTo(int id) throws IOException {
+    return iterator.moveTo(id);
+  }
+
+  public boolean moveTo(long id) throws IOException {
+    return iterator.moveTo(id);
+  }
+
+  public boolean moveTo(String id) throws IOException {
+    return iterator.moveTo(id);
   }
 
   public void movePast(int document) throws IOException {
-    if (!iterator.isDone() && iterator.identifier() <= document) {
-      iterator.skipToDocument(document + 1);
-    }
+    iterator.movePast(document);
   }
 
-  public int currentCandidate() {
+  public void movePast(long id) throws IOException {
+    iterator.movePast(id);
+  }
+
+  public void movePast(String id) throws IOException {
+    iterator.movePast(id);
+  }
+
+  public int intID() {
     if (isDone()) {
       return Integer.MAX_VALUE;
     }
-    return iterator.identifier();
+    return iterator.intID();
+  }
+
+  public long longID() {
+    if (isDone()) {
+      return Long.MAX_VALUE;
+    }
+    return iterator.longID();
+  }
+
+  public String stringID() {
+    if (isDone()) {
+      return null;
+    }
+    return iterator.stringID();
   }
 
   public boolean isDone() {
     return iterator.isDone();
   }
 
-  public boolean hasMatch(int document) {
-    return !isDone() && iterator.identifier() == document;
+  public boolean hasMatch(int id) {
+    return !isDone() && iterator.intID() == id;
+  }
+
+  public boolean hasMatch(long id) {
+    return !isDone() && iterator.longID() == id;
+  }
+
+  public boolean hasMatch(String id) {
+    return !isDone() && iterator.stringID() == id;
   }
 
   public void reset() throws IOException {
     iterator.reset();
   }
 
-  public boolean skipToDocument(int document) throws IOException {
-    return iterator.skipToDocument(document);
+  public double maximumScore() {
+    return Double.POSITIVE_INFINITY;
+  }
+
+  public double minimumScore() {
+    return Double.NEGATIVE_INFINITY;
+  }
+
+  public long totalEntries() throws IOException {
+    return iterator.totalEntries();
+  }
+
+  public boolean nextEntry() throws IOException {
+    return iterator.nextEntry();
+  }
+
+  public String getEntry() throws IOException {
+    return iterator.getEntry();
+  }
+
+  public void reset(Iterator it) throws IOException {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 }
