@@ -902,6 +902,10 @@ public class App {
       PageRankApp.main(args);
     } else if (command.equals("parameter-sweep")) {
       handleParameterSweep(args);
+    } else if (command.equals("start-parallel")) {
+      IndexShardControl.start(args, output);
+    } else if (command.equals("stop-parallel")) {
+      IndexShardControl.stop(args, output);
     } else if (command.equals("search")) {
       handleSearch(args);
     } else if (command.equals("eval")) {
