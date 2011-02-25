@@ -121,7 +121,7 @@ public class TopDocsReader extends KeyListReader {
       return (index >= numEntries);
     }
 
-    public int currentCandidate() {
+    public int currentIdentifier() {
       if (currentTopDoc != null) {
         return currentTopDoc.document;
       } else {
@@ -202,7 +202,7 @@ public class TopDocsReader extends KeyListReader {
     }
 
     public int compareTo(ListIterator that) {
-      return (this.currentCandidate() - that.currentCandidate());
+      return (this.currentIdentifier() - that.currentIdentifier());
     }
   }
 

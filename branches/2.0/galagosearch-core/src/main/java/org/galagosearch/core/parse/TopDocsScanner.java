@@ -13,9 +13,9 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.logging.Logger;
 import org.galagosearch.core.index.DocumentLengthsReader;
+import org.galagosearch.core.index.KeyListReader;
 import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberedDocumentData;
@@ -55,7 +55,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
     PositionIndexReader partReader;
     NumberedDocumentDataIterator docLengths;
     DocumentLengthsReader docReader;
-    ExtentIndexIterator extentIterator;
+    KeyListReader.ListIterator extentIterator;
     TopDocsEntry tde;
 
     public TopDocsScanner(TupleFlowParameters parameters) throws IOException {
@@ -78,7 +78,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         topdocs.clear();
         extentIterator = partReader.getTermCounts(Utility.toString(object.key));
         if (extentIterator instanceof PositionIndexReader.Iterator) {
-            count = ((PositionIndexReader.Iterator) extentIterator).totalDocuments();
+            count = ((PositionIndexReader.Iterator) extentIterator).totalEntries();
             if (count < minlength) return; //short-circuit out
         }
 
@@ -88,14 +88,14 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         docLengths.reset();
         while (!extentIterator.isDone()) {
             count++;
-            docLengths.skipToKey(extentIterator.currentCandidate());
+            docLengths.skipToKey(extentIterator.currentIdentifier());
             NumberedDocumentData ndd = docLengths.getDocumentData();
-            assert (ndd.number == extentIterator.currentCandidate());
+            assert (ndd.number == extentIterator.currentIdentifier());
             int length = ndd.textLength;
             double probability = (0.0+extentIterator.count())
                     / (0.0+length);
             tde = new TopDocsEntry();
-            tde.document = extentIterator.currentCandidate();
+            tde.document = extentIterator.currentIdentifier();
             tde.count = extentIterator.count();
             tde.doclength = length;
             tde.probability = probability;

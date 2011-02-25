@@ -31,32 +31,12 @@ public class ScaleIterator implements ScoreIterator {
     }
   }
 
-  public int intID() {
-    return iterator.intID();
+  public int currentIdentifier() {
+    return iterator.currentIdentifier();
   }
-
-  public boolean hasMatch(int document) {
-    return iterator.hasMatch(document);
-  }
-
-  public void moveTo(int document) throws IOException {
-    iterator.moveTo(document);
-  }
- 
-    public long totalCandidates() {
-	return iterator.totalCandidates();
-    }
-
-  public void movePast(int document) throws IOException {
-    iterator.movePast(document);
-  }
-
+  
   public double score() {
     return weight * iterator.score();
-  }
-
-  public double score(int document, int length) {
-    return weight * iterator.score(document, length);
   }
 
   /**
@@ -90,5 +70,25 @@ public class ScaleIterator implements ScoreIterator {
 
   public void reset() throws IOException {
     iterator.reset();
+  }
+
+  public void next() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public double maximumScore() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public double minimumScore() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public DocumentContext getContext() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public void setContext(DocumentContext context) {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 }

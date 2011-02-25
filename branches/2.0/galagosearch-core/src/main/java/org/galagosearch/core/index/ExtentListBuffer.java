@@ -25,7 +25,7 @@ public class ExtentListBuffer implements IndexElement {
         if (skipping) {
             skips = new CompressedRawByteBuffer();
             skipDistance = (int) parameters.get("skipDistance", 500);
-            options |= ValueIterator.HAS_SKIPS;
+            options |= KeyListReader.ListIterator.HAS_SKIPS;
             numSkips = 0;
         } else {
             skips = null;
@@ -129,7 +129,7 @@ public class ExtentListBuffer implements IndexElement {
 
         // remove skip options if the buffer is empty
         if (skips != null && skips.length() == 0) {
-            options = (0xffff - ValueIterator.HAS_SKIPS) & options;
+            options = (0xffff - KeyListReader.ListIterator.HAS_SKIPS) & options;
         }
 
         header.add(options);

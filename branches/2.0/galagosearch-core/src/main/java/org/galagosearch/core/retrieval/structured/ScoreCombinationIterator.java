@@ -17,7 +17,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor, sjh, irmarc
  */
-public class ScoreCombinationIterator implements ScoreIterator, ValueIterator {
+public abstract class ScoreCombinationIterator implements ScoreIterator {
 
   double[] weights;
   double weightSum;
@@ -27,7 +27,6 @@ public class ScoreCombinationIterator implements ScoreIterator, ValueIterator {
   double[][] weightLists = null; // double[parameterID][nodeID]
   double[] weightSums = null; // double[parameterID]
   String[] parameterStrings = null; // String[parameterID]
-  long total;
 
   public ScoreCombinationIterator(Parameters parameters,
           ScoreIterator[] childIterators) {
@@ -35,7 +34,6 @@ public class ScoreCombinationIterator implements ScoreIterator, ValueIterator {
     weights = new double[childIterators.length];
     weightSum = 0.0;
     int parameterSetSize = 1;
-    total = 0;
     String[] weightStrings = parameters.get(Integer.toString(0), "1.0").split(",");
     // check if we need to initialize our arrays
     parameterSetSize = weightStrings.length;
@@ -49,7 +47,6 @@ public class ScoreCombinationIterator implements ScoreIterator, ValueIterator {
       weightStrings = parameters.get(Integer.toString(i), "1.0").split(",");
       weights[i] = Double.parseDouble(weightStrings[0]);
       weightSum += weights[i];
-      total = Math.max(total, childIterators[i].totalEntries());
 
       assert parameterSetSize == weightStrings.length : "COMBINE NODE ERROR : all weight lists need to be the same size";
 
@@ -68,16 +65,16 @@ public class ScoreCombinationIterator implements ScoreIterator, ValueIterator {
     }
 
     this.iterators = childIterators;
-    if (total < Long.MAX_VALUE) { // do this if none of our children are "infinity"
-      total = 0;
-      for (ScoreIterator it : childIterators) {
-        total += it.totalEntries();
-      }
-    }
   }
 
-  public long totalCandidates() {
-    return total;
+  public abstract int currentIdentifier();
+
+  public abstract boolean isDone();
+
+  public void next() {
+    for (ScoreIterator iterator : iterators) {
+      iterator.next();
+    }
   }
 
   public double score() {
@@ -90,14 +87,8 @@ public class ScoreCombinationIterator implements ScoreIterator, ValueIterator {
     return total / weightSum;
   }
 
-  public void update() throws IOException {
-    for (ValueIterator iterator : iterators) {
-      iterator.update();
-    }
-  }
-
   public void reset() throws IOException {
-    for (ValueIterator iterator : iterators) {
+    for (StructuredIterator iterator : iterators) {
       iterator.reset();
     }
   }

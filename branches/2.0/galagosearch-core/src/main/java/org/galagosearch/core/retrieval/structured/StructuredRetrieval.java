@@ -136,7 +136,7 @@ public class StructuredRetrieval extends Retrieval {
         }
       }
       context.lastScored = document;
-      iterator.verify();
+      iterator.next();
     }
 
     String indexId = parameters.get("indexId", "0");

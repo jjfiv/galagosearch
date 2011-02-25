@@ -4,7 +4,6 @@
  */
 package org.galagosearch.core.retrieval.structured;
 
-import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -16,31 +15,21 @@ public class UnfilteredCombinationIterator extends ScoreCombinationIterator {
         super(parameters, childIterators);
     }
 
-    public int identifier() {
+    public int currentIdentifier() {
         int candidate = Integer.MAX_VALUE;
 
-        for (ValueIterator iterator : iterators) {
+        for (ScoreIterator iterator : iterators) {
             if (iterator.isDone()) {
                 continue;
             }
-            candidate = Math.min(candidate, iterator.currentCandidate());
+            candidate = Math.min(candidate, iterator.currentIdentifier());
         }
 
         return candidate;
     }
-
-    public boolean hasMatch(int document) {
-        for (ValueIterator iterator : iterators) {
-            if (!iterator.isDone() && iterator.hasMatch(document)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
     
     public boolean isDone() {
-        for (ValueIterator iterator : iterators) {
+        for (StructuredIterator iterator : iterators) {
             if (!iterator.isDone()) {
                 return false;
             }

@@ -15,7 +15,7 @@ import org.galagosearch.core.util.ExtentArray;
  * 
  * @author trevor
  */
-public abstract class ExtentDisjunctionIterator extends ExtentIterator {
+public abstract class ExtentDisjunctionIterator implements ExtentIterator {
     protected ExtentIterator[] original;
     protected PriorityQueue<ExtentIterator> iterators;
     protected int document;
@@ -37,9 +37,9 @@ public abstract class ExtentDisjunctionIterator extends ExtentIterator {
     
     public abstract void loadExtents();
 
-    public void nextEntry() throws IOException {
+    public boolean nextEntry() throws IOException {
         // find all iterators on the current intID and move them forward
-        while (iterators.size() > 0 && iterators.peek().intID() == document) {
+        while (iterators.size() > 0 && iterators.peek().currentIdentifier() == document) {
             ExtentIterator iter = iterators.poll();
             iter.nextEntry();
 
@@ -51,7 +51,9 @@ public abstract class ExtentDisjunctionIterator extends ExtentIterator {
         if (!isDone()) {
             extents.reset();
             loadExtents();
+            return true;
         }
+        return false;
     }
 
     public boolean isDone() {
@@ -62,7 +64,11 @@ public abstract class ExtentDisjunctionIterator extends ExtentIterator {
         return extents;
     }
 
-    public int intID() {
+    public ExtentArray getData() {
+      return extents;
+    }
+
+    public int currentIdentifier() {
         return document;
     }
 

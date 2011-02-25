@@ -2,7 +2,7 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import org.galagosearch.core.retrieval.structured.NavigableIterator;
+import org.galagosearch.core.retrieval.structured.CountIterator;
 import org.galagosearch.tupleflow.Utility;
 
 /**

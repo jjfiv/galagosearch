@@ -111,7 +111,7 @@ public class ExtentIndexReader extends KeyListReader {
       long dataEnd = 0;
 
       // check for skips
-      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
+      if ((options & HAS_SKIPS) == HAS_SKIPS) {
         skipDistance = stream.readInt();
         numSkips = stream.readInt();
         long remainingLength = stream.readLong();
@@ -157,7 +157,7 @@ public class ExtentIndexReader extends KeyListReader {
     }
 
     public boolean hasMatch(int document) {
-      return (!isDone() && intID() == document);
+      return (!isDone() && currentIdentifier() == document);
     }
 
     // If we have skips - it's go time
@@ -214,7 +214,7 @@ public class ExtentIndexReader extends KeyListReader {
       }
     }
 
-    public int intID() {
+    public int currentIdentifier() {
       return currentDocument;
     }
 
@@ -244,7 +244,7 @@ public class ExtentIndexReader extends KeyListReader {
       if (isDone() && other.isDone()) {
         return 0;
       }
-      return intID() - other.intID();
+      return currentIdentifier() - other.currentIdentifier();
     }
   }
   GenericIndexReader reader;

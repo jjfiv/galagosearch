@@ -56,7 +56,7 @@ public class PositionIndexWriter implements
             positions = new CompressedRawByteBuffer();
             header = new CompressedByteBuffer();
 
-            if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
+            if ((options & KeyListReader.ListIterator.HAS_SKIPS) == KeyListReader.ListIterator.HAS_SKIPS) {
                 skips = new CompressedRawByteBuffer();
                 skipPositions = new CompressedRawByteBuffer();
             } else {
@@ -72,7 +72,7 @@ public class PositionIndexWriter implements
 
             if (skips != null && skips.length() == 0) {
                 // not adding skip information b/c its empty
-                options &= (0xffff - ValueIterator.HAS_SKIPS);
+                options &= (0xffff - KeyListReader.ListIterator.HAS_SKIPS);
                 header.add(options);
             } else {
                 header.add(options);
@@ -262,7 +262,7 @@ public class PositionIndexWriter implements
         boolean skip = Boolean.parseBoolean(parameters.getXML().get("skipping", "true"));
         skipDistance = (int) parameters.getXML().get("skipDistance", 500);
         skipResetDistance = (int) parameters.getXML().get("skipResetDistance", 20);
-        options |= (skip ? ValueIterator.HAS_SKIPS : 0x0);
+        options |= (skip ? KeyListReader.ListIterator.HAS_SKIPS : 0x0);
         // more options here?
     }
 

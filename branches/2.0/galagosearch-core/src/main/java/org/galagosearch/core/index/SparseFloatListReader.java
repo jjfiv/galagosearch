@@ -4,11 +4,12 @@ package org.galagosearch.core.index;
 import gnu.trove.TObjectDoubleHashMap;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.HashMap;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.structured.ContextualIterator;
+import org.galagosearch.core.retrieval.structured.DocumentContext;
 import org.galagosearch.core.retrieval.structured.ScoreIterator;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.DataStream;
@@ -49,13 +50,14 @@ public class SparseFloatListReader extends KeyListReader {
     }
   }
 
-  public class ListIterator extends KeyListReader.ListIterator implements ScoreIterator {
+  public class ListIterator extends KeyListReader.ListIterator implements ContextualIterator, ScoreIterator, ValueIterator {
 
     VByteInput stream;
     int documentCount;
     int index;
     int currentDocument;
     double currentScore;
+    DocumentContext context;
 
     public ListIterator(GenericIndexReader.Iterator iterator) throws IOException {
       super(iterator);
@@ -82,6 +84,14 @@ public class SparseFloatListReader extends KeyListReader {
       return builder.toString();
     }
 
+    public void next() {
+      try {
+        nextEntry();
+      } catch (IOException ioe) {
+        throw new IllegalArgumentException(ioe);
+      }
+    }
+
     public boolean nextEntry() throws IOException {
       read();
       if (!isDone()) {
@@ -105,7 +115,15 @@ public class SparseFloatListReader extends KeyListReader {
       throw new UnsupportedOperationException("This iterator does not reset without the parent KeyIterator.");
     }
 
-    public int identifier() {
+    public void setContext(DocumentContext dc) {
+      this.context = dc;
+    }
+
+    public DocumentContext getContext() {
+      return context;
+    }
+
+    public int currentIdentifier() {
       return currentDocument;
     }
 
@@ -126,15 +144,11 @@ public class SparseFloatListReader extends KeyListReader {
       }
     }
 
-    public double score(int document, int length) {
-      if (currentDocument == document) {
+    public double score() {
+      if (currentDocument == context.document) {
         return currentScore;
       }
       return Double.NEGATIVE_INFINITY;
-    }
-
-    public double score() {
-      return score(documentToScore, lengthOfDocumentToScore);
     }
 
     public boolean isDone() {

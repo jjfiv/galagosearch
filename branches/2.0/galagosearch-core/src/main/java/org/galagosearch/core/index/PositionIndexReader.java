@@ -65,7 +65,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
   }
 
   public class TermExtentIterator extends KeyListReader.ListIterator
-          implements AggregateIterator, ExtentIterator {
+          implements AggregateIterator, CountIterator, ExtentIterator {
 
     int documentCount;
     int totalPositionCount;

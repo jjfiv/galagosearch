@@ -11,8 +11,7 @@ import java.io.IOException;
  *
  * @author marc
  */
-public interface ContextualIterator {
+public interface ContextualIterator extends StructuredIterator {
   public DocumentContext getContext();
   public void setContext(DocumentContext context);
-  public void verify() throws IOException;
 }

@@ -17,7 +17,7 @@ import org.galagosearch.core.util.CallTable;
  *
  * @author irmarc
  */
-public class ScoringFunctionIterator extends ScoreIterator {
+public class ScoringFunctionIterator implements ScoreIterator, ContextualIterator {
 
   boolean done;
   CountIterator iterator;
@@ -25,6 +25,7 @@ public class ScoringFunctionIterator extends ScoreIterator {
   // parameter sweep functions
   ScoringFunction[] functions;
   long total;
+  DocumentContext context;
 
   public ScoringFunctionIterator(CountIterator iterator, ScoringFunction function) throws IOException {
     this.iterator = iterator;
@@ -38,7 +39,15 @@ public class ScoringFunctionIterator extends ScoreIterator {
     this(iterator, functions[0]);
     this.functions = functions;
   }
-    
+
+  public void setContext(DocumentContext dc) {
+    context = dc;
+  }
+
+  public DocumentContext getContext() {
+    return context;
+  }
+
   public long totalCandidates() {
       return total;
   }
@@ -52,7 +61,7 @@ public class ScoringFunctionIterator extends ScoreIterator {
 
     // Used in counting # of score calls. Uncomment if you want to track that.
     //CallTable.increment("score_req");
-    if (iterator.intID() == context.document) {
+    if (iterator.currentIdentifier() == context.document) {
       count = iterator.count();
     }
     return function.score(count, context.length);
@@ -65,7 +74,7 @@ public class ScoringFunctionIterator extends ScoreIterator {
     }
 
     int count = 0;
-    if (iterator.intID() == context.document) {
+    if (iterator.currentIdentifier() == context.document) {
       count = iterator.count();
     }
     TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
@@ -75,49 +84,11 @@ public class ScoringFunctionIterator extends ScoreIterator {
     return results;
   }
 
-  public boolean moveTo(int id) throws IOException {
-    return iterator.moveTo(id);
-  }
-
-  public boolean moveTo(long id) throws IOException {
-    return iterator.moveTo(id);
-  }
-
-  public boolean moveTo(String id) throws IOException {
-    return iterator.moveTo(id);
-  }
-
-  public void movePast(int document) throws IOException {
-    iterator.movePast(document);
-  }
-
-  public void movePast(long id) throws IOException {
-    iterator.movePast(id);
-  }
-
-  public void movePast(String id) throws IOException {
-    iterator.movePast(id);
-  }
-
-  public int intID() {
+  public int currentIdentifier() {
     if (isDone()) {
       return Integer.MAX_VALUE;
     }
-    return iterator.intID();
-  }
-
-  public long longID() {
-    if (isDone()) {
-      return Long.MAX_VALUE;
-    }
-    return iterator.longID();
-  }
-
-  public String stringID() {
-    if (isDone()) {
-      return null;
-    }
-    return iterator.stringID();
+    return iterator.currentIdentifier();
   }
 
   public boolean isDone() {
@@ -125,15 +96,7 @@ public class ScoringFunctionIterator extends ScoreIterator {
   }
 
   public boolean hasMatch(int id) {
-    return !isDone() && iterator.intID() == id;
-  }
-
-  public boolean hasMatch(long id) {
-    return !isDone() && iterator.longID() == id;
-  }
-
-  public boolean hasMatch(String id) {
-    return !isDone() && iterator.stringID() == id;
+    return !isDone() && iterator.hasMatch(id);
   }
 
   public void reset() throws IOException {
@@ -152,15 +115,15 @@ public class ScoringFunctionIterator extends ScoreIterator {
     return iterator.totalEntries();
   }
 
-  public boolean nextEntry() throws IOException {
-    return iterator.nextEntry();
+  public void next() {
+    try {
+      iterator.nextEntry();
+    } catch (IOException ioe)  {
+      throw new RuntimeException(ioe);
+    }
   }
 
   public String getEntry() throws IOException {
     return iterator.getEntry();
-  }
-
-  public void reset(Iterator it) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet.");
   }
 }
