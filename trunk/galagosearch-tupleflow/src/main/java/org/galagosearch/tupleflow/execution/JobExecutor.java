@@ -1249,6 +1249,10 @@ public class JobExecutor {
     InetAddress address = java.net.InetAddress.getLocalHost();
     int port = server.getConnectors()[0].getPort();
     String masterURL = String.format("http://%s:%d", address.getHostAddress(), port);
+
+    // Ensure we print out the ip address version of the url as well.
+    System.err.println("IPStatus: " + masterURL);
+
     JobExecutionStatus status = new JobExecutionStatus(stages, temporaryStorage, executor, masterURL, command);
     MasterWebHandler handler = new MasterWebHandler(status);
     server.addHandler(handler);
