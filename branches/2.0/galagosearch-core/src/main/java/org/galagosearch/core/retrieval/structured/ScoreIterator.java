@@ -18,11 +18,7 @@ import org.galagosearch.core.index.ValueIterator;
  *
  * @author trevor, irmarc
  */
-public interface ScoreIterator extends ValueIterator {
-
-  public ScoringContext getScoringContext();
-
-  public void setScoringContext(ScoringContext sc);
+public interface ScoreIterator extends ContextualIterator {
 
   /**
    * Produce a score for the current candidate

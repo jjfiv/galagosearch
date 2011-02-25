@@ -107,8 +107,11 @@ public class StructuredRetrieval extends Retrieval {
    */
   public ScoredDocument[] runQuery(Node queryTree, Parameters parameters) throws Exception {
 
+    // Give it a context
+    DocumentContext context = new DocumentContext();
+
     // construct the query iterators
-      ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
+    ScoreIterator iterator = (ScoreIterator) createIterator(queryTree, context);
     int requested = (int) parameters.get("requested", 1000);
 
     // now there should be an iterator at the root of this tree
@@ -116,11 +119,12 @@ public class StructuredRetrieval extends Retrieval {
     NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
     
     while (!iterator.isDone()) {
-      int document = iterator.intID();
+      int document = iterator.currentIdentifier();
       lengthsIterator.skipTo(document);
       int length = lengthsIterator.getDocumentData().textLength;
       // This context is shared among all scorers
-      iterator.setScoringContext(document, length);
+      context.document = document;
+      context.length = length;
       double score = iterator.score();
       CallTable.increment("scored");
       if (queue.size() <= requested || queue.peek().score < score) {
@@ -131,8 +135,8 @@ public class StructuredRetrieval extends Retrieval {
           queue.poll();
         }
       }
-
-      iterator.movePast(document);
+      context.lastScored = document;
+      iterator.verify();
     }
 
     String indexId = parameters.get("indexId", "0");

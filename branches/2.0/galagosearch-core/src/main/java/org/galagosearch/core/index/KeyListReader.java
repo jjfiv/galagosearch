@@ -33,8 +33,9 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
 
   public abstract ListIterator getListIterator() throws IOException;
 
-  public abstract class ListIterator extends NavigableIterator implements ValueIterator {
+  public abstract class ListIterator implements ValueIterator {
 
+    public static final int HAS_SKIPS = 0x01;
     protected GenericIndexReader.Iterator source;
     protected byte[] key;
     protected long dataLength;
@@ -48,8 +49,6 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
       return dataLength;
     }
 
-    public abstract void reset(GenericIndexReader.Iterator it) throws IOException;
-
     public String getKey() {
       return Utility.toString(key);
     }
@@ -58,9 +57,18 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
       return key;
     }
 
-    public boolean nextEntry() throws IOException {
-      throw new UnsupportedOperationException("Not supported yet.");
+    public boolean hasMatch(int id) {
+      return (!isDone() && currentIdentifier() == id);
     }
+
+    public void movePast(int id) throws IOException {
+      moveTo(id + 1);
+    }
+
+    public abstract boolean moveTo(int id) throws IOException;
+
+    public abstract void reset(GenericIndexReader.Iterator it) throws IOException;
+
   }
 
   public abstract class Iterator implements KeyIterator {

@@ -637,6 +637,7 @@ public class Utility {
 
     InputStream resourceStream = requestingClass.getResourceAsStream(resourcePath);
     if (resourceStream == null) {
+      LOG.warning(String.format("Unable to create resource file."));
       return null;
     }
 

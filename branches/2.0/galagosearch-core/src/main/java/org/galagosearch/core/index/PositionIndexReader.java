@@ -64,7 +64,8 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     public int totalPositions();
   }
 
-  public class TermExtentIterator extends KeyListReader.ListIterator implements AggregateIterator, ExtentIterator {
+  public class TermExtentIterator extends KeyListReader.ListIterator
+          implements AggregateIterator, ExtentIterator {
 
     int documentCount;
     int totalPositionCount;
@@ -110,7 +111,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       int options = stream.readInt();
       documentCount = stream.readInt();
       totalPositionCount = stream.readInt();
-      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
+      if ((options & HAS_SKIPS) == HAS_SKIPS) {
         skipDistance = stream.readInt();
         skipResetDistance = stream.readInt();
         numSkips = stream.readLong();
@@ -123,7 +124,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long skipsByteLength = 0;
       long skipPositionsByteLength = 0;
 
-      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
+      if ((options & HAS_SKIPS) == HAS_SKIPS) {
         skipsByteLength = stream.readLong();
         skipPositionsByteLength = stream.readLong();
       }
@@ -138,7 +139,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long positionsEnd = positionsStart + positionsByteLength;
 
 
-      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
+      if ((options & HAS_SKIPS) == HAS_SKIPS) {
 
         long skipsStart = positionsEnd;
         long skipsEnd = skipsStart + skipsByteLength;
@@ -236,10 +237,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return false;
     }
 
-    public boolean hasMatch(int document) {
-      return (!isDone() && intID() == document);
-    }
-
     // If we have skips - it's go time
     @Override
     public boolean moveTo(int document) throws IOException {
@@ -313,7 +310,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return extentArray;
     }
 
-    public int intID() {
+    public int currentIdentifier() {
       return currentDocument;
     }
 
@@ -340,7 +337,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       if (isDone() && other.isDone()) {
         return 0;
       }
-      return intID() - other.intID();
+      return currentIdentifier() - other.currentIdentifier();
     }
   }
 
@@ -349,7 +346,8 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
    * we don't have to bookkeep the positions buffer. Overall smaller footprint and faster execution.
    *
    */
-  public class TermCountIterator extends KeyListReader.ListIterator implements AggregateIterator, CountIterator {
+  public class TermCountIterator extends KeyListReader.ListIterator
+          implements AggregateIterator, CountIterator {
 
     int documentCount;
     int collectionCount;
@@ -392,7 +390,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       int options = stream.readInt();
       documentCount = stream.readInt();
       collectionCount = stream.readInt();
-      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
+      if ((options & HAS_SKIPS) == HAS_SKIPS) {
         skipDistance = stream.readInt();
         skipResetDistance = stream.readInt();
         numSkips = stream.readLong();
@@ -405,7 +403,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long skipsByteLength = 0;
       long skipPositionsByteLength = 0;
 
-      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
+      if ((options & HAS_SKIPS) == HAS_SKIPS) {
         skipsByteLength = stream.readLong();
         skipPositionsByteLength = stream.readLong();
       }
@@ -421,7 +419,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long positionsEnd = positionsStart + positionsByteLength;
 
 
-      if ((options & ValueIterator.HAS_SKIPS) == ValueIterator.HAS_SKIPS) {
+      if ((options & HAS_SKIPS) == HAS_SKIPS) {
 
         long skipsStart = positionsEnd;
         long skipsEnd = skipsStart + skipsByteLength;
@@ -499,10 +497,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return false;
     }
 
-    public boolean hasMatch(int document) {
-      return (!isDone() && intID() == document);
-    }
-
     // If we have skips - it's go time
     @Override
     public boolean moveTo(int document) throws IOException {
@@ -566,7 +560,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return documentIndex >= documentCount;
     }
 
-    public int intID() {
+    public int currentIdentifier() {
       return currentDocument;
     }
 
@@ -593,7 +587,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       if (isDone() && other.isDone()) {
         return 0;
       }
-      return intID() - other.intID();
+      return currentIdentifier() - other.currentIdentifier();
     }
   }
   GenericIndexReader reader;

@@ -1,8 +1,6 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.structured;
 
-import org.galagosearch.core.index.ValueIterator;
-
 /**
  * This is base interface for all inverted lists that return count information.
  * 12/11/2010 (irmarc): Refactored
@@ -11,11 +9,11 @@ import org.galagosearch.core.index.ValueIterator;
  * @see PositionIndexIterator
  * @author trevor, irmarc
  */
-public interface CountIterator extends ValueIterator, Comparable<CountIterator> {
+public interface CountIterator extends ContextualIterator, Comparable<CountIterator> {
 
     /**
      * Returns the number of occurrences of this iterator's term in
-     * the current intID.
+     * the current identifier.
      */
     public int count();
 }

@@ -13,11 +13,11 @@ import org.galagosearch.core.retrieval.structured.StructuredIterator;
  */
 public interface ValueIterator extends StructuredIterator {
 
-  public static final int HAS_SKIPS = 0x01;
-
-  void reset(GenericIndexReader.Iterator it) throws IOException;
-
   long totalEntries();
+
+  int currentIdentifier();
+
+  boolean hasMatch(int id);
 
   boolean nextEntry() throws IOException;
 

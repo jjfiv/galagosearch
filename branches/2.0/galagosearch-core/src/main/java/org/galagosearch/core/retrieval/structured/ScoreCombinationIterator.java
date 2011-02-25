@@ -17,7 +17,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor, sjh, irmarc
  */
-public class ScoreCombinationIterator extends NavigableIterator implements ScoreIterator {
+public class ScoreCombinationIterator implements ScoreIterator, ValueIterator {
 
   double[] weights;
   double weightSum;
@@ -90,21 +90,9 @@ public class ScoreCombinationIterator extends NavigableIterator implements Score
     return total / weightSum;
   }
 
-  public void movePast(int document) throws IOException {
+  public void update() throws IOException {
     for (ValueIterator iterator : iterators) {
-      iterator.movePast(document);
-    }
-  }
-
-  public void movePast(long id) throws IOException {
-    for (ValueIterator iterator : iterators) {
-      iterator.movePast(id);
-    }
-  }
-
-  public void movePast(String id) throws IOException {
-    for (ValueIterator iterator : iterators) {
-      iterator.movePast(id);
+      iterator.update();
     }
   }
 
