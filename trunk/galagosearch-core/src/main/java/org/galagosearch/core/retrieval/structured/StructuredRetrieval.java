@@ -349,7 +349,7 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   public long xcount(Node root) throws Exception {
-    StructuredIterator structIterator = index.getIterator(root);
+    StructuredIterator structIterator = createIterator(root);
     if (structIterator instanceof CountIterator) {
       CountIterator iterator = (CountIterator) structIterator;
       long count = 0;
