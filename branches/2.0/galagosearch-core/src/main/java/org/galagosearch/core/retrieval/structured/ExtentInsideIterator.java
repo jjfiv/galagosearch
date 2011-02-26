@@ -33,12 +33,13 @@ public class ExtentInsideIterator extends ExtentConjunctionIterator {
      * @throws java.io.IOException
      */
     public ExtentInsideIterator(Parameters parameters,
-            ExtentIterator innerIterator,
-            ExtentIterator outerIterator) throws IOException {
-        super(new ExtentIterator[] { innerIterator, outerIterator });
+            ExtentValueIterator innerIterator,
+            ExtentValueIterator outerIterator) throws IOException {
+        super(new ExtentValueIterator[] { innerIterator, outerIterator });
         this.innerIterator = innerIterator;
         this.outerIterator = outerIterator;
-        findDocument();
+        if (!allMatch()) next();
+        else loadExtents();
     }
 
     /**

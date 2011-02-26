@@ -3,7 +3,7 @@ package org.galagosearch.core.scoring;
 
 import java.io.IOException;
 import org.galagosearch.core.index.PositionIndexReader;
-import org.galagosearch.core.retrieval.structured.CountIterator;
+import org.galagosearch.core.retrieval.structured.CountValueIterator;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -17,7 +17,7 @@ public class JelinekMercerScorer implements ScoringFunction {
     double background;
     double lambda;
 
-    public JelinekMercerScorer(Parameters parameters, CountIterator iterator) throws IOException {
+    public JelinekMercerScorer(Parameters parameters, CountValueIterator iterator) throws IOException {
 
         lambda = parameters.get("lambda", 0.5);
         if (parameters.containsKey("collectionProbability")) {
@@ -26,12 +26,12 @@ public class JelinekMercerScorer implements ScoringFunction {
             long collectionLength = parameters.get("collectionLength", 0L);
             long count = 0;
 
-            if (iterator instanceof PositionIndexReader.AggregateIterator) {
+            if (PositionIndexReader.AggregateIterator.class.isInstance(iterator)) {
                 count = ((PositionIndexReader.AggregateIterator) iterator).totalPositions();
             } else {
                 while (!iterator.isDone()) {
                     count += iterator.count();
-                    iterator.nextEntry();
+                    iterator.next();
                 }
             }
 

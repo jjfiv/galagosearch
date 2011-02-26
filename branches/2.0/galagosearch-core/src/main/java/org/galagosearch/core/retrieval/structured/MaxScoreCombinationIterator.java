@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 import org.galagosearch.core.index.TopDocsReader;
 import org.galagosearch.core.index.TopDocsReader.TopDocument;
+import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.scoring.ScoringFunction;
 import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
@@ -59,53 +60,64 @@ import org.galagosearch.tupleflow.Parameters;
 @RequiredStatistics(statistics = {"index"})
 public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
-    private class Placeholder implements Comparable<Placeholder> {
-	
-	int document;
-	double score;
-	
-	public Placeholder() {
-	}
-	
-	public Placeholder(int d, double s) {
-	    document = d;
-	    score = s;
-	}
-	
-	public int compareTo(Placeholder that) {
-	    return this.score > that.score ? -1 : this.score < that.score ? 1 : 0;
-	}
-	
-	public String toString() {
-	    return String.format("<%d,%f>", document, score);
-	}
-    }    
+  private class Placeholder implements Comparable<Placeholder> {
 
-  private static class DocumentOrderComparator implements Comparator<ScoreIterator> {
+    int document;
+    double score;
 
-    public int compare(ScoreIterator a, ScoreIterator b) {
-      return (a.intID() - b.intID());
+    public Placeholder() {
+    }
+
+    public Placeholder(int d, double s) {
+      document = d;
+      score = s;
+    }
+
+    public int compareTo(Placeholder that) {
+      return this.score > that.score ? -1 : this.score < that.score ? 1 : 0;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("<%d,%f>", document, score);
     }
   }
 
-  private class WeightComparator implements Comparator<ScoreIterator> {
-      public int compare(ScoreIterator a, ScoreIterator b) {
-	  if (!a.isDone() && b.isDone()) return -1;
-	  if (a.isDone() && !b.isDone()) return 1;
-	  double w1 = weightLookup.get(a);
-	  double w2 = weightLookup.get(b);
-	  return (w1 > w2 ? -1 : (w1 < w2 ? 1 : 0));
+  private static class DocumentOrderComparator implements Comparator<ScoreValueIterator> {
+
+    public int compare(ScoreValueIterator a, ScoreValueIterator b) {
+      return (a.currentIdentifier() - b.currentIdentifier());
+    }
+  }
+
+  private class WeightComparator implements Comparator<ScoreValueIterator> {
+
+    public int compare(ScoreValueIterator a, ScoreValueIterator b) {
+      if (!a.isDone() && b.isDone()) {
+        return -1;
       }
-  }
-
-  private static class TotalCandidateComparator implements Comparator<ScoreIterator> {
-
-    public int compare(ScoreIterator a, ScoreIterator b) {
-	if (!a.isDone() && b.isDone()) return -1;
-	if (a.isDone() && !b.isDone()) return 1;
-	return (a.totalEntries() < b.totalEntries() ? -1 : a.totalEntries() > b.totalEntries() ? 1 : 0);
+      if (a.isDone() && !b.isDone()) {
+        return 1;
+      }
+      double w1 = weightLookup.get(a);
+      double w2 = weightLookup.get(b);
+      return (w1 > w2 ? -1 : (w1 < w2 ? 1 : 0));
     }
   }
+
+  private static class TotalCandidateComparator implements Comparator<ScoreValueIterator> {
+
+    public int compare(ScoreValueIterator a, ScoreValueIterator b) {
+      if (!a.isDone() && b.isDone()) {
+        return -1;
+      }
+      if (a.isDone() && !b.isDone()) {
+        return 1;
+      }
+      return (a.totalEntries() < b.totalEntries() ? -1 : a.totalEntries() > b.totalEntries() ? 1 : 0);
+    }
+  }
+
   int requested;
   double threshold = 0;
   double potential;
@@ -115,77 +127,79 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
   int lastReportedCandidate = 0;
   int candidatesIndex;
   int quorumIndex;
-  ArrayList<ScoreIterator> scoreList;
+  ArrayList<ScoreValueIterator> scoreList;
   ArrayList<Placeholder> R;
-    TIntHashSet ids;
+  TIntHashSet ids;
+  DocumentContext context;
 
   public MaxScoreCombinationIterator(Parameters parameters,
-          ScoreIterator[] childIterators) throws IOException {
+          ScoreValueIterator[] childIterators) throws IOException {
     super(parameters, childIterators);
     requested = (int) parameters.get("requested", 100);
     R = new ArrayList<Placeholder>();
     ids = new TIntHashSet();
     topdocsCandidates = new TIntArrayList();
-    scoreList = new ArrayList<ScoreIterator>(iterators.length);
+    scoreList = new ArrayList<ScoreValueIterator>(iterators.length);
     weightLookup = new TObjectDoubleHashMap();
-    ArrayList<ScoreIterator> topdocs = new ArrayList<ScoreIterator>();
+    ArrayList<ScoreValueIterator> topdocs = new ArrayList<ScoreValueIterator>();
     for (int i = 0; i < iterators.length; i++) {
-      ScoreIterator dosi = iterators[i];
-      weightLookup.put(dosi, weights[i]);
-      if (TopDocsScoringIterator.class.isAssignableFrom(dosi.getClass())) {
-        topdocs.add(dosi);
+      ScoreValueIterator si = iterators[i];
+      weightLookup.put(si, weights[i]);
+      if (TopDocsScoringIterator.class.isAssignableFrom(si.getClass())) {
+        topdocs.add(si);
       }
     }
     cacheScores(topdocs);
     scoreList.addAll(Arrays.asList(iterators));
     String sort = parameters.get("sort", "length");
     if (sort.equals("weight")) {
-	Collections.sort(scoreList, new WeightComparator());
+      Collections.sort(scoreList, new WeightComparator());
     } else {
-	Collections.sort(scoreList, new TotalCandidateComparator());
+      Collections.sort(scoreList, new TotalCandidateComparator());
     }
     for (int i = 0; i < iterators.length; i++) {
-      ScoreIterator dosi = iterators[i];
-      potential += weights[i] * dosi.maximumScore();
-      minimum += weights[i] * dosi.minimumScore();
+      ScoreValueIterator si = iterators[i];
+      potential += weights[i] * si.maximumScore();
+      minimum += weights[i] * si.minimumScore();
     }
     computeQuorum();
   }
-    
-    @Override
-    public double maximumScore() {
-	double s = 0;
-	for (ScoreIterator it : iterators) {
-	    s = Math.max(it.maximumScore(), s);
-	}
-	if (s == Double.MAX_VALUE || s == Double.POSITIVE_INFINITY) return s;
 
-	// Not infinity/max
-	s = 0;
-	for (int i = 0; i < iterators.length; i++) {
-	    s += weights[i] * iterators[i].maximumScore();
-	}
-	return s / weightSum;
+  @Override
+  public double maximumScore() {
+    double s = 0;
+    for (ScoreValueIterator it : iterators) {
+      s = Math.max(it.maximumScore(), s);
+    }
+    if (s == Double.MAX_VALUE || s == Double.POSITIVE_INFINITY) {
+      return s;
     }
 
-
-    @Override
-    public double minimumScore() {
-	double s = 0;
-	for (int i = 0; i < iterators.length; i++) {
-	    s += weights[i] * iterators[i].minimumScore();
-	}
-	return s / weightSum;
+    // Not infinity/max
+    s = 0;
+    for (int i = 0; i < iterators.length; i++) {
+      s += weights[i] * iterators[i].maximumScore();
     }
-   
+    return s / weightSum;
+  }
+
+  @Override
+  public double minimumScore() {
+    double s = 0;
+    for (int i = 0; i < iterators.length; i++) {
+      s += weights[i] * iterators[i].minimumScore();
+    }
+    return s / weightSum;
+  }
+
   /**
    * Resets all iterators, does not perform caching again
    * @throws IOException
    */
-   @Override
-   public void reset() throws IOException {
-    for (ScoreIterator dosi : iterators) {
-      dosi.reset();
+  @Override
+  public void reset() throws IOException {
+    for (ScoreValueIterator si : iterators) {
+      si.reset();
     }
     candidatesIndex = 0;
     computeQuorum();
@@ -200,50 +214,53 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    */
   @Override
   public boolean isDone() {
-      return (intID() == Integer.MAX_VALUE);
+    return (currentIdentifier() == Integer.MAX_VALUE);
+  }
+
+  public long totalEntries() {
+    long max = 0;
+    for (ValueIterator iterator : iterators) {
+      max = Math.max(max, iterator.totalEntries());
+    }
+    return max;
   }
 
   @Override
-  public int intID() {
-      int candidate = Integer.MAX_VALUE;
+  public int currentIdentifier() {
+    int candidate = Integer.MAX_VALUE;
 
-      // first check the topdocs
-      if (candidatesIndex < topdocsCandidates.size()) {
-	  candidate = topdocsCandidates.get(candidatesIndex);
-      }
-      
-      // Now look among the quorum iterators
-      for (int i = 0; i < quorumIndex; i++) {
-	  candidate = Math.min(candidate, scoreList.get(i).intID());
-      }
-      lastReportedCandidate = candidate;
-      return candidate;
+    // first check the topdocs
+    if (candidatesIndex < topdocsCandidates.size()) {
+      candidate = topdocsCandidates.get(candidatesIndex);
+    }
+
+    // Now look among the quorum iterators
+    for (int i = 0; i < quorumIndex; i++) {
+      candidate = Math.min(candidate, scoreList.get(i).currentIdentifier());
+    }
+    lastReportedCandidate = candidate;
+    return candidate;
   }
 
-  @Override
-  public boolean hasMatch(int document) {
-      return (intID() == document);
-  }
-
-  @Override
-  public void movePast(int document) throws IOException {
-      moveTo(document+1);
+  public boolean next() throws IOException {
+    moveTo(currentIdentifier()+1);
+    return (isDone() == false);
   }
 
   @Override
   public boolean moveTo(int document) throws IOException {
-      // Move topdocs candidate list forward
-      while (candidatesIndex < topdocsCandidates.size() &&
-	     document > topdocsCandidates.get(candidatesIndex)) {
-	  candidatesIndex++;
-      }
+    // Move topdocs candidate list forward
+    while (candidatesIndex < topdocsCandidates.size()
+            && document > topdocsCandidates.get(candidatesIndex)) {
+      candidatesIndex++;
+    }
 
-      // Now only skip the quorum forward
-      for (int i = 0; i < quorumIndex; i++) {
-	  scoreList.get(i).moveTo(document);
-      }
+    // Now only skip the quorum forward
+    for (int i = 0; i < quorumIndex; i++) {
+      scoreList.get(i).moveTo(document);
+    }
 
-      return hasMatch(document);
+    return hasMatch(document);
   }
 
   /**
@@ -252,57 +269,57 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
   public double score() {
     int document = context.document;
     int length = context.length;
-      try {
-	  if ((candidatesIndex < topdocsCandidates.size() &&
-	       document == topdocsCandidates.get(candidatesIndex)) ||
-	      (R.size() < requested)) {
-	      // Make sure the iterators are lined up
-	      for (ScoreIterator it : iterators) {
-		  it.moveTo(lastReportedCandidate);
-	      }
-	      double score = fullyScore(document, length);
-	      adjustThreshold(document, score);
-	      return score / weightSum;
-	  } else {
-	      // First score the quorum, then as we score the rest, skip it forward.	  
-	      double adjustedPotential = potential;
-	      double inc;
-	      int i;
-	      for (i = 0; i < quorumIndex; i++) {
-		  ScoreIterator it = scoreList.get(i);
-		  inc = weightLookup.get(it) * (it.score(document, length) - it.maximumScore());
-		  adjustedPotential += inc;
-	      }
+    try {
+      if ((candidatesIndex < topdocsCandidates.size()
+              && document == topdocsCandidates.get(candidatesIndex))
+              || (R.size() < requested)) {
+        // Make sure the iterators are lined up
+        for (ScoreValueIterator it : iterators) {
+          it.moveTo(lastReportedCandidate);
+        }
+        double score = fullyScore();
+        adjustThreshold(document, score);
+        return score / weightSum;
+      } else {
+        // First score the quorum, then as we score the rest, skip it forward.
+        double adjustedPotential = potential;
+        double inc;
+        int i;
+        for (i = 0; i < quorumIndex; i++) {
+          ScoreValueIterator it = scoreList.get(i);
+          inc = weightLookup.get(it) * (it.score() - it.maximumScore());
+          adjustedPotential += inc;
+        }
 
-	      while (adjustedPotential > threshold && i < scoreList.size()) {
-		  ScoreIterator it = scoreList.get(i);
-		  it.moveTo(lastReportedCandidate);
-		  adjustedPotential += weightLookup.get(it) * (it.score(document, length) - it.maximumScore());
-		  i++;
-	      }
-	      
-	      // fully scored!
-	      if (i == scoreList.size()) {
-		  adjustThreshold(document, adjustedPotential);
-		  return adjustedPotential / weightSum; 
-	      } else {
-		  // didn't make the cut
-		  CallTable.increment("iterator_pruned", (scoreList.size()-i));
-		  return minimum / weightSum;
-	      }
-	  }
-      } catch (IOException ioe) {
-	  throw new RuntimeException(ioe);
-      }	  
-  }
-    
-    private double fullyScore(int document, int length) {
-	double total = 0;	  
-	for (int i = 0; i < iterators.length; i++) {
-	    total += weights[i] * iterators[i].score(document, length);
-	}
-	return total;
+        while (adjustedPotential > threshold && i < scoreList.size()) {
+          ScoreValueIterator it = scoreList.get(i);
+          it.moveTo(lastReportedCandidate);
+          adjustedPotential += weightLookup.get(it) * (it.score() - it.maximumScore());
+          i++;
+        }
+
+        // fully scored!
+        if (i == scoreList.size()) {
+          adjustThreshold(document, adjustedPotential);
+          return adjustedPotential / weightSum;
+        } else {
+          // didn't make the cut
+          CallTable.increment("iterator_pruned", (scoreList.size() - i));
+          return minimum / weightSum;
+        }
+      }
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
     }
+  }
+
+  private double fullyScore() {
+    double total = 0;
+    for (int i = 0; i < iterators.length; i++) {
+      total += weights[i] * iterators[i].score();
+    }
+    return total;
+  }
 
   /**
    * Determines if the top candidates list has changed. 
@@ -311,107 +328,113 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    * @param newscore
    */
   protected void adjustThreshold(int document, double newscore) {
-      if (ids.contains(document)) {
-	  for (Placeholder p : R) {
-	      if (p.document == document) {
-		  p.score = newscore;
-		  break;
-	      }
-	  }
+    if (ids.contains(document)) {
+      for (Placeholder p : R) {
+        if (p.document == document) {
+          p.score = newscore;
+          break;
+        }
+      }
+    } else {
+      if (R.size() < requested) {
+        R.add(new Placeholder(document, newscore));
+        ids.add(document);
       } else {
-	  if (R.size() < requested) {
-	      R.add(new Placeholder(document, newscore));	      
-	      ids.add(document);
-	  } else {
-	      if (newscore > R.get(requested-1).score) {
-		  Placeholder old = R.remove(requested-1);
-		  R.add(new Placeholder(document, newscore));
-		  ids.remove(old.document);
-		  ids.add(document);
-	      }
-	  }
+        if (newscore > R.get(requested - 1).score) {
+          Placeholder old = R.remove(requested - 1);
+          R.add(new Placeholder(document, newscore));
+          ids.remove(old.document);
+          ids.add(document);
+        }
       }
-      if (R.size() == requested) {
-	  Collections.sort(R);
-	  threshold = R.get(requested-1).score;
-	  computeQuorum();
-      }
+    }
+    if (R.size() == requested) {
+      Collections.sort(R);
+      threshold = R.get(requested - 1).score;
+      computeQuorum();
+    }
   }
 
-    /**
-     * Determines which iterators we need to worry about to produce a valid
-     * candidate score. If scored < requested, it defaults to all of them.
-     */
+  /**
+   * Determines which iterators we need to worry about to produce a valid
+   * candidate score. If scored < requested, it defaults to all of them.
+   */
   protected void computeQuorum() {
-      double adjustedPotential = 0;
-      if (R.size() < requested) {
-	  quorumIndex = scoreList.size();
-      } else {
-	  // Now we try
-	  adjustedPotential = potential;
-	  int i;
-	  for (i = 0; i < scoreList.size() && adjustedPotential > threshold; i++) {
-	      ScoreIterator it = scoreList.get(i);
-	      double inc = weightLookup.get(it) * (it.minimumScore() - it.maximumScore());
-		      adjustedPotential += inc;
-	  }
-	  quorumIndex = i;	  
+    double adjustedPotential = 0;
+    if (R.size() < requested) {
+      quorumIndex = scoreList.size();
+    } else {
+      // Now we try
+      adjustedPotential = potential;
+      int i;
+      for (i = 0; i < scoreList.size() && adjustedPotential > threshold; i++) {
+        ScoreValueIterator it = scoreList.get(i);
+        double inc = weightLookup.get(it) * (it.minimumScore() - it.maximumScore());
+        adjustedPotential += inc;
       }
+      quorumIndex = i;
+    }
   }
+
   /**
    * We pre-evaluate the the topdocs lists by scoring them against all iterators
    * that have topdocs, giving us a partial evaluation, and therefore a better
    * threshold bound - we also move the scored count up in order to activate the
    * threshold sooner.
    */
-  protected void cacheScores(ArrayList<ScoreIterator> topdocs) throws IOException {
+  protected void cacheScores(ArrayList<ScoreValueIterator> topdocs) throws IOException {
     // Iterate over the lists, scoring as we go - they are doc-ordered after all
     TObjectIntHashMap loweredCount = new TObjectIntHashMap();
-    PriorityQueue<TopDocsReader.Iterator> toScore = new PriorityQueue<TopDocsReader.Iterator>();
-    HashMap<TopDocsReader.Iterator, TopDocsScoringIterator> lookup =
-            new HashMap<TopDocsReader.Iterator, TopDocsScoringIterator>();
+    PriorityQueue<TopDocsReader.ListIterator> toScore = new PriorityQueue<TopDocsReader.ListIterator>();
+    HashMap<TopDocsReader.ListIterator, TopDocsScoringIterator> lookup =
+            new HashMap<TopDocsReader.ListIterator, TopDocsScoringIterator>();
     TIntDoubleHashMap scores = new TIntDoubleHashMap();
-    for (ScoreIterator dosi : topdocs) {
-      TopDocsScoringIterator tdsi = (TopDocsScoringIterator) dosi;
-      TopDocsReader.Iterator it = tdsi.getTopDocs();
+    for (ScoreValueIterator si : topdocs) {
+      TopDocsScoringIterator tdsi = (TopDocsScoringIterator) si;
+      TopDocsReader.ListIterator it = tdsi.getTopDocs();
       if (it != null) {
-	  toScore.add(it);
-	  lookup.put(it, tdsi);
+        toScore.add(it);
+        lookup.put(it, tdsi);
       }
     }
 
-    if (toScore.size() == 0) return;
+    if (toScore.size() == 0) {
+      return;
+    }
 
     double score;
+    DocumentContext backgroundContext = new DocumentContext();
+    backgroundContext.document = 0;
 
     // Now we can simply iterate until done
     while (!toScore.peek().isDone()) {
-      TopDocsReader.Iterator it = toScore.poll();
+      TopDocsReader.ListIterator it = toScore.poll();
       TopDocument td = it.getCurrentTopDoc();
 
       // Need the background score first
       score = 0;
-      for (ScoreIterator dosi: iterators) {
-	  score += weightLookup.get(dosi) * dosi.score(0, td.length);
+      for (ScoreValueIterator si : iterators) {
+        backgroundContext.length = td.length;
+        score += weightLookup.get(si) * si.score(backgroundContext);
       }
 
       scores.put(td.document, score);
       // Score it using this iterator
       ScoringFunction fn = lookup.get(it).getScoringFunction();
       score = weightLookup.get(lookup.get(it))
-	  * (fn.score(td.count, td.length) - fn.score(0, td.length));
+              * (fn.score(td.count, td.length) - fn.score(0, td.length));
       scores.adjustValue(td.document, score);
       lookup.get(it).lowerMaximumScore(score);
       it.movePast(td.document);
       // Now score w/ the others
-      for (TopDocsReader.Iterator tdrit : toScore) {
+      for (TopDocsReader.ListIterator tdrit : toScore) {
         if (tdrit.hasMatch(td.document)) {
           TopDocument other = tdrit.getCurrentTopDoc();
-	  fn = lookup.get(tdrit).getScoringFunction();
+          fn = lookup.get(tdrit).getScoringFunction();
           score = weightLookup.get(lookup.get(tdrit))
-	      * (fn.score(other.count, other.length) - fn.score(0, other.length));
+                  * (fn.score(other.count, other.length) - fn.score(0, other.length));
           scores.adjustValue(other.document, score);
-	  lookup.get(tdrit).lowerMaximumScore(score);
+          lookup.get(tdrit).lowerMaximumScore(score);
           tdrit.movePast(other.document); // scored - move on
         }
       }
@@ -421,16 +444,26 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
     double[] values = scores.getValues();
     int[] keys = scores.keys();
-    for (int i = 0; i < keys.length; i++) {	
-	R.add(new Placeholder(keys[i], scores.get(keys[i])));
+    for (int i = 0; i < keys.length; i++) {
+      R.add(new Placeholder(keys[i], scores.get(keys[i])));
     }
     Collections.sort(R);
-    while (R.size() > requested) R.remove(R.size()-1);
-    threshold = R.get(R.size()-1).score;
+    while (R.size() > requested) {
+      R.remove(R.size() - 1);
+    }
+    threshold = R.get(R.size() - 1).score;
     R.trimToSize();
     for (int i = 0; i < R.size(); i++) {
-	ids.add(R.get(i).document);
+      ids.add(R.get(i).document);
     }
     candidatesIndex = 0;
+  }
+
+  public void setContext(DocumentContext context) {
+    this.context = context;
+  }
+
+  public DocumentContext getContext() {
+    return context;
   }
 }

@@ -26,19 +26,27 @@ public class ExtentIndexReader extends KeyListReader {
     }
 
     @Override
-    public String getStringValue() {
+    public String getValueString() {
       ListIterator it;
       long count = -1;
       try {
         it = new ListIterator(iterator);
         count = it.totalEntries();
-      } catch (IOException ioe) {}
+      } catch (IOException ioe) {
+      }
 
       StringBuilder sb = new StringBuilder();
       sb.append(Utility.toString(iterator.getKey())).append(", List Value: size=");
-      if (count > 0) sb.append(count);
-      else sb.append("Unknown");
+      if (count > 0) {
+        sb.append(count);
+      } else {
+        sb.append("Unknown");
+      }
       return sb.toString();
+    }
+
+    public ValueIterator getValueIterator() throws IOException {
+       return new ListIterator(iterator);
     }
   }
 
@@ -63,7 +71,8 @@ public class ExtentIndexReader extends KeyListReader {
     long lastSkipPosition;
 
     public ListIterator(GenericIndexReader.Iterator iterator) throws IOException {
-      super(iterator);
+      extents = new ExtentArray();
+      reset(iterator);
     }
 
     public void reset(GenericIndexReader.Iterator iterator) throws IOException {
@@ -71,7 +80,7 @@ public class ExtentIndexReader extends KeyListReader {
       endPosition = iterator.getValueEnd();
       dataLength = iterator.getValueLength();
       key = iterator.getKey();
-      RandomAccessFile input = iterator.getInput();
+      input = iterator.getInput();
       reset();
     }
 
@@ -145,7 +154,7 @@ public class ExtentIndexReader extends KeyListReader {
       return documentCount;
     }
 
-    public boolean nextEntry() throws IOException {
+    public boolean next() throws IOException {
       extents.reset();
       documentIndex = Math.min(documentIndex + 1, documentCount);
 
@@ -176,7 +185,7 @@ public class ExtentIndexReader extends KeyListReader {
       }
 
       // linear from here
-      while (document > currentDocument && nextEntry());
+      while (document > currentDocument && next());
       return hasMatch(document);
     }
 
@@ -233,21 +242,7 @@ public class ExtentIndexReader extends KeyListReader {
     public boolean isDone() {
       return (documentIndex >= documentCount);
     }
-
-    public int compareTo(CountIterator other) {
-      if (isDone() && !other.isDone()) {
-        return 1;
-      }
-      if (other.isDone() && !isDone()) {
-        return -1;
-      }
-      if (isDone() && other.isDone()) {
-        return 0;
-      }
-      return currentIdentifier() - other.currentIdentifier();
-    }
   }
-  GenericIndexReader reader;
 
   public ExtentIndexReader(GenericIndexReader reader) throws IOException {
     super(reader);
@@ -289,7 +284,7 @@ public class ExtentIndexReader extends KeyListReader {
     return nodeTypes;
   }
 
-  public StructuredIterator getIterator(Node node) throws IOException {
+  public ValueIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("extents")) {
       return getExtents(node.getDefaultParameter());
     } else {

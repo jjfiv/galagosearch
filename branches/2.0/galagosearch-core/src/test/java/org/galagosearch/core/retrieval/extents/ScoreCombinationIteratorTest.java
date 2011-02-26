@@ -10,7 +10,8 @@ import org.galagosearch.core.retrieval.structured.ScoreCombinationIterator;
 import org.galagosearch.tupleflow.Parameters;
 import java.io.IOException;
 import junit.framework.TestCase;
-import org.galagosearch.core.retrieval.structured.ScoreIterator;
+import org.galagosearch.core.retrieval.structured.DocumentContext;
+import org.galagosearch.core.retrieval.structured.ScoreValueIterator;
 
 /**
  *
@@ -32,19 +33,27 @@ public class ScoreCombinationIteratorTest extends TestCase {
     super(testName);
   }
 
-  public ScoreCombinationIterator mockIterator(Parameters parameters, ScoreIterator[] iterators) {
+  public ScoreCombinationIterator mockIterator(Parameters parameters, ScoreValueIterator[] iterators) {
     return new ScoreCombinationIterator(parameters, iterators) {
 
-      public int identifier() {
+      public int currentIdentifier() {
         throw new UnsupportedOperationException("Abstract method.");
       }
 
       public boolean hasMatch(int document) {
-        throw new UnsupportedOperationException("Abstract method.");
+        return true;
       }
 
       public boolean isDone() {
         throw new UnsupportedOperationException("Abstract method.");
+      }
+
+      public boolean next() throws IOException {
+        throw new UnsupportedOperationException("Abstract method.");
+      }
+
+      public long totalEntries() {
+        throw new UnsupportedOperationException("Not supported yet.");
       }
     };
   }
@@ -58,7 +67,7 @@ public class ScoreCombinationIteratorTest extends TestCase {
     ScoreCombinationIterator instance = mockIterator(anyParameters, iterators);
 
     for (int i = 0; i < 12; i++) {
-      assertEquals(scoresTogether[i], instance.score(docsTogether[i], 100));
+      assertEquals(scoresTogether[i], instance.score(new DocumentContext(docsTogether[i], 100)));
       instance.movePast(docsTogether[i]);
     }
   }
@@ -74,7 +83,7 @@ public class ScoreCombinationIteratorTest extends TestCase {
     ScoreCombinationIterator instance = mockIterator(weightParameters, iterators);
 
     for (int i = 0; i < 12; i++) {
-      assert( Math.abs(weightedScoresTogether[i] - instance.score(docsTogether[i], 100)) < 0.000001);
+      assert( Math.abs(weightedScoresTogether[i] - instance.score(new DocumentContext(docsTogether[i], 100))) < 0.000001);
       instance.movePast(docsTogether[i]);
     }
   }

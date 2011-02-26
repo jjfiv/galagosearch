@@ -5,8 +5,8 @@
 package org.galagosearch.core.scoring;
 
 import java.io.IOException;
-import org.galagosearch.core.index.PositionIndexReader;
-import org.galagosearch.core.retrieval.structured.CountIterator;
+import org.galagosearch.core.index.BoundedIterator;
+import org.galagosearch.core.retrieval.structured.CountValueIterator;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -24,32 +24,31 @@ import org.galagosearch.tupleflow.Parameters;
 @RequiredStatistics(statistics = {"documentCount"})
 public class BM25RFScorer implements ScoringFunction {
 
-    double value;
+  double value;
 
-    public BM25RFScorer(Parameters parameters, CountIterator iterator) throws IOException {
-        int rt = (int) parameters.get("rt", 0);
-        int R = (int) parameters.get("R", 0);
-        int N = (int) parameters.get("documentCount", 0);
-        double factor = parameters.get("factor", 0.33D);
-        // now get idf
-        long ft = 0;
-        if (parameters.containsKey("ft")) {
-            ft = (int) parameters.get("ft", 0);
-        } else {
-          ft = iterator.totalEntries();
-        }
-        assert(ft >= rt); // otherwise they're wrong and/or lying
-        double numerator = (rt + 0.5) / (R - rt + 0.5);
-        double denominator = (ft - rt + 0.5) / (N - ft - R + rt + 0.5);
-        value = factor * Math.log(numerator / denominator);
+  public BM25RFScorer(Parameters parameters, CountValueIterator iterator) throws IOException {
+    int rt = (int) parameters.get("rt", 0);
+    int R = (int) parameters.get("R", 0);
+    int N = (int) parameters.get("documentCount", 0);
+    double factor = parameters.get("factor", 0.33D);
+    // now get idf
+    long ft = 0;
+    if (parameters.containsKey("ft")) {
+      ft = (int) parameters.get("ft", 0);
+    } else {
+        ft = iterator.totalEntries();
     }
+    assert (ft >= rt); // otherwise they're wrong and/or lying
+    double numerator = (rt + 0.5) / (R - rt + 0.5);
+    double denominator = (ft - rt + 0.5) / (N - ft - R + rt + 0.5);
+    value = factor * Math.log(numerator / denominator);
+  }
 
-    public double score(int count, int length) {
-        return value;
-    }
+  public double score(int count, int length) {
+    return value;
+  }
 
-    public String getParameterString(){
-      return "bm25rf.value=" + value;
-    }
-
+  public String getParameterString() {
+    return "bm25rf.value=" + value;
+  }
 }

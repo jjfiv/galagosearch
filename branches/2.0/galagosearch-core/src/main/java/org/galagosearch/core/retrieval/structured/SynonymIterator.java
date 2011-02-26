@@ -10,18 +10,18 @@ import org.galagosearch.tupleflow.Parameters;
  * @author trevor
  */
 public class SynonymIterator extends ExtentDisjunctionIterator {
-    public SynonymIterator(Parameters parameters, ExtentIterator[] iterators) {
+    public SynonymIterator(Parameters parameters, ExtentValueIterator[] iterators) {
         super(iterators);
         loadExtents();
     }
 
     public void loadExtents() {
         if (iterators.size() == 0) return;
-        ExtentIterator iter = iterators.poll();
+        ExtentValueIterator iter = iterators.poll();
         document = iter.currentIdentifier();
 
         // get all the iteators that point to this intID
-        ArrayList<ExtentIterator> useable = new ArrayList<ExtentIterator>();
+        ArrayList<ExtentValueIterator> useable = new ArrayList<ExtentValueIterator>();
         while (iterators.size() > 0 && iterators.peek().currentIdentifier() == document) {
             useable.add(iterators.poll());
         }
@@ -29,7 +29,7 @@ public class SynonymIterator extends ExtentDisjunctionIterator {
 
         // make a priority queue of these ExtentArrayIterators
         PriorityQueue<ExtentArrayIterator> arrayIterators = new PriorityQueue<ExtentArrayIterator>();
-        for (ExtentIterator iterator : useable) {
+        for (ExtentValueIterator iterator : useable) {
             arrayIterators.offer(new ExtentArrayIterator(iterator.extents()));
         }
         while (arrayIterators.size() > 0) {
@@ -42,7 +42,7 @@ public class SynonymIterator extends ExtentDisjunctionIterator {
         }
 
         // put back the ones we used
-        for (ExtentIterator i : useable) {
+        for (ExtentValueIterator i : useable) {
             if (!i.isDone()) {
                 iterators.offer(i);
             }

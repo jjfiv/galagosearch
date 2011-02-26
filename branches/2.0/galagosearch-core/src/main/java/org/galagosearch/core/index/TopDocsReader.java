@@ -64,7 +64,7 @@ public class TopDocsReader extends KeyListReader {
     }
 
     @Override
-    public String getStringValue() {
+    public String getValueString() {
       ListIterator it;
       long count = -1;
       try {
@@ -78,9 +78,13 @@ public class TopDocsReader extends KeyListReader {
       else sb.append("Unknown");
       return sb.toString();
     }
+
+    public ValueIterator getValueIterator() throws IOException {
+      return new ListIterator(iterator);
+    }
   }
 
-  public class ListIterator extends KeyListReader.ListIterator implements Comparable<ListIterator> {
+  public class ListIterator extends KeyListReader.ListIterator {
 
     IndexReader.Iterator iterator;
     int options;
@@ -96,7 +100,7 @@ public class TopDocsReader extends KeyListReader {
     byte[] key;
 
     public ListIterator(GenericIndexReader.Iterator it) throws IOException {
-      super(it);
+      reset(it);
     }
 
     private void initialize() throws IOException {
@@ -110,7 +114,7 @@ public class TopDocsReader extends KeyListReader {
       long dataStart = input.getFilePointer();
       long dataEnd = endPosition;
       data = new VByteInput(new BufferedFileDataStream(input, dataStart, dataEnd));
-      nextEntry();
+      next();
     }
 
     public long totalEntries() {
@@ -133,7 +137,7 @@ public class TopDocsReader extends KeyListReader {
       return currentTopDoc;
     }
 
-    public boolean nextEntry() throws IOException {
+    public boolean next() throws IOException {
       if (!isDone()) {
         currentTopDoc = new TopDocument();
         currentTopDoc.document = lastDocument + data.readInt();
@@ -196,14 +200,6 @@ public class TopDocsReader extends KeyListReader {
       }
       return hasMatch(document);
     }
-
-    public void movePast(int document) throws IOException {
-      moveTo(document + 1);
-    }
-
-    public int compareTo(ListIterator that) {
-      return (this.currentIdentifier() - that.currentIdentifier());
-    }
   }
 
   public TopDocsReader(GenericIndexReader r) {
@@ -238,7 +234,7 @@ public class TopDocsReader extends KeyListReader {
     return new ListIterator(reader.getIterator());
   }
 
-  public StructuredIterator getIterator(Node node) throws IOException {
+  public ValueIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("topdocs")) {
       return getTopDocs(node.getParameters().get("term"));
     } else {

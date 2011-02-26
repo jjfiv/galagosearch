@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.galagosearch.core.index.GenericIndexReader.Iterator;
 import org.galagosearch.core.index.PositionIndexReader;
+import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.scoring.ScoringFunction;
 import org.galagosearch.core.util.CallTable;
 
@@ -17,43 +18,39 @@ import org.galagosearch.core.util.CallTable;
  *
  * @author irmarc
  */
-public class ScoringFunctionIterator implements ScoreIterator, ContextualIterator {
+public class ScoringFunctionIterator extends TransformIterator {
 
   boolean done;
-  CountIterator iterator;
   ScoringFunction function;
   // parameter sweep functions
   ScoringFunction[] functions;
   long total;
-  DocumentContext context;
 
-  public ScoringFunctionIterator(CountIterator iterator, ScoringFunction function) throws IOException {
-    this.iterator = iterator;
+  public ScoringFunctionIterator(CountValueIterator iterator, ScoringFunction function) throws IOException {
+    super(iterator);
     this.function = function;
     this.functions = null; // null implies that we can not perform a parameter sweep
-    total = iterator.totalEntries();
   }
 
   // if we have a set of functions -> (for parameter sweeping)
-  public ScoringFunctionIterator(CountIterator iterator, ScoringFunction[] functions) throws IOException {
+  public ScoringFunctionIterator(CountValueIterator iterator, ScoringFunction[] functions) throws IOException {
     this(iterator, functions[0]);
     this.functions = functions;
   }
 
-  public void setContext(DocumentContext dc) {
-    context = dc;
-  }
-
-  public DocumentContext getContext() {
-    return context;
-  }
-
-  public long totalCandidates() {
-      return total;
-  }
-
   public ScoringFunction getScoringFunction() {
-      return function;
+    return function;
+  }
+
+  public double score(DocumentContext dc) {
+    int count = 0;
+
+    // Used in counting # of score calls. Uncomment if you want to track that.
+    //CallTable.increment("score_req");
+    if (iterator.currentIdentifier() == dc.document) {
+      count = ((CountIterator)iterator).count();
+    }
+    return function.score(count, dc.length);
   }
 
   public double score() {
@@ -62,7 +59,7 @@ public class ScoringFunctionIterator implements ScoreIterator, ContextualIterato
     // Used in counting # of score calls. Uncomment if you want to track that.
     //CallTable.increment("score_req");
     if (iterator.currentIdentifier() == context.document) {
-      count = iterator.count();
+      count = ((CountIterator)iterator).count();
     }
     return function.score(count, context.length);
   }
@@ -75,7 +72,7 @@ public class ScoringFunctionIterator implements ScoreIterator, ContextualIterato
 
     int count = 0;
     if (iterator.currentIdentifier() == context.document) {
-      count = iterator.count();
+      count = ((CountIterator)iterator).count();
     }
     TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
     for (ScoringFunction f : functions) {
@@ -84,46 +81,11 @@ public class ScoringFunctionIterator implements ScoreIterator, ContextualIterato
     return results;
   }
 
-  public int currentIdentifier() {
-    if (isDone()) {
-      return Integer.MAX_VALUE;
-    }
-    return iterator.currentIdentifier();
-  }
-
-  public boolean isDone() {
-    return iterator.isDone();
-  }
-
-  public boolean hasMatch(int id) {
-    return !isDone() && iterator.hasMatch(id);
-  }
-
-  public void reset() throws IOException {
-    iterator.reset();
-  }
-
   public double maximumScore() {
     return Double.POSITIVE_INFINITY;
   }
 
   public double minimumScore() {
     return Double.NEGATIVE_INFINITY;
-  }
-
-  public long totalEntries() throws IOException {
-    return iterator.totalEntries();
-  }
-
-  public void next() {
-    try {
-      iterator.nextEntry();
-    } catch (IOException ioe)  {
-      throw new RuntimeException(ioe);
-    }
-  }
-
-  public String getEntry() throws IOException {
-    return iterator.getEntry();
   }
 }

@@ -2,6 +2,8 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import org.galagosearch.core.types.NumberedDocumentData;
+import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -32,7 +34,7 @@ public abstract class KeyValueReader implements StructuredIndexPartReader {
 
   public abstract Iterator getIterator() throws IOException;
 
-  public abstract class Iterator implements KeyIterator {
+  public static abstract class Iterator implements KeyIterator {
 
     protected GenericIndexReader.Iterator iterator;
     protected GenericIndexReader reader;
@@ -42,12 +44,24 @@ public abstract class KeyValueReader implements StructuredIndexPartReader {
       reset();
     }
 
-    public boolean skipToKey(byte[] key) throws IOException {
+    public boolean isDone() {
+      return iterator.isDone();
+    }
+
+    public boolean moveToKey(byte[] key) throws IOException {
       iterator.skipTo(key);
       if (Utility.compare(key, iterator.getKey()) == 0) {
         return true;
       }
       return false;
+    }
+
+    public int compareTo(KeyIterator other) {
+      try {
+        return Utility.compare(iterator.getKey(), other.getKeyBytes());
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
     }
 
     public boolean nextKey() throws IOException {
@@ -62,6 +76,10 @@ public abstract class KeyValueReader implements StructuredIndexPartReader {
       return iterator.getValueBytes();
     }
 
+    public DataStream getValueStream() throws IOException {
+      return iterator.getValueStream();
+    }
+
     public byte[] getKeyBytes() {
       return iterator.getKey();
     }
@@ -70,23 +88,6 @@ public abstract class KeyValueReader implements StructuredIndexPartReader {
       return Utility.toString(iterator.getKey());
     }
 
-    public abstract String getStringValue();
-
-    // These REALLY need to be implemented one level down
-    public int getIntValue() throws IOException {
-      throw new UnsupportedOperationException();
-    }
-
-    public long getLongValue() throws IOException  {
-      throw new UnsupportedOperationException();
-    }
-
-    public float getFloatValue() throws IOException  {
-      throw new UnsupportedOperationException();
-    }
-
-    public double getDoubleValue() throws IOException  {
-      throw new UnsupportedOperationException();
-    }
+    public abstract String getValueString();
   }
 }

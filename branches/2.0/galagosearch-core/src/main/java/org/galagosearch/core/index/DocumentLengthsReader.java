@@ -33,8 +33,8 @@ public class DocumentLengthsReader extends KeyValueReader {
     return Utility.uncompressInt(reader.getValueBytes(Utility.fromInt(document)), 0);
   }
 
-  public Iterator getIterator() throws IOException {
-    return new Iterator(reader);
+  public KeyIterator getIterator() throws IOException {
+    return new KeyIterator(reader);
   }
 
   public Map<String, NodeType> getNodeTypes() {
@@ -43,22 +43,22 @@ public class DocumentLengthsReader extends KeyValueReader {
     return types;
   }
 
-  public KeyIterator getIterator(Node node) throws IOException {
+  public ValueIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("lengths")) {
-      return new Iterator(reader);
+      return new ValueIterator(new KeyIterator(reader));
     } else {
       throw new UnsupportedOperationException(
               "Index doesn't support operator: " + node.getOperator());
     }
   }
 
-  public class Iterator extends KeyValueReader.Iterator {
+  public class KeyIterator extends NumberedDocumentDataIterator {
 
-    public Iterator(GenericIndexReader reader) throws IOException {
+    public KeyIterator(GenericIndexReader reader) throws IOException {
       super(reader);
     }
 
-    public String getStringValue() {
+    public String getValueString() {
       try {
         StringBuilder sb = new StringBuilder();
         sb.append(Utility.toInt(iterator.getKey())).append(",");
@@ -69,17 +69,8 @@ public class DocumentLengthsReader extends KeyValueReader {
       }
     }
 
-    public void skipToKey(int key) throws IOException {
-      byte[] bkey = Utility.fromInt(key);
-      iterator.skipTo(bkey);
-    }
-
-    public int getIntValue() throws IOException {
-      return (Utility.uncompressInt(iterator.getValueBytes(), 0));
-    }
-
-    public long getLongValue() throws IOException {
-      return ((long) getIntValue());
+    public boolean moveToKey(int key) throws IOException {
+      return moveToKey(Utility.fromInt(key));
     }
 
     public int getCurrentDocument() {
@@ -88,6 +79,31 @@ public class DocumentLengthsReader extends KeyValueReader {
 
     public boolean isDone() {
       return iterator.isDone();
+    }
+
+    public NumberedDocumentData getDocumentData() throws IOException {
+      NumberedDocumentData ndd = 
+              new NumberedDocumentData("","",Utility.toInt(iterator.getKey()),Utility.toInt(iterator.getValueBytes()));
+      return ndd;
+    }
+
+    public ValueIterator getValueIterator() throws IOException {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+  }
+
+  public class ValueIterator extends KeyToListIterator {
+
+    public ValueIterator(KeyIterator it) {
+      super(it);
+    }
+
+    public String getEntry() throws IOException {
+      return Integer.toString(((KeyIterator) iterator).getCurrentDocument());
+    }
+
+    public long totalEntries() {
+      throw new UnsupportedOperationException("Not supported yet.");
     }
   }
 }

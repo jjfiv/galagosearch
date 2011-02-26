@@ -16,17 +16,19 @@ import org.galagosearch.core.index.ValueIterator;
  *
  * @author trevor, irmarc
  */
-public interface ScoreIterator extends StructuredIterator {
-
-  public int currentIdentifier();
-
-  public void next();
+public interface ScoreIterator extends ContextualIterator {
 
   /**
-   * Produce a score for the current candidate
+   * Produce a score for the iterator's current candidate given the implicit
+   * context.
    * @return
    */
   public double score();
+
+  /**
+   * Score this iterator's current candidate relative to the provided context.
+   */
+  public double score(DocumentContext context);
 
   /**
    * Estimate the maximum possible score to be produced by this iterator.

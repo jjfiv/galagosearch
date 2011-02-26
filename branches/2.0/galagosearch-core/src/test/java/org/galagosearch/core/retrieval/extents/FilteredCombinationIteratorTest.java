@@ -4,6 +4,7 @@ package org.galagosearch.core.retrieval.extents;
 
 import java.io.IOException;
 import junit.framework.TestCase;
+import org.galagosearch.core.retrieval.structured.DocumentContext;
 import org.galagosearch.core.retrieval.structured.ScoreCombinationIterator;
 import org.galagosearch.core.retrieval.structured.FilteredCombinationIterator;
 import org.galagosearch.tupleflow.Parameters;
@@ -33,9 +34,9 @@ public class FilteredCombinationIteratorTest extends TestCase {
         ScoreCombinationIterator instance = new FilteredCombinationIterator(filterParameters,
                                                                             iterators);
 
-        assertEquals(5, instance.identifier());
+        assertEquals(5, instance.currentIdentifier());
         instance.movePast(10);
-        assertEquals(15, instance.identifier());
+        assertEquals(15, instance.currentIdentifier());
     }
 
     public void testHasMatch() throws IOException {
@@ -68,7 +69,7 @@ public class FilteredCombinationIteratorTest extends TestCase {
             assertFalse(instance.isDone());
             instance.moveTo(docsTogether[i]);
             assertTrue(instance.hasMatch(docsTogether[i]));
-            assertEquals(scoresTogether[i], instance.score(docsTogether[i], 100));
+            assertEquals(scoresTogether[i], instance.score(new DocumentContext(docsTogether[i], 100)));
 
             instance.movePast(docsTogether[i]);
         }
@@ -85,7 +86,7 @@ public class FilteredCombinationIteratorTest extends TestCase {
         ScoreCombinationIterator instance = new FilteredCombinationIterator(anyParameters, iterators);
 
         instance.movePast(5);
-        assertEquals(10, instance.identifier());
+        assertEquals(10, instance.currentIdentifier());
     }
 
     public void testMoveTo() throws Exception {
@@ -97,6 +98,6 @@ public class FilteredCombinationIteratorTest extends TestCase {
         ScoreCombinationIterator instance = new FilteredCombinationIterator(anyParameters, iterators);
 
         instance.moveTo(5);
-        assertEquals(6, instance.identifier());
+        assertEquals(6, instance.currentIdentifier());
     }
 }

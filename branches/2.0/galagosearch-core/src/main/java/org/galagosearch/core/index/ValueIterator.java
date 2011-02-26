@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.galagosearch.core.index;
 
 import java.io.IOException;
@@ -11,17 +7,15 @@ import org.galagosearch.core.retrieval.structured.StructuredIterator;
  *
  * @author irmarc
  */
-public interface ValueIterator extends StructuredIterator {
-
-  long totalEntries();
+public interface ValueIterator extends BoundedIterator, Comparable<ValueIterator> {
 
   int currentIdentifier();
 
-  boolean hasMatch(int id);
+  boolean hasMatch(int identifier);
 
-  boolean nextEntry() throws IOException;
+  boolean next() throws IOException;
 
-  // This is for display purposes - otherwise we wouldn't even
-  // try to determine the data type of the entry
-  String getEntry() throws IOException;
+  boolean moveTo(int identifier) throws IOException;
+
+  void movePast(int identifier) throws IOException;
 }

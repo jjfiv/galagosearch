@@ -17,11 +17,11 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor, sjh, irmarc
  */
-public abstract class ScoreCombinationIterator implements ScoreIterator {
+public abstract class ScoreCombinationIterator implements ScoreValueIterator {
 
   double[] weights;
   double weightSum;
-  ScoreIterator[] iterators;
+  ScoreValueIterator[] iterators;
   boolean done;
   // parameter sweep stuff
   double[][] weightLists = null; // double[parameterID][nodeID]
@@ -29,7 +29,7 @@ public abstract class ScoreCombinationIterator implements ScoreIterator {
   String[] parameterStrings = null; // String[parameterID]
 
   public ScoreCombinationIterator(Parameters parameters,
-          ScoreIterator[] childIterators) {
+          ScoreValueIterator[] childIterators) {
 
     weights = new double[childIterators.length];
     weightSum = 0.0;
@@ -67,14 +67,38 @@ public abstract class ScoreCombinationIterator implements ScoreIterator {
     this.iterators = childIterators;
   }
 
-  public abstract int currentIdentifier();
-
-  public abstract boolean isDone();
-
-  public void next() {
+  public void setContext(DocumentContext context) {
     for (ScoreIterator iterator : iterators) {
-      iterator.next();
+      iterator.setContext(context);
     }
+  }
+
+  public DocumentContext getContext() {
+    return iterators[0].getContext();
+  }
+
+  public int compareTo(ValueIterator other) {
+    if (isDone() && !other.isDone()) {
+      return 1;
+    }
+    if (other.isDone() && !isDone()) {
+      return -1;
+    }
+    if (isDone() && other.isDone()) {
+      return 0;
+    }
+    return currentIdentifier() - other.currentIdentifier();
+  }
+
+  public boolean moveTo(int identifier) throws IOException {
+    for (ValueIterator iterator : iterators) {
+      iterator.moveTo(identifier);
+    }
+    return hasMatch(identifier);
+  }
+
+  public void movePast(int identifier) throws IOException {
+    moveTo(identifier+1);
   }
 
   public double score() {
@@ -87,10 +111,24 @@ public abstract class ScoreCombinationIterator implements ScoreIterator {
     return total / weightSum;
   }
 
+  public double score(DocumentContext dc) {
+    double total = 0;
+
+    for (int i = 0; i < iterators.length; i++) {
+      double score = iterators[i].score(dc);
+      total += weights[i] * score;
+    }
+    return total / weightSum;
+  }
+
   public void reset() throws IOException {
     for (StructuredIterator iterator : iterators) {
       iterator.reset();
     }
+  }
+
+  public boolean hasMatch(int identifier) {
+    return (currentIdentifier() == identifier);
   }
 
   public double minimumScore() {

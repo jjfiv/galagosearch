@@ -11,57 +11,63 @@ import org.galagosearch.tupleflow.Utility;
  * @author trevor
  */
 public class OrderedWindowIterator extends ExtentConjunctionIterator {
-    int width;
 
-    /** Creates a new instance of UnorderedWindowIterator */
-    public OrderedWindowIterator(Parameters parameters, ExtentIterator[] iterators) throws IOException {
-        super(iterators);
-        this.width = (int) parameters.getAsDefault("width", -1);
-        findDocument();
+  int width;
+
+  /** Creates a new instance of OrderedWindowIterator */
+  public OrderedWindowIterator(Parameters parameters, ExtentValueIterator[] iterators) throws IOException {
+    super(iterators);
+    this.width = (int) parameters.getAsDefault("width", -1);
+    lineUpIterators();
+  }
+
+  public void loadExtents() {
+    System.err.printf("OD loadExtents");
+    int i;
+    ExtentArrayIterator[] arrayIterators;
+
+    i = 0;
+    arrayIterators = new ExtentArrayIterator[iterators.size()];
+    for (ExtentValueIterator iterator : iterators) {
+      arrayIterators[i] = new ExtentArrayIterator(iterator.extents());
+      i++;
     }
+    boolean notDone = true;
+    while (notDone) {
+      // find the start of the first word
+      boolean invalid = false;
+      int begin = arrayIterators[0].current().begin;
 
-    public void loadExtents() {
-        ExtentArrayIterator[] iterators;
+      // loop over all the rest of the words
+      for (i = 1; i < arrayIterators.length; i++) {
+        int end = arrayIterators[i - 1].current().end;
 
-        iterators = new ExtentArrayIterator[extentIterators.length];
-        for (int i = 0; i < extentIterators.length; i++) {
-            iterators[i] = new ExtentArrayIterator(
-                    extentIterators[i].extents());
+        // try to move this iterator so that it's past the end of the previous word
+        assert(arrayIterators[i] != null);
+        assert(arrayIterators[i].current() != null);
+        while (end > arrayIterators[i].current().begin) {
+          notDone = arrayIterators[i].next();
+
+          // if there are no more occurrences of this word,
+          // no more ordered windows are possible
+          if (!notDone) {
+            return;
+          }
         }
-        boolean notDone = true;
-        while (notDone) {
-            // find the start of the first word
-            boolean invalid = false;
-            int begin = iterators[0].current().begin;
 
-            // loop over all the rest of the words
-            for (int i = 1; i < iterators.length; i++) {
-                int end = iterators[i - 1].current().end;
-
-                // try to move this iterator so that it's past the end of the previous word
-                while (end > iterators[i].current().begin) {
-                    notDone = iterators[i].next();
-
-                    // if there are no more occurrences of this word,
-                    // no more ordered windows are possible
-                    if (!notDone) {
-                        return;
-                    }
-                }
-
-                if (iterators[i].current().begin - end >= width) {
-                    invalid = true;
-                    break;
-                }
-            }
-
-            int end = iterators[iterators.length - 1].current().end;
-
-            // if it's a match, record it
-            if (!invalid) {
-                extents.add(document, begin, end);
-            }
-            notDone = iterators[0].next();
+        if (arrayIterators[i].current().begin - end >= width) {
+          invalid = true;
+          break;
         }
+      }
+
+      int end = arrayIterators[arrayIterators.length - 1].current().end;
+
+      // if it's a match, record it
+      if (!invalid) {
+        extents.add(document, begin, end);
+      }
+      notDone = arrayIterators[0].next();
     }
+  }
 }

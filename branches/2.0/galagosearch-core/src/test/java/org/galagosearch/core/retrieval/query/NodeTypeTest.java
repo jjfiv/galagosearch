@@ -44,6 +44,10 @@ public class NodeTypeTest extends TestCase {
 
         public void reset() throws IOException {
         }
+
+        public boolean isDone() {
+          return true;
+        }
     }
     
     public void testGetInputs() throws Exception {

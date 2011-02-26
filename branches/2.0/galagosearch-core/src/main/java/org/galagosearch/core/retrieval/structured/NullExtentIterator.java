@@ -2,15 +2,22 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
+import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.util.ExtentArray;
 
 /**
  *
  * @author trevor
+ * @author irmarc
  */
-public class NullExtentIterator implements ExtentIterator {
+public class NullExtentIterator implements ExtentValueIterator, CountValueIterator {
 
   ExtentArray array = new ExtentArray();
+
+  public boolean next() {
+    // do nothing
+    return false;
+  }
 
   public boolean nextEntry() {
     return false;
@@ -22,10 +29,6 @@ public class NullExtentIterator implements ExtentIterator {
 
   public ExtentArray extents() {
     return array;
-  }
-
-  public int identifier() {
-    return Integer.MAX_VALUE;
   }
 
   public int count() {
@@ -54,5 +57,16 @@ public class NullExtentIterator implements ExtentIterator {
 
   public String getEntry() throws IOException {
     return "NULL";
+  }
+
+  public boolean moveTo(int identifier) throws IOException {
+    return false;
+  }
+
+  public void movePast(int identifier) throws IOException {
+  }
+
+  public int compareTo(ValueIterator t) {
+    return 1;
   }
 }

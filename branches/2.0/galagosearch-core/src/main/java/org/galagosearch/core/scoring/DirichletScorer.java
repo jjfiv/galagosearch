@@ -3,7 +3,7 @@ package org.galagosearch.core.scoring;
 
 import java.io.IOException;
 import org.galagosearch.core.index.PositionIndexReader;
-import org.galagosearch.core.retrieval.structured.CountIterator;
+import org.galagosearch.core.retrieval.structured.CountValueIterator;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -17,7 +17,7 @@ public class DirichletScorer implements ScoringFunction {
     double background;
     double mu;
 
-    public DirichletScorer(Parameters parameters, CountIterator iterator) throws IOException {
+    public DirichletScorer(Parameters parameters, CountValueIterator iterator) throws IOException {
 
         mu = parameters.get("mu", 1500);
         if (parameters.containsKey("collectionProbability")) {
@@ -26,12 +26,12 @@ public class DirichletScorer implements ScoringFunction {
             long collectionLength = parameters.get("collectionLength", (long) 0);
             long count = 0;
 
-            if (iterator instanceof PositionIndexReader.AggregateIterator) {
+            if (PositionIndexReader.AggregateIterator.class.isInstance(iterator)) {
                 count = ((PositionIndexReader.AggregateIterator) iterator).totalPositions();
             } else {
                 while (!iterator.isDone()) {
                     count += iterator.count();
-                    iterator.nextEntry();
+                    iterator.next();
                 }
             }
             if (count > 0) {

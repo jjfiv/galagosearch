@@ -10,13 +10,10 @@ import org.galagosearch.core.index.DocumentNameReader;
 import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
-import org.galagosearch.core.pagerank.program.PageRankApp;
 import org.galagosearch.core.parse.Document;
-import org.galagosearch.core.index.IndexReader;
-import org.galagosearch.core.mergeindex.parallel.MergeParallelIndexShards;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
-import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
+import org.galagosearch.core.index.NumberedDocumentDataIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
 import org.galagosearch.tupleflow.FileOrderedReader;
@@ -335,9 +332,9 @@ public class App {
     String key = args[2];
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
     KeyIterator iterator = reader.getIterator();
-    if (iterator.skipToKey(Utility.fromString(key))) {
+    if (iterator.moveToKey(Utility.fromString(key))) {
       do {
-        output.println(iterator.getStringValue());
+        output.println(iterator.getValueString());
       } while (iterator.nextKey() && iterator.getKey().equals(key));
     }
   }
@@ -351,7 +348,7 @@ public class App {
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
     KeyIterator iterator = reader.getIterator();
     do {
-      output.println(iterator.getStringValue());
+      output.println(iterator.getValueString());
     } while (iterator.nextKey());
   }
 
@@ -429,7 +426,7 @@ public class App {
     DocumentLengthsReader reader = new DocumentLengthsReader(args[1]);
     NumberedDocumentDataIterator iterator = reader.getIterator();
     do {
-      output.println(iterator.getStringValue());
+      output.println(iterator.getValueString());
     } while (iterator.nextKey());
   }
 
@@ -440,9 +437,9 @@ public class App {
     }
 
     DocumentNameReader reader = new DocumentNameReader(args[1]);
-    NumberedDocumentDataIterator iterator = reader.getNumberOrderIterator();
+    NumberedDocumentDataIterator iterator = reader.getIterator();
     do {
-      output.println(iterator.getStringValue());
+      output.println(iterator.getValueString());
     } while (iterator.nextKey());
   }
 
@@ -493,6 +490,7 @@ public class App {
     }
   }
 
+  /*
   private void handleMergeIndexes(String[] args) throws Exception {
     // Remove 'merge-index' from the command.
     args = Utility.subarray(args, 1);
@@ -541,6 +539,7 @@ public class App {
       output.println(store.toString());
     }
   }
+  */
 
   private void handleNgram(String[] args) throws Exception {
     if (args.length < 3) { // ngram index input
@@ -707,7 +706,7 @@ public class App {
     } else if (command.startsWith("ngram")) {
       commandHelpNgram();
     } else if (command.startsWith("pagerank")) {
-      PageRankApp.commandHelpPageRank();
+      //PageRankApp.commandHelpPageRank();
     } else if (command.startsWith("build-topdocs")) {
       output.println("galago build-topdocs <index> <part> <size> <minlength>");
       output.println();
@@ -893,13 +892,15 @@ public class App {
     } else if (command.equals("make-corpus")) {
       handleMakeCorpus(args);
     } else if (command.equals("merge-index")) {
-      handleMergeIndexes(args);
+      throw new UnsupportedOperationException("Need to re-implement");
+      //handleMergeIndexes(args);
     } else if (command.equals("ngram")) {
       handleNgram(args);
     } else if (command.equals("ngram-se")) {
       handleNgram(args);
     } else if (command.equals("pagerank")) {
-      PageRankApp.main(args);
+      throw new UnsupportedOperationException("Need to re-implement");
+      //PageRankApp.main(args);
     } else if (command.equals("parameter-sweep")) {
       handleParameterSweep(args);
     } else if (command.equals("search")) {

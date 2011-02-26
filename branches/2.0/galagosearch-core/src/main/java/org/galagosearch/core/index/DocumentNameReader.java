@@ -58,8 +58,8 @@ public class DocumentNameReader extends KeyValueReader {
     }
   }
 
-  public Iterator getIterator() throws IOException {
-    return new Iterator(reader, isForward);
+  public KeyIterator getIterator() throws IOException {
+    return new KeyIterator(reader, isForward);
   }
 
   public Map<String, NodeType> getNodeTypes() {
@@ -68,53 +68,113 @@ public class DocumentNameReader extends KeyValueReader {
     return types;
   }
 
-  public KeyIterator getIterator(Node node) throws IOException {
+  public ValueIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("names")) {
-      return new Iterator(reader, isForward);
+      return new ValueIterator(new KeyIterator(reader, isForward));
     } else {
       throw new UnsupportedOperationException(
               "Index doesn't support operator: " + node.getOperator());
     }
   }
 
-  public class Iterator extends KeyValueReader.Iterator {
+  public class KeyIterator extends NumberedDocumentDataIterator {
 
     boolean forwardLookup;
     GenericIndexReader input;
     GenericIndexReader.Iterator iterator;
-    KeyValuePair current;
 
-    public Iterator(GenericIndexReader input, boolean forwardLookup) throws IOException {
+    public KeyIterator(GenericIndexReader input, boolean forwardLookup) throws IOException {
       super(input);
       this.forwardLookup = forwardLookup;
     }
 
-    public String getStringValue() {
+    public boolean isForward() {
+      return forwardLookup;
+    }
+
+    public boolean moveToKey(int identifier) throws IOException {
       if (forwardLookup) {
-        return Utility.toInt(current.key) + ", " + Utility.toString(current.value);
+        return moveToKey(Utility.fromInt(identifier));
       } else {
-        return Utility.toInt(current.value) + ", " + Utility.toString(current.key);
+        throw new UnsupportedOperationException("Direction is wrong.");
+      }
+    }
+
+    public boolean moveToKey(String name) throws IOException {
+      if (forwardLookup) {
+        throw new UnsupportedOperationException("Direction is wrong.");
+      } else {
+        return moveToKey(Utility.fromString(name));
+      }
+    }
+
+    public String getCurrentName() throws IOException {
+      if (forwardLookup) {
+        return Utility.toString(getValueBytes());
+      } else {
+        return Utility.toString(getKeyBytes());
+      }
+    }
+
+    public int getCurrentIdentifier() throws IOException {
+      if (!forwardLookup) {
+        return Utility.toInt(getValueBytes());
+      } else {
+        return Utility.toInt(getKeyBytes());
+      }
+    }
+
+    public String getValueString() {
+      try {
+        byte[] key = getKeyBytes();
+        byte[] value = getValueBytes();
+        if (forwardLookup) {
+          return Utility.toInt(key) + ", " + Utility.toString(value);
+        } else {
+          return Utility.toInt(value) + ", " + Utility.toString(key);
+        }
+      } catch (IOException ioe) {
+        return "Unknown";
       }
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {
+      byte[] key = getKeyBytes();
+      byte[] value = getValueBytes();
+
       if (forwardLookup) {
-        return new NumberedDocumentData(Utility.toString(current.value), "", Utility.toInt(current.key), 0);
+        return new NumberedDocumentData(Utility.toString(value), "", Utility.toInt(key), 0);
       } else {
-        return new NumberedDocumentData(Utility.toString(current.key), "", Utility.toInt(current.value), 0);
+        return new NumberedDocumentData(Utility.toString(key), "", Utility.toInt(value), 0);
       }
     }
 
     public String getKey() {
       if (forwardLookup) {
-        return Integer.toString(Utility.toInt(current.key));
+        return Integer.toString(Utility.toInt(getKeyBytes()));
       } else {
-        return Utility.toString(current.key);
+        return Utility.toString(getKeyBytes());
       }
     }
 
-    public boolean isDone() {
-      return iterator.isDone();
+    public ValueIterator getValueIterator() throws IOException {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+  }
+
+  public class ValueIterator extends KeyToListIterator {
+
+    public ValueIterator(KeyIterator ki) {
+      super(ki);
+    }
+
+    public String getEntry() throws IOException {
+      KeyIterator ki = (KeyIterator) iterator;
+      return ki.getValueString();
+    }
+
+    public long totalEntries() {
+      throw new UnsupportedOperationException("Not supported yet.");
     }
   }
 }

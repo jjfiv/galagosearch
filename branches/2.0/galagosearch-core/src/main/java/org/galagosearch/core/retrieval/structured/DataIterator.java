@@ -11,6 +11,6 @@ import org.galagosearch.core.index.ValueIterator;
  *
  * @author irmarc
  */
-public interface DataIterator<T> extends ValueIterator {
+public interface DataIterator<T> extends StructuredIterator {
   public T getData();
 }

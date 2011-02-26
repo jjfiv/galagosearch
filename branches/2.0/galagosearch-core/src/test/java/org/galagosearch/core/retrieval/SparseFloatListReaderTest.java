@@ -12,10 +12,11 @@ import org.galagosearch.core.index.SparseFloatListWriter;
 import org.galagosearch.tupleflow.FakeParameters;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.TupleFlowParameters;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import junit.framework.TestCase;
+import org.galagosearch.core.retrieval.structured.DocumentContext;
+import org.galagosearch.core.retrieval.structured.ScoreValueIterator;
 
 /**
  *
@@ -68,13 +69,15 @@ public class SparseFloatListReaderTest extends TestCase {
 
     public void testA() throws Exception {
         SparseFloatListReader instance = new SparseFloatListReader(tempPath.toString());
-        SparseFloatListReader.Iterator iter = instance.getScores("a");
+        SparseFloatListReader.ListIterator iter = instance.getScores("a");
         assertFalse(iter.isDone());
-        int i = 0;
-
+        int i;
+        DocumentContext context = new DocumentContext();
+        iter.setContext(context);
         for (i = 0; !iter.isDone(); i++) {
-            assertEquals(aDocs[i], iter.currentCandidate());
-            iter.setScoringContext(aDocs[i], 100);
+            assertEquals(aDocs[i], iter.currentIdentifier());
+            context.document = aDocs[i];
+            context.length = 100;
             assertEquals(aScores[i], iter.score(), 0.0001);
             assertTrue(iter.hasMatch(aDocs[i]));
 
@@ -87,14 +90,14 @@ public class SparseFloatListReaderTest extends TestCase {
 
     public void testB() throws Exception {
         SparseFloatListReader instance = new SparseFloatListReader(tempPath.toString());
-        SparseFloatListReader.Iterator iter = instance.getScores("b");
+        SparseFloatListReader.ListIterator iter = instance.getScores("b");
         int i;
 
         assertFalse(iter.isDone());
 
         for (i = 0; !iter.isDone(); i++) {
-            assertEquals(bDocs[i], iter.currentCandidate());
-            assertEquals(bScores[i], iter.score(bDocs[i], 100), 0.0001);
+            assertEquals(bDocs[i], iter.currentIdentifier());
+            assertEquals(bScores[i], iter.score(new DocumentContext(bDocs[i], 100)), 0.0001);
             assertTrue(iter.hasMatch(bDocs[i]));
 
             iter.movePast(bDocs[i]);
@@ -112,28 +115,32 @@ public class SparseFloatListReaderTest extends TestCase {
         assertEquals(term, "a");
         assertFalse(iter.isDone());
 
-        for (int i = 0; !iter.isDone(); i++) {
-            assertEquals(iter.currentCandidate(), aDocs[i]);
-            iter.setScoringContext(aDocs[i], 100);
-            assertEquals(iter.score(), aScores[i], 0.0001);
-            assertTrue(iter.hasMatch(aDocs[i]));
+        ScoreValueIterator lIter = (ScoreValueIterator) iter.getValueIterator();
+        DocumentContext context = new DocumentContext();
+        lIter.setContext(context);
+        for (int i = 0; !lIter.isDone(); i++) {
+            assertEquals(lIter.currentIdentifier(), aDocs[i]);
+            context.document = aDocs[i];
+            context.length = 100;
+            assertEquals(lIter.score(), aScores[i], 0.0001);
+            assertTrue(lIter.hasMatch(aDocs[i]));
 
-            iter.movePast(aDocs[i]);
+            lIter.movePast(aDocs[i]);
         }
 
-        assertTrue(iter.nextEntry());
+        assertTrue(iter.nextKey());
         term = iter.getKey();
         assertEquals(term, "b");
         assertFalse(iter.isDone());
+        lIter = (ScoreValueIterator) iter.getValueIterator();
+        for (int i = 0; !lIter.isDone(); i++) {
+            assertEquals(lIter.currentIdentifier(), bDocs[i]);
+            assertEquals(lIter.score(new DocumentContext(bDocs[i], 100)), bScores[i], 0.0001);
+            assertTrue(lIter.hasMatch(bDocs[i]));
 
-        for (int i = 0; !iter.isDone(); i++) {
-            assertEquals(iter.currentCandidate(), bDocs[i]);
-            assertEquals(iter.score(bDocs[i], 100), bScores[i], 0.0001);
-            assertTrue(iter.hasMatch(bDocs[i]));
-
-            iter.movePast(bDocs[i]);
+            lIter.movePast(bDocs[i]);
         }
-
-        assertFalse(iter.nextEntry());
+        assertFalse(lIter.next());
+        assertFalse(iter.nextKey());
     }
 }

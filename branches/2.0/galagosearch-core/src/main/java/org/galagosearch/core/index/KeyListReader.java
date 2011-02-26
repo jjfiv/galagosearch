@@ -13,25 +13,15 @@ import org.galagosearch.tupleflow.Utility;
  *
  * @author irmarc
  */
-public abstract class KeyListReader implements StructuredIndexPartReader {
-
-  protected GenericIndexReader reader;
+public abstract class KeyListReader extends KeyValueReader {
 
   public KeyListReader(String filename) throws FileNotFoundException, IOException {
-    reader = GenericIndexReader.getIndexReader(filename);
+    super(filename);
   }
 
   public KeyListReader(GenericIndexReader r) {
-    this.reader = r;
+    super(r);
   }
-
-  public void close() throws IOException {
-    reader.close();
-  }
-
-  public abstract Iterator getIterator() throws IOException;
-
-  public abstract ListIterator getListIterator() throws IOException;
 
   public abstract class ListIterator implements ValueIterator {
 
@@ -40,9 +30,19 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
     protected byte[] key;
     protected long dataLength;
 
-    public ListIterator(GenericIndexReader.Iterator it) throws IOException {
-      // implementation of this should load data
-      reset(it);
+    public abstract String getEntry();
+
+    public int compareTo(ValueIterator other) {
+      if (isDone() && !other.isDone()) {
+        return 1;
+      }
+      if (other.isDone() && !isDone()) {
+        return -1;
+      }
+      if (isDone() && other.isDone()) {
+        return 0;
+      }
+      return currentIdentifier() - other.currentIdentifier();
     }
 
     public long getByteLength() throws IOException {
@@ -68,51 +68,5 @@ public abstract class KeyListReader implements StructuredIndexPartReader {
     public abstract boolean moveTo(int id) throws IOException;
 
     public abstract void reset(GenericIndexReader.Iterator it) throws IOException;
-
-  }
-
-  public abstract class Iterator implements KeyIterator {
-
-    protected GenericIndexReader.Iterator iterator;
-    protected GenericIndexReader reader;
-
-    public Iterator(GenericIndexReader reader) throws IOException {
-      this.reader = reader;
-      reset();
-    }
-
-    public boolean isDone() {
-      return iterator.isDone();
-    }
-
-    public boolean skipToKey(byte[] key) throws IOException {
-      iterator.skipTo(key);
-      if (Utility.compare(key, iterator.getKey()) == 0) {
-        return true;
-      }
-      return false;
-    }
-
-    public boolean nextKey() throws IOException {
-      return (iterator.nextKey());
-    }
-
-    public void reset() throws IOException {
-      iterator = reader.getIterator();
-    }
-
-    public byte[] getValueBytes() throws IOException {
-      return iterator.getValueBytes();
-    }
-
-    public byte[] getKeyBytes() {
-      return iterator.getKey();
-    }
-
-    public String getKey() {
-      return Utility.toString(iterator.getKey());
-    }
-
-    public abstract String getStringValue();
   }
 }

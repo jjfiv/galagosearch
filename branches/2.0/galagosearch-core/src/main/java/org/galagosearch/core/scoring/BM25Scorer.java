@@ -5,8 +5,7 @@
 package org.galagosearch.core.scoring;
 
 import java.io.IOException;
-import org.galagosearch.core.index.PositionIndexReader;
-import org.galagosearch.core.retrieval.structured.CountIterator;
+import org.galagosearch.core.retrieval.structured.CountValueIterator;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -22,7 +21,7 @@ public class BM25Scorer implements ScoringFunction {
     double avgDocLength;
     double idf;
 
-    public BM25Scorer(Parameters parameters, CountIterator iterator) throws IOException {
+    public BM25Scorer(Parameters parameters, CountValueIterator iterator) throws IOException {
         b = parameters.get("b", 0.75D);
         k = parameters.get("k", 1.2D);
 
@@ -35,7 +34,7 @@ public class BM25Scorer implements ScoringFunction {
         if (parameters.containsKey("df")) {
             df = parameters.get("df", 0L);
         } else {
-          df = iterator.totalEntries();
+            df = iterator.totalEntries();
         }
         idf = Math.log((documentCount - df + 0.5) / (df + 0.5));
     }

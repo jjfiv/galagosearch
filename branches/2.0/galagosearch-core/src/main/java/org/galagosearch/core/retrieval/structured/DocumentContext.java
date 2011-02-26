@@ -6,7 +6,13 @@ package org.galagosearch.core.retrieval.structured;
  * @author irmarc
  */
 public class DocumentContext {
+
+  public DocumentContext() {}
+
+  public DocumentContext(int d, int l) {
+    document = d; length = l;
+  }
+
   public int document;
-  public int lastScored;
   public int length;
 }

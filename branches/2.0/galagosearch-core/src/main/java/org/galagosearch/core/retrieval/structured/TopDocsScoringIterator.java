@@ -25,16 +25,15 @@ import org.galagosearch.tupleflow.Parameters;
  * @author irmarc
  */
 @RequiredStatistics(statistics = {"term"})
-public class TopDocsScoringIterator implements ScoreIterator {
+public class TopDocsScoringIterator extends TransformIterator {
 
   static TopDocsReader reader = null;
-  ScoringFunctionIterator mainIterator;
-  TopDocsReader.Iterator tdIterator;
+  TopDocsReader.ListIterator tdIterator;
   ScoringFunction function;
   double maxscore;
 
   public TopDocsScoringIterator(Parameters p, ScoringFunctionIterator sfi) {
-    mainIterator = sfi;
+    super(sfi);
     function = sfi.getScoringFunction();
     maxscore = sfi.maximumScore();
     tdIterator = null;
@@ -57,7 +56,7 @@ public class TopDocsScoringIterator implements ScoreIterator {
     }
   }
 
-  public TopDocsReader.Iterator getTopDocs() {
+  public TopDocsReader.ListIterator getTopDocs() {
     return tdIterator;
   }
 
@@ -72,7 +71,7 @@ public class TopDocsScoringIterator implements ScoreIterator {
   }
 
   public double minimumScore() {
-    return mainIterator.minimumScore();
+    return ((ScoringFunctionIterator)iterator).minimumScore();
   }
 
   public void setMaximumScore(double newmax) {
@@ -86,47 +85,12 @@ public class TopDocsScoringIterator implements ScoreIterator {
   }
 
   @Override
-  public long totalEntries() {
-      return mainIterator.totalEntries();
-  }
-
-  @Override
-  public boolean isDone() {
-    return mainIterator.isDone();
-  }
-
-  @Override
-  public int intID() {
-    return mainIterator.intID();
-  }
-
-  @Override
-  public boolean hasMatch(int document) {
-    return mainIterator.hasMatch(document);
-  }
-
-  @Override
-  public boolean moveTo(int document) throws IOException {
-    return mainIterator.moveTo(document);
-  }
-
-  @Override
-  public void movePast(int document) throws IOException {
-    mainIterator.movePast(document);
-  }
-
-  @Override
-  public void reset() throws IOException {
-    mainIterator.reset();
-  }
-
-  @Override
   public double score() {
-    return mainIterator.score();
+    return ((ScoringFunctionIterator)iterator).score();
   }
 
-  public double score(int document, int length) {
-    return mainIterator.score(document, length);
+  public double score(DocumentContext dc) {
+    return ((ScoringFunctionIterator)iterator).score(dc);
   }
 
   public ScoringFunction getScoringFunction() {
@@ -134,6 +98,6 @@ public class TopDocsScoringIterator implements ScoreIterator {
   }
 
   public TObjectDoubleHashMap<String> parameterSweepScore() {
-    return mainIterator.parameterSweepScore();
+    return ((ScoringFunctionIterator)iterator).parameterSweepScore();
   }
 }

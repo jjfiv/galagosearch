@@ -73,7 +73,7 @@ public class ExtentIndexReaderTest extends TestCase {
 
     public void testReadTitle() throws Exception {
         ExtentIndexReader reader = new ExtentIndexReader(new IndexReader(tempPath.toString()));
-        ExtentIndexReader.Iterator extents = reader.getExtents("title");
+        ExtentIndexReader.ListIterator extents = reader.getExtents("title");
 
         assertFalse(extents.isDone());
 
@@ -82,7 +82,7 @@ public class ExtentIndexReaderTest extends TestCase {
         ExtentArrayIterator iter = new ExtentArrayIterator(e);
         assertFalse(iter.isDone());
 
-        assertEquals(1, extents.identifier());
+        assertEquals(1, extents.currentIdentifier());
 
         assertEquals(2, iter.current().begin);
         assertEquals(3, iter.current().end);
@@ -96,18 +96,18 @@ public class ExtentIndexReaderTest extends TestCase {
         iter.next();
         assertTrue(iter.isDone());
 
-        extents.nextEntry();
+        extents.next();
         assertFalse(extents.isDone());
 
         e = extents.extents();
         iter = new ExtentArrayIterator(e);
 
-        assertEquals(9, extents.identifier());
+        assertEquals(9, extents.currentIdentifier());
 
         assertEquals(5, iter.current().begin);
         assertEquals(10, iter.current().end);
 
-        extents.nextEntry();
+        extents.next();
         assertTrue(extents.isDone());
 
         reader.close();
@@ -115,19 +115,19 @@ public class ExtentIndexReaderTest extends TestCase {
 
     public void testReadZ() throws Exception {
         ExtentIndexReader reader = new ExtentIndexReader(new IndexReader(tempPath.toString()));
-        ExtentIndexReader.Iterator extents = reader.getExtents("z");
+        ExtentIndexReader.ListIterator extents = reader.getExtents("z");
 
         assertFalse(extents.isDone());
 
         ExtentArray e = extents.extents();
         ExtentArrayIterator iter = new ExtentArrayIterator(e);
 
-        assertEquals(15, extents.identifier());
+        assertEquals(15, extents.currentIdentifier());
 
         assertEquals(9, iter.current().begin);
         assertEquals(11, iter.current().end);
 
-        extents.nextEntry();
+        extents.next();
         assertTrue(extents.isDone());
 
         reader.close();
@@ -135,10 +135,10 @@ public class ExtentIndexReaderTest extends TestCase {
 
     public void testSimpleSkipTitle() throws Exception {
         ExtentIndexReader reader = new ExtentIndexReader(new IndexReader(tempPath.toString()));
-        ExtentIndexReader.Iterator extents = reader.getExtents("title");
+        ExtentIndexReader.ListIterator extents = reader.getExtents("title");
 
         assertFalse(extents.isDone());
-        extents.skipToEntry(10);
+        extents.moveTo(10);
         assertTrue(extents.isDone());
 
         reader.close();
@@ -163,13 +163,13 @@ public class ExtentIndexReaderTest extends TestCase {
         writer.close();
 
         ExtentIndexReader reader = new ExtentIndexReader(new IndexReader(tempPath.toString()));
-        ExtentIndexReader.Iterator extents = reader.getExtents("skippy");
+        ExtentIndexReader.ListIterator extents = reader.getExtents("skippy");
 
         assertFalse(extents.isDone());
-        assertFalse(extents.skipToEntry(453));
-        assertEquals(454, extents.identifier());
-        extents.nextEntry();
-        assertEquals(457, extents.identifier());
+        assertFalse(extents.moveTo(453));
+        assertEquals(454, extents.currentIdentifier());
+        extents.next();
+        assertEquals(457, extents.currentIdentifier());
         assertEquals(27, extents.count());
         ExtentArray ea = extents.extents();
         ExtentArrayIterator eait = new ExtentArrayIterator(ea);

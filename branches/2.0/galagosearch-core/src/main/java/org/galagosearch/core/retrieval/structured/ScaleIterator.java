@@ -13,14 +13,13 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor
  */
-public class ScaleIterator implements ScoreIterator {
+public class ScaleIterator extends TransformIterator {
 
-  ScoreIterator iterator;
   double weight;
   double[] weights;
 
-  public ScaleIterator(Parameters parameters, ScoreIterator iterator) throws IllegalArgumentException {
-    this.iterator = iterator;
+  public ScaleIterator(Parameters parameters, ScoreValueIterator iterator) throws IllegalArgumentException {
+    super(iterator);
     String[] weightStrings = parameters.get("default", "1.0").split(",");
     weight = Double.parseDouble(weightStrings[0]);
 
@@ -36,7 +35,11 @@ public class ScaleIterator implements ScoreIterator {
   }
   
   public double score() {
-    return weight * iterator.score();
+    return weight * ((ScoreIterator)iterator).score();
+  }
+
+  public double score(DocumentContext context) {
+    return weight * ((ScoreIterator)iterator).score(context);
   }
 
   /**
@@ -44,7 +47,7 @@ public class ScaleIterator implements ScoreIterator {
    */
   public TObjectDoubleHashMap<String> parameterSweepScore() {
     final TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
-    final TObjectDoubleHashMap<String> childResults = iterator.parameterSweepScore();
+    final TObjectDoubleHashMap<String> childResults = ((ScoreIterator)iterator).parameterSweepScore();
     for (int i = 0; i < weights.length; i++) {
       final int j = i;
       childResults.forEachKey(new TObjectProcedure<String>() {
@@ -64,31 +67,11 @@ public class ScaleIterator implements ScoreIterator {
     return results;
   }
 
-  public boolean isDone() {
-    return iterator.isDone();
-  }
-
-  public void reset() throws IOException {
-    iterator.reset();
-  }
-
-  public void next() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
   public double maximumScore() {
-    throw new UnsupportedOperationException("Not supported yet.");
+    return ((ScoreIterator)iterator).maximumScore();
   }
 
   public double minimumScore() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  public DocumentContext getContext() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  public void setContext(DocumentContext context) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    return ((ScoreIterator)iterator).minimumScore();
   }
 }

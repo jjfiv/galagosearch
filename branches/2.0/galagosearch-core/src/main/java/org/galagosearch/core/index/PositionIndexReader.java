@@ -10,8 +10,9 @@ import java.util.Map;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.CountIterator;
+import org.galagosearch.core.retrieval.structured.CountValueIterator;
 import org.galagosearch.core.retrieval.structured.ExtentIterator;
-import org.galagosearch.core.retrieval.structured.StructuredIterator;
+import org.galagosearch.core.retrieval.structured.ExtentValueIterator;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.DataStream;
@@ -40,7 +41,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     }
 
     @Override
-    public String getStringValue() {
+    public String getValueString() {
       ListIterator it;
       long count = -1;
       try {
@@ -58,14 +59,19 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       }
       return sb.toString();
     }
+
+    public ValueIterator getValueIterator() throws IOException {
+      return new TermCountIterator(iterator);
+    }
   }
 
   public interface AggregateIterator {
+
     public int totalPositions();
   }
 
   public class TermExtentIterator extends KeyListReader.ListIterator
-          implements AggregateIterator, CountIterator, ExtentIterator {
+          implements AggregateIterator, CountValueIterator, ExtentValueIterator {
 
     int documentCount;
     int totalPositionCount;
@@ -96,7 +102,8 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     long positionsByteFloor;
 
     TermExtentIterator(GenericIndexReader.Iterator iterator) throws IOException {
-      super(iterator);
+      extentArray = new ExtentArray();
+      reset(iterator);
     }
 
     // Initialization method.
@@ -228,7 +235,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       initialize();
     }
 
-    public boolean nextEntry() throws IOException {
+    public boolean next() throws IOException {
       documentIndex = Math.min(documentIndex + 1, documentCount);
       if (!isDone()) {
         loadExtents();
@@ -251,7 +258,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       }
 
       // Linear from here
-      while (document > currentDocument && nextEntry());
+      while (document > currentDocument && next());
       return hasMatch(document);
     }
 
@@ -326,19 +333,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     public int totalPositions() {
       return totalPositionCount;
     }
-
-    public int compareTo(CountIterator other) {
-      if (isDone() && !other.isDone()) {
-        return 1;
-      }
-      if (other.isDone() && !isDone()) {
-        return -1;
-      }
-      if (isDone() && other.isDone()) {
-        return 0;
-      }
-      return currentIdentifier() - other.currentIdentifier();
-    }
   }
 
   /**
@@ -347,7 +341,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
    *
    */
   public class TermCountIterator extends KeyListReader.ListIterator
-          implements AggregateIterator, CountIterator {
+          implements AggregateIterator, CountValueIterator {
 
     int documentCount;
     int collectionCount;
@@ -375,7 +369,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     long countsByteFloor;
 
     TermCountIterator(GenericIndexReader.Iterator iterator) throws IOException {
-      super(iterator);
+      reset(iterator);
     }
 
     // Initialization method.
@@ -488,7 +482,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       initialize();
     }
 
-    public boolean nextEntry() throws IOException {
+    public boolean next() throws IOException {
       documentIndex = Math.min(documentIndex + 1, documentCount);
       if (!isDone()) {
         load();
@@ -510,7 +504,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       }
 
       // linear from here
-      while (document > currentDocument && nextEntry());
+      while (document > currentDocument && next());
       return hasMatch(document);
     }
 
@@ -576,21 +570,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     public int totalPositions() {
       return collectionCount;
     }
-
-    public int compareTo(CountIterator other) {
-      if (isDone() && !other.isDone()) {
-        return 1;
-      }
-      if (other.isDone() && !isDone()) {
-        return -1;
-      }
-      if (isDone() && other.isDone()) {
-        return 0;
-      }
-      return currentIdentifier() - other.currentIdentifier();
-    }
   }
-  GenericIndexReader reader;
 
   public PositionIndexReader(GenericIndexReader reader) throws IOException {
     super(reader);
@@ -598,11 +578,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
 
   public PositionIndexReader(String pathname) throws FileNotFoundException, IOException {
     super(pathname);
-  }
-
-  @Override
-  public TermCountIterator getListIterator() throws IOException {
-    return new TermCountIterator(reader.getIterator());
   }
 
   public KeyIterator getIterator() throws IOException {
@@ -613,7 +588,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
    * Returns an iterator pointing at the specified term, or
    * null if the term doesn't exist in the inverted file.
    */
-  public ExtentIterator getTermExtents(String term) throws IOException {
+  public TermExtentIterator getTermExtents(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
     if (iterator != null) {
       return new TermExtentIterator(iterator);
@@ -621,7 +596,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     return null;
   }
 
-  public CountIterator getTermCounts(String term) throws IOException {
+  public TermCountIterator getTermCounts(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
 
     if (iterator != null) {
@@ -641,7 +616,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     return types;
   }
 
-  public StructuredIterator getIterator(Node node) throws IOException {
+  public ValueIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("counts")) {
       return getTermCounts(node.getDefaultParameter("term"));
     } else {

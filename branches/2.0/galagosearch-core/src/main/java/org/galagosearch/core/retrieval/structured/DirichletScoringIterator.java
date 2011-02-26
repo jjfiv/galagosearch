@@ -18,7 +18,7 @@ import org.galagosearch.tupleflow.Parameters;
  */
 @RequiredStatistics(statistics = {"collectionLength"})
 public class DirichletScoringIterator extends ScoringFunctionIterator {
-  public DirichletScoringIterator(Parameters p, CountIterator it)
+  public DirichletScoringIterator(Parameters p, CountValueIterator it)
           throws IOException {
     super(it, makeFunctions(p, it));
   }
@@ -26,7 +26,7 @@ public class DirichletScoringIterator extends ScoringFunctionIterator {
   /** Parameter Sweep Code
    *  - returns a set of functions : 1 for each mu parameter
    */
-  public static DirichletScorer[] makeFunctions(Parameters p, CountIterator it) throws IOException {
+  public static DirichletScorer[] makeFunctions(Parameters p, CountValueIterator it) throws IOException {
     // Extract the set of mus
     String[] muSet = p.get("mu", "1500").split(",");
     DirichletScorer[] fns = new DirichletScorer[muSet.length];

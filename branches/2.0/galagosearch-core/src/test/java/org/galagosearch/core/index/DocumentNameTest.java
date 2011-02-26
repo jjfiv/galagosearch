@@ -43,6 +43,7 @@ public class DocumentNameTest extends TestCase {
       writer.close();
       
       DocumentNameReader reader = new DocumentNameReader(names.getAbsolutePath());
+      DocumentNameReader revReader = new DocumentNameReader(names.getAbsolutePath()+".reverse");
 
       int key = 15;
       String name = "document_name_key_is_" + key;
@@ -50,7 +51,7 @@ public class DocumentNameTest extends TestCase {
       String result1 = reader.get(key);
       assert name.equals(result1);
       
-      int result2 = reader.getDocumentId(name);
+      int result2 = revReader.getDocumentId(name);
       assert key == result2;
 
       Utility.deleteDirectory(f);

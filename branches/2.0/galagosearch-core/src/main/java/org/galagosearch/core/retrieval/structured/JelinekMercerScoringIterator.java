@@ -15,14 +15,14 @@ import org.galagosearch.tupleflow.Parameters;
  */
 @RequiredStatistics(statistics = {"collectionLength","lambda"})
 public class JelinekMercerScoringIterator extends ScoringFunctionIterator {
-    public JelinekMercerScoringIterator(Parameters p, CountIterator it)
+    public JelinekMercerScoringIterator(Parameters p, CountValueIterator it)
             throws IOException {
     super(it, makeFunctions(p, it));
   }
   /** Parameter Sweep Code
    *  - returns a set of functions : 1 for each lambda parameter
    */
-  public static JelinekMercerScorer[] makeFunctions(Parameters p, CountIterator it) throws IOException {
+  public static JelinekMercerScorer[] makeFunctions(Parameters p, CountValueIterator it) throws IOException {
     // Extract the set of mus
     String[] lambdaSet = p.get("lambda", "0.5").split(",");
     JelinekMercerScorer[] fns = new JelinekMercerScorer[lambdaSet.length];

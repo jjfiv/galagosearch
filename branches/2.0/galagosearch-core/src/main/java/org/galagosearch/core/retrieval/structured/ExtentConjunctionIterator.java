@@ -2,79 +2,105 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.PriorityQueue;
+import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.util.ExtentArray;
 
 /**
  *
  * @author trevor
  */
-public abstract class ExtentConjunctionIterator extends ExtentIterator {
-    protected ExtentIterator[] extentIterators;
-    protected ExtentArray extents;
-    protected int document;
-    protected boolean done;
+public abstract class ExtentConjunctionIterator extends ExtentCombinationIterator {
 
-    public ExtentConjunctionIterator(ExtentIterator[] extIterators) {
-        this.done = false;
-        this.extentIterators = extIterators;
-        this.extents = new ExtentArray();
+  public ExtentConjunctionIterator(ExtentValueIterator[] extIterators) {
+    this.done = false;
+    iterators = new PriorityQueue<ExtentValueIterator>(extIterators.length);
+    for (ExtentValueIterator ei : extIterators) {
+      iterators.add(ei);
     }
+    this.extents = new ExtentArray();
+  }
 
-    public abstract void loadExtents();
-
-    public void nextEntry() throws IOException {
-        if (!done) {
-            extentIterators[0].nextEntry();
-            findDocument();
-        }
+  // Move the lowest one forward first, then keep moving them forward
+  // until they all match on the id.
+  public boolean next() throws IOException {
+    if (!done) {
+      iterators.peek().next();
+      lineUpIterators();
     }
+    return (done == false);
+  }
 
-    public void findDocument() throws IOException {
-        while (!done) {
-            // find a identifier that might have some matches
-            document = MoveIterators.moveAllToSameDocument(extentIterators);
+  protected void lineUpIterators() throws IOException {
+    while (!allMatch() && !done) {
+      ExtentValueIterator it = iterators.poll();
+      it.next();
+      iterators.offer(it);
+      if (it.isDone()) {
+        done = true;
+        document = Integer.MAX_VALUE;
+        return;
+      }
 
-            // if we're done, quit now
-            if (document == Integer.MAX_VALUE) {
-                done = true;
-                break;
-            }
+      System.err.printf("Iterators lined up on doc % d\n", iterators.peek().currentIdentifier());
 
-            // try to load some extents (subclass does this)
-            extents.reset();
-            loadExtents();
-
-            // were we successful? if so, quit, otherwise keep looking for documents
-            if (extents.getPositionCount() > 0) {
-                break;
-            }
-            extentIterators[0].nextEntry();
-        }
-    }
-
-    public ExtentArray extents() {
-        return extents;
-    }
-
-    public int identifier() {
-        return document;
-    }
-
-    public int count() {
-        return extents().getPositionCount();
-    }
-
-    public boolean isDone() {
-        return done;
-    }
-
-    public void reset() throws IOException {
-        for (ExtentIterator iterator : extentIterators) {
-            iterator.reset();
+      if (!done) {
+        document = iterators.peek().currentIdentifier();
+        extents.reset();
+        loadExtents();
+        if (extents.getPositionCount() > 0) {
+          return;
         }
 
-        done = false;
-        findDocument();
+        // Didn't find anything, so move one forward
+        iterators.peek().next();
+      }
     }
+  }
+
+  protected boolean allMatch() {
+    int current = iterators.peek().currentIdentifier();
+    for (ExtentValueIterator iterator : iterators) {
+      if (iterator.isDone() || iterator.currentIdentifier() != current) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public boolean isDone() {
+    return done;
+  }
+
+  public boolean moveTo(int identifier) throws IOException {
+    for (ValueIterator iterator : iterators) {
+      iterator.moveTo(identifier);
+    }
+    if (allMatch()) {
+      document = iterators.peek().currentIdentifier();
+      return (document == identifier);
+    } else {
+      // missed it but need to line up
+      next();
+      return false;
+    }
+  }
+
+  public void reset() throws IOException {
+    for (ExtentValueIterator iterator : iterators) {
+      iterator.reset();
+    }
+    done = false;
+    if (!allMatch()) {
+      next();
+    }
+  }
+
+  public long totalEntries() {
+    long min = Long.MAX_VALUE;
+    for (ValueIterator iterator : iterators) {
+      min = Math.min(min, iterator.totalEntries());
+    }
+    return min;
+  }
 }

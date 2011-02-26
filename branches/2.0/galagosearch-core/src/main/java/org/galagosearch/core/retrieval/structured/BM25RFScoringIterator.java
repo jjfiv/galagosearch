@@ -15,7 +15,7 @@ import org.galagosearch.tupleflow.Parameters;
 @RequiredStatistics(statistics = {"documentCount"})
 public class BM25RFScoringIterator extends ScoringFunctionIterator {
 
-    public BM25RFScoringIterator(Parameters p, CountIterator it)
+    public BM25RFScoringIterator(Parameters p, CountValueIterator it)
             throws IOException {
         super(it, new BM25RFScorer(p, it));
     }
@@ -31,7 +31,7 @@ public class BM25RFScoringIterator extends ScoringFunctionIterator {
     @Override
     public double score() {
         if (iterator.currentIdentifier() == context.document) {
-            return function.score(iterator.count(), context.length);
+            return function.score(((CountIterator)iterator).count(), context.length);
         } else {
             return 0;
         }

@@ -8,6 +8,7 @@ import org.galagosearch.core.retrieval.structured.ScoreCombinationIterator;
 import org.galagosearch.core.retrieval.structured.UnfilteredCombinationIterator;
 import java.io.IOException;
 import junit.framework.TestCase;
+import org.galagosearch.core.retrieval.structured.DocumentContext;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -34,13 +35,13 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
         UnfilteredCombinationIterator instance = new UnfilteredCombinationIterator(anyParameters,
                                                                                    iterators);
 
-        assertEquals(2, instance.identifier());
+        assertEquals(2, instance.currentIdentifier());
         instance.movePast(2);
-        assertEquals(4, instance.identifier());
+        assertEquals(4, instance.currentIdentifier());
         instance.movePast(4);
-        assertEquals(5, instance.identifier());
+        assertEquals(5, instance.currentIdentifier());
         instance.movePast(5);
-        assertEquals(6, instance.identifier());
+        assertEquals(6, instance.currentIdentifier());
     }
 
     public void testHasMatch() {
@@ -66,10 +67,13 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
         UnfilteredCombinationIterator instance = new UnfilteredCombinationIterator(anyParameters,
                                                                                    iterators);
 
+        DocumentContext context = new DocumentContext();
+        instance.setContext(context);
         for (int i = 0; i < 12; i++) {
             assertFalse(instance.isDone());
             assertTrue(instance.hasMatch(docsTogether[i]));
-            instance.setScoringContext(docsTogether[i], 100);
+            context.document = docsTogether[i];
+            context.length = 100;
             assertEquals(scoresTogether[i], instance.score());
 
             instance.movePast(docsTogether[i]);
@@ -88,7 +92,7 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
                                                                                    iterators);
 
         instance.movePast(5);
-        assertEquals(6, instance.identifier());
+        assertEquals(6, instance.currentIdentifier());
     }
 
     public void testMoveTo() throws Exception {
@@ -101,6 +105,6 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
                                                                                    iterators);
 
         instance.moveTo(5);
-        assertEquals(5, instance.identifier());
+        assertEquals(5, instance.currentIdentifier());
     }
 }

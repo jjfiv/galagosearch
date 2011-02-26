@@ -4,6 +4,7 @@ package org.galagosearch.core.index;
 
 import java.io.IOException;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
+import org.galagosearch.tupleflow.DataStream;
 
 /**
  * Each iterator from an index has an extra two methods,
@@ -18,11 +19,16 @@ import org.galagosearch.core.retrieval.structured.StructuredIterator;
  *
  * @author trevor, irmarc
  */
-public interface KeyIterator extends StructuredIterator {
-    boolean skipToKey(byte[] key) throws IOException;
+public interface KeyIterator extends StructuredIterator, Comparable<KeyIterator> {
+    boolean moveToKey(byte[] key) throws IOException;
     boolean nextKey() throws IOException;
     String getKey() throws IOException;
     // sjh: i need this method to ensure key order is consistent when merging indexes
     byte[] getKeyBytes() throws IOException;
-    String getStringValue();
+
+    // Access to the key's value. Not all may be implemented
+    String getValueString() throws IOException;
+    byte[] getValueBytes() throws IOException;
+    DataStream getValueStream() throws IOException;
+    ValueIterator getValueIterator() throws IOException;
 }

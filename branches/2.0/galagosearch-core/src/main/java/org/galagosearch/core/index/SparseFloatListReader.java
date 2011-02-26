@@ -8,9 +8,8 @@ import java.util.Map;
 import java.util.HashMap;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
-import org.galagosearch.core.retrieval.structured.ContextualIterator;
 import org.galagosearch.core.retrieval.structured.DocumentContext;
-import org.galagosearch.core.retrieval.structured.ScoreIterator;
+import org.galagosearch.core.retrieval.structured.ScoreValueIterator;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Utility;
@@ -30,7 +29,7 @@ public class SparseFloatListReader extends KeyListReader {
     }
 
     @Override
-    public String getStringValue() {
+    public String getValueString() {
       ListIterator it;
       long count = -1;
       try {
@@ -48,9 +47,14 @@ public class SparseFloatListReader extends KeyListReader {
       }
       return sb.toString();
     }
+
+    public ListIterator getValueIterator() throws IOException {
+      return new ListIterator(iterator);
+    }
   }
 
-  public class ListIterator extends KeyListReader.ListIterator implements ContextualIterator, ScoreIterator, ValueIterator {
+  public class ListIterator extends KeyListReader.ListIterator 
+          implements ScoreValueIterator {
 
     VByteInput stream;
     int documentCount;
@@ -60,7 +64,7 @@ public class SparseFloatListReader extends KeyListReader {
     DocumentContext context;
 
     public ListIterator(GenericIndexReader.Iterator iterator) throws IOException {
-      super(iterator);
+      reset(iterator);
     }
 
     void read() throws IOException {
@@ -84,15 +88,7 @@ public class SparseFloatListReader extends KeyListReader {
       return builder.toString();
     }
 
-    public void next() {
-      try {
-        nextEntry();
-      } catch (IOException ioe) {
-        throw new IllegalArgumentException(ioe);
-      }
-    }
-
-    public boolean nextEntry() throws IOException {
+    public boolean next() throws IOException {
       read();
       if (!isDone()) {
         return true;
@@ -144,6 +140,13 @@ public class SparseFloatListReader extends KeyListReader {
       }
     }
 
+    public double score(DocumentContext dc) {
+      if (currentDocument == dc.document) {
+        return currentScore;
+      }
+      return Double.NEGATIVE_INFINITY;
+    }
+
     public double score() {
       if (currentDocument == context.document) {
         return currentScore;
@@ -171,7 +174,6 @@ public class SparseFloatListReader extends KeyListReader {
       throw new UnsupportedOperationException("Not supported yet.");
     }
   }
-  GenericIndexReader reader;
 
   public SparseFloatListReader(String pathname) throws FileNotFoundException, IOException {
     super(pathname);
@@ -200,7 +202,7 @@ public class SparseFloatListReader extends KeyListReader {
     return nodeTypes;
   }
 
-  public StructuredIterator getIterator(Node node) throws IOException {
+  public ValueIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("scores")) {
       return getScores(node.getDefaultParameter());
     } else {

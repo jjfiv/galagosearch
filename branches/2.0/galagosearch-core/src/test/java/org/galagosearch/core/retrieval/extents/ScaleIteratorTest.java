@@ -5,6 +5,7 @@
 package org.galagosearch.core.retrieval.extents;
 
 import junit.framework.TestCase;
+import org.galagosearch.core.retrieval.structured.DocumentContext;
 import org.galagosearch.core.retrieval.structured.ScaleIterator;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -30,8 +31,8 @@ public class ScaleIteratorTest extends TestCase {
         assertFalse(iterator.isDone());
         assertTrue(iterator.hasMatch(docsA[0]));
         for (int i = 0; i < docsA.length; i++) {
-            assertEquals(docsA[i], iterator.identifier());
-            assertEquals(scoresA[i], iterator.score(docsA[i], 100));
+            assertEquals(docsA[i], iterator.currentIdentifier());
+            assertEquals(scoresA[i], iterator.score(new DocumentContext(docsA[i], 100)));
             iterator.movePast(docsA[i]);
         }
         assertTrue(iterator.isDone());
@@ -48,9 +49,9 @@ public class ScaleIteratorTest extends TestCase {
         assertFalse(iterator.isDone());
         assertTrue(iterator.hasMatch(docsB[0]));
         for (int i = 0; i < docsB.length; i++) {
-            iterator.skipToDocument(docsB[i]);
-            assertEquals(docsB[i], iterator.identifier());
-            assertEquals(scoresB[i]*weight, iterator.score(docsB[i], 100));
+            iterator.moveTo(docsB[i]);
+            assertEquals(docsB[i], iterator.currentIdentifier());
+            assertEquals(scoresB[i]*weight, iterator.score(new DocumentContext(docsB[i], 100)));
         }
         iterator.reset();
         assertTrue(iterator.hasMatch(docsB[0]));

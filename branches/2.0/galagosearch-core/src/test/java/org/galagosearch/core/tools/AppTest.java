@@ -36,9 +36,9 @@ public class AppTest extends TestCase {
         assertTrue(childPath.exists());
 
         // doc names -- there are two files
-        childPath = new File(indexPath, "documentNames.fl");
+        childPath = new File(indexPath, "documentNames");
         assertTrue(childPath.exists());
-        childPath = new File(indexPath, "documentNames.rl");
+        childPath = new File(indexPath, "documentNames.reverse");
         assertTrue(childPath.exists());
 
         // parts directory

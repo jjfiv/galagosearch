@@ -11,9 +11,7 @@ import org.galagosearch.core.index.ValueIterator;
  * @see PositionIndexIterator
  * @author trevor, irmarc
  */
-public interface CountIterator extends StructuredIterator, Comparable<CountIterator> {
-
-    public int currentIdentifier();
+public interface CountIterator extends StructuredIterator {
 
     /**
      * Returns the number of occurrences of this iterator's term in

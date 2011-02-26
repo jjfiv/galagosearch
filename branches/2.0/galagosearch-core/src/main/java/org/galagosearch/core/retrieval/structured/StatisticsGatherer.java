@@ -12,14 +12,14 @@ import org.galagosearch.tupleflow.Parameters;
  * @author trevor
  */
 public class StatisticsGatherer {
-    CountIterator iterator;
+    CountValueIterator iterator;
     long documentCount;
     long termCount;
     long collectionLength;
     double averageDocumentLength;
     HashSet<String> required;
 
-    public StatisticsGatherer(CountIterator iterator) {
+    public StatisticsGatherer(CountValueIterator iterator) {
         this.iterator = iterator;
         this.documentCount = 0;
         this.termCount = 0;
@@ -28,7 +28,7 @@ public class StatisticsGatherer {
         this.required = new HashSet<String>();
     }
 
-    public StatisticsGatherer(StructuredIndex index, CountIterator iterator, String[] required) {
+    public StatisticsGatherer(StructuredIndex index, CountValueIterator iterator, String[] required) {
         this(iterator);
 
         this.required.addAll(Arrays.asList(required));

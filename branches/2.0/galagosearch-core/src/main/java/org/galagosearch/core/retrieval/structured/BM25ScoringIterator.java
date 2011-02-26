@@ -15,7 +15,7 @@ import org.galagosearch.tupleflow.Parameters;
  */
 @RequiredStatistics(statistics = {"collectionLength", "documentCount"})
 public class BM25ScoringIterator extends ScoringFunctionIterator {
-    public BM25ScoringIterator(Parameters p, CountIterator it)
+    public BM25ScoringIterator(Parameters p, CountValueIterator it)
         throws IOException {
         super( it, new BM25Scorer(p, it));
     }

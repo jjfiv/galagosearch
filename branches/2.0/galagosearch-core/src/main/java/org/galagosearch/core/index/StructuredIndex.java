@@ -154,8 +154,8 @@ public class StructuredIndex {
     return part;
   }
 
-  public StructuredIterator getIterator(Node node) throws IOException {
-    StructuredIterator result = null;
+  public ValueIterator getIterator(Node node) throws IOException {
+    ValueIterator result = null;
     StructuredIndexPartReader part = getIndexPart(node);
     if (part != null) {
       result = part.getIterator(node);
@@ -205,24 +205,16 @@ public class StructuredIndex {
     return documentNames.getDocumentId(document);
   }
 
-  public NumberedDocumentDataIterator getDocumentLengthsIterator() throws IOException {
+  public DocumentLengthsReader.KeyIterator getDocumentLengthsIterator() throws IOException {
     return documentLengths.getIterator();
   }
 
-  public NumberedDocumentDataIterator getDocumentNamesIterator() throws IOException {
-    return documentNames.getNumberOrderIterator();
+  public DocumentNameReader.KeyIterator getDocumentNamesIterator() throws IOException {
+    return documentNames.getIterator();
   }
 
   public Parameters getManifest() {
     return manifest.clone();
-  }
-
-  public ExtentIndexIterator getExtentIterator(String part) throws IOException {
-    KeyIterator i = parts.get(part).getIterator();
-    if (i instanceof ExtentIndexIterator) {
-      return (ExtentIndexIterator) i;
-    }
-    throw new RuntimeException("part " + part + " does not offer an Extent Index Iterator");
   }
 
   public Set<String> getPartNames() {

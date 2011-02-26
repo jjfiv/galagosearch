@@ -16,7 +16,8 @@ import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.KeyListReader;
 import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
+import org.galagosearch.core.index.NumberedDocumentDataIterator;
+import org.galagosearch.core.retrieval.structured.CountValueIterator;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.types.TopDocsEntry;
@@ -55,7 +56,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
     PositionIndexReader partReader;
     NumberedDocumentDataIterator docLengths;
     DocumentLengthsReader docReader;
-    KeyListReader.ListIterator extentIterator;
+    CountValueIterator extentIterator;
     TopDocsEntry tde;
 
     public TopDocsScanner(TupleFlowParameters parameters) throws IOException {
@@ -77,10 +78,9 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         count = 0;
         topdocs.clear();
         extentIterator = partReader.getTermCounts(Utility.toString(object.key));
-        if (extentIterator instanceof PositionIndexReader.Iterator) {
-            count = ((PositionIndexReader.Iterator) extentIterator).totalEntries();
-            if (count < minlength) return; //short-circuit out
-        }
+        count = extentIterator.totalEntries();
+        if (count < minlength) return; //short-circuit out
+        
 
         count = 0; // need to reset b/c we're going to count anyhow.
 
@@ -88,11 +88,11 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         docLengths.reset();
         while (!extentIterator.isDone()) {
             count++;
-            docLengths.skipToKey(extentIterator.currentIdentifier());
+            docLengths.moveToKey(extentIterator.currentIdentifier());
             NumberedDocumentData ndd = docLengths.getDocumentData();
             assert (ndd.number == extentIterator.currentIdentifier());
             int length = ndd.textLength;
-            double probability = (0.0+extentIterator.count())
+            double probability = (0.0 + extentIterator.count())
                     / (0.0+length);
             tde = new TopDocsEntry();
             tde.document = extentIterator.currentIdentifier();
@@ -105,7 +105,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
             if (topdocs.size() > size) {
                 topdocs.poll();
             }
-            extentIterator.nextEntry();
+            extentIterator.next();
         }
 
         // skip if it's too small

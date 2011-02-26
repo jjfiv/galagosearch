@@ -11,7 +11,10 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
+import org.galagosearch.core.index.DocumentLengthsReader;
+import org.galagosearch.core.index.DocumentNameReader;
 import org.galagosearch.core.index.StructuredIndex;
+import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
@@ -111,17 +114,18 @@ public class StructuredRetrieval extends Retrieval {
     DocumentContext context = new DocumentContext();
 
     // construct the query iterators
-    ScoreIterator iterator = (ScoreIterator) createIterator(queryTree, context);
+    System.err.printf("Running query: %s\n", queryTree.toString());
+    ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context);
     int requested = (int) parameters.get("requested", 1000);
 
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
-    NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
+    DocumentLengthsReader.KeyIterator lengthsIterator = index.getDocumentLengthsIterator();
     
     while (!iterator.isDone()) {
       int document = iterator.currentIdentifier();
-      lengthsIterator.skipTo(document);
-      int length = lengthsIterator.getDocumentData().textLength;
+      lengthsIterator.moveToKey(document);
+      int length = lengthsIterator.getCurrentDocument();
       // This context is shared among all scorers
       context.document = document;
       context.length = length;
@@ -135,7 +139,6 @@ public class StructuredRetrieval extends Retrieval {
           queue.poll();
         }
       }
-      context.lastScored = document;
       iterator.next();
     }
 
@@ -193,7 +196,7 @@ public class StructuredRetrieval extends Retrieval {
 
   /**
    * Evaluates a query using intID-at-a-time evaluation.
-   *  - allowing user to sweep accross parameters specified within the query
+   *  - allowing user to sweep across parameters specified within the query
    *
    * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
    * @param parameters - query parameters (indexId, # requested, query type, transform)
@@ -202,21 +205,25 @@ public class StructuredRetrieval extends Retrieval {
    */
   public ScoredDocument[] runParameterSweep(Node queryTree, Parameters parameters) throws Exception {
 
+    // Give it a context
+    DocumentContext context = new DocumentContext();
+
     // construct the query iterators
-    ScoreIterator iterator = (ScoreIterator) createIterator(queryTree);
+    ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context);
     int requested = (int) parameters.get("requested", 1000);
 
     // now there should be an iterator at the root of this tree
     HashMap<String, PriorityQueue<ScoredDocument>> queues = new HashMap();
-    NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
+    DocumentLengthsReader.KeyIterator lengthsIterator = index.getDocumentLengthsIterator();
 
     while (!iterator.isDone()) {
-      int document = iterator.intID();
-      lengthsIterator.skipTo(document);
-      int length = lengthsIterator.getDocumentData().textLength;
+      int document = iterator.currentIdentifier();
+      lengthsIterator.moveToKey(document);
+      int length = lengthsIterator.getCurrentDocument();
 
       // This context is shared among all scorers
-      iterator.setScoringContext(document, length);
+      context.document = document;
+      context.length = length;
       TObjectDoubleHashMap<String> scores = iterator.parameterSweepScore();
 
       for (String params : scores.keys( new String[0] )) {
@@ -231,7 +238,7 @@ public class StructuredRetrieval extends Retrieval {
         }
       }
 
-      iterator.movePast(document);
+      iterator.next();
     }
 
     String indexId = parameters.get("indexId", "0");
@@ -256,9 +263,9 @@ public class StructuredRetrieval extends Retrieval {
       docIds.put(results[i].document, i);
     }
 
-    NumberedDocumentDataIterator iterator = index.getDocumentNamesIterator();
+    DocumentNameReader.KeyIterator iterator = index.getDocumentNamesIterator();
     for (int document : docIds.keySet()) {
-      iterator.skipTo(document);
+      iterator.moveToKey(document);
       NumberedDocumentData ndd = iterator.getDocumentData();
       if (ndd.number == document) {
         results[docIds.get(document)].documentName = ndd.identifier;
@@ -308,6 +315,29 @@ public class StructuredRetrieval extends Retrieval {
     return StructuredQuery.parse(query);
   }
 
+  public StructuredIterator createIterator(Node node, DocumentContext context)
+          throws Exception {
+    ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
+    StructuredIterator iterator;
+    try {
+      for (Node internalNode : node.getInternalNodes()) {
+        StructuredIterator internalIterator = createIterator(internalNode, context);
+        internalIterators.add(internalIterator);
+      }
+
+      iterator = index.getIterator(node);
+      if (iterator == null) {
+        iterator = featureFactory.getIterator(node, internalIterators);
+      }
+    } catch (Exception e) {
+      throw e;
+    }
+    if (ContextualIterator.class.isInstance(iterator)) {
+      ((ContextualIterator)iterator).setContext(context);
+    }
+    return iterator;
+  }
+
   public StructuredIterator createIterator(Node node) throws Exception {
     ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
     StructuredIterator iterator;
@@ -353,9 +383,9 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   public long xcount(Node root) throws Exception {
-    StructuredIterator structIterator = index.getIterator(root);
+    ValueIterator structIterator = index.getIterator(root);
     if (structIterator instanceof CountIterator) {
-      CountIterator iterator = (CountIterator) structIterator;
+      CountValueIterator iterator = (CountValueIterator) structIterator;
       long count = 0;
       while (!iterator.isDone()) {
         count += iterator.count();
