@@ -18,6 +18,10 @@ public abstract class ExtentCombinationIterator implements ExtentValueIterator, 
   protected ExtentValueIterator[] iterators;
   protected ExtentArray extents;
 
+  public String getEntry() throws IOException {
+    throw new UnsupportedOperationException("Extent combine nodes don't have singular values");
+  }
+
   public ExtentArray extents() {
     return extents;
   }
@@ -35,7 +39,7 @@ public abstract class ExtentCombinationIterator implements ExtentValueIterator, 
   }
 
   public void movePast(int identifier) throws IOException {
-      moveTo(identifier+1);
+    moveTo(identifier + 1);
   }
 
   public int compareTo(ValueIterator other) {

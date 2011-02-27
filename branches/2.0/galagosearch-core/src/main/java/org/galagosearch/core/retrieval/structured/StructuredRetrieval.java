@@ -101,7 +101,7 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   /**
-   * Evaluates a query using intID-at-a-time evaluation.
+   * Evaluates a query using document-at-a-time evaluation.
    *
    * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
    * @param parameters - query parameters (indexId, # requested, query type, transform)
@@ -120,7 +120,7 @@ public class StructuredRetrieval extends Retrieval {
 
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
-    DocumentLengthsReader.KeyIterator lengthsIterator = index.getDocumentLengthsIterator();
+    DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
     
     while (!iterator.isDone()) {
       int document = iterator.currentIdentifier();
@@ -214,7 +214,7 @@ public class StructuredRetrieval extends Retrieval {
 
     // now there should be an iterator at the root of this tree
     HashMap<String, PriorityQueue<ScoredDocument>> queues = new HashMap();
-    DocumentLengthsReader.KeyIterator lengthsIterator = index.getDocumentLengthsIterator();
+    DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
 
     while (!iterator.isDone()) {
       int document = iterator.currentIdentifier();
@@ -259,11 +259,11 @@ public class StructuredRetrieval extends Retrieval {
       results[i] = scores.poll();
       results[i].source = indexId;
       results[i].rank = i + 1;
-      //results[i].documentName = getDocumentName(results[i].intID);
+      //results[i].documentName = getName(results[i].intID);
       docIds.put(results[i].document, i);
     }
 
-    DocumentNameReader.KeyIterator iterator = index.getDocumentNamesIterator();
+    DocumentNameReader.KeyIterator iterator = index.getNamesIterator();
     for (int document : docIds.keySet()) {
       iterator.moveToKey(document);
       NumberedDocumentData ndd = iterator.getDocumentData();
@@ -302,7 +302,7 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   protected String getDocumentName(int document) throws IOException {
-    return index.getDocumentName(document);
+    return index.getName(document);
   }
 
   protected Node parseQuery(String query, Parameters parameters) {
@@ -383,8 +383,8 @@ public class StructuredRetrieval extends Retrieval {
   }
 
   public long xcount(Node root) throws Exception {
-    ValueIterator structIterator = index.getIterator(root);
-    if (structIterator instanceof CountIterator) {
+    StructuredIterator structIterator = createIterator(root);
+    if (structIterator instanceof CountValueIterator) {
       CountValueIterator iterator = (CountValueIterator) structIterator;
       long count = 0;
       while (!iterator.isDone()) {

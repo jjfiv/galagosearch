@@ -20,8 +20,8 @@ import java.util.Set;
  */
 public class StructuredIndex {
 
-  DocumentLengthsReader documentLengths;
-  DocumentNameReader documentNames;
+  DocumentLengthsReader lengthsReader;
+  DocumentNameReader namesReader;
   Map<String, StructuredIndexPartReader> parts;
   Parameters manifest;
   HashMap<String, String> defaultIndexOperators = new HashMap<String, String>();
@@ -30,18 +30,21 @@ public class StructuredIndex {
   public StructuredIndex(String filename) throws IOException {
     manifest = new Parameters();
     manifest.parse(filename + File.separator + "manifest");
-    documentLengths = new DocumentLengthsReader(filename + File.separator + "documentLengths");
-    documentNames = new DocumentNameReader(filename + File.separator + "documentNames");
-
     File partsDirectory = new File(filename + File.separator + "parts");
     parts = new HashMap<String, StructuredIndexPartReader>();
     for (File part : partsDirectory.listFiles()) {
       StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
       if (reader == null) {
         continue;
-      }
+      }      
       parts.put(part.getName(), reader);
     }
+    
+    // Initialize these now b/c they're so common
+    namesReader = null;
+    lengthsReader = null;
+    if (parts.containsKey("lengths")) lengthsReader = (DocumentLengthsReader) parts.get("lengths");
+    if (parts.containsKey("names")) namesReader = (DocumentNameReader) parts.get("names");
 
     initializeIndexOperators();
   }
@@ -190,27 +193,27 @@ public class StructuredIndex {
       part.close();
     }
     parts.clear();
-    documentLengths.close();
+    lengthsReader.close();
   }
 
   public int getLength(int document) throws IOException {
-    return documentLengths.getLength(document);
+    return lengthsReader.getLength(document);
   }
 
-  public String getDocumentName(int document) throws IOException {
-    return documentNames.get(document);
+  public String getName(int document) throws IOException {
+    return namesReader.get(document);
   }
 
-  public int getDocumentNumber(String document) throws IOException {
-    return documentNames.getDocumentId(document);
+  public int getIdentifier(String document) throws IOException {
+    return ((DocumentNameReader)parts.get("names.reverse")).getDocumentId(document);
   }
 
-  public DocumentLengthsReader.KeyIterator getDocumentLengthsIterator() throws IOException {
-    return documentLengths.getIterator();
+  public DocumentLengthsReader.KeyIterator getLengthsIterator() throws IOException {
+    return lengthsReader.getIterator();
   }
 
-  public DocumentNameReader.KeyIterator getDocumentNamesIterator() throws IOException {
-    return documentNames.getIterator();
+  public DocumentNameReader.KeyIterator getNamesIterator() throws IOException {
+    return namesReader.getIterator();
   }
 
   public Parameters getManifest() {

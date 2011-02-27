@@ -48,6 +48,9 @@ public class DocumentLengthsWriter implements Processor<NumberedDocumentData> {
         p.copy(parameters.getXML());
         //p.set("blockSize", "1048576");
         writer = new IndexWriter(filename, p);
+        writer.getManifest().set("writerClass", getClass().getName());
+        writer.getManifest().set("readerClass", DocumentLengthsReader.class.getName());
+
         bstream = new ByteArrayOutputStream();
         stream = new DataOutputStream(bstream);
         documentsWritten = parameters.getCounter("Document Lengths Written");

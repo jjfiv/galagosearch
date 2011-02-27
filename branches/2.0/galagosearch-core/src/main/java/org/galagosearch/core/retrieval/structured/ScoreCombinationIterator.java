@@ -78,6 +78,10 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
     return iterators[0].getContext();
   }
 
+  public String getEntry() throws IOException {
+    throw new UnsupportedOperationException("Score combine nodes don't have singular values");
+  }
+
   public int compareTo(ValueIterator other) {
     if (isDone() && !other.isDone()) {
       return 1;

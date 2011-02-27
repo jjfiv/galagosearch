@@ -32,6 +32,11 @@ public class DocumentNameReader extends KeyValueReader {
     isForward = (reader.getManifest().get("order").equals("forward"));
   }
 
+  public DocumentNameReader(GenericIndexReader r) {
+    super(r);
+    isForward = (reader.getManifest().get("order").equals("forward"));
+  }
+
   // gets the document name of the internal id index.
   public String get(int index) throws IOException {
     if (isForward) {

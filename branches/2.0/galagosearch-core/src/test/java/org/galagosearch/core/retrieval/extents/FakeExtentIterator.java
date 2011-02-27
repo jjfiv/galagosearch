@@ -94,4 +94,8 @@ public class FakeExtentIterator implements ExtentValueIterator, CountValueIterat
     }
     return currentIdentifier() - other.currentIdentifier();
   }
+
+  public String getEntry() throws IOException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
 }

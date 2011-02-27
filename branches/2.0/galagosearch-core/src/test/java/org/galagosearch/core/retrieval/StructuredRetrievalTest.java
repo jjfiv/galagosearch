@@ -91,7 +91,7 @@ public class StructuredRetrievalTest extends TestCase {
 
         // add some document names
         Parameters dnp = new Parameters();
-        dnp.add("filename", tempPath + File.separator + "documentNames");
+        dnp.add("filename", tempPath + File.separator + "parts" + File.separator + "names");
 
         DocumentNameWriter dnWriter = new DocumentNameWriter(new FakeParameters(dnp));
         for (int i = 0; i < 20; i++) {
@@ -100,7 +100,7 @@ public class StructuredRetrievalTest extends TestCase {
         dnWriter.close();
 
         Parameters lp = new Parameters();
-        lp.add("filename", tempPath + File.separator + "documentLengths");
+        lp.add("filename", tempPath + File.separator + "parts" + File.separator + "lengths");
         DocumentLengthsWriter lWriter = new DocumentLengthsWriter(new FakeParameters(lp));
 
         for (int i = 0; i < 20; i++) {

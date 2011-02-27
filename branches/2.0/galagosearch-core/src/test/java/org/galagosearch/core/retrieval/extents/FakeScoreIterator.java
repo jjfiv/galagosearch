@@ -105,4 +105,8 @@ public class FakeScoreIterator implements ScoreValueIterator {
     }
     return currentIdentifier() - other.currentIdentifier();
   }
+
+  public String getEntry() throws IOException {
+    return currentIdentifier() + "," + score();
+  }
 }

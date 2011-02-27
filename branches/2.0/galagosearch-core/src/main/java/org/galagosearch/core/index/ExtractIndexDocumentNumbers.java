@@ -47,7 +47,7 @@ public class ExtractIndexDocumentNumbers extends StandardStep<Document, Numbered
         numdoc.text = doc.text;
       }
       try{
-        numdoc.number = index.getDocumentNumber(doc.identifier);
+        numdoc.number = index.getIdentifier(doc.identifier);
       } catch (Exception e){
         //System.err.println("can not find name: " + doc.identifier);
         throw new IOException("Can not find document number for document: " + doc.identifier);

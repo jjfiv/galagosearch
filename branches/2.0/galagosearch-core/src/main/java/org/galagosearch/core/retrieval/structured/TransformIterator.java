@@ -57,6 +57,10 @@ public abstract class TransformIterator implements ScoreValueIterator {
     iterator.movePast(identifier);
   }
 
+  public String getEntry() throws IOException {
+    return iterator.getEntry();
+  }
+
   public long totalEntries() {
     return iterator.totalEntries();
   }

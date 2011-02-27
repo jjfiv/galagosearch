@@ -31,19 +31,22 @@ public class AppTest extends TestCase {
         File childPath = new File(indexPath, "manifest");
         assertTrue(childPath.exists());
 
+        // Time to check standard parts
+
+        // parts directory
+        File partsPath = new File(indexPath, "parts");
+        assertTrue(partsPath.exists() && partsPath.isDirectory());
+
         // doc lengths
-        childPath = new File(indexPath, "documentLengths");
+        childPath = new File(partsPath, "lengths");
         assertTrue(childPath.exists());
 
         // doc names -- there are two files
-        childPath = new File(indexPath, "documentNames");
+        childPath = new File(partsPath, "names");
         assertTrue(childPath.exists());
-        childPath = new File(indexPath, "documentNames.reverse");
+        childPath = new File(partsPath, "names.reverse");
         assertTrue(childPath.exists());
 
-        // parts directory
-        childPath = new File(indexPath, "parts");
-        assertTrue(childPath.exists() && childPath.isDirectory());
     }
 
     public void testMakeCorpora() throws Exception {

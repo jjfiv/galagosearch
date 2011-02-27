@@ -344,7 +344,7 @@ public class BuildIndex {
         stage.add(new StageConnectionPoint(ConnectionPointType.Input,
                 "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
         Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "documentLengths");
+        p.add("filename", indexPath + File.separator + "parts" + File.separator + "lengths");
         stage.add(new InputStep("numberedDocumentData"));
         stage.add(new Step(DocumentLengthsWriter.class, p));
 
@@ -360,7 +360,7 @@ public class BuildIndex {
         stage.add(new StageConnectionPoint(ConnectionPointType.Input,
                 "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
         Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "documentNames");
+        p.add("filename", indexPath + File.separator + "parts" + File.separator + "names");
         stage.add(new InputStep("numberedDocumentData"));
         stage.add(new Step(DocumentNameWriter.class, p));
         return stage;

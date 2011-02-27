@@ -23,7 +23,7 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
  * Does not assume that the data is sorted
  *  - as data would need to be sorted into both key and value order
  *  - instead this class takes care of the re-sorting
- *  - this may be inefficient, but docnames is a reletively small pair of files
+ *  - this may be inefficient, but docnames is a relatively small pair of files
  *
  * @author sjh
  */
@@ -82,7 +82,7 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
 
   public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
     if (!parameters.getXML().containsKey("filename")) {
-      handler.addError("DocumentNameWriter requires an 'filename' parameter.");
+      handler.addError("DocumentNameWriter requires a 'filename' parameter.");
       return;
     }
   }
@@ -97,6 +97,8 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     public IndexWriterProcessor(String fileName, Parameters p) throws IOException{
       // default uncompressed index is fine
       writer = new IndexWriter(fileName, p);
+      writer.getManifest().set("writerClass", getClass().getName());
+      writer.getManifest().set("readerClass", DocumentNameReader.class.getName());
     }
     
     public void process(KeyValuePair kvp) throws IOException {
