@@ -18,14 +18,17 @@ public class UnfilteredCombinationIterator extends ScoreCombinationIterator {
     super(parameters, childIterators);
   }
 
+    /**
+     * Moves all iterators at the current document to the next.
+     */
   public boolean next() throws IOException {
-    boolean moved = false;
     int current = currentIdentifier();
+    boolean moved = false;
     for (ScoreValueIterator iterator : iterators) {
-      if (!iterator.isDone() && iterator.currentIdentifier() == current) {
-        iterator.next();
-        moved = true;
-      }
+	if (!iterator.isDone() && iterator.currentIdentifier() == current) {
+	    iterator.next();
+	    moved = true;	    
+	}
     }
     return moved;
   }
@@ -44,7 +47,7 @@ public class UnfilteredCombinationIterator extends ScoreCombinationIterator {
   }
 
   public boolean isDone() {
-    for (StructuredIterator iterator : iterators) {
+    for (ValueIterator iterator : iterators) {
       if (!iterator.isDone()) {
         return false;
       }

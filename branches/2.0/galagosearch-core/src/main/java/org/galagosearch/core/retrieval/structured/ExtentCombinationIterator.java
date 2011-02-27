@@ -15,10 +15,8 @@ import org.galagosearch.core.util.ExtentArray;
  */
 public abstract class ExtentCombinationIterator implements ExtentValueIterator, CountValueIterator {
 
-  protected PriorityQueue<ExtentValueIterator> iterators;
+  protected ExtentValueIterator[] iterators;
   protected ExtentArray extents;
-  protected int document;
-  protected boolean done;
 
   public ExtentArray extents() {
     return extents;
@@ -28,22 +26,16 @@ public abstract class ExtentCombinationIterator implements ExtentValueIterator, 
     return extents;
   }
 
-  public int currentIdentifier() {
-    return document;
-  }
-
   public int count() {
     return extents().getPositionCount();
   }
 
   public boolean hasMatch(int identifier) {
-    return (document == identifier);
+    return (currentIdentifier == identifier);
   }
 
   public void movePast(int identifier) throws IOException {
-    if (moveTo(identifier)) {
-      next();
-    }
+      moveTo(identifier+1);
   }
 
   public int compareTo(ValueIterator other) {

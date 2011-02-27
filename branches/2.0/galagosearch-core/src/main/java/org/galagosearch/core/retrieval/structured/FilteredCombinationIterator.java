@@ -16,59 +16,53 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public class FilteredCombinationIterator extends ScoreCombinationIterator {
 
-  private class IteratorComparator implements Comparator<ScoreValueIterator> {
-    public int compare(ScoreValueIterator a, ScoreValueIterator b) {
-      return (a.currentIdentifier() - b.currentIdentifier());
-    }
-  }
-
-  Comparator<ScoreValueIterator> comparator;
-
+  protected int document;
+    
   public FilteredCombinationIterator(Parameters parameters, ScoreValueIterator[] childIterators) {
     super(parameters, childIterators);
-    comparator = new IteratorComparator();
+    findDocument();
   }
+
+    public boolean moveTo(int identifier) throws IOException {
+	if (done) return false;
+	for (ValueIterator iterator : iterators) {
+	    iterator.moveTo(identifier);
+	    if (iterator.isDone()) {
+		document = Integer.MAX_VALUE;
+		done = true;
+		return false;
+	    }
+	}
+	findDocument();
+	return (done == false);
+    }
+
+    public void findDocument() throws IOException {
+        if (!done) {
+            // find a document that might have some matches
+            document = MoveIterators.moveAllToSameDocument(iterators);
+
+            // if we're done, quit now
+            if (document == Integer.MAX_VALUE) {
+                done = true;
+                break;
+            }
+	}
+    }
 
   public boolean next() throws IOException {
-    if (!isDone()) {
-      while (!allMatch() && !done) {
-        iterators[0].next();
-        Arrays.sort(iterators, comparator);
-      }
+    if (!done) {
+	iterators[0].next();
+	findDocument();
     }
-    return (isDone() == false);
+    return (done == false);
   }
 
-  private boolean allMatch() {
-    int current = iterators[0].currentIdentifier();
-    for (int i = 0; i < iterators.length; i++) {
-      if (iterators[i].currentIdentifier() != current)
-        return false;
+    public void reset() throws IOException {
+	super.reset();
+	done = false;
+	findDocument();
     }
-    return true;
-  }
-
-  public int currentIdentifier() {
-    int candidate = 0;
-
-    for (ValueIterator iterator : iterators) {
-      if (iterator.isDone()) {
-        return Integer.MAX_VALUE;
-      }
-      candidate = Math.max(candidate, iterator.currentIdentifier());
-    }
-
-    return candidate;
-  }
-  
-  public boolean isDone() {
-    for (ScoreIterator iterator : iterators) {
-      if (iterator.isDone()) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   public long totalEntries() {
     long min = Long.MAX_VALUE;

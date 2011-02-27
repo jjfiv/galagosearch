@@ -539,7 +539,7 @@ public class App {
       output.println(store.toString());
     }
   }
-  */
+  
 
   private void handleNgram(String[] args) throws Exception {
     if (args.length < 3) { // ngram index input
@@ -586,6 +586,7 @@ public class App {
       output.println(store.toString());
     }
   }
+  */
 
   private void handleBatchSearch(String[] args) throws Exception {
     if (args.length <= 1) {
@@ -895,9 +896,9 @@ public class App {
       throw new UnsupportedOperationException("Need to re-implement");
       //handleMergeIndexes(args);
     } else if (command.equals("ngram")) {
-      handleNgram(args);
+	//handleNgram(args);
     } else if (command.equals("ngram-se")) {
-      handleNgram(args);
+	//handleNgram(args);
     } else if (command.equals("pagerank")) {
       throw new UnsupportedOperationException("Need to re-implement");
       //PageRankApp.main(args);

@@ -77,13 +77,17 @@ public class DocumentLengthsReader extends KeyValueReader {
       return Utility.toInt(iterator.getKey());
     }
 
+    public int getCurrentLength() throws IOException {
+	return Utility.uncompressInt(iterator.getValueBytes(), 0);
+    }
+
     public boolean isDone() {
       return iterator.isDone();
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {
       NumberedDocumentData ndd = 
-              new NumberedDocumentData("","",Utility.toInt(iterator.getKey()),Utility.toInt(iterator.getValueBytes()));
+	  new NumberedDocumentData("","",Utility.toInt(iterator.getKey()),Utility.uncompressInt(iterator.getValueBytes(), 0));
       return ndd;
     }
 

@@ -18,35 +18,37 @@ import org.galagosearch.core.util.ExtentArray;
  */
 public abstract class ExtentDisjunctionIterator extends ExtentCombinationIterator {
 
-  protected ExtentValueIterator[] original;
-
   public ExtentDisjunctionIterator(ExtentValueIterator[] iterators) {
-    this.original = iterators;
-    this.iterators = new PriorityQueue<ExtentValueIterator>(iterators.length);
+    this.iterators = iterators;
+    this.activeIterators = new PriorityQueue<ExtentValueIterator>(iterators.length);
 
     this.extents = new ExtentArray();
     this.document = 0;
 
-    for (ExtentValueIterator iterator : original) {
+    for (ExtentValueIterator iterator : iterators) {
       if (!iterator.isDone()) {
-        this.iterators.add(iterator);
+        this.activeIterators.add(iterator);
       }
     }
   }
 
+  public int currentIdentifier() {
+    return document;
+  }
+
   public boolean next() throws IOException {
-    // find all iterators on the current id and move them forward
-    while (iterators.size() > 0 && iterators.peek().currentIdentifier() == document) {
-      ExtentValueIterator iter = iterators.poll();
+    // find all activeIterators on the current id and move them forward
+    while (activeIterators.size() > 0 && activeIterators.peek().currentIdentifier() == document) {
+      ExtentValueIterator iter = activeIterators.poll();
       iter.next();
 
       if (!iter.isDone()) {
-        iterators.offer(iter);
+        activeIterators.offer(iter);
       }
     }
 
     if (!isDone()) {
-      document = iterators.peek().currentIdentifier();
+      document = activeIterators.peek().currentIdentifier();
       extents.reset();
       loadExtents();
       return true;
@@ -57,7 +59,7 @@ public abstract class ExtentDisjunctionIterator extends ExtentCombinationIterato
   }
 
   public boolean isDone() {
-    return iterators.size() == 0;
+    return activeIterators.size() == 0;
   }
 
   /**
@@ -68,19 +70,19 @@ public abstract class ExtentDisjunctionIterator extends ExtentCombinationIterato
    */
   public boolean moveTo(int identifier) throws IOException {
     boolean hit = false;
-    for (ValueIterator iterator : iterators) {
+    for (ValueIterator iterator : activeIterators) {
       iterator.moveTo(identifier);
     }
-    document = iterators.peek().currentIdentifier();
+    document = activeIterators.peek().currentIdentifier();
     return (document == identifier);
   }
 
   public void reset() throws IOException {
-    iterators.clear();
-    for (ExtentValueIterator iterator : original) {
+    activeIterators.clear();
+    for (ExtentValueIterator iterator : iterators) {
       iterator.reset();
       if (!iterator.isDone()) {
-        iterators.add(iterator);
+        activeIterators.add(iterator);
       }
     }
 
@@ -89,7 +91,7 @@ public abstract class ExtentDisjunctionIterator extends ExtentCombinationIterato
 
   public long totalEntries() {
     long max = 0;
-    for (ValueIterator iterator : iterators) {
+    for (ValueIterator iterator : activeIterators) {
       max = Math.max(max, iterator.totalEntries());
     }
     return max;

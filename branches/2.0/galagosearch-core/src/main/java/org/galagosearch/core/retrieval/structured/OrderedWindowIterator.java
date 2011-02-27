@@ -18,19 +18,15 @@ public class OrderedWindowIterator extends ExtentConjunctionIterator {
   public OrderedWindowIterator(Parameters parameters, ExtentValueIterator[] iterators) throws IOException {
     super(iterators);
     this.width = (int) parameters.getAsDefault("width", -1);
-    lineUpIterators();
+    findDocument();
   }
 
   public void loadExtents() {
-    System.err.printf("OD loadExtents");
-    int i;
     ExtentArrayIterator[] arrayIterators;
 
-    i = 0;
-    arrayIterators = new ExtentArrayIterator[iterators.size()];
-    for (ExtentValueIterator iterator : iterators) {
-      arrayIterators[i] = new ExtentArrayIterator(iterator.extents());
-      i++;
+    arrayIterators = new ExtentArrayIterator[iterators.length];
+    for (int i = 0; i < iterators.length; i++) {
+      arrayIterators[i] = new ExtentArrayIterator(iterators[i].extents());
     }
     boolean notDone = true;
     while (notDone) {
@@ -39,7 +35,7 @@ public class OrderedWindowIterator extends ExtentConjunctionIterator {
       int begin = arrayIterators[0].current().begin;
 
       // loop over all the rest of the words
-      for (i = 1; i < arrayIterators.length; i++) {
+      for (int i = 1; i < arrayIterators.length; i++) {
         int end = arrayIterators[i - 1].current().end;
 
         // try to move this iterator so that it's past the end of the previous word
@@ -65,6 +61,7 @@ public class OrderedWindowIterator extends ExtentConjunctionIterator {
 
       // if it's a match, record it
       if (!invalid) {
+	  System.err.printf("%s: adding OW extent (%d, %d, %d)\n", this.toString(), document, begin, end);
         extents.add(document, begin, end);
       }
       notDone = arrayIterators[0].next();

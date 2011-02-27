@@ -124,11 +124,13 @@ public class StructuredRetrieval extends Retrieval {
     
     while (!iterator.isDone()) {
       int document = iterator.currentIdentifier();
+      System.err.printf("Moving to document %d\n", document);
       lengthsIterator.moveToKey(document);
-      int length = lengthsIterator.getCurrentDocument();
+      int length = lengthsIterator.getCurrentLength();
       // This context is shared among all scorers
       context.document = document;
       context.length = length;
+      System.err.printf("Setting context to: %d, %d\n", document, length);
       double score = iterator.score();
       CallTable.increment("scored");
       if (queue.size() <= requested || queue.peek().score < score) {

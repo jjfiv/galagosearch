@@ -20,11 +20,10 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
     super(evIterators);
     this.width = (int) parameters.getAsDefault("width", -1);
     this.overlap = parameters.get("overlap", false);
-    lineUpIterators();
+    findDocument();
   }
 
   public void loadExtents() {
-    System.err.println("UW loadExtents");
     extents.reset();
 
     ExtentArrayIterator[] arrayIterators;
@@ -32,24 +31,19 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
     int minimumPosition = Integer.MAX_VALUE;
 
     // someday this will be a heap/priorityQueue for the overlapping case
-    arrayIterators = new ExtentArrayIterator[iterators.size()];
+    arrayIterators = new ExtentArrayIterator[iterators.length];
 
-    int i = 0;
-    for (ExtentValueIterator iterator : iterators) {
-      arrayIterators[i] = new ExtentArrayIterator(iterator.extents());
+    for (int i = 0; i < iterators.length; i ++) {
+      arrayIterators[i] = new ExtentArrayIterator(iterators[i].extents());
       minimumPosition = Math.min(arrayIterators[i].current().begin, minimumPosition);
       maximumPosition = Math.max(arrayIterators[i].current().end, maximumPosition);
-      i++;
     }
 
     do {
       boolean match = (maximumPosition - minimumPosition <= width);
-      System.err.printf("minimum=%d, maximum=%d, width=%d, match=%b\n", minimumPosition,
-              maximumPosition, width, match);
       // try to emit an extent here, but only if the width is small enough
       if (match) {
         extents.add(document, minimumPosition, maximumPosition);
-        System.err.printf("Adding extent: %d, %d, %d\n", document, minimumPosition, maximumPosition);
       }
       if (overlap || !match) {
         // either it didn't just match or we don't care about overlap,

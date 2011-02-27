@@ -30,6 +30,7 @@ public class ScoringFunctionIterator extends TransformIterator {
     super(iterator);
     this.function = function;
     this.functions = null; // null implies that we can not perform a parameter sweep
+    System.err.printf("%s wraps %s\n", this.toString(), iterator.toString());
   }
 
   // if we have a set of functions -> (for parameter sweeping)
@@ -58,6 +59,8 @@ public class ScoringFunctionIterator extends TransformIterator {
 
     // Used in counting # of score calls. Uncomment if you want to track that.
     //CallTable.increment("score_req");
+    System.err.printf("%s: told to score under context (%d, %d). current doc = %d\n", this.toString(),
+		      context.document, context.length, iterator.currentIdentifier());
     if (iterator.currentIdentifier() == context.document) {
       count = ((CountIterator)iterator).count();
     }

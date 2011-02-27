@@ -12,11 +12,14 @@ import org.galagosearch.core.util.ExtentArray;
  */
 public abstract class ExtentConjunctionIterator extends ExtentCombinationIterator {
 
+    protected int document;
+    protected boolean done;
+
   public ExtentConjunctionIterator(ExtentValueIterator[] extIterators) {
     this.done = false;
-    iterators = new PriorityQueue<ExtentValueIterator>(extIterators.length);
-    for (ExtentValueIterator ei : extIterators) {
-      iterators.add(ei);
+    iterators = new ExtentValueIterator[extIterators.length];
+    for (int i = 0; i < extIterators.length; i++) {
+	iterators[i] = extIterators[i];
     }
     this.extents = new ExtentArray();
   }
@@ -24,49 +27,35 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
   // Move the lowest one forward first, then keep moving them forward
   // until they all match on the id.
   public boolean next() throws IOException {
-    if (!done) {
-      iterators.peek().next();
-      lineUpIterators();
-    }
-    return (done == false);
-  }
-
-  protected void lineUpIterators() throws IOException {
-    while (!allMatch() && !done) {
-      ExtentValueIterator it = iterators.poll();
-      it.next();
-      iterators.offer(it);
-      if (it.isDone()) {
-        done = true;
-        document = Integer.MAX_VALUE;
-        return;
-      }
-
-      System.err.printf("Iterators lined up on doc % d\n", iterators.peek().currentIdentifier());
-
       if (!done) {
-        document = iterators.peek().currentIdentifier();
-        extents.reset();
-        loadExtents();
-        if (extents.getPositionCount() > 0) {
-          return;
+	  iterators[0].next();
+	  findDocument();
+      }
+      return (done == false);
+  }
+
+    public void findDocument() throws IOException {
+        while (!done) {
+            // find a document that might have some matches
+            document = MoveIterators.moveAllToSameDocument(iterators);
+
+            // if we're done, quit now
+            if (document == Integer.MAX_VALUE) {
+                done = true;
+                break;
+            }
+
+            // try to load some extents (subclass does this)
+            extents.reset();
+            loadExtents();
+
+            // were we successful? if so, quit, otherwise keep looking for documents
+            if (extents.getPositionCount() > 0) {
+                break;
+            }
+            iterators[0].next();
         }
-
-        // Didn't find anything, so move one forward
-        iterators.peek().next();
-      }
     }
-  }
-
-  protected boolean allMatch() {
-    int current = iterators.peek().currentIdentifier();
-    for (ExtentValueIterator iterator : iterators) {
-      if (iterator.isDone() || iterator.currentIdentifier() != current) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   public boolean isDone() {
     return done;
@@ -76,25 +65,17 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
     for (ValueIterator iterator : iterators) {
       iterator.moveTo(identifier);
     }
-    if (allMatch()) {
-      document = iterators.peek().currentIdentifier();
-      return (document == identifier);
-    } else {
-      // missed it but need to line up
-      next();
-      return false;
-    }
+    findDocument();
   }
 
-  public void reset() throws IOException {
-    for (ExtentValueIterator iterator : iterators) {
-      iterator.reset();
+    public void reset() throws IOException {
+        for (ExtentIterator iterator : iterators) {
+            iterator.reset();
+        }
+
+        done = false;
+        findDocument();
     }
-    done = false;
-    if (!allMatch()) {
-      next();
-    }
-  }
 
   public long totalEntries() {
     long min = Long.MAX_VALUE;
