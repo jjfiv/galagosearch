@@ -5,8 +5,6 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
 import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -16,59 +14,51 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public class FilteredCombinationIterator extends ScoreCombinationIterator {
 
-  protected int document;
-    
   public FilteredCombinationIterator(Parameters parameters, ScoreValueIterator[] childIterators) {
     super(parameters, childIterators);
-    findDocument();
   }
 
-    public boolean moveTo(int identifier) throws IOException {
-	if (done) return false;
-	for (ValueIterator iterator : iterators) {
-	    iterator.moveTo(identifier);
-	    if (iterator.isDone()) {
-		document = Integer.MAX_VALUE;
-		done = true;
-		return false;
-	    }
-	}
-	findDocument();
-	return (done == false);
+  public int currentIdentifier() {
+    int candidate = 0;
+
+    for (ValueIterator iterator : iterators) {
+      if (iterator.isDone()) {
+        return Integer.MAX_VALUE;
+      }
+      candidate = Math.max(candidate, iterator.currentIdentifier());
     }
 
-    public void findDocument() throws IOException {
-        if (!done) {
-            // find a document that might have some matches
-            document = MoveIterators.moveAllToSameDocument(iterators);
+    return candidate;
+  }
 
-            // if we're done, quit now
-            if (document == Integer.MAX_VALUE) {
-                done = true;
-                break;
-            }
-	}
+  public boolean hasMatch(int document) {
+    for (ValueIterator iterator : iterators) {
+      if (iterator.isDone() || !iterator.hasMatch(document)) {
+        return false;
+      }
     }
+
+    return true;
+  }
+
+  public boolean isDone() {
+    for (ValueIterator iterator : iterators) {
+      if (iterator.isDone()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   public boolean next() throws IOException {
-    if (!done) {
-	iterators[0].next();
-	findDocument();
-    }
-    return (done == false);
+    return (moveTo(currentIdentifier()+1));
   }
 
-    public void reset() throws IOException {
-	super.reset();
-	done = false;
-	findDocument();
-    }
-
   public long totalEntries() {
-    long min = Long.MAX_VALUE;
+    long max = 0;
     for (ValueIterator iterator : iterators) {
-      min = Math.min(min, iterator.totalEntries());
+      max = Math.max(max, iterator.totalEntries());
     }
-    return min;
+    return max;
   }
 }

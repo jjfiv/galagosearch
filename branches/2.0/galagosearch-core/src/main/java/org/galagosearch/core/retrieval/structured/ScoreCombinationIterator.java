@@ -92,7 +92,16 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
   }
 
   public void movePast(int identifier) throws IOException {
-    moveTo(identifier+1);
+    moveTo(identifier + 1);
+  }
+
+  public boolean moveTo(int identifier) throws IOException {
+    for (ValueIterator iterator : iterators) {
+      if (!iterator.isDone()) {
+        iterator.moveTo(identifier);
+      }
+    }
+    return hasMatch(identifier);
   }
 
   public double score() {
@@ -114,13 +123,13 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
     }
     return total / weightSum;
   }
- 
+
   public int currentIdentifier() {
-      return document;
+    return document;
   }
-  
+
   public boolean isDone() {
-      return done;
+    return done;
   }
 
   public void reset() throws IOException {

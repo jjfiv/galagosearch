@@ -16,14 +16,14 @@ public class SynonymIterator extends ExtentDisjunctionIterator {
     }
 
     public void loadExtents() {
-        if (iterators.size() == 0) return;
-        ExtentValueIterator iter = iterators.poll();
+        if (activeIterators.size() == 0) return;
+        ExtentValueIterator iter = activeIterators.poll();
         document = iter.currentIdentifier();
 
         // get all the iteators that point to this intID
         ArrayList<ExtentValueIterator> useable = new ArrayList<ExtentValueIterator>();
-        while (iterators.size() > 0 && iterators.peek().currentIdentifier() == document) {
-            useable.add(iterators.poll());
+        while (activeIterators.size() > 0 && activeIterators.peek().currentIdentifier() == document) {
+            useable.add(activeIterators.poll());
         }
         useable.add(iter);
 
@@ -44,7 +44,7 @@ public class SynonymIterator extends ExtentDisjunctionIterator {
         // put back the ones we used
         for (ExtentValueIterator i : useable) {
             if (!i.isDone()) {
-                iterators.offer(i);
+                activeIterators.offer(i);
             }
         }
     }

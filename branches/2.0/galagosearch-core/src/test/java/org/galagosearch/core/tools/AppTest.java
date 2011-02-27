@@ -293,7 +293,6 @@ public class AppTest extends TestCase {
                     + "14 Q0 55 1 -1.73220460 galago\n"
                     + "14 Q0 59 2 -1.73353440 galago\n";
 
-	    System.err.printf("(1) Expected: %s\n\nActual: %s\n\n", expectedScores, output);
             assertEquals(expectedScores, output);
 
         } finally {
@@ -360,7 +359,6 @@ public class AppTest extends TestCase {
                     + "14 Q0 55 1 -1.73220460 galago\n"
                     + "14 Q0 59 2 -1.73353440 galago\n";
 
-	    System.err.printf("(2) Expected: %s\n\nActual: %s\n\n", expectedScores, output);
             assertEquals(expectedScores, output);
 
         } finally {

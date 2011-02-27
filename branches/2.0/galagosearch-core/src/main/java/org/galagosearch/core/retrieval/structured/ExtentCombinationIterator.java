@@ -31,7 +31,7 @@ public abstract class ExtentCombinationIterator implements ExtentValueIterator, 
   }
 
   public boolean hasMatch(int identifier) {
-    return (currentIdentifier == identifier);
+    return (currentIdentifier() == identifier);
   }
 
   public void movePast(int identifier) throws IOException {

@@ -18,6 +18,9 @@ import org.galagosearch.core.util.ExtentArray;
  */
 public abstract class ExtentDisjunctionIterator extends ExtentCombinationIterator {
 
+  protected PriorityQueue<ExtentValueIterator> activeIterators;
+  protected int document;
+
   public ExtentDisjunctionIterator(ExtentValueIterator[] iterators) {
     this.iterators = iterators;
     this.activeIterators = new PriorityQueue<ExtentValueIterator>(iterators.length);

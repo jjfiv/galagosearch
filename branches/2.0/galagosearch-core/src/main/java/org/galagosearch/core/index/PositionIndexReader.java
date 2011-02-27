@@ -117,7 +117,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       // metadata
       int options = stream.readInt();
       documentCount = stream.readInt();
-      System.err.printf("%s: doc count=%d\n", this.toString(), documentCount);
       totalPositionCount = stream.readInt();
       if ((options & HAS_SKIPS) == HAS_SKIPS) {
         skipDistance = stream.readInt();
@@ -186,7 +185,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
 
       documentIndex = 0;
       loadExtents();
-      System.err.printf("%s: after init, current doc=%d\n", this.toString(), currentDocument);
     }
 
     // Loads up a single set of positions for a intID. Basically it's the
@@ -199,7 +197,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       int position = 0;
       for (int i = 0; i < currentCount; i++) {
         position += positions.readInt();
-	System.err.printf("%s: loading extent (%d, %d, %d)\n", this.toString(), currentDocument, position, position+1);
         extentArray.add(currentDocument, position, position + 1);
       }
     }
@@ -232,7 +229,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       currentDocument = 0;
       currentCount = 0;
       extentArray.reset();
-      System.err.printf("%s: reset\n", this.toString());
       initialize();
     }
 

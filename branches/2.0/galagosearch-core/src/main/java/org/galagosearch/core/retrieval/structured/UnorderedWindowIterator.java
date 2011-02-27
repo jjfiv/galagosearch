@@ -48,7 +48,7 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
       if (overlap || !match) {
         // either it didn't just match or we don't care about overlap,
         // so we want to increment only the very first iterator
-        for (i = 0; i < arrayIterators.length; i++) {
+        for (int i = 0; i < arrayIterators.length; i++) {
           if (arrayIterators[i].current().begin == minimumPosition) {
             boolean result = arrayIterators[i].next();
 
@@ -59,7 +59,7 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
         }
       } else {
         // last was a match, so increment all iterators past the end of the match
-        for (i = 0; i < arrayIterators.length; i++) {
+        for (int i = 0; i < arrayIterators.length; i++) {
           while (arrayIterators[i].current().begin < maximumPosition) {
             boolean result = arrayIterators[i].next();
 
@@ -75,7 +75,7 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
       maximumPosition = 0;
 
       // now, reset bounds
-      for (i = 0; i < arrayIterators.length; i++) {
+      for (int i = 0; i < arrayIterators.length; i++) {
         minimumPosition = Math.min(minimumPosition, arrayIterators[i].current().begin);
         maximumPosition = Math.max(maximumPosition, arrayIterators[i].current().end);
       }

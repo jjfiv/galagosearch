@@ -61,7 +61,6 @@ public class OrderedWindowIterator extends ExtentConjunctionIterator {
 
       // if it's a match, record it
       if (!invalid) {
-	  System.err.printf("%s: adding OW extent (%d, %d, %d)\n", this.toString(), document, begin, end);
         extents.add(document, begin, end);
       }
       notDone = arrayIterators[0].next();

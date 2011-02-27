@@ -2,6 +2,7 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
+import org.galagosearch.core.index.ValueIterator;
 
 /**
  *
@@ -18,7 +19,7 @@ public class MoveIterators {
      * @return The currentIdentifier number that the iterators are now pointing to, or Integer.MAX_VALUE
      *         if one of the iterators is now done.
      */
-    public static int moveAllToSameDocument(ExtentIterator[] iterators) throws IOException {
+    public static int moveAllToSameDocument(ValueIterator[] iterators) throws IOException {
         if (iterators.length == 0) {
             return Integer.MAX_VALUE;
         }
@@ -32,7 +33,7 @@ public class MoveIterators {
         while (!allMatch) {
             allMatch = true;
 
-            for (ExtentIterator iterator : iterators) {
+            for (ValueIterator iterator : iterators) {
                 if (iterator.isDone()) {
                     return Integer.MAX_VALUE;
                 }
@@ -42,7 +43,7 @@ public class MoveIterators {
                 // current target currentIdentifier, so try to move forward to
                 // the target
                 if (currentTarget > thisDocument) {
-                    iterator.skipToDocument(currentTarget);
+                    iterator.moveTo(currentTarget);
                     if (iterator.isDone()) {
                         return Integer.MAX_VALUE;
                     }
@@ -64,13 +65,13 @@ public class MoveIterators {
         return currentTarget;
     }
 
-    public static boolean allSameDocument(ExtentIterator[] iterators) {
+    public static boolean allSameDocument(ValueIterator[] iterators) {
         if (iterators.length == 0) {
             return true;
         }
         int document = iterators[0].currentIdentifier();
 
-        for (ExtentIterator iterator : iterators) {
+        for (ValueIterator iterator : iterators) {
             if (document != iterator.currentIdentifier()) {
                 return false;
             }
@@ -79,10 +80,10 @@ public class MoveIterators {
         return true;
     }
 
-    public static int findMaximumDocument(ExtentIterator[] iterators) {
+    public static int findMaximumDocument(ValueIterator[] iterators) {
         int maximumDocument = 0;
 
-        for (ExtentIterator iterator : iterators) {
+        for (ValueIterator iterator : iterators) {
             if (iterator.isDone()) {
                 return Integer.MAX_VALUE;
             }
@@ -92,21 +93,21 @@ public class MoveIterators {
         return maximumDocument;
     }
 
-    public static int findMinimumDocument(ExtentIterator[] iterators) {
+    public static int findMinimumDocument(ValueIterator[] iterators) {
         int minimumDocument = Integer.MAX_VALUE;
 
-        for (ExtentIterator iterator : iterators) {
+        for (ValueIterator iterator : iterators) {
             minimumDocument = Math.min(minimumDocument, iterator.currentIdentifier());
         }
 
         return minimumDocument;
     }
 
-    public static int findMinimumCandidate(ScoreIterator[] iterators) {
+    public static int findMinimumCandidate(ValueIterator[] iterators) {
         int minimumDocument = Integer.MAX_VALUE;
 
-        for (ScoreIterator iterator : iterators) {
-            minimumDocument = Math.min(minimumDocument, iterator.identifier());
+        for (ValueIterator iterator : iterators) {
+            minimumDocument = Math.min(minimumDocument, iterator.currentIdentifier());
         }
 
         return minimumDocument;
