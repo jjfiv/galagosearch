@@ -10,6 +10,7 @@ import org.galagosearch.core.index.DocumentNameReader;
 import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
+import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
@@ -347,9 +348,14 @@ public class App {
 
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
     KeyIterator iterator = reader.getIterator();
-    do {
-      output.println(iterator.getValueString());
-    } while (iterator.nextKey());
+    while (!iterator.isDone()) {
+	ValueIterator vIter = iterator.getValueIterator();
+	while (!vIter.isDone()) {
+	    output.println(vIter.getEntry());
+	    vIter.next();
+	}
+	iterator.nextKey();
+    }
   }
 
   private void handleDumpCorpus(String[] args) throws IOException {

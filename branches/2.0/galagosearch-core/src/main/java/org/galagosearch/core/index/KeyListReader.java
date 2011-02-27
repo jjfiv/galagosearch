@@ -31,7 +31,7 @@ public abstract class KeyListReader extends KeyValueReader {
     protected long dataLength;
 
     public abstract String getEntry();
-
+      
     public int compareTo(ValueIterator other) {
       if (isDone() && !other.isDone()) {
         return 1;

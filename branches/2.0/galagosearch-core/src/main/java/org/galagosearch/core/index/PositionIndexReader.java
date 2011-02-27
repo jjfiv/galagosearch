@@ -42,16 +42,16 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
 
     @Override
     public String getValueString() {
-      ListIterator it;
+      TermCountIterator it;
       long count = -1;
       try {
         it = new TermCountIterator(iterator);
-        count = it.totalEntries();
+	count = it.count();
       } catch (IOException ioe) {
       }
-
       StringBuilder sb = new StringBuilder();
-      sb.append(Utility.toString(iterator.getKey())).append(", List Value: size=");
+      sb.append(Utility.toString(getKeyBytes())).append(",");
+      sb.append("list of size: ");
       if (count > 0) {
         sb.append(count);
       } else {
@@ -61,7 +61,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     }
 
     public ValueIterator getValueIterator() throws IOException {
-      return new TermCountIterator(iterator);
+      return new TermExtentIterator(iterator);
     }
   }
 
@@ -187,7 +187,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       loadExtents();
     }
 
-    // Loads up a single set of positions for a intID. Basically it's the
+    // Loads up a single set of positions for an intID. Basically it's the
     // load that needs to be done when moving forward one in the posting list.
     private void loadExtents() throws IOException {
       currentDocument += documents.readInt();

@@ -203,14 +203,16 @@ public class AppTest extends TestCase {
                     File.separator);
             new App(printStream).run(new String[]{"dump-index", postingsName});
             output = byteArrayStream.toString();
-            assertEquals("a,0,2\n"
-                    + "document,0,4\n"
-                    + "document,1,1\n"
-                    + "is,0,1\n"
-                    + "sampl,0,3\n"
-                    + "sampl,1,0\n"
-                    + "this,0,0\n"
-                    + "two,1,2\n", output);
+            String correct = "a,0,2\n"
+		+ "document,0,4\n"
+		+ "document,1,1\n"
+		+ "is,0,1\n"
+		+ "sampl,0,3\n"
+		+ "sampl,1,0\n"
+		+ "this,0,0\n"
+		+ "two,1,2\n";
+
+	    assertEquals(correct, output);
 
             // Verify eval works
             byteArrayStream = new ByteArrayOutputStream();

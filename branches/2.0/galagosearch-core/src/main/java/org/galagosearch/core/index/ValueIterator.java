@@ -18,4 +18,6 @@ public interface ValueIterator extends BoundedIterator, Comparable<ValueIterator
   boolean moveTo(int identifier) throws IOException;
 
   void movePast(int identifier) throws IOException;
+
+  String getEntry() throws IOException;
 }
