@@ -37,15 +37,12 @@ public class StructuredRetrievalTest extends TestCase {
         tempPath.delete();
         tempPath.mkdir();
         
-        String partsPath = tempPath.toString() + File.separator + "parts";
-        new File(partsPath).mkdir();
-        
         // put in a generic manifest
         new Parameters().write(tempPath + File.separator + "manifest");
 
         // build an empty extent index
         Parameters extp = new Parameters();
-        extp.add("filename", partsPath + File.separator + "extents");
+        extp.add("filename", tempPath + File.separator + "extents");
         TupleFlowParameters extParameters = new FakeParameters(extp);
 
         ExtentIndexWriter ewriter = new ExtentIndexWriter(extParameters);
@@ -57,7 +54,7 @@ public class StructuredRetrievalTest extends TestCase {
 
         // write positions!
         Parameters pp = new Parameters();
-        pp.add("filename", partsPath + File.separator + "postings");
+        pp.add("filename", tempPath + File.separator + "postings");
         TupleFlowParameters posParameters = new FakeParameters(pp);
 
         PositionIndexWriter pwriter = new PositionIndexWriter(posParameters);
@@ -91,7 +88,7 @@ public class StructuredRetrievalTest extends TestCase {
 
         // add some document names
         Parameters dnp = new Parameters();
-        dnp.add("filename", tempPath + File.separator + "parts" + File.separator + "names");
+        dnp.add("filename", tempPath + File.separator + "names");
 
         DocumentNameWriter dnWriter = new DocumentNameWriter(new FakeParameters(dnp));
         for (int i = 0; i < 20; i++) {
@@ -100,7 +97,7 @@ public class StructuredRetrievalTest extends TestCase {
         dnWriter.close();
 
         Parameters lp = new Parameters();
-        lp.add("filename", tempPath + File.separator + "parts" + File.separator + "lengths");
+        lp.add("filename", tempPath + File.separator + "lengths");
         DocumentLengthsWriter lWriter = new DocumentLengthsWriter(new FakeParameters(lp));
 
         for (int i = 0; i < 20; i++) {

@@ -6,20 +6,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.galagosearch.core.index.DocumentLengthsWriter;
-import org.galagosearch.core.index.DocumentNameWriter;
-import org.galagosearch.core.index.ExtentIndexWriter;
-import org.galagosearch.core.index.ExtentValueIndexWriter;
-import org.galagosearch.core.index.ManifestWriter;
 import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
 import org.galagosearch.core.parse.AdditionalTextCombiner;
 import org.galagosearch.core.parse.AnchorTextCreator;
-import org.galagosearch.core.parse.CollectionLengthCounterNDD;
-import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.index.corpus.CorpusWriter;
-import org.galagosearch.core.index.corpus.DocumentToKeyValuePair;
-import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
 import org.galagosearch.core.parse.DocumentDataExtractor;
 import org.galagosearch.core.parse.FastDocumentNumberer;
 import org.galagosearch.core.parse.DocumentSource;
@@ -40,8 +31,6 @@ import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberWordPosition;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.types.NumberedExtent;
-import org.galagosearch.core.types.NumberedValuedExtent;
-import org.galagosearch.tupleflow.Order;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.Parameters.Value;
@@ -54,7 +43,6 @@ import org.galagosearch.tupleflow.execution.OutputStep;
 import org.galagosearch.tupleflow.execution.Stage;
 import org.galagosearch.tupleflow.execution.StageConnectionPoint;
 import org.galagosearch.tupleflow.execution.Step;
-import org.galagosearch.tupleflow.types.XMLFragment;
 
 /**
  *
@@ -65,46 +53,11 @@ import org.galagosearch.tupleflow.types.XMLFragment;
  */
 public class BuildFastIndex {
 
-    protected String indexPath;
+    protected File indexPath;
     protected boolean stemming;
     protected boolean useLinks;
     protected boolean makeCorpus;
     protected Parameters corpusParameters;
-
-    public Stage getSplitStage(ArrayList<String> inputPaths) throws IOException {
-        Stage stage = new Stage("inputSplit");
-        stage.add(new StageConnectionPoint(ConnectionPointType.Output, "splits",
-                new DocumentSplit.FileIdOrder()));
-
-        Parameters p = new Parameters();
-        for (String input : inputPaths) {
-            File inputFile = new File(input);
-
-            if (inputFile.isFile()) {
-                p.add("filename", inputFile.getAbsolutePath());
-            } else if (inputFile.isDirectory()) {
-                p.add("directory", inputFile.getAbsolutePath());
-            } else {
-                throw new IOException("Couldn't find file/directory: " + input);
-            }
-        }
-
-        stage.add(new Step(DocumentSource.class, p));
-        stage.add(Utility.getSorter(new DocumentSplit.FileIdOrder()));
-        stage.add(new OutputStep("splits"));
-        return stage;
-    }
-
-    public ArrayList<Step> getExtractionSteps(
-            String outputName,
-            Class extractionClass,
-            Order sortOrder) {
-        ArrayList<Step> steps = new ArrayList<Step>();
-        steps.add(new Step(extractionClass));
-        steps.add(Utility.getSorter(sortOrder));
-        steps.add(new OutputStep(outputName));
-        return steps;
-    }
 
     public Stage getParsePostingsStage() {
         Stage stage = new Stage("parsePostings");
@@ -167,13 +120,13 @@ public class BuildFastIndex {
 
         MultiStep processingForkTwo = new MultiStep();
         ArrayList<Step> text =
-                getExtractionSteps("numberedPostings", NumberedPostingsPositionExtractor.class,
+                BuildStageTemplates.getExtractionSteps("numberedPostings", NumberedPostingsPositionExtractor.class,
                 new NumberWordPosition.WordDocumentPositionOrder());
         ArrayList<Step> extents =
-                getExtractionSteps("numberedExtents", NumberedExtentExtractor.class,
+                BuildStageTemplates.getExtractionSteps("numberedExtents", NumberedExtentExtractor.class,
                 new NumberedExtent.ExtentNameNumberBeginOrder());
         ArrayList<Step> documentData =
-                getExtractionSteps("numberedDocumentData", NumberedDocumentDataExtractor.class,
+                BuildStageTemplates.getExtractionSteps("numberedDocumentData", NumberedDocumentDataExtractor.class,
                 new NumberedDocumentData.NumberOrder());
 
         processingForkTwo.groups.add(text);
@@ -217,9 +170,9 @@ public class BuildFastIndex {
 
         MultiStep multi = new MultiStep();
         ArrayList<Step> links =
-                getExtractionSteps("links", LinkExtractor.class, new ExtractedLink.DestUrlOrder());
+                BuildStageTemplates.getExtractionSteps("links", LinkExtractor.class, new ExtractedLink.DestUrlOrder());
         ArrayList<Step> data =
-                getExtractionSteps("documentUrls", DocumentDataExtractor.class,
+                BuildStageTemplates.getExtractionSteps("documentUrls", DocumentDataExtractor.class,
                 new DocumentData.UrlOrder());
 
         multi.groups.add(links);
@@ -250,24 +203,6 @@ public class BuildFastIndex {
         return stage;
     }
 
-    public Stage getCollectionLengthStage() {
-        Stage stage = new Stage("collectionLength");
-
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input, "numberedDocumentData",
-                new NumberedDocumentData.NumberOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output, "collectionLength",
-                new XMLFragment.NodePathOrder()));
-
-        stage.add(new InputStep("numberedDocumentData"));
-        stage.add(new Step(CollectionLengthCounterNDD.class));
-        stage.add(Utility.getSorter(new XMLFragment.NodePathOrder()));
-        stage.add(new OutputStep("collectionLength"));
-
-        return stage;
-    }
-
     public Stage getWritePostingsStage(String stageName, String inputName, String indexName) {
         Stage stage = new Stage(stageName);
 
@@ -276,85 +211,11 @@ public class BuildFastIndex {
                 new NumberWordPosition.WordDocumentPositionOrder()));
         stage.add(new InputStep(inputName));
         Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "parts" + File.separator + indexName);
+        p.add("filename", indexPath + File.separator + indexName);
         stage.add(new Step(PositionIndexWriter.class, p));
         return stage;
     }
-
-    public Stage getWriteExtentsStage() {
-        Stage stage = new Stage("writeExtents");
-
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input, "numberedExtents",
-                new NumberedExtent.ExtentNameNumberBeginOrder()));
-
-        stage.add(new InputStep("numberedExtents"));
-        Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "parts" + File.separator + "extents");
-        stage.add(new Step(ExtentIndexWriter.class, p));
-        return stage;
-    }
-
-    public Stage getWriteDatesStage() {
-        Stage stage = new Stage("writeDates");
-
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input, "numberedDateExtents",
-                new NumberedValuedExtent.ExtentNameNumberBeginOrder()));
-        Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "parts" + File.separator + "dates");
-        stage.add(new Step(ExtentValueIndexWriter.class));
-
-        return stage;
-    }
-
-    /**
-     * Write out document count and collection length information.
-     */
-    public Stage getWriteManifestStage() {
-        Stage stage = new Stage("writeManifest");
-
-        stage.add(new StageConnectionPoint(ConnectionPointType.Input,
-                "collectionLength",
-                new XMLFragment.NodePathOrder()));
-        stage.add(new InputStep("collectionLength"));
-        Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "manifest");
-        stage.add(new Step(ManifestWriter.class, p));
-        return stage;
-    }
-
-    /**
-     * Writes document lengths to a document lengths file.
-     */
-    public Stage getWriteDocumentLengthsStage() {
-        Stage stage = new Stage("writeDocumentLengths");
-
-        stage.add(new StageConnectionPoint(ConnectionPointType.Input,
-                "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
-        Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "parts" + File.separator + "lengths");
-        stage.add(new InputStep("numberedDocumentData"));
-        stage.add(new Step(DocumentLengthsWriter.class, p));
-
-        return stage;
-    }
-
-    /**
-     * Writes document names to a document names file.
-     */
-    public Stage getWriteDocumentNamesStage() {
-        Stage stage = new Stage("writeDocumentNames");
-
-        stage.add(new StageConnectionPoint(ConnectionPointType.Input,
-                "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
-        Parameters p = new Parameters();
-        p.add("filename", indexPath + File.separator + "parts" + File.separator + "names");
-        stage.add(new InputStep("numberedDocumentData"));
-        stage.add(new Step(DocumentNameWriter.class, p));
-        return stage;
-    }
-
+    
     public Stage getParallelIndexKeyWriterStage(String name, String input, Parameters indexParameters) {
         Stage stage = new Stage(name);
 
@@ -373,7 +234,7 @@ public class BuildFastIndex {
         Job job = new Job();
         this.stemming = p.get("stemming", true);
         this.useLinks = p.get("links", false);
-        this.indexPath = new File(p.get("indexPath")).getAbsolutePath(); // fail if no path.
+        this.indexPath = new File(p.get("indexPath")); // fail if no path.
         this.makeCorpus = p.containsKey("corpusPath");
 
         ArrayList<String> inputPaths = new ArrayList();
@@ -383,6 +244,7 @@ public class BuildFastIndex {
         }
         // ensure the index folder exists
         Utility.makeParentDirectories(indexPath);
+
         if (makeCorpus) {
             this.corpusParameters = new Parameters();
             this.corpusParameters.add("parallel", "true");
@@ -390,18 +252,18 @@ public class BuildFastIndex {
             this.corpusParameters.add("filename", new File(p.get("corpusPath")).getAbsolutePath());
         }
 
-        job.add(getSplitStage(inputPaths));
+        job.add(BuildStageTemplates.getSplitStage(inputPaths, DocumentSource.class));
         job.add(getParsePostingsStage());
         job.add(getWritePostingsStage("writePostings", "numberedPostings", "postings"));
-        job.add(getWriteManifestStage());
-        job.add(getWriteExtentsStage());
-        job.add(getWriteDocumentNamesStage());
-        job.add(getWriteDocumentLengthsStage());
-        job.add(getCollectionLengthStage());
+        job.add(BuildStageTemplates.getWriteManifestStage(indexPath));
+        job.add(BuildStageTemplates.getWriteExtentsStage(indexPath));
+        job.add(BuildStageTemplates.getWriteNamesStage(indexPath));
+        job.add(BuildStageTemplates.getWriteLengthsStage(indexPath));
+        job.add(BuildStageTemplates.getCollectionLengthStage());
 
         job.connect("inputSplit", "parsePostings", ConnectionAssignmentType.Each);
-        job.connect("parsePostings", "writeDocumentLengths", ConnectionAssignmentType.Combined);
-        job.connect("parsePostings", "writeDocumentNames", ConnectionAssignmentType.Combined);
+        job.connect("parsePostings", "writeLengths", ConnectionAssignmentType.Combined);
+        job.connect("parsePostings", "writeNames", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "writeExtents", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "writePostings", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "collectionLength", ConnectionAssignmentType.Combined);

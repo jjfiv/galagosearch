@@ -62,7 +62,6 @@ public class NgramRewriteTraversal implements Traversal {
       if( ! p.containsKey("part") ){
         int n = original.getInternalNodes().size();
         String part = getnGramPartName(n);
-        System.err.println("Using part:" + part);
         p.add("part", part);
       } 
 

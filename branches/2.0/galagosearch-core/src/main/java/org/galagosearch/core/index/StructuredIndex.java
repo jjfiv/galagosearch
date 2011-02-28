@@ -23,23 +23,35 @@ public class StructuredIndex {
   DocumentLengthsReader lengthsReader;
   DocumentNameReader namesReader;
   Map<String, StructuredIndexPartReader> parts;
+  File location;
+
   Parameters manifest;
   HashMap<String, String> defaultIndexOperators = new HashMap<String, String>();
   HashSet<String> knownIndexOperators = new HashSet<String>();
 
-  public StructuredIndex(String filename) throws IOException {
-    manifest = new Parameters();
-    manifest.parse(filename + File.separator + "manifest");
-    File partsDirectory = new File(filename + File.separator + "parts");
+  public StructuredIndex(String indexPath) throws IOException {
+    // Make sure it's a valid location
+    location = new File(indexPath);
+    if (!location.isDirectory()) throw new IOException(String.format("%s is not a directory.", indexPath));
+
+    // Check manifest
+    manifest = null;
     parts = new HashMap<String, StructuredIndexPartReader>();
-    for (File part : partsDirectory.listFiles()) {
-      StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
-      if (reader == null) {
-        continue;
-      }      
-      parts.put(part.getName(), reader);
+    for (File part : location.listFiles()) {
+      if (part.getName().equals("manifest")) {
+        manifest = new Parameters();
+        manifest.parse(part.getCanonicalPath());
+      } else {
+        StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
+        if (reader == null) {
+          continue;
+        }
+        parts.put(part.getName(), reader);
+      }
     }
-    
+
+    if (manifest == null) throw new IOException(String.format("%s has no manifest file.", indexPath));
+
     // Initialize these now b/c they're so common
     namesReader = null;
     lengthsReader = null;
@@ -49,8 +61,12 @@ public class StructuredIndex {
     initializeIndexOperators();
   }
 
+  public File getIndexLocation() {
+    return location;
+  }
+
   public static String getPartPath(String index, String part) {
-    return (index + File.separator + "parts" + File.separator + part);
+    return (index + File.separator + part);
   }
 
   public static StructuredIndexPartReader openIndexPart(String path) throws IOException {

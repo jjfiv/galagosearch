@@ -79,7 +79,7 @@ public class RelevanceModel implements ExpansionModel {
         }
         // We also need the document lengths
         if (docLengths == null) {
-           docLengths = new DocumentLengthsReader(parameters.get("index") + File.separator + "parts" + File.separator + "lengths");
+           docLengths = new DocumentLengthsReader(parameters.get("index") + File.separator + "lengths");
         } 
 	assert(cReader != null);
 	assert(docLengths != null);

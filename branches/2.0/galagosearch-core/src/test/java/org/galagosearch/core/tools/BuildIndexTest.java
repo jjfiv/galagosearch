@@ -1,9 +1,11 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.tools;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import junit.framework.TestCase;
+import org.galagosearch.core.parse.DocumentSource;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.execution.Job;
@@ -22,7 +24,7 @@ public class BuildIndexTest extends TestCase {
   public void testCollectionLengthStage() throws IOException {
     BuildIndex buildIndex = new BuildIndex();
     Job job = new Job();
-    job.add(buildIndex.getCollectionLengthStage());
+    job.add(BuildStageTemplates.getCollectionLengthStage());
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -34,11 +36,10 @@ public class BuildIndexTest extends TestCase {
    * Test of getSplitStage method, of class BuildIndex.
    */
   public void testGetSplitStage() throws IOException {
-    BuildIndex buildIndex = new BuildIndex();
     Job job = new Job();
     ArrayList<String> d = new ArrayList();
     d.add("/");
-    job.add(buildIndex.getSplitStage(d));
+    job.add(BuildStageTemplates.getSplitStage(d, DocumentSource.class));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -90,10 +91,9 @@ public class BuildIndexTest extends TestCase {
   /**
    * Test of getWriteExtentsStage method, of class BuildIndex.
    */
-  public void testGetWriteExtentsStage() {
-    BuildIndex BuildIndex = new BuildIndex();
+  public void testGetWriteExtentsStage() throws IOException {
     Job job = new Job();
-    job.add(BuildIndex.getWriteExtentsStage());
+    job.add(BuildStageTemplates.getWriteExtentsStage(new File(".")));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -104,10 +104,9 @@ public class BuildIndexTest extends TestCase {
   /**
    * Test of getWriteDatesStage method, of class BuildIndex.
    */
-  public void testGetWriteDatesStage() {
-    BuildIndex BuildIndex = new BuildIndex();
+  public void testGetWriteDatesStage() throws IOException {
     Job job = new Job();
-    job.add(BuildIndex.getWriteDatesStage());
+    job.add(BuildStageTemplates.getWriteDatesStage(new File(".")));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -118,10 +117,9 @@ public class BuildIndexTest extends TestCase {
   /**
    * Test of getWriteManifestStage method, of class BuildIndex.
    */
-  public void testGetWriteManifestStage() {
-    BuildIndex BuildIndex = new BuildIndex();
+  public void testGetWriteManifestStage() throws IOException {
     Job job = new Job();
-    job.add(BuildIndex.getWriteManifestStage());
+    job.add(BuildStageTemplates.getWriteManifestStage(new File(".")));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -132,10 +130,9 @@ public class BuildIndexTest extends TestCase {
   /**
    * Test of getWriteDocumentLengthsStage method, of class BuildIndex.
    */
-  public void testGetWriteDocumentLengthsStage() {
-    BuildIndex BuildIndex = new BuildIndex();
+  public void testGetWriteDocumentLengthsStage() throws IOException {
     Job job = new Job();
-    job.add(BuildIndex.getWriteDocumentLengthsStage());
+    job.add(BuildStageTemplates.getWriteLengthsStage(new File(".")));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);

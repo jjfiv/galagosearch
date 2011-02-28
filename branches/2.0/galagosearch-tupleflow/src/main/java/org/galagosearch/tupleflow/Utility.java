@@ -71,11 +71,16 @@ public class Utility {
    *
    * @param filename A filename that will soon be opened for writing.
    */
-  public static void makeParentDirectories(String filename) {
-    File parent = new File(filename).getParentFile();
+  public static void makeParentDirectories(File f) {
+    File parent = f.getParentFile();
     if (parent != null) {
       parent.mkdirs();
     }
+  }
+
+
+  public static void makeParentDirectories(String filename) {
+    makeParentDirectories(new File(filename));
   }
 
   /**

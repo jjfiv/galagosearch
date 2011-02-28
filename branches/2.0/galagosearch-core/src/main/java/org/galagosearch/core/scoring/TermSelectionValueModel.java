@@ -88,8 +88,7 @@ public class TermSelectionValueModel implements ExpansionModel {
         // For now we only take AggregateReader objects, which can report that number. Meaning we need
         // a dummy text node to get the part assignment
         Node dummy = TextPartAssigner.assignPart(new Node("text", "dummy"), parameters);
-        String indexPart = parameters.get("index") + File.separator + "parts"
-                + File.separator + dummy.getParameters().get("part");
+        String indexPart = parameters.get("index") + File.separator + dummy.getParameters().get("part");
         reader = StructuredIndex.openIndexPart(indexPart);
     }
 

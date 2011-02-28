@@ -107,7 +107,7 @@ public class BuildParallelIndex extends BuildFastIndex {
         Job job = new Job();
         this.stemming = p.get("stemming", true);
         this.useLinks = p.get("links", false);
-        this.indexPath = new File(p.get("indexPath")).getAbsolutePath(); // fail if no path.
+        this.indexPath = new File(p.get("indexPath")); // fail if no path.
         this.makeCorpus = p.containsKey("corpusPath");
         this.indexShards = (int) p.get("indexShards", 11);
 
@@ -118,6 +118,7 @@ public class BuildParallelIndex extends BuildFastIndex {
         }
         // ensure the index folder exists
         Utility.makeParentDirectories(indexPath);
+       
         if (makeCorpus) {
             this.corpusParameters = new Parameters();
             this.corpusParameters.add("parallel", "true");
@@ -128,29 +129,29 @@ public class BuildParallelIndex extends BuildFastIndex {
         this.postingsParameters = new Parameters();
         this.postingsParameters.add("parallel", "true");
         this.postingsParameters.add("hashMod", Integer.toString(indexShards));
-        this.postingsParameters.add("filename", indexPath + File.separator + "parts" + File.separator + "postings");
+        this.postingsParameters.add("filename", new File(indexPath, "postings").getCanonicalPath());
 
         this.extentParameters = new Parameters();
         this.extentParameters.add("parallel", "true");
         this.extentParameters.add("hashMod", Integer.toString(indexShards));
-        this.extentParameters.add("filename", indexPath + File.separator + "parts" + File.separator + "extents");
+        this.extentParameters.add("filename", new File(indexPath, "extents").getCanonicalPath());
 
-        job.add(getSplitStage(inputPaths));
+        job.add(BuildStageTemplates.getSplitStage(inputPaths, DocumentSource.class));
         job.add(getParsePostingsStage());
         job.add(getWritePostingsStage("writePostings", "numberedPostings", postingsParameters));
-        job.add(getWriteManifestStage());
+        job.add(BuildStageTemplates.getWriteManifestStage(indexPath));
         job.add(getWriteExtentsStage("writeExtents", "numberedExtents", extentParameters));
-        job.add(getWriteDocumentNamesStage());
-        job.add(getWriteDocumentLengthsStage());
-        job.add(getCollectionLengthStage());
+        job.add(BuildStageTemplates.getWriteNamesStage(indexPath));
+        job.add(BuildStageTemplates.getWriteLengthsStage(indexPath));
+        job.add(BuildStageTemplates.getCollectionLengthStage());
 
         // parallel writers
         job.add(getParallelIndexKeyWriterStage("writePostingKeys", "numberedPostingsKeys", postingsParameters));
         job.add(getParallelIndexKeyWriterStage("writeExtentKeys", "numberedExtentsKeys", extentParameters));
 
         job.connect("inputSplit", "parsePostings", ConnectionAssignmentType.Each);
-        job.connect("parsePostings", "writeDocumentLengths", ConnectionAssignmentType.Combined);
-        job.connect("parsePostings", "writeDocumentNames", ConnectionAssignmentType.Combined);
+        job.connect("parsePostings", "writeLengths", ConnectionAssignmentType.Combined);
+        job.connect("parsePostings", "writeNames", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "collectionLength", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "writeExtents", ConnectionAssignmentType.Each, new String[]{"+extentName"}, indexShards);
         job.connect("parsePostings", "writePostings", ConnectionAssignmentType.Each, new String[]{"+word"}, indexShards);
@@ -173,7 +174,7 @@ public class BuildParallelIndex extends BuildFastIndex {
             this.stemmedParameters = new Parameters();
             this.stemmedParameters.add("parallel", "true");
             this.stemmedParameters.add("hashMod", Integer.toString(indexShards));
-            this.stemmedParameters.add("filename", indexPath + File.separator + "parts" + File.separator + "stemmedPostings");
+            this.stemmedParameters.add("filename", indexPath + File.separator + "stemmedPostings");
 
             job.add(getWritePostingsStage("writeStemmedPostings",
                     "numberedStemmedPostings",

@@ -75,19 +75,6 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
 
         // optional printing of various stats
         App runner = new App(System.out);
-
-        // document lengths
-        /*
-        runner.run(new String[]{"dump-lengths",
-        new File(indexFile, "documentLengths").getAbsolutePath()});
-
-        // posting lists -- *not* the stemmed ones
-        runner.run(new String[]{"dump-index",
-        indexFile.getAbsolutePath()
-        + File.separator + "parts"
-        + File.separator + "postings"});
-         *
-         */
     }
 
     public void testRelevanceModelTraversal() throws Exception {

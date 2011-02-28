@@ -40,7 +40,7 @@ public class TopDocsScoringIterator extends TransformIterator {
     if (p.containsKey("index")) {
       try {
         if (reader == null) {
-          String path = p.get("index") + File.separator + "parts" + File.separator 
+          String path = p.get("index") + File.separator 
             + p.get("loc") + ".topdocs";
           reader = (TopDocsReader) StructuredIndex.openIndexPart(path);
         }
