@@ -20,6 +20,7 @@ import org.galagosearch.core.types.NumberedValuedExtent;
 import org.galagosearch.tupleflow.ExNihiloSource;
 import org.galagosearch.tupleflow.Order;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ConnectionPointType;
 import org.galagosearch.tupleflow.execution.InputStep;
@@ -39,96 +40,75 @@ public class BuildStageTemplates {
   private BuildStageTemplates() {
   }
 
+  public static Stage getGenericWriteStage(String stageName, File destination, String inputPipeName,
+          Class<? extends org.galagosearch.tupleflow.Step> writer, Order dataOrder) throws IOException {
+    Stage stage = new Stage(stageName);
+    stage.add(new StageConnectionPoint(ConnectionPointType.Input,
+            inputPipeName, dataOrder));
+    Parameters p = new Parameters();
+    p.add("filename", destination.getCanonicalPath());
+    stage.add(new InputStep(inputPipeName));
+    stage.add(new Step(writer, p));
+    return stage;
+  }
+
+  public static ArrayList<Step> getExtractionSteps(String outputName, Class extractionClass, Order sortOrder) {
+    ArrayList<Step> steps = new ArrayList<Step>();
+    steps.add(new Step(extractionClass));
+    steps.add(Utility.getSorter(sortOrder));
+    steps.add(new OutputStep(outputName));
+    return steps;
+  }
+
   /**
    * Writes document lengths to a document lengths file.
    */
-  public static Stage getWriteLengthsStage(File destination) throws IOException {
-    Stage stage = new Stage("writeLengths");
-
-    stage.add(new StageConnectionPoint(ConnectionPointType.Input,
-            "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
-    Parameters p = new Parameters();
-    p.add("filename", new File(destination, "lengths").getCanonicalPath());
-    stage.add(new InputStep("numberedDocumentData"));
-    stage.add(new Step(DocumentLengthsWriter.class, p));
-
-    return stage;
+  public static Stage getWriteLengthsStage(String stageName, File destination, String inputPipeName) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            DocumentLengthsWriter.class, new NumberedDocumentData.NumberOrder());
   }
 
   /**
    * Write out document count and collection length information.
    */
-  public static Stage getWriteManifestStage(File destination) throws IOException {
-    Stage stage = new Stage("writeManifest");
-
-    stage.add(new StageConnectionPoint(ConnectionPointType.Input,
-            "collectionLength",
-            new XMLFragment.NodePathOrder()));
-    stage.add(new InputStep("collectionLength"));
-    Parameters p = new Parameters();
-    p.add("filename", new File(destination, "manifest").getAbsolutePath());
-    stage.add(new Step(ManifestWriter.class, p));
-    return stage;
+  public static Stage getWriteManifestStage(String stageName, File destination, String inputPipeName) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            ManifestWriter.class, new XMLFragment.NodePathOrder());
   }
 
-  public static Stage getWriteDatesStage(File destination) throws IOException {
-    Stage stage = new Stage("writeDates");
-
-    stage.add(new StageConnectionPoint(
-            ConnectionPointType.Input, "numberedDateExtents",
-            new NumberedValuedExtent.ExtentNameNumberBeginOrder()));
-    Parameters p = new Parameters();
-    p.add("filename", new File(destination, "dates").getCanonicalPath());
-    stage.add(new Step(ExtentValueIndexWriter.class));
-
-    return stage;
-  }
-
-  public static Stage getCollectionLengthStage() {
-
-    Stage stage = new Stage("collectionLength");
-
-    stage.add(new StageConnectionPoint(
-            ConnectionPointType.Input, "numberedDocumentData",
-            new NumberedDocumentData.NumberOrder()));
-    stage.add(new StageConnectionPoint(
-            ConnectionPointType.Output, "collectionLength",
-            new XMLFragment.NodePathOrder()));
-
-    stage.add(new InputStep("numberedDocumentData"));
-    stage.add(new Step(CollectionLengthCounterNDD.class));
-    stage.add(Utility.getSorter(new XMLFragment.NodePathOrder()));
-    stage.add(new OutputStep("collectionLength"));
-
-    return stage;
+  public static Stage getWriteDatesStage(String stageName, File destination, String inputPipeName) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            ExtentValueIndexWriter.class, new NumberedValuedExtent.ExtentNameNumberBeginOrder());
   }
 
   /**
    * Writes document names to a document names file.
    */
-  public static Stage getWriteNamesStage(File destination) throws IOException {
-    Stage stage = new Stage("writeNames");
-
-    stage.add(new StageConnectionPoint(ConnectionPointType.Input,
-            "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
-    Parameters p = new Parameters();
-    p.add("filename", new File(destination, "names").getCanonicalPath());
-    stage.add(new InputStep("numberedDocumentData"));
-    stage.add(new Step(DocumentNameWriter.class, p));
-    return stage;
+  public static Stage getWriteNamesStage(String stageName, File destination, String inputPipeName) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            DocumentNameWriter.class, new NumberedDocumentData.NumberOrder());
   }
 
-  public static Stage getWriteExtentsStage(File destination) throws IOException {
-    Stage stage = new Stage("writeExtents");
+  public static Stage getWriteExtentsStage(String stageName, File destination, String inputPipeName) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            ExtentIndexWriter.class, new NumberedExtent.ExtentNameNumberBeginOrder());
+  }
+
+  public static Stage getCollectionLengthStage(String stageName, String inputPipeName, String outputPipeName) {
+    Stage stage = new Stage(stageName);
 
     stage.add(new StageConnectionPoint(
-            ConnectionPointType.Input, "numberedExtents",
-            new NumberedExtent.ExtentNameNumberBeginOrder()));
+            ConnectionPointType.Input, inputPipeName,
+            new NumberedDocumentData.NumberOrder()));
+    stage.add(new StageConnectionPoint(
+            ConnectionPointType.Output, outputPipeName,
+            new XMLFragment.NodePathOrder()));
 
-    stage.add(new InputStep("numberedExtents"));
-    Parameters p = new Parameters();
-    p.add("filename", new File(destination, "extents").getCanonicalPath());
-    stage.add(new Step(ExtentIndexWriter.class, p));
+    stage.add(new InputStep(inputPipeName));
+    stage.add(new Step(CollectionLengthCounterNDD.class));
+    stage.add(Utility.getSorter(new XMLFragment.NodePathOrder()));
+    stage.add(new OutputStep(outputPipeName));
+
     return stage;
   }
 
@@ -154,13 +134,5 @@ public class BuildStageTemplates {
     stage.add(Utility.getSorter(new DocumentSplit.FileIdOrder()));
     stage.add(new OutputStep("splits"));
     return stage;
-  }
-
-  public static ArrayList<Step> getExtractionSteps(String outputName, Class extractionClass, Order sortOrder) {
-    ArrayList<Step> steps = new ArrayList<Step>();
-    steps.add(new Step(extractionClass));
-    steps.add(Utility.getSorter(sortOrder));
-    steps.add(new OutputStep(outputName));
-    return steps;
   }
 }

@@ -139,11 +139,12 @@ public class BuildParallelIndex extends BuildFastIndex {
         job.add(BuildStageTemplates.getSplitStage(inputPaths, DocumentSource.class));
         job.add(getParsePostingsStage());
         job.add(getWritePostingsStage("writePostings", "numberedPostings", postingsParameters));
-        job.add(BuildStageTemplates.getWriteManifestStage(indexPath));
         job.add(getWriteExtentsStage("writeExtents", "numberedExtents", extentParameters));
-        job.add(BuildStageTemplates.getWriteNamesStage(indexPath));
-        job.add(BuildStageTemplates.getWriteLengthsStage(indexPath));
-        job.add(BuildStageTemplates.getCollectionLengthStage());
+        job.add(BuildStageTemplates.getWriteManifestStage("writeManifest", new File(indexPath, "manifest"), "collectionLength"));
+        job.add(BuildStageTemplates.getWriteNamesStage("writeNames", new File(indexPath, "names"), "numberedDocumentData"));
+        job.add(BuildStageTemplates.getWriteLengthsStage("writeLengths", new File(indexPath, "lengths"), "numberedDocumentData"));
+        job.add(BuildStageTemplates.getCollectionLengthStage("collectionLength", "numberedDocumentData", "collectionLength"));
+
 
         // parallel writers
         job.add(getParallelIndexKeyWriterStage("writePostingKeys", "numberedPostingsKeys", postingsParameters));

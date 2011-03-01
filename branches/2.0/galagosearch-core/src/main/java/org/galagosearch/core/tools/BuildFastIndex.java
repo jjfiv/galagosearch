@@ -255,11 +255,11 @@ public class BuildFastIndex {
         job.add(BuildStageTemplates.getSplitStage(inputPaths, DocumentSource.class));
         job.add(getParsePostingsStage());
         job.add(getWritePostingsStage("writePostings", "numberedPostings", "postings"));
-        job.add(BuildStageTemplates.getWriteManifestStage(indexPath));
-        job.add(BuildStageTemplates.getWriteExtentsStage(indexPath));
-        job.add(BuildStageTemplates.getWriteNamesStage(indexPath));
-        job.add(BuildStageTemplates.getWriteLengthsStage(indexPath));
-        job.add(BuildStageTemplates.getCollectionLengthStage());
+        job.add(BuildStageTemplates.getWriteManifestStage("writeManifest", new File(indexPath, "manifest"), "collectionLength"));
+        job.add(BuildStageTemplates.getWriteExtentsStage("writeExtents", new File(indexPath, "extents"), "numberedExtents"));
+        job.add(BuildStageTemplates.getWriteNamesStage("writeNames", new File(indexPath, "names"), "numberedDocumentData"));
+        job.add(BuildStageTemplates.getWriteLengthsStage("writeLengths", new File(indexPath, "lengths"), "numberedDocumentData"));
+        job.add(BuildStageTemplates.getCollectionLengthStage("collectionLength", "numberedDocumentData", "collectionLength"));
 
         job.connect("inputSplit", "parsePostings", ConnectionAssignmentType.Each);
         job.connect("parsePostings", "writeLengths", ConnectionAssignmentType.Combined);

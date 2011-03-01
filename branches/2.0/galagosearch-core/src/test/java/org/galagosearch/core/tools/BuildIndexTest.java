@@ -24,7 +24,7 @@ public class BuildIndexTest extends TestCase {
   public void testCollectionLengthStage() throws IOException {
     BuildIndex buildIndex = new BuildIndex();
     Job job = new Job();
-    job.add(BuildStageTemplates.getCollectionLengthStage());
+    job.add(BuildStageTemplates.getCollectionLengthStage("collectionLength", "numberedDocumentData", "collectionLength"));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -93,7 +93,7 @@ public class BuildIndexTest extends TestCase {
    */
   public void testGetWriteExtentsStage() throws IOException {
     Job job = new Job();
-    job.add(BuildStageTemplates.getWriteExtentsStage(new File(".")));
+    job.add(BuildStageTemplates.getWriteExtentsStage("writeExtents", new File("./extents"), "numberedExtents"));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -106,7 +106,7 @@ public class BuildIndexTest extends TestCase {
    */
   public void testGetWriteDatesStage() throws IOException {
     Job job = new Job();
-    job.add(BuildStageTemplates.getWriteDatesStage(new File(".")));
+    job.add(BuildStageTemplates.getWriteDatesStage("writeDates", new File("./dates"), "numberedExtents"));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -119,7 +119,7 @@ public class BuildIndexTest extends TestCase {
    */
   public void testGetWriteManifestStage() throws IOException {
     Job job = new Job();
-    job.add(BuildStageTemplates.getWriteManifestStage(new File(".")));
+    job.add(BuildStageTemplates.getWriteManifestStage("writeManifest", new File("./manifest"), "collectionLength"));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);
@@ -132,7 +132,7 @@ public class BuildIndexTest extends TestCase {
    */
   public void testGetWriteDocumentLengthsStage() throws IOException {
     Job job = new Job();
-    job.add(BuildStageTemplates.getWriteLengthsStage(new File(".")));
+    job.add(BuildStageTemplates.getWriteLengthsStage("writeLengths", new File("./lengths"), "collectionLengths"));
     ErrorStore store = new ErrorStore();
 
     Verification.verify(job, store);

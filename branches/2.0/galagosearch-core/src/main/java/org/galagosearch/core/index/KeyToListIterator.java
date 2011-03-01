@@ -13,7 +13,7 @@ import org.galagosearch.tupleflow.Utility;
  */
 public abstract class KeyToListIterator implements ValueIterator {
 
-  KeyIterator iterator;
+  protected KeyIterator iterator;
 
   public KeyToListIterator(KeyIterator ki) {
     iterator = ki;

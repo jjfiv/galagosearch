@@ -28,8 +28,7 @@ public class DocumentNameReader extends KeyValueReader {
 
   /** Creates a new instance of DocumentNameReader */
   public DocumentNameReader(String fileName) throws IOException {
-    super(fileName);
-    isForward = (reader.getManifest().get("order").equals("forward"));
+    this(GenericIndexReader.getIndexReader(fileName));
   }
 
   public DocumentNameReader(GenericIndexReader r) {
@@ -163,7 +162,7 @@ public class DocumentNameReader extends KeyValueReader {
     }
 
     public ValueIterator getValueIterator() throws IOException {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return new ValueIterator(this);
     }
   }
 
