@@ -21,7 +21,7 @@ import java.util.Set;
 public class StructuredIndex {
 
   DocumentLengthsReader lengthsReader;
-  DocumentNameReader namesReader;
+  NameReader namesReader;
   Map<String, StructuredIndexPartReader> parts;
   File location;
 
@@ -56,7 +56,7 @@ public class StructuredIndex {
     namesReader = null;
     lengthsReader = null;
     if (parts.containsKey("lengths")) lengthsReader = (DocumentLengthsReader) parts.get("lengths");
-    if (parts.containsKey("names")) namesReader = (DocumentNameReader) parts.get("names");
+    if (parts.containsKey("names")) namesReader = (NameReader) parts.get("names");
 
     initializeIndexOperators();
   }
@@ -228,7 +228,7 @@ public class StructuredIndex {
     return lengthsReader.getIterator();
   }
 
-  public DocumentNameReader.KeyIterator getNamesIterator() throws IOException {
+  public KeyValueReader.Iterator getNamesIterator() throws IOException {
     return namesReader.getIterator();
   }
 

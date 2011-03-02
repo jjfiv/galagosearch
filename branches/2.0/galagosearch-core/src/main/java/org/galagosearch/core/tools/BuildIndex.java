@@ -68,35 +68,16 @@ public class BuildIndex {
     public Stage getParsePostingsStage() {
         Stage stage = new Stage("parsePostings");
 
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input,
-                "splits", new DocumentSplit.FileIdOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output,
-                "postings", new DocumentWordPosition.DocumentWordPositionOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output,
-                "extents", new DocumentExtent.IdentifierOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output,
-                "documentData", new DocumentData.IdentifierOrder()));
-        if (stemming) {
-            stage.add(new StageConnectionPoint(
-                    ConnectionPointType.Output,
-                    "stemmedPostings", new DocumentWordPosition.DocumentWordPositionOrder()));
-        }
-        if (useLinks) {
-            stage.add(new StageConnectionPoint(
-                    ConnectionPointType.Input,
-                    "anchorText", new AdditionalDocumentText.IdentifierOrder()));
-        }
+        // Connections
+        stage.addInput("splits", new DocumentSplit.FileIdOrder());
+        stage.addOutput("postings", new DocumentWordPosition.DocumentWordPositionOrder());
+        stage.addOutput("extents", new DocumentExtent.IdentifierOrder());
+        stage.addOutput("documentData", new DocumentData.IdentifierOrder());
+        if (stemming) stage.addOutput("stemmedPostings", new DocumentWordPosition.DocumentWordPositionOrder());
+        if (useLinks) stage.addInput("anchorText", new AdditionalDocumentText.IdentifierOrder());
+        if (makeCorpus) stage.addOutput("corpusKeyData", new KeyValuePair.KeyOrder());
 
-        if (makeCorpus) {
-            stage.add(new StageConnectionPoint(
-                    ConnectionPointType.Output,
-                    "corpusKeyData", new KeyValuePair.KeyOrder()));
-        }
-
+        // Steps
         stage.add(new InputStep("splits"));
 
         Parameters p = new Parameters();
@@ -165,16 +146,12 @@ public class BuildIndex {
     public Stage getParseLinksStage() {
         Stage stage = new Stage("parseLinks");
 
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input,
-                "splits", new DocumentSplit.FileIdOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output,
-                "links", new ExtractedLink.DestUrlOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output,
-                "documentUrls", new DocumentData.UrlOrder()));
+        // Connections
+        stage.addInput("splits", new DocumentSplit.FileIdOrder());
+        stage.addOutput("links", new ExtractedLink.DestUrlOrder());
+        stage.addOutput("documentUrls", new DocumentData.UrlOrder());
 
+        // Steps
         stage.add(new InputStep("splits"));
         stage.add(new Step(UniversalParser.class));
         stage.add(new Step(TagTokenizer.class));
@@ -196,13 +173,12 @@ public class BuildIndex {
     public Stage getLinkCombineStage() {
         Stage stage = new Stage("linkCombine");
 
-        stage.add(new StageConnectionPoint(ConnectionPointType.Input, "documentUrls",
-                new DocumentData.UrlOrder()));
-        stage.add(new StageConnectionPoint(ConnectionPointType.Input, "links",
-                new ExtractedLink.DestUrlOrder()));
-        stage.add(new StageConnectionPoint(ConnectionPointType.Output, "anchorText",
-                new AdditionalDocumentText.IdentifierOrder()));
+        // Connections
+        stage.addInput("documentUrls", new DocumentData.UrlOrder());
+        stage.addInput("links", new ExtractedLink.DestUrlOrder());
+        stage.addOutput("anchorText", new AdditionalDocumentText.IdentifierOrder());
 
+        // Steps
         Parameters p = new Parameters();
         p.add("documentDatas", "documentUrls");
         p.add("extractedLinks", "links");
@@ -217,9 +193,7 @@ public class BuildIndex {
     public Stage getWritePostingsStage(String stageName, String inputName, String indexName) {
         Stage stage = new Stage(stageName);
 
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input, inputName,
-                new NumberWordPosition.WordDocumentPositionOrder()));
+        stage.addInput(inputName, new NumberWordPosition.WordDocumentPositionOrder());
         stage.add(new InputStep(inputName));
         Parameters p = new Parameters();
         p.add("filename", indexPath + File.separator + indexName);
@@ -230,10 +204,9 @@ public class BuildIndex {
     public Stage getParallelIndexKeyWriterStage(String name, String input, Parameters indexParameters) {
         Stage stage = new Stage(name);
 
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input, input,
-                new KeyValuePair.KeyOrder()));
-        
+        stage.addInput(input, new KeyValuePair.KeyOrder());
+
+        // Steps
         stage.add(new InputStep(input));
         stage.add(new Step(SplitIndexKeyWriter.class, indexParameters));
 
@@ -243,10 +216,11 @@ public class BuildIndex {
     public Stage getNumberDocumentsStage() {
         Stage stage = new Stage("numberDocuments");
 
-        stage.add(new StageConnectionPoint(ConnectionPointType.Input, "documentData",
-                new DocumentData.IdentifierOrder()));
-        stage.add(new StageConnectionPoint(ConnectionPointType.Output, "numberedDocumentData",
-                new NumberedDocumentData.NumberOrder()));
+        // Connections
+        stage.addInput("documentData", new DocumentData.IdentifierOrder());
+        stage.addOutput( "numberedDocumentData", new NumberedDocumentData.NumberOrder());
+
+        // Steps
         stage.add(new InputStep("documentData"));
         stage.add(new Step(DocumentDataNumberer.class));
         stage.add(Utility.getSorter(new NumberedDocumentData.NumberOrder()));
@@ -258,16 +232,12 @@ public class BuildIndex {
     public Stage getNumberPostingsStage(String stageName, String inputName, String outputName) {
         Stage stage = new Stage(stageName);
 
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input,
-                inputName, new DocumentWordPosition.DocumentWordPositionOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input,
-                "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output,
-                outputName, new NumberWordPosition.WordDocumentPositionOrder()));
+        // Connections
+        stage.addInput(inputName, new DocumentWordPosition.DocumentWordPositionOrder());
+        stage.addInput("numberedDocumentData", new NumberedDocumentData.NumberOrder());
+        stage.addOutput(outputName, new NumberWordPosition.WordDocumentPositionOrder());
 
+        // Steps
         stage.add(new InputStep(inputName));
         stage.add(new Step(PositionPostingsNumberer.class));
         stage.add(Utility.getSorter(new NumberWordPosition.WordDocumentPositionOrder()));
@@ -279,16 +249,12 @@ public class BuildIndex {
     public Stage getNumberExtentsStage() {
         Stage stage = new Stage("numberExtents");
 
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input,
-                "extents", new DocumentExtent.IdentifierOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input,
-                "numberedDocumentData", new NumberedDocumentData.NumberOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output,
-                "numberedExtents", new NumberedExtent.ExtentNameNumberBeginOrder()));
+        // Connections
+        stage.addInput("extents", new DocumentExtent.IdentifierOrder());
+        stage.addInput("numberedDocumentData", new NumberedDocumentData.NumberOrder());
+        stage.addOutput("numberedExtents", new NumberedExtent.ExtentNameNumberBeginOrder());
 
+        // Steps
         stage.add(new InputStep("extents"));
         stage.add(new Step(ExtentsNumberer.class));
         stage.add(Utility.getSorter(new NumberedExtent.ExtentNameNumberBeginOrder()));

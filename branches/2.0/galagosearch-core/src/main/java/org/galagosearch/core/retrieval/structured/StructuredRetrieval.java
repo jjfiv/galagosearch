@@ -12,9 +12,8 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
 import org.galagosearch.core.index.DocumentLengthsReader;
-import org.galagosearch.core.index.DocumentNameReader;
+import org.galagosearch.core.index.NameReader;
 import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
@@ -22,9 +21,9 @@ import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
-import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  * 10/7/2010 - Modified for asynchronous execution
@@ -263,15 +262,11 @@ public class StructuredRetrieval extends Retrieval {
       docIds.put(results[i].document, i);
     }
 
-    DocumentNameReader.KeyIterator iterator = index.getNamesIterator();
+    NameReader.Iterator iterator = index.getNamesIterator();
     for (int document : docIds.keySet()) {
-      iterator.moveToKey(document);
-      NumberedDocumentData ndd = iterator.getDocumentData();
-      if (ndd.number == document) {
-        results[docIds.get(document)].documentName = ndd.identifier;
-      } else {
-        results[docIds.get(document)].documentName = "DOCUMENT_NAME_NOT_FOUND";
-      }
+      iterator.moveToKey(Utility.fromInt(document));
+      String name = Utility.toString(iterator.getValueBytes());
+      results[docIds.get(document)].documentName = name;
     }
 
     return results;

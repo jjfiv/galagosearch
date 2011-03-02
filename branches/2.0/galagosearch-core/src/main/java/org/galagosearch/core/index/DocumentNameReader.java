@@ -4,11 +4,9 @@ package org.galagosearch.core.index;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import org.galagosearch.core.index.PositionIndexReader.TermCountIterator;
-import org.galagosearch.core.index.PositionIndexReader.TermExtentIterator;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
-import org.galagosearch.core.types.KeyValuePair;
+import org.galagosearch.core.retrieval.structured.DataIterator;
 
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Utility;
@@ -22,7 +20,7 @@ import org.galagosearch.tupleflow.Utility;
  * 
  * @author sjh
  */
-public class DocumentNameReader extends KeyValueReader {
+public class DocumentNameReader extends NameReader {
 
   boolean isForward;
 
@@ -73,7 +71,7 @@ public class DocumentNameReader extends KeyValueReader {
   }
 
   public ValueIterator getIterator(Node node) throws IOException {
-    if (node.getOperator().equals("names")) {
+    if (node.getOperator().equals("names") && isForward) {
       return new ValueIterator(new KeyIterator(reader, isForward));
     } else {
       throw new UnsupportedOperationException(
@@ -166,7 +164,7 @@ public class DocumentNameReader extends KeyValueReader {
     }
   }
 
-  public class ValueIterator extends KeyToListIterator {
+  public class ValueIterator extends KeyToListIterator implements DataIterator<String> {
 
     public ValueIterator(KeyIterator ki) {
       super(ki);
@@ -179,6 +177,14 @@ public class DocumentNameReader extends KeyValueReader {
 
     public long totalEntries() {
       throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public String getData() {
+      try {
+        return getEntry();
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
     }
   }
 }

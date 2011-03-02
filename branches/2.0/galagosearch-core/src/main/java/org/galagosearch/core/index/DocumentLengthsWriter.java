@@ -1,5 +1,4 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.index;
 
 import java.io.BufferedOutputStream;
@@ -31,51 +30,39 @@ import org.galagosearch.tupleflow.execution.Verification;
  * @author trevor, sjh, irmarc
  */
 @InputClass(className = "org.galagosearch.core.types.NumberedDocumentData", order = {"+number"})
-public class DocumentLengthsWriter implements Processor<NumberedDocumentData> {
-    DataOutputStream output;
-    IndexWriter writer;
-    int document = 0;
-    int offset = 0;
-    Counter documentsWritten = null;
-    ByteArrayOutputStream bstream;
-    DataOutputStream stream;
+public class DocumentLengthsWriter extends KeyValueWriter<NumberedDocumentData> {
 
-    /** Creates a new instance of DocumentLengthsWriter */
-    public DocumentLengthsWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
-        String filename = parameters.getXML().get("filename");
-        Utility.makeParentDirectories(filename);
-        Parameters p = new Parameters();
-        p.copy(parameters.getXML());
-        //p.set("blockSize", "1048576");
-        writer = new IndexWriter(filename, p);
-        writer.getManifest().set("writerClass", getClass().getName());
-        writer.getManifest().set("readerClass", DocumentLengthsReader.class.getName());
+  DataOutputStream output;
+  int document = 0;
+  int offset = 0;
+  ByteArrayOutputStream bstream;
+  DataOutputStream stream;
 
-        bstream = new ByteArrayOutputStream();
-        stream = new DataOutputStream(bstream);
-        documentsWritten = parameters.getCounter("Document Lengths Written");
+  /** Creates a new instance of DocumentLengthsWriter */
+  public DocumentLengthsWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
+    super(parameters, "Document lengths written");
+    Parameters p = writer.getManifest();
+    p.set("writerClass", getClass().getName());
+    p.set("readerClass", DocumentLengthsReader.class.getName());
+
+    bstream = new ByteArrayOutputStream();
+    stream = new DataOutputStream(bstream);
+  }
+
+  public GenericElement prepare(NumberedDocumentData object) throws IOException {
+    bstream.reset();
+    Utility.compressInt(stream, object.textLength);
+    GenericElement element = new GenericElement(Utility.fromInt(object.number), bstream.toByteArray());
+    return element;
+  }
+
+  public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
+    if (!parameters.getXML().containsKey("filename")) {
+      handler.addError("KeyValueWriters require a 'filename' parameter.");
+      return;
     }
 
-    public void close() throws IOException {
-       writer.close();
-    }
-
-    public void process(NumberedDocumentData object) throws IOException {
-        bstream.reset();
-        Utility.compressInt(stream, object.textLength);
-        GenericElement element = new GenericElement(Utility.fromInt(object.number), bstream.toByteArray());
-        writer.add(element);
-        document++;
-        if (documentsWritten != null) documentsWritten.increment();
-    }
-
-    public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
-        if (!parameters.getXML().containsKey("filename")) {
-            handler.addError("DocumentLengthsWriter requires an 'filename' parameter.");
-            return;
-        }
-
-        String filename = parameters.getXML().get("filename");
-        Verification.requireWriteableFile(filename, handler);
-    }
+    String index = parameters.getXML().get("filename");
+    Verification.requireWriteableFile(index, handler);
+  }
 }

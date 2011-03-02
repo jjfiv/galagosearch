@@ -4,6 +4,7 @@ package org.galagosearch.tupleflow.execution;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import org.galagosearch.tupleflow.Order;
 
 /**
  * This is a stage description for a TupleFlow job.
@@ -64,6 +65,16 @@ public class Stage extends Locatable implements Serializable, Cloneable {
         }
 
         return result;
+    }
+
+    public void addInput(String pipeName, Order pipeOrder) {
+      add(new StageConnectionPoint(ConnectionPointType.Input,
+              pipeName, pipeOrder));
+    }
+
+    public void addOutput(String pipeName, Order pipeOrder) {
+      add(new StageConnectionPoint(ConnectionPointType.Output,
+              pipeName, pipeOrder));
     }
 
     public void add(StageConnectionPoint point) {
