@@ -228,33 +228,18 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
 
   // This iterator is always done, never provides a valid document, but always
   // returns the length of the field it was built for.
-  public class FieldLengthIterator extends DocumentOrderedCountIterator implements IndexIterator, Runnable {
+  public class FieldLengthIterator extends DocumentOrderedCountIterator implements IndexIterator {
 
     int fieldLength;
     GenericIndexReader.Iterator iterator;
-    Thread fieldCounter;
 
     public FieldLengthIterator(GenericIndexReader.Iterator iterator) throws IOException {
       fieldLength = 0;
       this.iterator = iterator;
-      fieldCounter = new Thread(this);
-      fieldCounter.start();
-    }
-
-    public void run() {
-      try {
-        Iterator eirIter = new ExtentIndexReader.Iterator(iterator);
-        while (!eirIter.isDone()) {
-          fieldLength += eirIter.count();
-          eirIter.nextEntry();
-        }
-      } catch (IOException ioe) {
-        throw new RuntimeException(ioe);
-      }
-
-      // Finally, indicate we're done counting
-      synchronized(this) {
-        fieldCounter = null;
+      Iterator eirIter = new ExtentIndexReader.Iterator(iterator);
+      while (!eirIter.isDone()) {
+        fieldLength += eirIter.count();
+        eirIter.nextEntry();
       }
     }
 
@@ -273,13 +258,6 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     }
 
     public int count() {
-      synchronized(this) {
-        try {
-          if (fieldCounter != null) fieldCounter.join();
-        } catch (InterruptedException ie) {
-          throw new RuntimeException(ie);
-        }
-      }
       return fieldLength;
     }
 
@@ -310,7 +288,6 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       return iterator.getKey();
     }
   }
-
   GenericIndexReader reader;
 
   public ExtentIndexReader(GenericIndexReader reader) throws FileNotFoundException, IOException {
