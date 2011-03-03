@@ -226,6 +226,91 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     }
   }
 
+  // This iterator is always done, never provides a valid document, but always
+  // returns the length of the field it was built for.
+  public class FieldLengthIterator extends DocumentOrderedCountIterator implements IndexIterator, Runnable {
+
+    int fieldLength;
+    GenericIndexReader.Iterator iterator;
+    Thread fieldCounter;
+
+    public FieldLengthIterator(GenericIndexReader.Iterator iterator) throws IOException {
+      fieldLength = 0;
+      this.iterator = iterator;
+      fieldCounter = new Thread(this);
+      fieldCounter.start();
+    }
+
+    public void run() {
+      try {
+        Iterator eirIter = new ExtentIndexReader.Iterator(iterator);
+        while (!eirIter.isDone()) {
+          fieldLength += eirIter.count();
+          eirIter.nextEntry();
+        }
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
+
+      // Finally, indicate we're done counting
+      synchronized(this) {
+        fieldCounter = null;
+      }
+    }
+
+    @Override
+    public boolean isDone() {
+      return true;
+    }
+
+    @Override
+    public void reset() throws IOException {
+      // no-op
+    }
+
+    public int document() {
+      return Integer.MAX_VALUE;
+    }
+
+    public int count() {
+      synchronized(this) {
+        try {
+          if (fieldCounter != null) fieldCounter.join();
+        } catch (InterruptedException ie) {
+          throw new RuntimeException(ie);
+        }
+      }
+      return fieldLength;
+    }
+
+    public void nextEntry() throws IOException {
+      // no-op
+    }
+
+    public String getRecordString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("|").append(Utility.toString(iterator.getKey())).append("|=");
+      sb.append(Integer.toString(fieldLength));
+      return sb.toString();
+    }
+
+    public boolean skipTo(byte[] key) throws IOException {
+      return false;
+    }
+
+    public boolean nextRecord() throws IOException {
+      return false;
+    }
+
+    public String getKey() throws IOException {
+      return Utility.toString(iterator.getKey());
+    }
+
+    public byte[] getKeyBytes() throws IOException {
+      return iterator.getKey();
+    }
+  }
+
   GenericIndexReader reader;
 
   public ExtentIndexReader(GenericIndexReader reader) throws FileNotFoundException, IOException {
@@ -241,6 +326,14 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
 
     if (iterator != null) {
       return new Iterator(iterator);
+    }
+    return null;
+  }
+
+  public FieldLengthIterator getFieldLength(String term) throws IOException {
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    if (iterator != null) {
+      return new FieldLengthIterator(iterator);
     }
     return null;
   }
@@ -261,12 +354,15 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
   public HashMap<String, NodeType> getNodeTypes() {
     HashMap<String, NodeType> nodeTypes = new HashMap<String, NodeType>();
     nodeTypes.put("extents", new NodeType(Iterator.class));
+    nodeTypes.put("all", new NodeType(FieldLengthIterator.class));
     return nodeTypes;
   }
 
   public IndexIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("extents")) {
       return getExtents(node.getDefaultParameter());
+    } else if (node.getOperator().equals("all")) {
+      return getFieldLength(node.getDefaultParameter());
     } else {
       throw new UnsupportedOperationException("Node type " + node.getOperator()
               + " isn't supported.");

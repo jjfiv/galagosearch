@@ -353,10 +353,10 @@ public class StructuredRetrieval extends Retrieval {
     if (structIterator instanceof CountIterator) {
       CountIterator iterator = (CountIterator) structIterator;
       long count = 0;
-      while (!iterator.isDone()) {
+      do { // works for iterators that are always done (#all - see ExtentIndexReader)
         count += iterator.count();
         iterator.nextEntry();
-      }
+      } while (!iterator.isDone());
       return count;
     } else {
       throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
