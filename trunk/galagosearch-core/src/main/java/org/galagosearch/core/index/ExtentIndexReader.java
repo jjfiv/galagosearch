@@ -1,6 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.index;
 
+import gnu.trove.TIntHashSet;
 import java.io.DataInput;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -237,8 +238,16 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
       fieldLength = 0;
       this.iterator = iterator;
       Iterator eirIter = new ExtentIndexReader.Iterator(iterator);
+      TIntHashSet set = new TIntHashSet();
       while (!eirIter.isDone()) {
-        fieldLength += eirIter.count();
+        set.clear();
+        Extent[] buffer = eirIter.extents().getBuffer();
+        for (Extent e : buffer) {
+          for (int i = e.begin; i < e.end; i++) {
+            set.add(i);
+          }
+        }
+        fieldLength += set.size();
         eirIter.nextEntry();
       }
     }
