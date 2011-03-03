@@ -41,11 +41,10 @@ public class BuildStageTemplates {
   }
 
   public static Stage getGenericWriteStage(String stageName, File destination, String inputPipeName,
-          Class<? extends org.galagosearch.tupleflow.Step> writer, Order dataOrder) throws IOException {
+          Class<? extends org.galagosearch.tupleflow.Step> writer, Order dataOrder, Parameters p) throws IOException {
     Stage stage = new Stage(stageName);
     stage.add(new StageConnectionPoint(ConnectionPointType.Input,
             inputPipeName, dataOrder));
-    Parameters p = new Parameters();
     p.add("filename", destination.getCanonicalPath());
     stage.add(new InputStep(inputPipeName));
     stage.add(new Step(writer, p));
@@ -63,22 +62,44 @@ public class BuildStageTemplates {
   /**
    * Writes document lengths to a document lengths file.
    */
+  public static Stage getWriteLengthsStage(String stageName, File destination, String inputPipeName, Parameters p) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            DocumentLengthsWriter.class, new NumberedDocumentData.NumberOrder(), p);
+  }
+
   public static Stage getWriteLengthsStage(String stageName, File destination, String inputPipeName) throws IOException {
     return getGenericWriteStage(stageName, destination, inputPipeName,
-            DocumentLengthsWriter.class, new NumberedDocumentData.NumberOrder());
+            DocumentLengthsWriter.class, new NumberedDocumentData.NumberOrder(), new Parameters());
   }
 
   /**
    * Write out document count and collection length information.
    */
+  public static Stage getWriteManifestStage(String stageName, File destination, String inputPipeName, Parameters p) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            ManifestWriter.class, new XMLFragment.NodePathOrder(), p);
+  }
+
   public static Stage getWriteManifestStage(String stageName, File destination, String inputPipeName) throws IOException {
     return getGenericWriteStage(stageName, destination, inputPipeName,
-            ManifestWriter.class, new XMLFragment.NodePathOrder());
+            ManifestWriter.class, new XMLFragment.NodePathOrder(), new Parameters());
+  }
+
+  public static Stage getWriteManifestStage(String stageName, File destination, String inputPipeName, String defaultPart) throws IOException {
+    Parameters p = new Parameters();
+    p.set("default", defaultPart);
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            ManifestWriter.class, new XMLFragment.NodePathOrder(), p);
+  }
+
+  public static Stage getWriteDatesStage(String stageName, File destination, String inputPipeName, Parameters p) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            ExtentValueIndexWriter.class, new NumberedValuedExtent.ExtentNameNumberBeginOrder(), p);
   }
 
   public static Stage getWriteDatesStage(String stageName, File destination, String inputPipeName) throws IOException {
     return getGenericWriteStage(stageName, destination, inputPipeName,
-            ExtentValueIndexWriter.class, new NumberedValuedExtent.ExtentNameNumberBeginOrder());
+            ExtentValueIndexWriter.class, new NumberedValuedExtent.ExtentNameNumberBeginOrder(), new Parameters());
   }
 
   /**
@@ -86,12 +107,22 @@ public class BuildStageTemplates {
    */
   public static Stage getWriteNamesStage(String stageName, File destination, String inputPipeName) throws IOException {
     return getGenericWriteStage(stageName, destination, inputPipeName,
-            DocumentNameWriter.class, new NumberedDocumentData.NumberOrder());
+            DocumentNameWriter.class, new NumberedDocumentData.NumberOrder(), new Parameters());
+  }
+
+  public static Stage getWriteNamesStage(String stageName, File destination, String inputPipeName, Parameters p) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            DocumentNameWriter.class, new NumberedDocumentData.NumberOrder(), p);
   }
 
   public static Stage getWriteExtentsStage(String stageName, File destination, String inputPipeName) throws IOException {
     return getGenericWriteStage(stageName, destination, inputPipeName,
-            ExtentIndexWriter.class, new NumberedExtent.ExtentNameNumberBeginOrder());
+            ExtentIndexWriter.class, new NumberedExtent.ExtentNameNumberBeginOrder(), new Parameters());
+  }
+
+  public static Stage getWriteExtentsStage(String stageName, File destination, String inputPipeName, Parameters p) throws IOException {
+    return getGenericWriteStage(stageName, destination, inputPipeName,
+            ExtentIndexWriter.class, new NumberedExtent.ExtentNameNumberBeginOrder(), p);
   }
 
   public static Stage getCollectionLengthStage(String stageName, String inputPipeName, String outputPipeName) {

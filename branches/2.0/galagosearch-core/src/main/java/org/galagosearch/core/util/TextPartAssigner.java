@@ -23,10 +23,6 @@ public class TextPartAssigner {
 	return stemmedNode(original, "stemmedPostings", "extents");
     } else if (available.contains("postings")) {
       return transformedNode(original, "extents", "postings");
-    } else if (available.contains("stemmedScorePostings")) {
-	return stemmedNode(original, "stemmedScorePostings", "scores");
-    } else if (available.contains("scorePostings")) {
-	return transformedNode(original, "scores", "scorePostings");
     } else {
       return original;
     }

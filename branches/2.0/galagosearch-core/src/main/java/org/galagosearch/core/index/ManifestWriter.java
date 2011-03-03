@@ -32,6 +32,11 @@ public class ManifestWriter implements Processor<XMLFragment> {
         }
 
         filename = p.getXML().get("filename");
+
+        // Set the default index part if it's there
+        if (p.getXML().containsKey("default")) {
+          result.add("default", p.getXML().get("default"));
+        }
     }
 
     public void process(XMLFragment object) throws IOException {
