@@ -109,8 +109,9 @@ public class MultiRetrieval extends Retrieval {
       r.waitForAsynchronousQuery();
     }
 
-    // sort the results
+    // sort the results and invert (sort is inverted)
     Collections.sort(queryResults);
+    Collections.reverse(queryResults);
 
     // get the best {requested} results
     int requested = (int) parameters.get("requested", 1000);
