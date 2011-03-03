@@ -127,17 +127,12 @@ public class DocumentNameReader extends NameReader {
     }
 
     public String getValueString() {
-      try {
-        byte[] key = getKeyBytes();
-        byte[] value = getValueBytes();
-        if (forwardLookup) {
-          return Utility.toInt(key) + ", " + Utility.toString(value);
-        } else {
-          return Utility.toInt(value) + ", " + Utility.toString(key);
-        }
-      } catch (IOException ioe) {
-        return "Unknown";
-      }
+	try {
+	    byte[] value = getValueBytes();
+	    return Utility.toString(value);
+	} catch (IOException ioe) {
+	    return "Unknown";
+	}
     }
 
     public NumberedDocumentData getDocumentData() throws IOException {

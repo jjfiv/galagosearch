@@ -265,7 +265,7 @@ public class StructuredRetrieval extends Retrieval {
     NameReader.Iterator iterator = index.getNamesIterator();
     for (int document : docIds.keySet()) {
       iterator.moveToKey(Utility.fromInt(document));
-      String name = Utility.toString(iterator.getValueBytes());
+      String name = iterator.getValueString();
       results[docIds.get(document)].documentName = name;
     }
 
