@@ -38,7 +38,7 @@ public class MultiRetrieval extends Retrieval {
   public MultiRetrieval(HashMap<String, ArrayList<Retrieval>> indexes, Parameters p) throws Exception {
 
     this.retrievals = indexes;
-    
+
     initRetrieval();
   }
 
@@ -69,7 +69,7 @@ public class MultiRetrieval extends Retrieval {
   }
 
   public StructuredIterator createIterator(Node node) throws Exception {
-      throw new UnsupportedOperationException("Semantics to instantiate iterator are unclear");
+    throw new UnsupportedOperationException("Semantics to instantiate iterator are unclear");
   }
 
   /**
@@ -160,7 +160,7 @@ public class MultiRetrieval extends Retrieval {
     }
   }
 
-  public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception{
+  public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception {
     throw new UnsupportedOperationException("Parameter Sweep not yet implemented");
   }
 
@@ -228,9 +228,9 @@ public class MultiRetrieval extends Retrieval {
     for (String partName : intersection.stringList("part")) {
       for (Parameters p : ps) {
         // if some index does not contain the correct part - delete it and all node Classes
-        if (! p.stringList("part").contains(partName)) {
-          for(Value v : intersection.list("part")){
-            if(v.toString().equals(partName)){
+        if (!p.stringList("part").contains(partName)) {
+          for (Value v : intersection.list("part")) {
+            if (v.toString().equals(partName)) {
               intersection.list("part").remove(v);
             }
           }
@@ -269,6 +269,33 @@ public class MultiRetrieval extends Retrieval {
     return count;
   }
 
+  public long doccount(String nodeString) throws Exception {
+    Node countNode = StructuredQuery.parse(nodeString);
+    return doccount(countNode);
+  }
+
+  /**
+   * Note that this assumes the retrieval objects involved in the group
+   * contain mutually exclusive subcollections. If you're doing PAC-search
+   * or another non-disjoint subset retrieval model, look out.
+   */
+  public long doccount(Node countNode) throws Exception {
+    Parameters parameters = countNode.getParameters();
+    String nodeString = countNode.toString();
+    String retrievalGroup = parameters.get("retrievalGroup", "all");
+    if (!retrievals.containsKey(retrievalGroup)) {
+      // this should fail nicely
+      // Print a fail, then return null
+      throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + nodeString + "'");
+    }
+    ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
+    long count = 0;
+    for (Retrieval r : selected) {
+      count += r.doccount(nodeString);
+    }
+    return count;
+  }
+
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
     NodeType nodeType = getIndexNodeType(node, retrievalGroup);
     if (nodeType == null) {
@@ -286,13 +313,13 @@ public class MultiRetrieval extends Retrieval {
         throw new IOException("The index has no part named '" + partName + "'");
       }
       String operator = node.getOperator();
-      if(! parts.containsKey("nodeType/" + partName + "/" + operator)){
+      if (!parts.containsKey("nodeType/" + partName + "/" + operator)) {
         throw new IOException("The index has no iterator for the operator '" + operator + "'");
-      } 
+      }
       String iteratorClass = parts.get("nodeType/" + partName + "/" + operator);
 
       // may need to do some checking here...
-      return new NodeType( (Class<? extends StructuredIterator>) Class.forName(iteratorClass));
+      return new NodeType((Class<? extends StructuredIterator>) Class.forName(iteratorClass));
     }
     return null;
   }

@@ -52,6 +52,10 @@ public abstract class Retrieval implements Runnable {
 
     public abstract long xcount(Node root) throws Exception;
 
+    public abstract long doccount(String nodeString) throws Exception;
+
+    public abstract long doccount(Node root) throws Exception;
+
     public abstract ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception;
 
     public abstract Node transformQuery(Node root, String retrievalGroup) throws Exception;

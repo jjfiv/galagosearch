@@ -120,7 +120,7 @@ public class StructuredRetrieval extends Retrieval {
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
     DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
-    
+
     while (!iterator.isDone()) {
       int document = iterator.currentIdentifier();
       lengthsIterator.moveToKey(document);
@@ -225,7 +225,7 @@ public class StructuredRetrieval extends Retrieval {
       context.length = length;
       TObjectDoubleHashMap<String> scores = iterator.parameterSweepScore();
 
-      for (String params : scores.keys( new String[0] )) {
+      for (String params : scores.keys(new String[0])) {
         if (!queues.containsKey(params)) {
           queues.put(params, new PriorityQueue());
         }
@@ -328,7 +328,7 @@ public class StructuredRetrieval extends Retrieval {
       throw e;
     }
     if (ContextualIterator.class.isInstance(iterator)) {
-      ((ContextualIterator)iterator).setContext(context);
+      ((ContextualIterator) iterator).setContext(context);
     }
     return iterator;
   }
@@ -382,8 +382,30 @@ public class StructuredRetrieval extends Retrieval {
     if (structIterator instanceof CountValueIterator) {
       CountValueIterator iterator = (CountValueIterator) structIterator;
       long count = 0;
-      while (!iterator.isDone()) {
+      do {
         count += iterator.count();
+        iterator.next();
+      } while (!iterator.isDone());
+      return count;
+    } else {
+      throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
+    }
+  }
+
+  public long doccount(String nodeString) throws Exception {
+
+    // first parse the node
+    Node root = StructuredQuery.parse(nodeString);
+    return xcount(root);
+  }
+
+  public long doccount(Node root) throws Exception {
+    StructuredIterator structIterator = createIterator(root);
+    if (structIterator instanceof CountValueIterator) {
+      CountValueIterator iterator = (CountValueIterator) structIterator;
+      long count = 0;
+      while (!iterator.isDone()) {
+        count++;
         iterator.next();
       }
       return count;

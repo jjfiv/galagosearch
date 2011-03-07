@@ -116,7 +116,7 @@ public class StructuredRetrievalProxy extends Retrieval {
   }
 
   public StructuredIterator createIterator(Node node) throws Exception {
-      throw new UnsupportedOperationException("cannot create proxy iterator");
+    throw new UnsupportedOperationException("cannot create proxy iterator");
   }
 
   public ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception {
@@ -215,7 +215,7 @@ public class StructuredRetrievalProxy extends Retrieval {
     }
   }
 
-  public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception{
+  public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception {
     throw new UnsupportedOperationException("Parameter Sweep not yet implemented");
   }
 
@@ -244,6 +244,32 @@ public class StructuredRetrievalProxy extends Retrieval {
 
   public long xcount(Node root) throws Exception {
     return xcount(root.toString());
+  }
+
+  public long doccount(Node root) throws Exception {
+    return doccount(root.toString());
+  }
+
+  public long doccount(String nodeString) throws Exception {
+
+    StringBuilder request = new StringBuilder(indexUrl);
+    String encoded = URLEncoder.encode(nodeString, "UTF-8"); // need to web-escape
+    request.append("/doccount?expression=").append(encoded);
+    URL resource = new URL(request.toString());
+    HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
+    connection.setRequestMethod("GET");
+
+    // Hook up an xml handler to the input stream to directly generate the results, as opposed
+    // to buffering them up
+    if (parser == null) {
+      parser = SAXParserFactory.newInstance().newSAXParser();
+    }
+
+    // might be a better way to do this....
+    DocCountHandler handler = new DocCountHandler();
+    parser.parse(connection.getInputStream(), handler);
+    connection.disconnect();
+    return (handler.getCount());
   }
 
   // this function is for the query transform function (which should not be completed here)
@@ -378,6 +404,41 @@ public class StructuredRetrievalProxy extends Retrieval {
     }
   }
 
+  private static class DocCountHandler extends DefaultHandler {
+
+    String context;
+    long value;
+
+    public DocCountHandler() {
+      reset();
+    }
+
+    public long getCount() {
+      return value;
+    }
+
+    public void reset() {
+      value = 0;
+      context = null;
+    }
+
+    public void endElement(String uri, String localName, String rawName) {
+      context = null;
+    }
+
+    public void startElement(String uri, String localName, String qName, Attributes attributes)
+            throws SAXException {
+      context = qName;
+    }
+
+    public void characters(char[] ch, int start, int length) {
+      if (context.equals("count")) {
+        value = Integer.parseInt(new String(ch, start, length));
+        String value = new String(ch, start, length);
+      }
+    }
+  }
+
   private static class TransformQueryHandler extends DefaultHandler {
 
     String context;
@@ -388,8 +449,8 @@ public class StructuredRetrievalProxy extends Retrieval {
     }
 
     public void reset() {
-        nodeString = "";
-        context = null;
+      nodeString = "";
+      context = null;
     }
 
     public void endElement(String uri, String localName, String rawName) {

@@ -359,6 +359,23 @@ public class SearchWebHandler extends AbstractHandler {
     outputter.endDocument();
   }
 
+    public void handleDocCount(HttpServletRequest request, HttpServletResponse response)
+          throws IllegalStateException, IllegalArgumentException, IOException, Exception {
+    String exp = request.getParameter("expression");
+    long count = search.doccount(exp);
+    PrintWriter writer = response.getWriter();
+    XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
+    response.setContentType("text/xml");
+    outputter.startTag("response");
+
+    outputter.startTag("count");
+    outputter.pcdata(Long.toString(count));
+    outputter.endTag(); // count
+
+    outputter.endTag(); // response
+    outputter.endDocument();
+  }
+
   public void handleStats(HttpServletRequest request, HttpServletResponse response)
           throws IllegalStateException, IllegalArgumentException, IOException {
     String retGroup = request.getParameter("retGroup");
@@ -498,6 +515,12 @@ public class SearchWebHandler extends AbstractHandler {
     } else if (request.getPathInfo().equals("/xcount")) {
       try {
         handleXCount(request, response);
+      } catch (Exception e) {
+        throw new ServletException("Caught exception from handleXCount", e);
+      }
+    } else if (request.getPathInfo().equals("/doccount")) {
+      try {
+        handleDocCount(request, response);
       } catch (Exception e) {
         throw new ServletException("Caught exception from handleXCount", e);
       }

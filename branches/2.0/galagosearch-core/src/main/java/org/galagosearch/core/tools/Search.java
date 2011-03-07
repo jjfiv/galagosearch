@@ -114,6 +114,10 @@ public class Search {
       return this.retrieval.xcount(nodeString);
   }
 
+  public long doccount(String nodeString) throws Exception {
+    return this.retrieval.doccount(nodeString);
+  }
+
   public SearchResult runQuery(String query, Parameters p, boolean summarize) throws Exception {
     Node root = StructuredQuery.parse(query);
     Node transformed = retrieval.transformQuery(root, p.get("retrievalGroup","all"));
