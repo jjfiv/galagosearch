@@ -12,12 +12,12 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author sjh
  */
-public class FrequentCountIterator implements CountIterator {
+public class FrequentCountIterator extends DocumentOrderedCountIterator {
     
     int threshold;
     CountIterator i;
 
-    public FrequentCountIterator(Parameters parameters, CountIterator iterator){
+    public FrequentCountIterator(Parameters parameters, DocumentOrderedCountIterator iterator){
         i = iterator;
         threshold = (int) parameters.get("default", 0);
     }
@@ -46,10 +46,4 @@ public class FrequentCountIterator implements CountIterator {
     public void reset() throws IOException {
         i.reset();
     }
-
-    public int compareTo(CountIterator o) {
-        return i.compareTo(o);
-    }
-    
-
 }
