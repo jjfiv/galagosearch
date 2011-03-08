@@ -90,8 +90,10 @@ public class DocumentOrderedFeatureFactory extends FeatureFactory {
     {UnfilteredCombinationIterator.class.getName(), "rm"},
     {UnfilteredCombinationIterator.class.getName(), "seqdep"},
     {UnfilteredCombinationIterator.class.getName(), "bm25rf"},
-    {MaxScoreCombinationIterator.class.getName(), "maxscore"}
+    {MaxScoreCombinationIterator.class.getName(), "maxscore"},
+    {FrequentCountIterator.class.getName(), "freq"}
   };
+
   static String[][] sFeatureLookup = {
     {DirichletScoringIterator.class.getName(), "dirichlet"},
     {JelinekMercerScoringIterator.class.getName(), "linear"},
