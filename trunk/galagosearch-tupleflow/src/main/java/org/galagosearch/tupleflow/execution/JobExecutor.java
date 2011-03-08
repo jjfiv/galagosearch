@@ -1286,7 +1286,7 @@ public class JobExecutor {
       InetAddress local = InetAddress.getLocalHost();
       String hostname = local.getHostName();
       if (hostname.contains("swarm")) {
-        params = new String[]{"-ns=-q long.q -l long=TRUE", "Xmx4096m", "Xms4096m"};
+        params = new String[]{"Xmx3g", "Xms3g"};
         // params = new String[]{"Xmx1600m", "Xms1500m"};
       } else if (hostname.contains("sydney")) {
         params = new String[]{"-ns=-q std.q -pe thread.std 2", "Xmx1600m", "Xms1500m"};

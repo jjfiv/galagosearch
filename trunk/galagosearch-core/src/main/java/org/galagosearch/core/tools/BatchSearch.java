@@ -41,22 +41,29 @@ public class BatchSearch {
     Parameters parameters = new Parameters(args);
     List<Parameters.Value> queries = parameters.list("query");
 
-    // open index
-    Retrieval retrieval = Retrieval.instance(parameters);
+    // copy the parameters for internal use
+    //   remove parameters that are used here
+    Parameters internalParameters = parameters.clone();
+    internalParameters.set("query", "");
+    internalParameters.set("print_calls", "");
 
-    // record results requested
-    int requested = (int) parameters.get("count", 1000);
+    // open index
+    Retrieval retrieval = Retrieval.instance(internalParameters);
 
     // for each query, run it, get the results, print in TREC format
     int index = 0;
     for (Parameters.Value query : queries) {
 
       String queryText = query.get("text");
-      Parameters p = new Parameters();
-      p.add("requested", Integer.toString(requested));
+
       Node root = StructuredQuery.parse(queryText);      
       Node transformed = retrieval.transformQuery(root, "all");
-      ScoredDocument[] results = retrieval.runQuery(transformed, p);
+
+      // System.err.println("Input:" + queryText);
+      // System.err.println("Parsed:" + root.toString());
+      // System.err.println("Transformed:" + transformed.toString());
+
+      ScoredDocument[] results = retrieval.runQuery(transformed, internalParameters);
       for (int i = 0; i < results.length; i++) {
         double score = results[i].score;
         int rank = i + 1;

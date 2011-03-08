@@ -4,6 +4,7 @@ package org.galagosearch.core.tools;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.util.Map.Entry;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.DocumentNameReader;
@@ -620,6 +621,11 @@ public class App {
     server.addHandler(new SearchWebHandler(search));
     server.start();
     output.println("Server: http://localhost:" + port);
+
+    // Ensure we print out the ip address version of the url as well.
+    InetAddress address = java.net.InetAddress.getLocalHost();
+    String masterURL = String.format("http://%s:%d", address.getHostAddress(), port);
+    output.println("IPStatus: " + masterURL);
   }
 
   private void handleSearch(String[] args) throws Exception {

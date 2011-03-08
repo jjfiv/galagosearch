@@ -45,8 +45,14 @@ public class StructuredRetrieval extends Retrieval {
 
     Parameters featureParameters = factoryParameters.clone();
     Parameters indexStats = getRetrievalStatistics("all");
-    featureParameters.add("collectionLength", indexStats.get("collectionLength"));
-    featureParameters.add("documentCount", indexStats.get("documentCount"));
+
+    // this allows the user to set collectionLength or documentCount manually in the parameters
+    if(! featureParameters.containsKey("collectionLength")){
+        featureParameters.add("collectionLength", indexStats.get("collectionLength"));
+    }
+    if(! featureParameters.containsKey("collectionLength")){
+        featureParameters.add("documentCount", indexStats.get("documentCount"));
+    }
     featureParameters.add("retrievalGroup", "all"); // the value wont matter here
     featureFactory = new DocumentOrderedFeatureFactory(featureParameters);
     runner = null;
@@ -109,7 +115,7 @@ public class StructuredRetrieval extends Retrieval {
 
     // construct the query iterators
       DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
-    int requested = (int) parameters.get("requested", 1000);
+    int count = (int) parameters.get("count", 1000);
 
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
@@ -123,11 +129,11 @@ public class StructuredRetrieval extends Retrieval {
       iterator.setScoringContext(document, length);
       double score = iterator.score();
       CallTable.increment("scored");
-      if (queue.size() <= requested || queue.peek().score < score) {
+      if (queue.size() <= count || queue.peek().score < score) {
         ScoredDocument scoredDocument = new ScoredDocument(document, score);
         queue.add(scoredDocument);
 
-        if (queue.size() > requested) {
+        if (queue.size() > count) {
           queue.poll();
         }
       }

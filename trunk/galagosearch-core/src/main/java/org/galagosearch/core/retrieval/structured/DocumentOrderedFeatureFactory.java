@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
+import org.galagosearch.core.retrieval.traversal.FrequenceFilteringTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
 import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
@@ -111,7 +112,8 @@ public class DocumentOrderedFeatureFactory extends FeatureFactory {
     TextFieldRewriteTraversal.class.getName(),
     ImplicitFeatureCastTraversal.class.getName(),
     RelevanceModelTraversal.class.getName(),
-    BM25RelevanceFeedbackTraversal.class.getName()
+    BM25RelevanceFeedbackTraversal.class.getName(),
+    FrequenceFilteringTraversal.class.getName()
   };
 
   public DocumentOrderedFeatureFactory(Parameters parameters) {

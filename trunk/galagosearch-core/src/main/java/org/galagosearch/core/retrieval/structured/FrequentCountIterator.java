@@ -19,7 +19,7 @@ public class FrequentCountIterator extends DocumentOrderedCountIterator {
 
     public FrequentCountIterator(Parameters parameters, DocumentOrderedCountIterator iterator){
         i = iterator;
-        threshold = (int) parameters.get("default", 0);
+        threshold = Integer.parseInt(parameters.get("default"));
     }
 
     public int document() {
@@ -28,7 +28,7 @@ public class FrequentCountIterator extends DocumentOrderedCountIterator {
 
     public int count() {
         int c = i.count();
-        if(c > threshold){
+        if(c >= threshold){
             return c;
         } else {
             return 0;
@@ -41,6 +41,10 @@ public class FrequentCountIterator extends DocumentOrderedCountIterator {
 
     public void nextEntry() throws IOException {
         i.nextEntry();
+        while((!i.isDone()) &&
+              (i.count() < threshold)){
+          i.nextEntry();
+        }
     }
 
     public void reset() throws IOException {
