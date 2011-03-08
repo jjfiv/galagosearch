@@ -253,7 +253,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       }
 
       // if we're here, we're skipping
-      while (skipsRead < numSkips
+      while (skipsRead < (numSkips-1)
               && document > nextSkipDocument) {
         skipOnce();
       }
@@ -265,7 +265,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     // needed to update floors
     //
     private void skipOnce() throws IOException {
-      assert skipsRead < numSkips;
+      assert skipsRead < (numSkips-1);
       long currentSkipPosition = lastSkipPosition + skips.readInt();
 
       if (skipsRead % skipResetDistance == 0) {
@@ -667,7 +667,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     }
   }
 
-  // I add these in order to return document frequency and collection frequency
+  // I added these in order to return document frequency and collection frequency
   // information for terms. Any other way from the iterators are SLOW
   // unless the headers have already been loaded.
   // We need a better interface for these.
