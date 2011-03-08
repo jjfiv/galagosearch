@@ -59,6 +59,10 @@ public class SequentialDependenceTraversal implements Traversal {
                 // unigrams go as-is
                 Node unigramNode = new Node("combine", children);
 
+                if(children.size() == 1){
+                  return unigramNode;
+                }
+
                 // ordered and unordered can go at the same time
                 ArrayList<Node> ordered = new ArrayList<Node>();
                 ArrayList<Node> unordered= new ArrayList<Node>();
