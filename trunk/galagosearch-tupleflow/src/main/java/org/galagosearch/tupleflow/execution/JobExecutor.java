@@ -1280,21 +1280,6 @@ public class JobExecutor {
 
     String[] params = new String[]{};
 
-    // CIIR Cluster parameters:
-    if (mode.equals("drmaa")) {
-      // First get the hostname
-      InetAddress local = InetAddress.getLocalHost();
-      String hostname = local.getHostName();
-      if (hostname.contains("swarm")) {
-        params = new String[]{"Xmx3g", "Xms3g"};
-        // params = new String[]{"Xmx1600m", "Xms1500m"};
-      } else if (hostname.contains("sydney")) {
-        params = new String[]{"-ns=-q std.q -pe thread.std 2", "Xmx1600m", "Xms1500m"};
-      } else {
-        params = new String[0];
-      }
-    }
-
     String command;
     if (p.containsKey("command")) {
       command = p.get("command");
