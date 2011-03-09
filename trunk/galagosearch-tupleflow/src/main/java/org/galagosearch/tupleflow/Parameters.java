@@ -222,6 +222,10 @@ public class Parameters implements Serializable {
 
     public List<String> stringList(String key) {
       List<Value> list = list(key);
+      if(list.isEmpty()){
+        return Collections.emptyList();
+      }
+
       ArrayList<String> strings = new ArrayList<String>(list.size());
 
       for (Value value : list) {
