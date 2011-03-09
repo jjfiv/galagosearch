@@ -91,8 +91,7 @@ public class DocumentOrderedFeatureFactory extends FeatureFactory {
     {UnfilteredCombinationIterator.class.getName(), "rm"},
     {UnfilteredCombinationIterator.class.getName(), "seqdep"},
     {UnfilteredCombinationIterator.class.getName(), "bm25rf"},
-    {MaxScoreCombinationIterator.class.getName(), "maxscore"},
-    {FrequentCountIterator.class.getName(), "freq"}
+    {MaxScoreCombinationIterator.class.getName(), "maxscore"}
   };
 
   static String[][] sFeatureLookup = {

@@ -17,6 +17,7 @@ import org.galagosearch.tupleflow.Parameters;
  * @author trevor
  */
 public class BatchSearch {
+
   public static Node parseQuery(String query, Parameters parameters) {
     String queryType = parameters.get("queryType", "complex");
 
@@ -56,12 +57,14 @@ public class BatchSearch {
 
       String queryText = query.get("text");
 
-      Node root = StructuredQuery.parse(queryText);      
+      Node root = StructuredQuery.parse(queryText);
       Node transformed = retrieval.transformQuery(root, "all");
 
-      // System.err.println("Input:" + queryText);
-      // System.err.println("Parsed:" + root.toString());
-      // System.err.println("Transformed:" + transformed.toString());
+      if (parameters.get("printTransformation", false)) {
+        System.err.println("Input:" + queryText);
+        System.err.println("Parsed:" + root.toString());
+        System.err.println("Transformed:" + transformed.toString());
+      }
 
       ScoredDocument[] results = retrieval.runQuery(transformed, internalParameters);
       for (int i = 0; i < results.length; i++) {
@@ -72,7 +75,9 @@ public class BatchSearch {
                 formatScore(score));
       }
       index++;
-      if (parameters.get("print_calls", "false").equals("true")) CallTable.print(System.err, Integer.toString(index));
+      if (parameters.get("print_calls", "false").equals("true")) {
+        CallTable.print(System.err, Integer.toString(index));
+      }
       CallTable.reset();
     }
 

@@ -20,19 +20,18 @@ public class FrequenceFilteringTraversal implements Traversal {
 
   int threshold;
   HashSet<String> whiteList = new HashSet();
+  Retrieval retrieval;
+
 
   public FrequenceFilteringTraversal(Parameters parameters, Retrieval retrieval) {
     threshold = (int) parameters.get("freq", 0);
+    this.retrieval = retrieval;
+
     List<Value> fops = parameters.list("freqop");
     if(fops.size() > 0){
       for(Value v: fops ){
         whiteList.add( v.toString() );
       }
-    }
-
-    System.err.println(whiteList.size());
-    for(String w : whiteList){
-      System.err.println(w);
     }
   }
 
@@ -49,24 +48,24 @@ public class FrequenceFilteringTraversal implements Traversal {
     if (node.getOperator().equals("feature")) {
       ArrayList<Node> children = node.getInternalNodes(); // should only be one
 
-      if ((children.size() > 1)
-              || (children.get(0).getOperator().equals("freq"))) {
+      if (children.size() > 1){
         return node;
       }
 
+      Node child = children.get(0);
 
       if ((whiteList.size() > 0)
-              && (! whiteList.contains(children.get(0).getOperator()))) {
+              && (! whiteList.contains(child.getOperator()))) {
         return node;
       }
 
-      Node newChild = new Node("freq", Integer.toString(threshold), children);
-      ArrayList<Node> newChildren = new ArrayList();
-      newChildren.add(newChild);
+      long count = retrieval.xcount(child);
+      if(count < threshold){
+        // this term can not exist in the index
+        child.getParameters().set("default", "!");
+      }
 
-      Node newNode = new Node(node.getOperator(), node.getParameters(), newChildren, 0);
-
-      return newNode;
+      return node;
     } else {
       return node;
     }
