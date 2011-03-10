@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.structured.CountValueIterator;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -88,7 +89,7 @@ public class DocumentLengthsReader extends KeyValueReader {
     }
   }
 
-  public class ValueIterator extends KeyToListIterator {
+  public class ValueIterator extends KeyToListIterator implements CountValueIterator {
 
     public ValueIterator(KeyIterator it) {
       super(it);
@@ -100,6 +101,14 @@ public class DocumentLengthsReader extends KeyValueReader {
 
     public long totalEntries() {
       throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public int count() {
+      try {
+        return ((KeyIterator) iterator).getCurrentLength();
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
     }
   }
 }
