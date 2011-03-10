@@ -11,7 +11,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor
  */
-@RequiredStatistics(statistics = {"collectionLength"})
+@RequiredStatistics(statistics = {"collectionLength","mu"})
 public class DirichletScorer implements ScoringFunction {
 
     double background;
@@ -19,7 +19,11 @@ public class DirichletScorer implements ScoringFunction {
 
     public DirichletScorer(Parameters parameters, CountIterator iterator) throws IOException {
 
+        System.err.println( parameters.toString() );
+
         mu = parameters.get("mu", 1500);
+        System.err.println("mu : " + mu);
+
         if (parameters.containsKey("collectionProbability")) {
             background = parameters.get("collectionProbability", 0.0001);
         } else {

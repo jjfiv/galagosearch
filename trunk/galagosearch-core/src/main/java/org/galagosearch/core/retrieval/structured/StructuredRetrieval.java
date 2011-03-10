@@ -50,7 +50,7 @@ public class StructuredRetrieval extends Retrieval {
     if(! featureParameters.containsKey("collectionLength")){
         featureParameters.add("collectionLength", indexStats.get("collectionLength"));
     }
-    if(! featureParameters.containsKey("collectionLength")){
+    if(! featureParameters.containsKey("documentCount")){
         featureParameters.add("documentCount", indexStats.get("documentCount"));
     }
     featureParameters.add("retrievalGroup", "all"); // the value wont matter here
@@ -366,7 +366,7 @@ public class StructuredRetrieval extends Retrieval {
       return count;
     } else {
       throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
-    }
+  }
   }
 
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {

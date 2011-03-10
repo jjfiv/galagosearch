@@ -4,6 +4,7 @@ package org.galagosearch.core.retrieval.structured;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.galagosearch.core.retrieval.traversal.PRMSTraversal;
 import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
 import org.galagosearch.core.retrieval.traversal.FrequenceFilteringTraversal;
@@ -104,6 +105,7 @@ public class DocumentOrderedFeatureFactory extends FeatureFactory {
   };
   static String[] sTraversalList = {
     SequentialDependenceTraversal.class.getName(),
+    PRMSTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
     AddCombineTraversal.class.getName(),
     WeightConversionTraversal.class.getName(),

@@ -237,6 +237,7 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
     public FieldLengthIterator(GenericIndexReader.Iterator iterator) throws IOException {
       fieldLength = 0;
       this.iterator = iterator;
+      System.err.println("Creating extent iterator for key " + Utility.toString(iterator.getKey()));
       Iterator eirIter = new ExtentIndexReader.Iterator(iterator);
       TIntHashSet set = new TIntHashSet();
       while (!eirIter.isDone()) {
