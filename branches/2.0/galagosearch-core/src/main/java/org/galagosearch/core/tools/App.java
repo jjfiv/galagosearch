@@ -14,7 +14,6 @@ import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
-import org.galagosearch.core.index.NumberedDocumentDataIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
 import org.galagosearch.tupleflow.FileOrderedReader;
@@ -430,7 +429,7 @@ public class App {
     }
 
     DocumentLengthsReader reader = new DocumentLengthsReader(args[1]);
-    NumberedDocumentDataIterator iterator = reader.getIterator();
+    DocumentLengthsReader.KeyIterator iterator = reader.getIterator();
     do {
       output.println(iterator.getValueString());
     } while (iterator.nextKey());
@@ -443,7 +442,7 @@ public class App {
     }
 
     DocumentNameReader reader = new DocumentNameReader(args[1]);
-    NumberedDocumentDataIterator iterator = reader.getIterator();
+    DocumentNameReader.KeyIterator iterator = reader.getIterator();
     do {
       output.println(iterator.getValueString());
     } while (iterator.nextKey());

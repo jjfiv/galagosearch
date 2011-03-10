@@ -8,7 +8,6 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.DataIterator;
 
-import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -79,7 +78,7 @@ public class DocumentNameReader extends NameReader {
     }
   }
 
-  public class KeyIterator extends NumberedDocumentDataIterator {
+  public class KeyIterator extends KeyValueReader.Iterator {
 
     boolean forwardLookup;
     GenericIndexReader input;
@@ -133,17 +132,6 @@ public class DocumentNameReader extends NameReader {
 	} catch (IOException ioe) {
 	    return "Unknown";
 	}
-    }
-
-    public NumberedDocumentData getDocumentData() throws IOException {
-      byte[] key = getKeyBytes();
-      byte[] value = getValueBytes();
-
-      if (forwardLookup) {
-        return new NumberedDocumentData(Utility.toString(value), "", Utility.toInt(key), 0);
-      } else {
-        return new NumberedDocumentData(Utility.toString(key), "", Utility.toInt(value), 0);
-      }
     }
 
     public String getKey() {

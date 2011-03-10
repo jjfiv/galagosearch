@@ -55,14 +55,9 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
       
   }
 
-  public void process(NumberedDocumentData ndd) throws IOException {
-     if(last == null) last = ndd;
-
-    assert last.number <= ndd.number;
-    assert last.identifier != null;
-   
-    byte[] docnum = Utility.fromInt(ndd.number);
-    byte[] docname = Utility.fromString(ndd.identifier);
+  public void process(int number, String identifier) throws IOException {
+    byte[] docnum = Utility.fromInt(number);
+    byte[] docname = Utility.fromString(identifier);
 
     // numbers -> names
     KeyValuePair btiFL = new KeyValuePair(docnum, docname);
@@ -73,6 +68,14 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     sorterRL.process(btiRL);
 
     if (documentNamesWritten != null) documentNamesWritten.increment();
+  }
+
+  public void process(NumberedDocumentData ndd) throws IOException {
+     if(last == null) last = ndd;
+
+    assert last.number <= ndd.number;
+    assert last.identifier != null;
+    process(ndd.number, ndd.identifier);
   }
 
   public void close() throws IOException {

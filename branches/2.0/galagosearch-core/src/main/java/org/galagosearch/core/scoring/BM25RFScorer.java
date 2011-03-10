@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.galagosearch.core.scoring;
 
 import java.io.IOException;
@@ -44,6 +40,13 @@ public class BM25RFScorer implements ScoringFunction {
     value = factor * Math.log(numerator / denominator);
   }
 
+  /**
+   * Returns a constant value, determined by term selection value. See
+   * the #TermSelectionValueModel for details.
+   * @param count
+   * @param length
+   * @return
+   */
   public double score(int count, int length) {
     return value;
   }

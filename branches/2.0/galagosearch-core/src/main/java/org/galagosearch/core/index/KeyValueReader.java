@@ -58,7 +58,7 @@ public abstract class KeyValueReader implements StructuredIndexPartReader {
 
     public int compareTo(KeyIterator other) {
       try {
-        return Utility.compare(iterator.getKey(), other.getKeyBytes());
+        return Utility.compare(getKeyBytes(), other.getKeyBytes());
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);
       }

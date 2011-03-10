@@ -5,10 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import org.galagosearch.core.index.PositionIndexReader.TermCountIterator;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
-import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -52,7 +50,7 @@ public class DocumentLengthsReader extends KeyValueReader {
     }
   }
 
-  public class KeyIterator extends NumberedDocumentDataIterator {
+  public class KeyIterator extends KeyValueReader.Iterator {
 
     public KeyIterator(GenericIndexReader reader) throws IOException {
       super(reader);
@@ -83,12 +81,6 @@ public class DocumentLengthsReader extends KeyValueReader {
 
     public boolean isDone() {
       return iterator.isDone();
-    }
-
-    public NumberedDocumentData getDocumentData() throws IOException {
-      NumberedDocumentData ndd = 
-	  new NumberedDocumentData("","",Utility.toInt(iterator.getKey()),Utility.uncompressInt(iterator.getValueBytes(), 0));
-      return ndd;
     }
 
     public ValueIterator getValueIterator() throws IOException {

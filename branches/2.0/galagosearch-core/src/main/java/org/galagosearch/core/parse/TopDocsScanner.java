@@ -13,13 +13,10 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.logging.Logger;
 import org.galagosearch.core.index.DocumentLengthsReader;
-import org.galagosearch.core.index.KeyListReader;
 import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.index.NumberedDocumentDataIterator;
 import org.galagosearch.core.retrieval.structured.CountValueIterator;
 import org.galagosearch.core.types.KeyValuePair;
-import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.types.TopDocsEntry;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.FileSource;
@@ -54,7 +51,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
     Counter counter;
     PriorityQueue<TopDocsEntry> topdocs;
     PositionIndexReader partReader;
-    NumberedDocumentDataIterator docLengths;
+    DocumentLengthsReader.KeyIterator docLengths;
     DocumentLengthsReader docReader;
     CountValueIterator extentIterator;
     TopDocsEntry tde;
@@ -89,9 +86,8 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         while (!extentIterator.isDone()) {
             count++;
             docLengths.moveToKey(extentIterator.currentIdentifier());
-            NumberedDocumentData ndd = docLengths.getDocumentData();
-            assert (ndd.number == extentIterator.currentIdentifier());
-            int length = ndd.textLength;
+            assert (docLengths.getCurrentDocument() == extentIterator.currentIdentifier());
+            int length = docLengths.getCurrentLength();
             double probability = (0.0 + extentIterator.count())
                     / (0.0+length);
             tde = new TopDocsEntry();

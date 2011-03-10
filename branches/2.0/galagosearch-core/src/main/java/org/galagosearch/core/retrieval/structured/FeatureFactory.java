@@ -41,6 +41,7 @@ public class FeatureFactory {
     {OrderedWindowIterator.class.getName(), "od"},
     {UnorderedWindowIterator.class.getName(), "unordered"},
     {UnorderedWindowIterator.class.getName(), "uw"},
+    {UnorderedDocumentWindowIterator.class.getName(), "and"},
     {ScaleIterator.class.getName(), "scale"},
     {UnfilteredCombinationIterator.class.getName(), "rm"},
     {UnfilteredCombinationIterator.class.getName(), "seqdep"},
