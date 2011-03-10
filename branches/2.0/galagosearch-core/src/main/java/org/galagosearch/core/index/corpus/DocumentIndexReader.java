@@ -37,7 +37,11 @@ public class DocumentIndexReader extends DocumentReader {
   }
 
   public Document getDocument(String key) throws IOException {
-    return new Iterator(reader).getDocument();
+    Iterator i = new Iterator(reader);
+    byte[] k = Utility.fromString(key);
+    i.moveToKey(k);
+    assert(Utility.compare(i.getKeyBytes(), k) == 0);
+    return i.getDocument();
   }
 
   public Map<String, NodeType> getNodeTypes() {

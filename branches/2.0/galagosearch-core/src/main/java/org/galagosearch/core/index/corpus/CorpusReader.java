@@ -40,7 +40,11 @@ public class CorpusReader extends DocumentReader {
   }
 
   public Document getDocument(String key) throws IOException {
-    return new Iterator(reader).getDocument();
+    Iterator i = new Iterator(reader);
+    byte[] k = Utility.fromString(key);
+    i.moveToKey(k);
+    assert(Utility.compare(i.getKeyBytes(), k) == 0);
+    return i.getDocument();
   }
 
   public Map<String, NodeType> getNodeTypes() {
@@ -53,18 +57,12 @@ public class CorpusReader extends DocumentReader {
 
   public class Iterator extends DocumentReader.DocumentIterator {
 
-    Document document;
-
     Iterator(GenericIndexReader reader) throws IOException {
       super(reader);
     }
 
     public Document getDocument() throws IOException {
-      // only decode once
-      if (document == null) {
-        document = decodeDocument(iterator.getValueBytes());
-      }
-      return document;
+      return decodeDocument(iterator.getValueBytes());
     }
 
     private Document decodeDocument(byte[] docData) throws IOException {

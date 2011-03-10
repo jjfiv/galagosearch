@@ -7,8 +7,6 @@ import java.util.List;
 import org.galagosearch.core.parse.DocumentSource;
 import org.galagosearch.core.parse.UniversalParser;
 import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
-import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
-import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.index.corpus.CorpusWriter;
 import org.galagosearch.core.index.corpus.DocumentToKeyValuePair;
 import org.galagosearch.core.index.corpus.DocumentIndexWriter;
