@@ -23,7 +23,6 @@ public interface KeyIterator extends StructuredIterator, Comparable<KeyIterator>
     boolean moveToKey(byte[] key) throws IOException;
     boolean nextKey() throws IOException;
     String getKey() throws IOException;
-    // sjh: i need this method to ensure key order is consistent when merging indexes
     byte[] getKeyBytes() throws IOException;
 
     // Access to the key's value. Not all may be implemented

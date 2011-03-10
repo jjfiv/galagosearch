@@ -8,6 +8,9 @@ import java.io.IOException;
 import org.galagosearch.tupleflow.Utility;
 
 /**
+ * Iterates over the a KeyIterator as if it were a Value iterator.
+ * Useful for iterating over document lengths or document names.
+ *
  *
  * @author marc
  */

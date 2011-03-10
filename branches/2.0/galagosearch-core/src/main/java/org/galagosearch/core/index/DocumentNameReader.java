@@ -11,11 +11,7 @@ import org.galagosearch.core.retrieval.structured.DataIterator;
 import org.galagosearch.tupleflow.Utility;
 
 /**
- * Reads a binary file of document names produced by DocumentNameWriter2.
- * BulkTrees are used 
- * 
- * 
- * Reverse lookup is provided 
+ * Reads a binary file of document names produced by DocumentNameWriter2
  * 
  * @author sjh
  */
@@ -42,7 +38,7 @@ public class DocumentNameReader extends NameReader {
       }
       return Utility.toString(data);
     } else {
-      throw new UnsupportedOperationException("This direction does not support int -> name mappings");
+      throw new UnsupportedOperationException("This index file does not support doc int -> doc name mappings");
     }
   }
 
@@ -55,7 +51,7 @@ public class DocumentNameReader extends NameReader {
       }
       return Utility.toInt(data);
     } else {
-      throw new UnsupportedOperationException("This direction does not support name -> int mappings");
+      throw new UnsupportedOperationException("This index file does not support doc name -> doc int mappings");
     }
   }
 

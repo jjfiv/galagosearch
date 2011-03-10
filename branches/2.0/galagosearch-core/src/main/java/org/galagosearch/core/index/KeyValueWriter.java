@@ -30,8 +30,8 @@ import org.galagosearch.tupleflow.execution.Verification;
  * @author irmarc
  */
 public abstract class KeyValueWriter<T> implements Processor<T> {
-    IndexWriter writer;
-    Counter elementsWritten;
+    protected IndexWriter writer;
+    protected Counter elementsWritten;
 
     public KeyValueWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
       this(parameters, "Documents written");

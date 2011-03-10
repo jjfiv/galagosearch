@@ -22,8 +22,8 @@ public class IndexReaderSplitParser implements DocumentStreamParser {
 
   public IndexReaderSplitParser(DocumentSplit split) throws FileNotFoundException, IOException {
     reader = DocumentReader.getInstance( split.fileName );
-    iterator = reader.getIterator();
-    iterator.skipTo(split.startKey);
+    iterator = (DocumentIterator) reader.getIterator();
+    iterator.moveToKey(split.startKey);
     this.split = split;
   }
 
@@ -43,7 +43,7 @@ public class IndexReaderSplitParser implements DocumentStreamParser {
     }
 
     Document document = iterator.getDocument();
-    iterator.nextDocument();
+    iterator.nextKey();
     return document;
   }
 

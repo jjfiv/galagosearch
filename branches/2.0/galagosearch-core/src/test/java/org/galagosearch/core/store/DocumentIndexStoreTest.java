@@ -1,14 +1,20 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.store;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
 import junit.framework.TestCase;
+import org.galagosearch.core.index.GenericIndexReader;
+import org.galagosearch.core.index.ValueIterator;
 
 import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentIndexReader;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.index.corpus.DocumentReader;
+import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.NodeType;
 
 public class DocumentIndexStoreTest extends TestCase {
 
@@ -17,6 +23,10 @@ public class DocumentIndexStoreTest extends TestCase {
   }
 
   class MockReader extends DocumentReader {
+
+    public MockReader() throws IOException {
+      super((GenericIndexReader) null);
+    }
 
     public boolean closeCalled = false;
 
@@ -33,6 +43,14 @@ public class DocumentIndexStoreTest extends TestCase {
 
     public DocumentIterator getIterator() throws IOException {
       throw new UnsupportedOperationException("unsupported");
+    }
+
+    public Map<String, NodeType> getNodeTypes() {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public ValueIterator getIterator(Node node) throws IOException {
+      throw new UnsupportedOperationException("Not supported yet.");
     }
   }
 

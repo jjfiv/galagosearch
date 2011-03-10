@@ -5,8 +5,15 @@ import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
+import org.galagosearch.core.index.GenericIndexReader;
+import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.parse.Document;
+import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -21,90 +28,78 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class CorpusReader extends DocumentReader {
 
-    SplitIndexReader indexReader;
-    boolean compressed;
+  boolean compressed;
 
-    public CorpusReader(String fileName) throws FileNotFoundException, IOException {
-        indexReader = new SplitIndexReader(fileName);
-        compressed = indexReader.getManifest().get("compressed", true);
+  public CorpusReader(String fileName) throws FileNotFoundException, IOException {
+    super(fileName);
+    compressed = reader.getManifest().get("compressed", true);
+  }
+
+  public DocumentReader.DocumentIterator getIterator() throws IOException {
+    return new Iterator(reader);
+  }
+
+  public Document getDocument(String key) throws IOException {
+    return new Iterator(reader).getDocument();
+  }
+
+  public Map<String, NodeType> getNodeTypes() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public ValueIterator getIterator(Node node) throws IOException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public class Iterator extends DocumentReader.DocumentIterator {
+
+    Document document;
+
+    Iterator(GenericIndexReader reader) throws IOException {
+      super(reader);
     }
 
-    public CorpusReader() {
-        // do nothing -- shouldn't really be used by anyone ever
-        throw new UnsupportedOperationException("NO!");
+    public Document getDocument() throws IOException {
+      // only decode once
+      if (document == null) {
+        document = decodeDocument(iterator.getValueBytes());
+      }
+      return document;
     }
 
-    public void close() throws IOException {
-        indexReader.close();
+    private Document decodeDocument(byte[] docData) throws IOException {
+
+      ByteArrayInputStream stream = new ByteArrayInputStream(docData);
+      ObjectInputStream docInput;
+      if (compressed) {
+        docInput = new ObjectInputStream(new GZIPInputStream(stream));
+      } else {
+        docInput = new ObjectInputStream(stream);
+      }
+
+      Document document = null;
+      try {
+        document = (Document) docInput.readObject();
+      } catch (ClassNotFoundException ex) {
+        throw new IOException("Expected to find a serialized document here, " + "but found something else instead.", ex);
+      }
+
+      docInput.close();
+
+      return document;
     }
 
-    public DocumentReader.DocumentIterator getIterator() throws IOException {
-        return new Iterator(indexReader.getIterator());
+    @Override
+    public String getValueString() {
+      try {
+        return getDocument().toString();
+      } catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
     }
 
-    public Document getDocument(String key) throws IOException {
-        SplitIndexReader.Iterator iterator = indexReader.getIterator(Utility.fromString(key));
-        if (iterator == null) {
-            return null;
-        }
-        return new Iterator(iterator).getDocument();
+    public ValueIterator getValueIterator() throws IOException {
+      throw new UnsupportedOperationException("Not supported yet.");
     }
-
-    public class Iterator implements DocumentReader.DocumentIterator {
-
-        SplitIndexReader.Iterator iterator;
-        Document document;
-
-        Iterator(SplitIndexReader.Iterator iterator) throws IOException {
-            this.iterator = iterator;
-        }
-
-        public void skipTo(byte[] key) throws IOException {
-            iterator.skipTo(key);
-            document = null;
-        }
-
-        public String getKey() {
-            return Utility.toString(iterator.getKey());
-        }
-
-        public boolean isDone() {
-            return iterator.isDone();
-        }
-
-        public Document getDocument() throws IOException {
-            // only decode once
-            if (document == null){
-                document = decodeDocument(iterator.getValueBytes());
-            }
-            return document;
-        }
-
-        public boolean nextDocument() throws IOException {
-            document = null;
-            return iterator.nextKey();
-        }
-
-        private Document decodeDocument(byte[] docData) throws IOException {
-
-            ByteArrayInputStream stream = new ByteArrayInputStream(docData);
-            ObjectInputStream docInput;
-            if ( compressed ) {
-                docInput = new ObjectInputStream(new GZIPInputStream( stream ));
-            } else {
-                docInput = new ObjectInputStream( stream );
-            }
-
-            Document document = null;
-            try {
-                document = (Document) docInput.readObject();
-            } catch (ClassNotFoundException ex) {
-                throw new IOException("Expected to find a serialized document here, " + "but found something else instead.", ex);
-            }
-
-            docInput.close();
-
-            return document;
-        }
-    }
+  }
 }

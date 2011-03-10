@@ -11,6 +11,7 @@ import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.index.ValueIterator;
+import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
@@ -364,7 +365,7 @@ public class App {
     }
 
     DocumentReader reader = DocumentReader.getInstance(args[1]);
-    DocumentReader.DocumentIterator iterator = reader.getIterator();
+    DocumentReader.DocumentIterator iterator = (DocumentIterator) reader.getIterator();
 
     while (!iterator.isDone()) {
       output.println("#IDENTIFIER: " + iterator.getKey());
@@ -375,7 +376,7 @@ public class App {
       }
       output.println("#TEXT");
       output.println(document.text);
-      iterator.nextDocument();
+      iterator.nextKey();
     }
   }
 
@@ -724,6 +725,10 @@ public class App {
       output.println();
       output.println("  Prints the full text of the document named by <identifier>.");
       output.println("  The document is retrieved from a Corpus file named <corpus>.");
+    } else if (command.equals("doc-id")) {
+      output.println("galago doc <documentNames.ReverseLookup> <identifier>");
+      output.println();
+      output.println("  Prints the internal document id of the document named by <identifier>.");
     } else if (command.equals("dump-connection")) {
       output.println("galago dump-connection <connection-file>");
       output.println();
@@ -881,6 +886,8 @@ public class App {
       handleBuildTopdocs(args);
     } else if (command.equals("doc")) {
       handleDoc(args);
+    } else if (command.equals("doc-id")) {
+      handleDocId(args);
     } else if (command.equals("dump-connection")) {
       handleDumpConnection(args);
     } else if (command.equals("dump-corpus")) {
