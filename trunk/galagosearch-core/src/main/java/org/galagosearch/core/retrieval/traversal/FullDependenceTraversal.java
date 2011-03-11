@@ -6,6 +6,7 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.query.MalformedQueryException;
 import org.galagosearch.core.retrieval.Retrieval;
+import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -20,8 +21,9 @@ import org.galagosearch.tupleflow.Parameters;
  *
  *
  *
- * @author irmarc
+ * @author sjh
  */
+@RequiredStatistics(statistics = {"windowLimit"})
 public class FullDependenceTraversal implements Traversal {
 
   private int defaultWindowLimit;
