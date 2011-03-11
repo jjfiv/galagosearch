@@ -5,15 +5,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.galagosearch.core.index.GenericIndexReader;
-import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.index.KeyIterator;
-import org.galagosearch.core.index.ValueIterator;
+import org.galagosearch.core.index.KeyToListIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.structured.DataIterator;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
@@ -40,16 +38,23 @@ public class DocumentIndexReader extends DocumentReader {
     Iterator i = new Iterator(reader);
     byte[] k = Utility.fromString(key);
     i.moveToKey(k);
-    assert(Utility.compare(i.getKeyBytes(), k) == 0);
+    assert (Utility.compare(i.getKeyBytes(), k) == 0);
     return i.getDocument();
   }
 
   public Map<String, NodeType> getNodeTypes() {
-    return new HashMap();
+    HashMap<String, NodeType> types = new HashMap<String, NodeType>();
+    types.put("content", new NodeType(Iterator.class));
+    return types;
   }
 
   public ValueIterator getIterator(Node node) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet.");
+    if (node.getOperator().equals("content")) {
+      return new ValueIterator(new Iterator(reader));
+    } else {
+      throw new UnsupportedOperationException(
+              "Index doesn't support operator: " + node.getOperator());
+    }
   }
 
   public class Iterator extends DocumentReader.DocumentIterator {
@@ -93,7 +98,30 @@ public class DocumentIndexReader extends DocumentReader {
     }
 
     public ValueIterator getValueIterator() throws IOException {
+      return new ValueIterator(this);
+    }
+  }
+
+  public class ValueIterator extends KeyToListIterator implements DataIterator<Document> {
+
+    public ValueIterator(KeyIterator ki) {
+      super(ki);
+    }
+
+    public String getEntry() throws IOException {
+      return ((Iterator) iterator).getDocument().toString();
+    }
+
+    public long totalEntries() {
       throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Document getData() {
+      try {
+        return ((Iterator) iterator).getDocument();
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
     }
   }
 }

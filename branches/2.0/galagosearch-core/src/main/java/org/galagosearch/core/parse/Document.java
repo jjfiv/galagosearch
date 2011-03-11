@@ -28,4 +28,18 @@ public class Document implements Serializable {
     public int fileId;
     public int totalFileCount;
 
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Identifier: ").append(identifier).append("\n");
+      sb.append("Metadata: ");
+      for (Map.Entry<String, String> entry : metadata.entrySet()) {
+        sb.append("<");
+        sb.append(entry.getKey()).append(",").append(entry.getValue());
+        sb.append("> ");
+      }
+      sb.append("\n");
+      sb.append("Text :").append(text);
+      return sb.toString();
+    }
+
 }

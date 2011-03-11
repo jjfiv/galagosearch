@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.corpus.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.parse.TagTokenizer;
 import org.galagosearch.core.retrieval.ScoredDocument;
