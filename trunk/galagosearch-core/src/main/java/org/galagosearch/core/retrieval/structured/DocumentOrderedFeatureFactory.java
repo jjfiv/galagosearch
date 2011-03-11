@@ -8,6 +8,7 @@ import org.galagosearch.core.retrieval.traversal.PRMSTraversal;
 import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
 import org.galagosearch.core.retrieval.traversal.FrequenceFilteringTraversal;
+import org.galagosearch.core.retrieval.traversal.FullDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
 import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
@@ -104,6 +105,7 @@ public class DocumentOrderedFeatureFactory extends FeatureFactory {
     {TopDocsScoringIterator.class.getName(), "topdocs"}
   };
   static String[] sTraversalList = {
+    FullDependenceTraversal.class.getName(),
     SequentialDependenceTraversal.class.getName(),
     PRMSTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
