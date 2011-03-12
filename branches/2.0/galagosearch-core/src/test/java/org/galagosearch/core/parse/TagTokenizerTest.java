@@ -27,6 +27,8 @@ public class TagTokenizerTest extends TestCase {
      */
     public void testTokenize() throws IOException, IncompatibleProcessorException {
         TagTokenizer tokenizer = new TagTokenizer();
+        tokenizer.addField("title");
+        tokenizer.addField("a");
         Document document = new Document();
         tokenizer.setProcessor(new NullProcessor(Document.class));
 
@@ -48,7 +50,7 @@ public class TagTokenizerTest extends TestCase {
         }
 
         // then, check tags
-        assertEquals(document.tags.size(), 3);
+        assertEquals(3, document.tags.size());
 
         // html tag
         Tag html = document.tags.get(0);

@@ -6,39 +6,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.galagosearch.core.index.DocumentLengthsWriter;
-import org.galagosearch.core.index.DocumentNameWriter;
 import org.galagosearch.core.index.ExtentIndexWriter;
-import org.galagosearch.core.index.ExtentValueIndexWriter;
-import org.galagosearch.core.index.ManifestWriter;
-import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
-import org.galagosearch.core.parse.AdditionalTextCombiner;
-import org.galagosearch.core.parse.AnchorTextCreator;
-import org.galagosearch.core.parse.CollectionLengthCounterNDD;
-import org.galagosearch.core.index.corpus.CorpusWriter;
-import org.galagosearch.core.parse.DocumentDataExtractor;
-import org.galagosearch.core.parse.FastDocumentNumberer;
 import org.galagosearch.core.parse.DocumentSource;
-import org.galagosearch.core.parse.LinkCombiner;
-import org.galagosearch.core.parse.LinkExtractor;
-import org.galagosearch.core.parse.NumberedDocument;
-import org.galagosearch.core.parse.NumberedDocumentDataExtractor;
-import org.galagosearch.core.parse.NumberedExtentExtractor;
-import org.galagosearch.core.parse.NumberedPostingsPositionExtractor;
-import org.galagosearch.core.parse.Porter2Stemmer;
-import org.galagosearch.core.parse.TagTokenizer;
-import org.galagosearch.core.parse.UniversalParser;
-import org.galagosearch.core.types.AdditionalDocumentText;
-import org.galagosearch.core.types.DocumentData;
-import org.galagosearch.core.types.DocumentSplit;
-import org.galagosearch.core.types.ExtractedLink;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberWordPosition;
-import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.types.NumberedExtent;
-import org.galagosearch.core.types.NumberedValuedExtent;
-import org.galagosearch.tupleflow.Order;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.Parameters.Value;
@@ -46,12 +19,10 @@ import org.galagosearch.tupleflow.execution.ConnectionAssignmentType;
 import org.galagosearch.tupleflow.execution.ConnectionPointType;
 import org.galagosearch.tupleflow.execution.InputStep;
 import org.galagosearch.tupleflow.execution.Job;
-import org.galagosearch.tupleflow.execution.MultiStep;
 import org.galagosearch.tupleflow.execution.OutputStep;
 import org.galagosearch.tupleflow.execution.Stage;
 import org.galagosearch.tupleflow.execution.StageConnectionPoint;
 import org.galagosearch.tupleflow.execution.Step;
-import org.galagosearch.tupleflow.types.XMLFragment;
 
 /**
  *
@@ -105,6 +76,7 @@ public class BuildParallelIndex extends BuildFastIndex {
     public Job getIndexJob(Parameters p) throws IOException {
 
         Job job = new Job();
+        this.buildParameters = p;
         this.stemming = p.get("stemming", true);
         this.useLinks = p.get("links", false);
         this.indexPath = new File(p.get("indexPath")); // fail if no path.

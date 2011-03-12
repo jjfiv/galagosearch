@@ -12,10 +12,6 @@ import java.io.Serializable;
 public class Step implements Serializable {
     protected FileLocation location;
     private String className;
-    private String inputType;
-    private String outputType;
-    private String[] inputOrder;
-    private String[] outputOrder;
     private Parameters parameters;
 
     public Step() {

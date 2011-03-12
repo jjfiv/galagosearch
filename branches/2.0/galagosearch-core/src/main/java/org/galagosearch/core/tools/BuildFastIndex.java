@@ -58,6 +58,7 @@ public class BuildFastIndex {
     protected boolean useLinks;
     protected boolean makeCorpus;
     protected Parameters corpusParameters;
+    protected Parameters buildParameters;
 
     public Stage getParsePostingsStage() {
         Stage stage = new Stage("parsePostings");
@@ -73,7 +74,7 @@ public class BuildFastIndex {
 
         // Steps
         stage.add(new InputStep("splits"));
-        stage.add(new Step(UniversalParser.class));
+        stage.add(BuildStageTemplates.getParserStep(buildParameters));
 
         // if we are making a corpus - it needs to be spun off here:
         MultiStep processingForkOne = new MultiStep();
@@ -96,7 +97,7 @@ public class BuildFastIndex {
             indexer.add(new Step(AdditionalTextCombiner.class, p));
         }
 
-        indexer.add(new Step(TagTokenizer.class));
+        indexer.add(BuildStageTemplates.getTokenizerStep(buildParameters));
         indexer.add(new Step(FastDocumentNumberer.class));
 
         MultiStep processingForkTwo = new MultiStep();
@@ -113,12 +114,15 @@ public class BuildFastIndex {
         processingForkTwo.groups.add(text);
         processingForkTwo.groups.add(extents);
         processingForkTwo.groups.add(documentData);
-
         if (stemming) {
             ArrayList<Step> stemmedSteps = new ArrayList<Step>();
             Parameters p = new Parameters();
-            p.add("class", NumberedDocument.class.getName());
-            stemmedSteps.add(new Step(Porter2Stemmer.class, p));
+            if (buildParameters.containsKey("stemmer")) {
+              p.add("stemmer", buildParameters.list("stemmer"));
+            }
+            p.add("stemmer/outputClass", NumberedDocument.class.getName());
+            stemmedSteps.add(BuildStageTemplates.getStemmerStep(p));
+            //stemmedSteps.add(new Step(Porter2Stemmer.class, p));
             stemmedSteps.add(new Step(NumberedPostingsPositionExtractor.class));
             stemmedSteps.add(Utility.getSorter(new NumberWordPosition.WordDocumentPositionOrder()));
             stemmedSteps.add(new OutputStep("numberedStemmedPostings"));
@@ -205,6 +209,7 @@ public class BuildFastIndex {
     public Job getIndexJob(Parameters p) throws IOException {
 
         Job job = new Job();
+        this.buildParameters = p;
         this.stemming = p.get("stemming", true);
         this.useLinks = p.get("links", false);
         this.indexPath = new File(p.get("indexPath")); // fail if no path.

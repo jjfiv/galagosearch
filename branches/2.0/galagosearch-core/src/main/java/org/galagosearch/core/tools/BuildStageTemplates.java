@@ -207,12 +207,8 @@ public class BuildStageTemplates {
     Class stepClass = null;
     String stepClassName = null;
     try {
-      stepClassName = step.get("class");
-      if (stepClassName == null) {
-        stepClass = defaultClass;
-      } else {
-        stepClass = Class.forName(stepClassName);
-      }
+      stepClassName = step.get("class", defaultClass.getName());
+      stepClass = Class.forName(stepClassName);
     } catch (ClassNotFoundException cnfe) {
         System.err.printf("WARNING: Step class %s cound not be found: %s\n",
                 stepClassName, cnfe.getMessage());

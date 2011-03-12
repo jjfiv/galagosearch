@@ -64,10 +64,10 @@ public class Porter2Stemmer implements Processor<Document>, Source<Document> {
     Linkage.link(this, processor);
   }
   public static String getInputClass(TupleFlowParameters params){
-    return params.getXML().get("class", "org.galagosearch.core.parse.Document");
+    return params.getXML().get("outputClass", "org.galagosearch.core.parse.Document");
   }
   public static String getOutputClass(TupleFlowParameters params){
-    return params.getXML().get("class", "org.galagosearch.core.parse.Document");
+    return params.getXML().get("outputClass", "org.galagosearch.core.parse.Document");
   }
   public static String[] getOutputOrder(TupleFlowParameters parameters) {
     return new String[0];
