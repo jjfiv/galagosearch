@@ -7,12 +7,16 @@ package org.galagosearch.core.tools;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import org.galagosearch.core.index.DocumentLengthsWriter;
 import org.galagosearch.core.index.DocumentNameWriter;
 import org.galagosearch.core.index.ExtentIndexWriter;
 import org.galagosearch.core.index.ExtentValueIndexWriter;
 import org.galagosearch.core.index.ManifestWriter;
 import org.galagosearch.core.parse.CollectionLengthCounterNDD;
+import org.galagosearch.core.parse.Porter2Stemmer;
+import org.galagosearch.core.parse.TagTokenizer;
+import org.galagosearch.core.parse.UniversalParser;
 import org.galagosearch.core.types.DocumentSplit;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.types.NumberedExtent;
@@ -20,7 +24,7 @@ import org.galagosearch.core.types.NumberedValuedExtent;
 import org.galagosearch.tupleflow.ExNihiloSource;
 import org.galagosearch.tupleflow.Order;
 import org.galagosearch.tupleflow.Parameters;
-import org.galagosearch.tupleflow.Processor;
+import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ConnectionPointType;
 import org.galagosearch.tupleflow.execution.InputStep;
@@ -165,5 +169,64 @@ public class BuildStageTemplates {
     stage.add(Utility.getSorter(new DocumentSplit.FileIdOrder()));
     stage.add(new OutputStep("splits"));
     return stage;
+  }
+
+  public static Step getParserStep(Parameters p) {
+    return getParserStep(p, UniversalParser.class);
+  }
+
+  public static Step getParserStep(Parameters p, Class defaultClass) {
+    return getGenericStep("parser", p, defaultClass);
+  }
+
+  public static Step getStemmerStep(Parameters p) {
+    return getStemmerStep(p, Porter2Stemmer.class);
+  }
+
+  public static Step getStemmerStep(Parameters p, Class defaultClass) {
+    return getGenericStep("stemmer", p, defaultClass);
+  }
+
+  public static Step getTokenizerStep(Parameters p) {
+    return getTokenizerStep(p, TagTokenizer.class);
+  }
+
+  public static Step getTokenizerStep(Parameters p, Class defaultClass) {
+    return getGenericStep("tokenizer", p, defaultClass);
+  }
+
+  public static Step getGenericStep(String stepname, Parameters p, Class defaultClass) {
+    if (p == null) return new Step(defaultClass);
+
+    // We list it to get to the value, but we only use the first one
+    List<Value> nodes = p.list(stepname);
+    if (nodes.isEmpty()) return new Step(defaultClass);
+    Value step = nodes.toArray(new Value[0])[0];
+
+    // Try to get the step class specified - use default otherwise
+    Class stepClass = null;
+    String stepClassName = null;
+    try {
+      stepClassName = step.get("class");
+      if (stepClassName == null) {
+        stepClass = defaultClass;
+      } else {
+        stepClass = Class.forName(stepClassName);
+      }
+    } catch (ClassNotFoundException cnfe) {
+        System.err.printf("WARNING: Step class %s cound not be found: %s\n",
+                stepClassName, cnfe.getMessage());
+    }
+
+    // Pull out any parameters under the step class name
+    // (this parameterizes defaults as well)
+    Parameters extractedParams = new Parameters();
+    for (String key : step.listKeys()) {
+      if (key.equals("class")) continue;
+      extractedParams.add(key, step.get(key));
+    }
+
+    // Return step encapsulating the class and params
+    return new Step(stepClass, extractedParams);
   }
 }

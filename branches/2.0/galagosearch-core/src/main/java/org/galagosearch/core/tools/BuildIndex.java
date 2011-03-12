@@ -58,6 +58,7 @@ public class BuildIndex {
     String indexunit;
     boolean makeCorpus;
     Parameters corpusParameters;
+    Parameters buildParameters;
 
     public BuildIndex() {
         this.stemming = false;
@@ -80,9 +81,7 @@ public class BuildIndex {
         // Steps
         stage.add(new InputStep("splits"));
 
-        Parameters p = new Parameters();
-        p.add("indexunit", this.indexunit);
-        stage.add(new Step(UniversalParser.class, p));
+        stage.add(BuildStageTemplates.getParserStep(buildParameters));
 
         // if we are making a corpus - it needs to be spun off here:
         MultiStep processingForkOne = new MultiStep();
@@ -100,12 +99,12 @@ public class BuildIndex {
         ArrayList<Step> indexer = new ArrayList();
 
         if (useLinks) {
-            p = new Parameters();
+            Parameters p = new Parameters();
             p.add("textSource", "anchorText");
             indexer.add(new Step(AdditionalTextCombiner.class, p));
         }
 
-        indexer.add(new Step(TagTokenizer.class));
+        indexer.add(BuildStageTemplates.getTokenizerStep(buildParameters));
 
         // processing now forks into 3 or 4 more threads
         MultiStep processingForkTwo = new MultiStep();
@@ -126,7 +125,7 @@ public class BuildIndex {
 
         if (stemming) {
             ArrayList<Step> stemmedSteps = new ArrayList<Step>();
-            stemmedSteps.add(new Step(Porter2Stemmer.class));
+            stemmedSteps.add(BuildStageTemplates.getStemmerStep(buildParameters));
             stemmedSteps.add(new Step(PostingsPositionExtractor.class));
             stemmedSteps.add(Utility.getSorter(new DocumentWordPosition.DocumentWordPositionOrder()));
             stemmedSteps.add(new OutputStep("stemmedPostings"));
@@ -266,6 +265,7 @@ public class BuildIndex {
     public Job getIndexJob(Parameters p) throws IOException {
 
         Job job = new Job();
+        this.buildParameters = p;
         this.stemming = p.get("stemming", true);
         this.useLinks = p.get("links", false);
         this.indexPath = new File(p.get("indexPath")); // fail if no path.
