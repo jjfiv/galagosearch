@@ -8,6 +8,8 @@ import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
@@ -54,7 +56,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     int documentIndex;
     int currentDocument;
     int currentCount;
-    ExtentArray extentArray;
+    // ExtentArray extentArray;
     GenericIndexReader.Iterator iterator;
 
     // to support skipping
@@ -160,28 +162,35 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
 
       }
 
-      extentArray = new ExtentArray();
+      // extentArray = new ExtentArray();
       documentIndex = 0;
 
-      loadExtents();
+      //loadExtents();
     }
 
     // Loads up a single set of positions for a document. Basically it's the
     // load that needs to be done when moving forward one in the posting list.
-    private void loadExtents() throws IOException {
+    private ExtentArray loadExtents() throws IOException {
       currentDocument += documents.readInt();
       currentCount = counts.readInt();
-      extentArray.reset();
+      //extentArray.reset();
+      ExtentArray extentArray = new ExtentArray();
 
       int position = 0;
       for (int i = 0; i < currentCount; i++) {
         position += positions.readInt();
         extentArray.add(currentDocument, position, position + 1);
       }
+      return extentArray;
     }
 
     public String getRecordString() {
       StringBuilder builder = new StringBuilder();
+
+      ExtentArray extentArray = null;
+      try {
+        extentArray = loadExtents();
+      } catch (IOException ex) {}
 
       builder.append(getKey());
       builder.append(",");
@@ -197,7 +206,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     public void reset() throws IOException {
       currentDocument = 0;
       currentCount = 0;
-      extentArray.reset();
+      //extentArray.reset();
 
       initialize();
     }
@@ -309,7 +318,11 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     }
 
     public ExtentArray extents() {
-      return extentArray;
+      try {
+        return loadExtents();
+      } catch (IOException ex) {
+        return null;
+      }
     }
 
     public int document() {
