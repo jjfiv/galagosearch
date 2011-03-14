@@ -6,6 +6,7 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.query.MalformedQueryException;
 import org.galagosearch.core.retrieval.Retrieval;
+import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -22,6 +23,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author irmarc
  */
+@RequiredStatistics(statistics = {"uniw", "odw", "uww"})
 public class SequentialDependenceTraversal implements Traversal {
     private int levels;
     private String unigramDefault;

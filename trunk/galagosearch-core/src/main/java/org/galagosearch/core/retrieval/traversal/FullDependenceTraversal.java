@@ -23,7 +23,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author sjh
  */
-@RequiredStatistics(statistics = {"windowLimit"})
+@RequiredStatistics(statistics = {"windowLimit", "uniw", "odw", "uww"})
 public class FullDependenceTraversal implements Traversal {
 
   private int defaultWindowLimit;
