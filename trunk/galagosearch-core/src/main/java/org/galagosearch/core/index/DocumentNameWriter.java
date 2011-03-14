@@ -23,7 +23,7 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
  * Does not assume that the data is sorted
  *  - as data would need to be sorted into both key and value order
  *  - instead this class takes care of the re-sorting
- *  - this may be inefficient, but docnames is a reletively small pair of files
+ *  - this may be inefficient, but docnames is a relatively small pair of files
  *
  * @author sjh
  */

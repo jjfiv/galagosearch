@@ -501,7 +501,7 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
       }
     }
 
-    // Moves foward in a posting list, but if it's at the end of the current
+    // Moves forward in a posting list, but if it's at the end of the current
     // list, moves on to the next list. Useful for iterating over all posting lists,
     // vs. nextEntry, which is bounded by a single posting list.
     public boolean nextRecord() throws IOException {
@@ -601,15 +601,22 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
     }
   }
   GenericIndexReader reader;
+  HashMap<String, NodeType> types;
 
   public PositionIndexReader(
           GenericIndexReader reader) throws IOException {
     this.reader = reader;
+    types = new HashMap<String, NodeType>();
+    types.put("counts", new NodeType(TermCountIterator.class));
+    types.put("extents", new NodeType(TermExtentIterator.class));
   }
 
   public PositionIndexReader(
           String pathname) throws FileNotFoundException, IOException {
     reader = GenericIndexReader.getIndexReader(pathname);
+    types = new HashMap<String, NodeType>();
+    types.put("counts", new NodeType(TermCountIterator.class));
+    types.put("extents", new NodeType(TermExtentIterator.class));
   }
 
   /**
@@ -654,10 +661,6 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
   }
 
   public Map<String, NodeType> getNodeTypes() {
-    HashMap<String, NodeType> types = new HashMap<String, NodeType>();
-    types.put("counts", new NodeType(TermCountIterator.class));
-    types.put("extents", new NodeType(TermExtentIterator.class));
-
     return types;
   }
 

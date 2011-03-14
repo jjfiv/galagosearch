@@ -7,6 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class is a logical encapsulation of a single retrieval unit.
+ * The tags field is to hold XML/HTML-style markup tags.
+ *
+ * @author trevor
+ */
 public class Document implements Serializable {
     public Document() {
         this.metadata = new HashMap<String, String>();

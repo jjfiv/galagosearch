@@ -238,7 +238,6 @@ public class PositionIndexWriter implements
     long filePosition;
     GenericIndexWriter writer;
     long documentCount = 0;
-    long collectionLength = 0;
     int options = 0;
     int skipDistance;
     int skipResetDistance;
