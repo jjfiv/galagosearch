@@ -11,9 +11,11 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
+import org.galagosearch.core.index.AggregateReader;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.NameReader;
 import org.galagosearch.core.index.StructuredIndex;
+import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
@@ -370,48 +372,28 @@ public class StructuredRetrieval extends Retrieval {
    * @return Number of times the expression occurs.
    * @throws Exception
    */
-  public long xcount(String nodeString) throws Exception {
+  public long xCount(String nodeString) throws Exception {
 
     // first parse the node
     Node root = StructuredQuery.parse(nodeString);
-    return xcount(root);
+    return xCount(root);
   }
 
-  public long xcount(Node root) throws Exception {
-    StructuredIterator structIterator = createIterator(root);
-    if (structIterator instanceof CountValueIterator) {
-      CountValueIterator iterator = (CountValueIterator) structIterator;
-      long count = 0;
-      do {
-        count += iterator.count();
-        iterator.next();
-      } while (!iterator.isDone());
-      return count;
-    } else {
-      throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
-    }
+  public long xCount(Node root) throws Exception {
+    NodeCountAggregator agg = new NodeCountAggregator(root);
+    return agg.termCount();
   }
 
-  public long doccount(String nodeString) throws Exception {
+  public long docCount(String nodeString) throws Exception {
 
     // first parse the node
     Node root = StructuredQuery.parse(nodeString);
-    return xcount(root);
+    return docCount(root);
   }
 
-  public long doccount(Node root) throws Exception {
-    StructuredIterator structIterator = createIterator(root);
-    if (structIterator instanceof CountValueIterator) {
-      CountValueIterator iterator = (CountValueIterator) structIterator;
-      long count = 0;
-      while (!iterator.isDone()) {
-        count++;
-        iterator.next();
-      }
-      return count;
-    } else {
-      throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
-    }
+  public long docCount(Node root) throws Exception {
+    NodeCountAggregator agg = new NodeCountAggregator(root);
+    return agg.documentCount();
   }
 
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
@@ -420,5 +402,68 @@ public class StructuredRetrieval extends Retrieval {
       nodeType = featureFactory.getNodeType(node);
     }
     return nodeType;
+  }
+
+
+  /**
+   * Subclass that counts the number of occurrences of the provided
+   * expression. If the expression does not produce a CountIterator
+   * as a node type, throws an IllegalArgumentException, since it's not
+   * an appropriate input. #text, #ow, and #uw should be ok here.
+   *
+   * both term and document counts are maintained.
+   *
+   * author sjh
+   *
+   */
+  public class NodeCountAggregator {
+
+    private int docCount;
+    private int termCount;
+
+    public NodeCountAggregator(Node root) throws IOException, Exception {
+      // check if the root is a single term from a single posting list
+      // if so - get the part reader - cast to aggregate reader - return termCount( term )
+      if (((root.getOperator().equals("count"))
+              || (root.getOperator().equals("extents")))
+              && (root.getParameters().containsKey("part"))) {
+
+        String term = root.getDefaultParameter();
+        String part = root.getParameters().get("part");
+
+        if (index.containsPart(part)) {
+          StructuredIndexPartReader partReader = index.openLocalIndexPart( part );
+          if (partReader instanceof AggregateReader) {
+            termCount = ((AggregateReader) partReader).termCount(term);
+            docCount = ((AggregateReader) partReader).documentCount(term);
+          }
+        }
+      } else {
+
+        // otherwise we have to create an iterator + sum over count values
+        docCount = 0;
+        termCount = 0;
+
+        StructuredIterator structIterator = createIterator(root);
+        if (structIterator instanceof CountIterator) {
+          CountValueIterator iterator = (CountValueIterator) structIterator;
+          do {
+            termCount += iterator.count();
+            docCount++;
+            iterator.next();
+          } while (!iterator.isDone());
+        } else {
+          throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
+        }
+      }
+    }
+
+    public int documentCount() throws IOException {
+      return docCount;
+    }
+
+    public int termCount() throws IOException {
+      return termCount;
+    }
   }
 }

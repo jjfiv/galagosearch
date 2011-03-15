@@ -48,13 +48,13 @@ public abstract class Retrieval implements Runnable {
      * @return The count of the provided expression
      * @throws Exception
      */
-    public abstract long xcount(String nodeString) throws Exception;
+    public abstract long xCount(String nodeString) throws Exception;
 
-    public abstract long xcount(Node root) throws Exception;
+    public abstract long xCount(Node root) throws Exception;
 
-    public abstract long doccount(String nodeString) throws Exception;
+    public abstract long docCount(String nodeString) throws Exception;
 
-    public abstract long doccount(Node root) throws Exception;
+    public abstract long docCount(Node root) throws Exception;
 
     public abstract ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception;
 
@@ -80,6 +80,7 @@ public abstract class Retrieval implements Runnable {
             return new StructuredRetrievalProxy(path, parameters);
         } else {
             // check for drmaa
+
             return new StructuredRetrieval(path, parameters);
         }
     }

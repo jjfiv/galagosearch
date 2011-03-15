@@ -222,6 +222,32 @@ public class AppTest extends TestCase {
 
       // for now this is just a smoke test.
       new App(printStream).run(new String[]{"eval", scoresFile.getAbsolutePath(), relsFile.getAbsolutePath()});
+
+
+      queries =
+              "<parameters>\n"
+              + "<x>document</x>\n"
+              + "<x>#counts:a:part=postings()</x>\n"
+              + "<x>#counts:a:part=stemmedPostings()</x>\n"
+              + "</parameters>\n";
+      queryFile = Utility.createTemporary();
+      Utility.copyStringToFile(queries, queryFile);
+
+
+      byteArrayStream = new ByteArrayOutputStream();
+      printStream = new PrintStream(byteArrayStream);
+      // now check xcount and doccount
+      new App(printStream).run(new String[]{"xcount",
+                "--index=" + indexFile.getAbsolutePath(),
+                queryFile.getAbsolutePath()});
+      output = byteArrayStream.toString();
+      String expected = "2\tdocument\n"
+              +"1\t#counts:a:part=postings()\n"
+              +"1\t#counts:a:part=stemmedPostings()\n";
+
+      assertEquals(expected, output);
+
+
     } finally {
       if (relsFile != null) {
         relsFile.delete();
@@ -307,69 +333,4 @@ public class AppTest extends TestCase {
     }
   }
 
-  public void testBuildParallel() throws IOException, Exception {
-    File trecCorpusFile = null;
-    File indexFile = null;
-    File queryFile = null;
-
-    try {
-      String trecCorpus = trecDocument("55", "This is a sample document")
-              + trecDocument("59", "sample document two");
-      trecCorpusFile = File.createTempFile("galago", ".trectext");
-      Utility.copyStringToFile(trecCorpus, trecCorpusFile);
-
-      indexFile = Utility.createGalagoTempDir();
-      // now, try to build an index from that
-      App.main(new String[]{"build-parallel", indexFile.getAbsolutePath(),
-                trecCorpusFile.getAbsolutePath(), "--indexShards=2"});
-
-      // Checks path and components
-      verifyIndexStructures(indexFile);
-
-      File postings = new File(indexFile, "postings");
-      assert (postings.list().length == 3);
-
-      // try to batch search that index with a no-match string
-      String queries =
-              "<parameters>\n"
-              + "<query><number>5</number><text>nothing</text></query>\n"
-              + "<query><number>9</number><text>sample</text></query>\n"
-              + "<query><number>10</number><text>nothing sample</text></query>\n"
-              + "<query><number>14</number><text>#combine(#1(this is) sample)</text></query>\n"
-              + "</parameters>\n";
-      queryFile = Utility.createTemporary();
-      Utility.copyStringToFile(queries, queryFile);
-
-      // Smoke test with batch search
-      ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-      PrintStream printStream = new PrintStream(byteArrayStream);
-
-      new App(printStream).run(new String[]{"batch-search",
-                "--index=" + indexFile.getAbsolutePath(),
-                queryFile.getAbsolutePath()});
-
-      // Now, verify that some stuff exists
-      String output = byteArrayStream.toString();
-      String expectedScores =
-              "9 Q0 59 1 -1.38562925 galago\n"
-              + "9 Q0 55 2 -1.38695903 galago\n"
-              + "10 Q0 59 1 -2.08010799 galago\n"
-              + "10 Q0 55 2 -2.08143777 galago\n"
-              + "14 Q0 55 1 -1.73220460 galago\n"
-              + "14 Q0 59 2 -1.73353440 galago\n";
-
-      assertEquals(expectedScores, output);
-
-    } finally {
-      if (trecCorpusFile != null) {
-        trecCorpusFile.delete();
-      }
-      if (queryFile != null) {
-        queryFile.delete();
-      }
-      if (indexFile != null) {
-        Utility.deleteDirectory(indexFile);
-      }
-    }
-  }
 }

@@ -345,7 +345,7 @@ public class SearchWebHandler extends AbstractHandler {
   public void handleXCount(HttpServletRequest request, HttpServletResponse response)
           throws IllegalStateException, IllegalArgumentException, IOException, Exception {
     String exp = request.getParameter("expression");
-    long count = search.xcount(exp);
+    long count = search.xCount(exp);
     PrintWriter writer = response.getWriter();
     XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
     response.setContentType("text/xml");
@@ -362,7 +362,7 @@ public class SearchWebHandler extends AbstractHandler {
     public void handleDocCount(HttpServletRequest request, HttpServletResponse response)
           throws IllegalStateException, IllegalArgumentException, IOException, Exception {
     String exp = request.getParameter("expression");
-    long count = search.doccount(exp);
+    long count = search.docCount(exp);
     PrintWriter writer = response.getWriter();
     XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
     response.setContentType("text/xml");

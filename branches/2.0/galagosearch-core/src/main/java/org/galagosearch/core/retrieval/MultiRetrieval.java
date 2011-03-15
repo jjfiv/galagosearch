@@ -244,15 +244,15 @@ public class MultiRetrieval extends Retrieval {
    * Currently does this synchronously to make sure it works.
    * We can multi-thread it when we have time.
    */
-  public long xcount(String nodeString) throws Exception {
+  public long xCount(String nodeString) throws Exception {
     // For now, grab the parameters from the node itself.
     // Maybe a better option than parsing the query at EVERY level,
     // but at least it works.
     Node countNode = StructuredQuery.parse(nodeString);
-    return xcount(countNode);
+    return xCount(countNode);
   }
 
-  public long xcount(Node countNode) throws Exception {
+  public long xCount(Node countNode) throws Exception {
     Parameters parameters = countNode.getParameters();
     String nodeString = countNode.toString();
     String retrievalGroup = parameters.get("retrievalGroup", "all");
@@ -264,14 +264,14 @@ public class MultiRetrieval extends Retrieval {
     ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
     long count = 0;
     for (Retrieval r : selected) {
-      count += r.xcount(nodeString);
+      count += r.xCount(nodeString);
     }
     return count;
   }
 
-  public long doccount(String nodeString) throws Exception {
+  public long docCount(String nodeString) throws Exception {
     Node countNode = StructuredQuery.parse(nodeString);
-    return doccount(countNode);
+    return docCount(countNode);
   }
 
   /**
@@ -279,7 +279,7 @@ public class MultiRetrieval extends Retrieval {
    * contain mutually exclusive subcollections. If you're doing PAC-search
    * or another non-disjoint subset retrieval model, look out.
    */
-  public long doccount(Node countNode) throws Exception {
+  public long docCount(Node countNode) throws Exception {
     Parameters parameters = countNode.getParameters();
     String nodeString = countNode.toString();
     String retrievalGroup = parameters.get("retrievalGroup", "all");
@@ -291,7 +291,7 @@ public class MultiRetrieval extends Retrieval {
     ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
     long count = 0;
     for (Retrieval r : selected) {
-      count += r.doccount(nodeString);
+      count += r.docCount(nodeString);
     }
     return count;
   }

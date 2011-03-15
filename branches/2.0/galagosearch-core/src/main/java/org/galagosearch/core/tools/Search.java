@@ -107,12 +107,12 @@ public class Search {
     return store.get(identifier);
   }
 
-  public long xcount(String nodeString) throws Exception {
-      return this.retrieval.xcount(nodeString);
+  public long xCount(String nodeString) throws Exception {
+      return this.retrieval.xCount(nodeString);
   }
 
-  public long doccount(String nodeString) throws Exception {
-    return this.retrieval.doccount(nodeString);
+  public long docCount(String nodeString) throws Exception {
+    return this.retrieval.docCount(nodeString);
   }
 
   public SearchResult runQuery(String query, Parameters p, boolean summarize) throws Exception {

@@ -15,9 +15,13 @@ import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
+import org.galagosearch.core.retrieval.Retrieval;
+import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
 import org.galagosearch.tupleflow.FileOrderedReader;
+import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.execution.JobExecutor;
@@ -112,7 +116,7 @@ public class App {
   }
 
   private void commandHelpBuild() {
-    output.println("galago build[-fast|-parallel] [flags] <index> (<input>)+");
+    output.println("galago build[-fast] [flags] <index> (<input>)+");
     output.println();
     output.println("  Builds a Galago StructuredIndex with TupleFlow, using one thread ");
     output.println("  for each CPU core on your computer.  While some debugging output ");
@@ -664,6 +668,24 @@ public class App {
     }
   }
 
+  public void handleXCount(String[] args) throws Exception {
+    if (args.length <= 1) {
+      commandHelp("xcount");
+      return;
+    }
+
+    BatchSearch.xCount(args, output);
+  }
+
+    public void handleDocCount(String[] args) throws Exception {
+    if (args.length <= 1) {
+      commandHelp("doccount");
+      return;
+    }
+
+    BatchSearch.docCount(args, output);
+ }
+
   public void handleEval(String[] args) throws IOException {
     org.galagosearch.core.eval.Main.internalMain(Utility.subarray(args, 1), output);
   }
@@ -683,7 +705,6 @@ public class App {
     output.println("   batch-search");
     output.println("   build");
     output.println("   build-fast");
-    output.println("   build-parallel");
     output.println("   build-topdocs");
     output.println("   doc");
     output.println("   dump-connection");
@@ -701,6 +722,8 @@ public class App {
     output.println("   pagerank");
     output.println("   parameter-sweep");
     output.println("   search");
+    output.println("   xcount");
+    output.println("   doccount");
   }
 
   public void commandHelp(String command) throws IOException {
@@ -761,10 +784,22 @@ public class App {
       output.println("  Dumps all lengths from a length file created by DocumentLengthsWriter.");
       output.println("  This is only for the documentLengths file produced by a Galago indexing job.");
     } else if (command.equals("dump-names")) {
-      output.println("galago dump-names <document-names-folder>");
+      output.println("galago dump-names <document-names-file>");
       output.println();
       output.println("  Dumps all names from a names folder created by DocumentNamesWriter2.");
       output.println("  This is only for the documentNames folder produced by a Galago indexing job.");
+    } else if (command.equals("xcount")) {
+      output.println("galago xcount --x=<countable-query> --index=<index> ");
+      output.println();
+      output.println("  Returns the number of times the countable-query occurs.");
+      output.println("  More than one index and expression can be specified.");
+      output.println("  Examples of countable-expressions: terms, ordered windows and unordered windows.");
+    } else if (command.equals("doccount")) {
+      output.println("galago doccount --x=<countable-query> --index=<index> ");
+      output.println();
+      output.println("  Returns the number of documents that contain the countable-query.");
+      output.println("  More than one index and expression can be specified.");
+      output.println("  Examples of countable-expressions: terms, ordered windows and unordered windows.");
     } else if (command.equals("eval")) {
       org.galagosearch.core.eval.Main.usage(output);
     } else if (command.equals("make-corpus")) {
@@ -918,6 +953,10 @@ public class App {
       handleParameterSweep(args);
     } else if (command.equals("search")) {
       handleSearch(args);
+    } else if (command.equals("xcount")) {
+      handleXCount(args);
+    } else if (command.equals("doccount")) {
+      handleDocCount(args);
     } else if (command.equals("eval")) {
       handleEval(args);
     } else {

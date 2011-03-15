@@ -220,7 +220,7 @@ public class StructuredRetrievalProxy extends Retrieval {
   }
 
   @Override
-  public long xcount(String nodeString) throws Exception {
+  public long xCount(String nodeString) throws Exception {
 
     StringBuilder request = new StringBuilder(indexUrl);
     String encoded = URLEncoder.encode(nodeString, "UTF-8"); // need to web-escape
@@ -242,15 +242,15 @@ public class StructuredRetrievalProxy extends Retrieval {
     return (handler.getCount());
   }
 
-  public long xcount(Node root) throws Exception {
-    return xcount(root.toString());
+  public long xCount(Node root) throws Exception {
+    return xCount(root.toString());
   }
 
-  public long doccount(Node root) throws Exception {
-    return doccount(root.toString());
+  public long docCount(Node root) throws Exception {
+    return docCount(root.toString());
   }
 
-  public long doccount(String nodeString) throws Exception {
+  public long docCount(String nodeString) throws Exception {
 
     StringBuilder request = new StringBuilder(indexUrl);
     String encoded = URLEncoder.encode(nodeString, "UTF-8"); // need to web-escape

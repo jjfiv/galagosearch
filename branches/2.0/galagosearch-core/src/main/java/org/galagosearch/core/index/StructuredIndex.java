@@ -69,6 +69,11 @@ public class StructuredIndex {
     return (index + File.separator + part);
   }
 
+  public StructuredIndexPartReader openLocalIndexPart(String part) throws IOException {
+    return openIndexPart(location + File.separator + part);
+  }
+
+
   public static StructuredIndexPartReader openIndexPart(String path) throws IOException {
     GenericIndexReader reader = GenericIndexReader.getIndexReader(path);
     if (reader == null) {

@@ -24,99 +24,120 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor, irmarc
  */
-@RequiredStatistics(statistics = {"retrievalGroup", "index","scorer","topdocs"})
+@RequiredStatistics(statistics = {"retrievalGroup", "index", "scorer", "topdocs"})
 public class ImplicitFeatureCastTraversal implements Traversal {
-    Retrieval retrieval;
-    String retrievalGroup;
-    Parameters parameters;
 
-    public ImplicitFeatureCastTraversal(Parameters parameters, Retrieval retrieval) {
-        this.retrieval = retrieval;
-        this.retrievalGroup = parameters.get("retrievalGroup");
-	this.parameters = parameters;
-    }
-    
-    Node createSmoothingNode(Node child) throws Exception {
-        ArrayList<Node> data = new ArrayList<Node>();
-        data.add(child);
-	String scorerType = parameters.get("scorer", "dirichlet");
-        Node smoothed = new Node("feature", scorerType, data, child.getPosition());
-	if (!parameters.get("topdocs", false)) return smoothed;
-	
-	// If we're here, we should be adding a topdocs node
-	return createTopdocsNode(smoothed);
-    }
+  Retrieval retrieval;
+  String retrievalGroup;
+  Parameters parameters;
 
-    Node createTopdocsNode(Node child) throws Exception {
-	// First (and only) child should be a scoring function iterator node
-	if (!isScoringFunctionNode(child)) return child;
+  public ImplicitFeatureCastTraversal(Parameters parameters, Retrieval retrieval) {
+    this.retrieval = retrieval;
+    this.retrievalGroup = parameters.get("retrievalGroup");
+    this.parameters = parameters;
+  }
 
-	// The replacement
-	ArrayList<Node> children = new ArrayList<Node>();
-	children.add(child);
-	Node workingNode = new Node("feature", "topdocs", children, child.getPosition());	
+  Node createSmoothingNode(Node child) throws Exception {
 
-	// count node, with the information we need
-	Node grandchild = child.getInternalNodes().get(0);
-	Parameters descendantParameters = grandchild.getParameters();
-	Parameters workingParameters = workingNode.getParameters();
-	workingParameters.set("term", descendantParameters.get("default"));
-	workingParameters.set("loc", descendantParameters.get("part"));
-	workingParameters.set("index", parameters.get("index"));
-	return workingNode;
-    }
-    
-    public boolean isCountNode(Node node) throws Exception {
-        NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
-        if (nodeType == null) return false;
-        Class outputClass = nodeType.getIteratorClass();
-        return CountIterator.class.isAssignableFrom(outputClass);
+    /** Check if the child is an 'extents' node
+     *    If so - we can replace extents with counts.
+     *    This can lead to performance improvements within positions indexes
+     *    as the positional data does NOT need to be read for the feature scorer to operate.
+     */
+    if (child.getOperator().equals("extents")) {
+      child = new Node("counts", child.getParameters(), child.getInternalNodes(), child.getPosition());
     }
 
-    public boolean isScoringFunctionNode(Node node) throws Exception {
-        NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
-        if (nodeType == null) return false;
-        Class outputClass = nodeType.getIteratorClass();
-        return ScoringFunctionIterator.class.isAssignableFrom(outputClass);
+    ArrayList<Node> data = new ArrayList<Node>();
+    data.add(child);
+    String scorerType = parameters.get("scorer", "dirichlet");
+    Node smoothed = new Node("feature", scorerType, data, child.getPosition());
+    if (!parameters.get("topdocs", false)) {
+      return smoothed;
     }
 
-    public void beforeNode(Node node) throws Exception {
+    // If we're here, we should be adding a topdocs node
+    return createTopdocsNode(smoothed);
+  }
+
+  Node createTopdocsNode(Node child) throws Exception {
+    // First (and only) child should be a scoring function iterator node
+    if (!isScoringFunctionNode(child)) {
+      return child;
     }
 
-    
-    public Node afterNode(Node node) throws Exception {
-	// Determine if we need to add a scoring node
-	Node scored = addScorers(node);
-	return scored;
+    // The replacement
+    ArrayList<Node> children = new ArrayList<Node>();
+    children.add(child);
+    Node workingNode = new Node("feature", "topdocs", children, child.getPosition());
+
+    // count node, with the information we need
+    Node grandchild = child.getInternalNodes().get(0);
+    Parameters descendantParameters = grandchild.getParameters();
+    Parameters workingParameters = workingNode.getParameters();
+    workingParameters.set("term", descendantParameters.get("default"));
+    workingParameters.set("loc", descendantParameters.get("part"));
+    workingParameters.set("index", parameters.get("index"));
+    return workingNode;
+  }
+
+  public boolean isCountNode(Node node) throws Exception {
+    NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
+    if (nodeType == null) {
+      return false;
+    }
+    Class outputClass = nodeType.getIteratorClass();
+    return CountIterator.class.isAssignableFrom(outputClass);
+  }
+
+  public boolean isScoringFunctionNode(Node node) throws Exception {
+    NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
+    if (nodeType == null) {
+      return false;
+    }
+    Class outputClass = nodeType.getIteratorClass();
+    return ScoringFunctionIterator.class.isAssignableFrom(outputClass);
+  }
+
+  public void beforeNode(Node node) throws Exception {
+  }
+
+  public Node afterNode(Node node) throws Exception {
+    // Determine if we need to add a scoring node
+    Node scored = addScorers(node);
+    return scored;
+  }
+
+  public Node addScorers(Node node) throws Exception {
+    ArrayList<Node> newChildren = new ArrayList<Node>();
+
+    NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
+    if (nodeType == null) {
+      return node;
     }
 
-    public Node addScorers(Node node) throws Exception {
-        ArrayList<Node> newChildren = new ArrayList<Node>();
-        
-        NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
-        if (nodeType == null) return node;
-
-        ArrayList<Node> children = node.getInternalNodes();
-        // Given that we're going to pass children.size() + 1 parameters to
-        // this constructor, what types should those parameters have?
-        Class[] types = nodeType.getParameterTypes(children.size() + 1);
-        if (types == null) return node;
-
-        for (int i = 1; i < types.length; ++i) {
-            Node child = children.get(i-1);
-            // If the parent will expect a ScoreIterator at this position, but
-            // we've got a CountIterator here, we'll perform a conversion step.
-            if (ScoreIterator.class.isAssignableFrom(types[i]) &&
-                isCountNode(children.get(i-1))) {
-                Node feature = createSmoothingNode(child);
-                newChildren.add(feature);
-            } else {
-                newChildren.add(child);
-            }
-        }
-
-        return new Node(node.getOperator(), node.getParameters(),
-                        newChildren, node.getPosition());
+    ArrayList<Node> children = node.getInternalNodes();
+    // Given that we're going to pass children.size() + 1 parameters to
+    // this constructor, what types should those parameters have?
+    Class[] types = nodeType.getParameterTypes(children.size() + 1);
+    if (types == null) {
+      return node;
     }
+
+    for (int i = 1; i < types.length; ++i) {
+      Node child = children.get(i - 1);
+      // If the parent will expect a ScoreIterator at this position, but
+      // we've got a CountIterator here, we'll perform a conversion step.
+      if (ScoreIterator.class.isAssignableFrom(types[i])
+              && isCountNode(children.get(i - 1))) {
+        Node feature = createSmoothingNode(child);
+        newChildren.add(feature);
+      } else {
+        newChildren.add(child);
+      }
+    }
+
+    return new Node(node.getOperator(), node.getParameters(),
+            newChildren, node.getPosition());
+  }
 }
-

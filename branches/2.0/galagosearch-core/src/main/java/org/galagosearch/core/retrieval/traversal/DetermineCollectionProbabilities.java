@@ -73,7 +73,7 @@ public class DetermineCollectionProbabilities implements Traversal {
         // Use xcount to count the background probabilities
         // TODO: make retrievalGroup a parameters for xcount
         node.getParameters().add("retrievalGroup", retrievalGroup);
-        double collectionProb = getCollectionProbability(retrieval.xcount(node.toString()));
+        double collectionProb = getCollectionProbability(retrieval.xCount(node.toString()));
 
         // add the collection probability to the scoring function node
         newParameters.add("collectionCount", Double.toString(collectionProb));

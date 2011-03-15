@@ -11,12 +11,14 @@ import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  *
  * @author trevor
  */
 public class BatchSearch {
+
   public static Node parseQuery(String query, Parameters parameters) {
     String queryType = parameters.get("queryType", "complex");
 
@@ -54,7 +56,7 @@ public class BatchSearch {
       String queryText = query.get("text");
       Parameters p = new Parameters();
       p.add("requested", Integer.toString(requested));
-      Node root = StructuredQuery.parse(queryText);      
+      Node root = StructuredQuery.parse(queryText);
       Node transformed = retrieval.transformQuery(root, "all");
       ScoredDocument[] results = retrieval.runQuery(transformed, p);
       for (int i = 0; i < results.length; i++) {
@@ -65,10 +67,67 @@ public class BatchSearch {
                 formatScore(score));
       }
       index++;
-      if (parameters.get("print_calls", "false").equals("true")) CallTable.print(System.err, Integer.toString(index));
+      if (parameters.get("print_calls", "false").equals("true")) {
+        CallTable.print(System.err, Integer.toString(index));
+      }
       CallTable.reset();
     }
 
+  }
+
+  public static void xCount(String[] args, PrintStream out) throws Exception {
+    Parameters p = new Parameters(Utility.subarray(args, 1));
+    Retrieval r = Retrieval.instance(p);
+
+    String defPart = "";
+    Parameters availableParts = r.getAvailableParts("all");
+    List<String> available = availableParts.stringList("part");
+    if (available.contains("stemmedPostings")) {
+      defPart = "stemmedPostings";
+    } else if (available.contains("postings")) {
+      defPart = "postings";
+    }
+
+    long count;
+    for (Parameters.Value v : p.list("x")) {
+      String q = v.toString();
+      System.err.println(q);
+      if (q.contains("#")) {
+        count = r.xCount(q);
+      } else {
+        String termOp = "#counts:" + q + ":part=" + defPart + "()";
+        count = r.xCount(termOp);
+      }
+      out.println(count + "\t" + q);
+    }
+    r.close();
+  }
+
+  public static void docCount(String[] args, PrintStream out) throws Exception {
+    Parameters p = new Parameters(Utility.subarray(args, 1));
+    Retrieval r = Retrieval.instance(p);
+
+    String defPart = "";
+    Parameters availableParts = r.getAvailableParts("all");
+    List<String> available = availableParts.stringList("part");
+    if (available.contains("stemmedPostings")) {
+      defPart = "stemmedPostings";
+    } else if (available.contains("postings")) {
+      defPart = "postings";
+    }
+
+    long count;
+    for (Parameters.Value v : p.list("x")) {
+      String q = v.toString();
+      if (q.contains("#")) {
+        count = r.docCount(q);
+      } else {
+        String termOp = "#counts:" + q + ":part=" + defPart + "()";
+        count = r.docCount(termOp);
+      }
+      out.println(count + "\t" + q);
+    }
+    r.close();
   }
 
   public static void main(String[] args) throws Exception {
