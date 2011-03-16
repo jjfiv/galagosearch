@@ -195,6 +195,7 @@ public class BuildFastIndex {
     stage.add(new InputStep(inputName));
     Parameters p = new Parameters();
     p.add("filename", indexPath + File.separator + indexName);
+    p.add("pipename", "collectionLength");
     stage.add(new Step(PositionIndexWriter.class, p));
     return stage;
   }

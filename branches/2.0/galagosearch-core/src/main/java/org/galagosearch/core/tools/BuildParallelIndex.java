@@ -45,7 +45,7 @@ public class BuildParallelIndex extends BuildFastIndex {
     stage.addInput(inputName, new NumberWordPosition.WordDocumentPositionOrder());
     stage.addInput("collectionLength", new XMLFragment.NodePathOrder());
     stage.addOutput(inputName + "Keys", new KeyValuePair.KeyOrder());
-
+    p.add("pipename", "collectionLength");
     stage.add(new InputStep(inputName));
     stage.add(new Step(PositionIndexWriter.class, p));
     stage.add(new OutputStep(inputName + "Keys"));
