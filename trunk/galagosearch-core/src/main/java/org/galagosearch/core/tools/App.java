@@ -324,8 +324,13 @@ public class App {
     String identifier = args[2];
 
     DocumentNameReader reader = new DocumentNameReader(indexPath);
-    int docNum = reader.getDocumentId(identifier);
-    output.println(docNum);
+    try{
+      String docName = reader.get(Integer.parseInt(identifier));
+      output.println(docName);
+    } catch (Exception e1){
+      int docNum = reader.getDocumentId(identifier);
+      output.println(docNum);
+    }
   }
 
   private void handleDumpKeyValue(String[] args) throws IOException {
@@ -686,6 +691,7 @@ public class App {
     output.println("   build-parallel");
     output.println("   build-topdocs");
     output.println("   doc");
+    output.println("   doc-id");
     output.println("   dump-connection");
     output.println("   dump-corpus");
     output.println("   dump-index");
@@ -725,6 +731,11 @@ public class App {
       output.println();
       output.println("  Prints the full text of the document named by <identifier>.");
       output.println("  The document is retrieved from a Corpus file named <corpus>.");
+    } else if (command.equals("doc-id")) {
+      output.println("galago doc <documentNames.ReverseLookup> <identifier>");
+      output.println();
+      output.println("  Prints the internal document id of the document named by <identifier>.");
+      output.println("  If the identifier is numeric it prints the external document name of that document.");
     } else if (command.equals("dump-connection")) {
       output.println("galago dump-connection <connection-file>");
       output.println();
@@ -882,6 +893,8 @@ public class App {
       handleBuildTopdocs(args);
     } else if (command.equals("doc")) {
       handleDoc(args);
+    } else if (command.equals("doc-id")) {
+      handleDocId(args);
     } else if (command.equals("dump-connection")) {
       handleDumpConnection(args);
     } else if (command.equals("dump-corpus")) {
