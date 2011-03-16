@@ -20,7 +20,6 @@ import org.galagosearch.core.parse.NumberedDocument;
 import org.galagosearch.core.parse.NumberedDocumentDataExtractor;
 import org.galagosearch.core.parse.NumberedExtentExtractor;
 import org.galagosearch.core.parse.NumberedPostingsPositionExtractor;
-import org.galagosearch.core.parse.Porter2Stemmer;
 import org.galagosearch.core.parse.TagTokenizer;
 import org.galagosearch.core.parse.UniversalParser;
 import org.galagosearch.core.types.AdditionalDocumentText;
@@ -35,14 +34,13 @@ import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.execution.ConnectionAssignmentType;
-import org.galagosearch.tupleflow.execution.ConnectionPointType;
 import org.galagosearch.tupleflow.execution.InputStep;
 import org.galagosearch.tupleflow.execution.Job;
 import org.galagosearch.tupleflow.execution.MultiStep;
 import org.galagosearch.tupleflow.execution.OutputStep;
 import org.galagosearch.tupleflow.execution.Stage;
-import org.galagosearch.tupleflow.execution.StageConnectionPoint;
 import org.galagosearch.tupleflow.execution.Step;
+import org.galagosearch.tupleflow.types.XMLFragment;
 
 /**
  *
@@ -187,7 +185,7 @@ public class BuildFastIndex {
         Stage stage = new Stage(stageName);
 
         stage.addInput(inputName, new NumberWordPosition.WordDocumentPositionOrder());
-
+        stage.addInput("collectionLength", new XMLFragment.NodePathOrder());
         stage.add(new InputStep(inputName));
         Parameters p = new Parameters();
         p.add("filename", indexPath + File.separator + indexName);
@@ -233,7 +231,6 @@ public class BuildFastIndex {
         job.add(BuildStageTemplates.getSplitStage(inputPaths, DocumentSource.class));
         job.add(getParsePostingsStage());
         job.add(getWritePostingsStage("writePostings", "numberedPostings", "postings"));
-        job.add(BuildStageTemplates.getWriteManifestStage("writeManifest", new File(indexPath, "manifest"), "collectionLength", "postings"));
         job.add(BuildStageTemplates.getWriteExtentsStage("writeExtents", new File(indexPath, "extents"), "numberedExtents"));
         job.add(BuildStageTemplates.getWriteNamesStage("writeNames", new File(indexPath, "names"), "numberedDocumentData"));
         job.add(BuildStageTemplates.getWriteLengthsStage("writeLengths", new File(indexPath, "lengths"), "numberedDocumentData"));
@@ -245,7 +242,7 @@ public class BuildFastIndex {
         job.connect("parsePostings", "writeExtents", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "writePostings", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "collectionLength", ConnectionAssignmentType.Combined);
-        job.connect("collectionLength", "writeManifest", ConnectionAssignmentType.Combined);
+        job.connect("collectionLength", "writePostings", ConnectionAssignmentType.Combined);
 
         if (useLinks) {
             job.add(getParseLinksStage());
@@ -261,6 +258,7 @@ public class BuildFastIndex {
                     "numberedStemmedPostings",
                     "stemmedPostings"));
             job.connect("parsePostings", "writeStemmedPostings", ConnectionAssignmentType.Combined);
+            job.connect("collectionLength", "writeStemmedPostings", ConnectionAssignmentType.Combined);
         }
 
         if (makeCorpus) {

@@ -1,6 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.index;
 
+import gnu.trove.TIntHashSet;
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -11,12 +12,15 @@ import org.galagosearch.core.types.NumberWordPosition;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.OutputClass;
+import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Source;
 import org.galagosearch.tupleflow.Step;
 import org.galagosearch.tupleflow.TupleFlowParameters;
+import org.galagosearch.tupleflow.TypeReader;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorHandler;
 import org.galagosearch.tupleflow.execution.Verification;
+import org.galagosearch.tupleflow.types.XMLFragment;
 
 /**
  * 12/14/2010 (irmarc): Adding a skip list to this structure. It's pretty
@@ -241,16 +245,33 @@ public class PositionIndexWriter implements
     int skipDistance;
     int skipResetDistance;
     byte[] lastWord;
+    boolean hasStats;
+    TIntHashSet uniqueDocs;
+
     // parallel index stuff
     boolean parallel;
 
     /**
-     * Creates a new instance of BinnedListWriter
+     * Creates a new instance of PositionIndexWriter
      */
     public PositionIndexWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
-        parameters.getXML().add("writerClass", getClass().getName());
-        parameters.getXML().add("readerClass", PositionIndexReader.class.getName());
-        parallel = parameters.getXML().get("parallel", false);
+        Parameters actualParams = parameters.getXML();
+        actualParams.add("writerClass", getClass().getName());
+        actualParams.add("readerClass", PositionIndexReader.class.getName());
+        parallel = actualParams.get("parallel", false);
+
+        // Let's get those XMLFragments in there if we're receiving
+        TypeReader<XMLFragment> collectionStats = parameters.getTypeReader("collectionLength");
+        if (collectionStats != null) {
+          XMLFragment frag;
+          while ((frag = collectionStats.read()) != null) {
+            actualParams.add("statistics/" + frag.nodePath, frag.innerText);
+          }
+          hasStats = true;
+        } else {
+          hasStats = false;
+          uniqueDocs = new TIntHashSet();
+        }
 
         if (parallel) {
             writer = new SplitIndexValueWriter(parameters);
@@ -268,6 +289,7 @@ public class PositionIndexWriter implements
 
     public void processWord(byte[] wordBytes) throws IOException {
         if (invertedList != null) {
+            if (!hasStats) collectionLength += invertedList.totalPositionCount;
             invertedList.close();
             writer.add(invertedList);
 
@@ -286,6 +308,7 @@ public class PositionIndexWriter implements
     public void processDocument(int document) throws IOException {
         invertedList.addDocument(document);
         documentCount++;
+        if (!hasStats) uniqueDocs.add(document);
         maximumDocumentNumber = Math.max(document, maximumDocumentNumber);
     }
 
@@ -304,8 +327,16 @@ public class PositionIndexWriter implements
 
     public void close() throws IOException {
         if (invertedList != null) {
+          if (!hasStats) collectionLength += invertedList.totalPositionCount;
             invertedList.close();
             writer.add(invertedList);
+        }
+
+        // Add stats to the manifest if needed
+        if (!hasStats) {
+          Parameters manifest = writer.getManifest();
+          if (!manifest.containsKey("statistics/documentCount")) manifest.add("statistics/documentCount", Long.toString(uniqueDocs.size()));
+          if (!manifest.containsKey("statistics/collectionLength")) manifest.add("statistics/collectionLength", Long.toString(collectionLength));
         }
 
         writer.close();

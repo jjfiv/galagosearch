@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
-import org.galagosearch.core.retrieval.structured.StructuredIterator;
+import org.galagosearch.tupleflow.Parameters;
 
 /**
  * A StructuredIndexPart is an object that can create StructuredIterators that
@@ -29,4 +29,6 @@ public interface StructuredIndexPartReader {
     /// The type of iterator returned is assumed to be a value iterator (i.e. over one
     /// list in the index)
     public ValueIterator getIterator(Node node) throws IOException;
+
+    public Parameters getManifest();
 }

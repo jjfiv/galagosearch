@@ -10,6 +10,7 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.*;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
+import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
 
@@ -46,7 +47,7 @@ public class ExtentIndexReader extends KeyListReader {
     }
 
     public ValueIterator getValueIterator() throws IOException {
-       return new ListIterator(iterator);
+      return new ListIterator(iterator);
     }
   }
 

@@ -9,13 +9,12 @@ import java.util.HashMap;
 import java.util.Map;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
-import org.galagosearch.core.retrieval.structured.CountIterator;
 import org.galagosearch.core.retrieval.structured.CountValueIterator;
-import org.galagosearch.core.retrieval.structured.ExtentIterator;
 import org.galagosearch.core.retrieval.structured.ExtentValueIterator;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.DataStream;
+import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
 
@@ -46,7 +45,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       long count = -1;
       try {
         it = new TermCountIterator(iterator);
-	count = it.count();
+        count = it.count();
       } catch (IOException ioe) {
       }
       StringBuilder sb = new StringBuilder();
@@ -575,6 +574,10 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
 
   public PositionIndexReader(String pathname) throws FileNotFoundException, IOException {
     super(pathname);
+  }
+
+  public Parameters getManifest() {
+    return reader.getManifest();
   }
 
   public KeyIterator getIterator() throws IOException {

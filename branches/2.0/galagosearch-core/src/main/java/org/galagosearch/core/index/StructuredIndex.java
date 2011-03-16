@@ -24,39 +24,37 @@ public class StructuredIndex {
   NameReader namesReader;
   Map<String, StructuredIndexPartReader> parts;
   File location;
-
-  Parameters manifest;
+  Parameters manifest = new Parameters();
   HashMap<String, String> defaultIndexOperators = new HashMap<String, String>();
   HashSet<String> knownIndexOperators = new HashSet<String>();
 
   public StructuredIndex(String indexPath) throws IOException {
     // Make sure it's a valid location
     location = new File(indexPath);
-    if (!location.isDirectory()) throw new IOException(String.format("%s is not a directory.", indexPath));
-
-    // Check manifest
-    manifest = null;
-    parts = new HashMap<String, StructuredIndexPartReader>();
-    for (File part : location.listFiles()) {
-      if (part.getName().equals("manifest")) {
-        manifest = new Parameters();
-        manifest.parse(part.getCanonicalPath());
-      } else {
-        StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
-        if (reader == null) {
-          continue;
-        }
-        parts.put(part.getName(), reader);
-      }
+    if (!location.isDirectory()) {
+      throw new IOException(String.format("%s is not a directory.", indexPath));
     }
 
-    if (manifest == null) throw new IOException(String.format("%s has no manifest file.", indexPath));
+    // Check manifest
+    parts = new HashMap<String, StructuredIndexPartReader>();
+    for (File part : location.listFiles()) {
+      StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
+      if (reader == null) {
+        continue;
+      }
+      parts.put(part.getName(), reader);
+
+    }
 
     // Initialize these now b/c they're so common
     namesReader = null;
     lengthsReader = null;
-    if (parts.containsKey("lengths")) lengthsReader = (DocumentLengthsReader) parts.get("lengths");
-    if (parts.containsKey("names")) namesReader = (NameReader) parts.get("names");
+    if (parts.containsKey("lengths")) {
+      lengthsReader = (DocumentLengthsReader) parts.get("lengths");
+    }
+    if (parts.containsKey("names")) {
+      namesReader = (NameReader) parts.get("names");
+    }
 
     initializeIndexOperators();
   }
@@ -72,7 +70,6 @@ public class StructuredIndex {
   public StructuredIndexPartReader openLocalIndexPart(String part) throws IOException {
     return openIndexPart(location + File.separator + part);
   }
-
 
   public static StructuredIndexPartReader openIndexPart(String path) throws IOException {
     GenericIndexReader reader = GenericIndexReader.getIndexReader(path);
@@ -202,11 +199,11 @@ public class StructuredIndex {
   }
 
   public long getCollectionLength() {
-    return manifest.get("collectionLength", (long) 0);
+    return parts.get("postings").getManifest().get("statistics/collectionLength", 0L);
   }
 
   public long getDocumentCount() {
-    return manifest.get("documentCount", (long) 0);
+    return parts.get("postings").getManifest().get("statistics/documentCount", 0L);
   }
 
   public void close() throws IOException {
@@ -226,7 +223,7 @@ public class StructuredIndex {
   }
 
   public int getIdentifier(String document) throws IOException {
-    return ((DocumentNameReader)parts.get("names.reverse")).getDocumentId(document);
+    return ((DocumentNameReader) parts.get("names.reverse")).getDocumentId(document);
   }
 
   public DocumentLengthsReader.KeyIterator getLengthsIterator() throws IOException {

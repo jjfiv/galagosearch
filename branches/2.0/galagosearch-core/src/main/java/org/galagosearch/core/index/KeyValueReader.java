@@ -2,8 +2,8 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.DataStream;
+import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -22,6 +22,10 @@ public abstract class KeyValueReader implements StructuredIndexPartReader {
 
   public KeyValueReader(String filename) throws FileNotFoundException, IOException {
     reader = GenericIndexReader.getIndexReader(filename);
+  }
+
+  public Parameters getManifest() {
+    return reader.getManifest();
   }
 
   public KeyValueReader(GenericIndexReader r) {

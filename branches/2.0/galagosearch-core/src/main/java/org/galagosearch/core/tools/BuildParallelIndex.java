@@ -23,6 +23,7 @@ import org.galagosearch.tupleflow.execution.OutputStep;
 import org.galagosearch.tupleflow.execution.Stage;
 import org.galagosearch.tupleflow.execution.StageConnectionPoint;
 import org.galagosearch.tupleflow.execution.Step;
+import org.galagosearch.tupleflow.types.XMLFragment;
 
 /**
  *
@@ -42,12 +43,9 @@ public class BuildParallelIndex extends BuildFastIndex {
     public Stage getWritePostingsStage(String stageName, String inputName, Parameters p) {
         Stage stage = new Stage(stageName);
 
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Input, inputName,
-                new NumberWordPosition.WordDocumentPositionOrder()));
-        stage.add(new StageConnectionPoint(
-                ConnectionPointType.Output, inputName + "Keys",
-                new KeyValuePair.KeyOrder()));
+        stage.addInput(inputName, new NumberWordPosition.WordDocumentPositionOrder());
+        stage.addInput("collectionLength", new XMLFragment.NodePathOrder());
+        stage.addOutput(inputName + "Keys", new KeyValuePair.KeyOrder());
 
         stage.add(new InputStep(inputName));
         stage.add(new Step(PositionIndexWriter.class, p));
@@ -128,7 +126,7 @@ public class BuildParallelIndex extends BuildFastIndex {
         job.connect("parsePostings", "collectionLength", ConnectionAssignmentType.Combined);
         job.connect("parsePostings", "writeExtents", ConnectionAssignmentType.Each, new String[]{"+extentName"}, indexShards);
         job.connect("parsePostings", "writePostings", ConnectionAssignmentType.Each, new String[]{"+word"}, indexShards);
-        job.connect("collectionLength", "writeManifest", ConnectionAssignmentType.Combined);
+        job.connect("collectionLength", "writePostings", ConnectionAssignmentType.Combined);
 
         // parallel writers
         job.connect("writePostings", "writePostingKeys", ConnectionAssignmentType.Combined);

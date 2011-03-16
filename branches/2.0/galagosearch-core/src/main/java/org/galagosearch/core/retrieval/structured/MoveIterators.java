@@ -13,7 +13,7 @@ public class MoveIterators {
      * Moves all iterators in the array to the same intID.  This method will only
      * stop at documents where all of the iterators have a match.
      *
-     * This code assumes that the most selective iterator (the one with the fewest intID
+     * This code assumes that the most selective iterator (the one with the fewest currentIdentifier
      * matches) is the first one.
      *
      * @return The currentIdentifier number that the iterators are now pointing to, or Integer.MAX_VALUE

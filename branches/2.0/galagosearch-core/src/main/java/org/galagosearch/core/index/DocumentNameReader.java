@@ -122,12 +122,12 @@ public class DocumentNameReader extends NameReader {
     }
 
     public String getValueString() {
-	try {
-	    byte[] value = getValueBytes();
-	    return Utility.toString(value);
-	} catch (IOException ioe) {
-	    return "Unknown";
-	}
+      try {
+        byte[] value = getValueBytes();
+        return Utility.toString(value);
+      } catch (IOException ioe) {
+        return "Unknown";
+      }
     }
 
     public String getKey() {

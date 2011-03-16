@@ -53,7 +53,7 @@ public class SparseFloatListReader extends KeyListReader {
     }
   }
 
-  public class ListIterator extends KeyListReader.ListIterator 
+  public class ListIterator extends KeyListReader.ListIterator
           implements ScoreValueIterator {
 
     VByteInput stream;
