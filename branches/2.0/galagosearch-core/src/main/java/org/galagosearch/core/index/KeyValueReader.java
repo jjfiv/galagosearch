@@ -2,6 +2,8 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
+import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
@@ -34,6 +36,15 @@ public abstract class KeyValueReader implements StructuredIndexPartReader {
 
   public void close() throws IOException {
     reader.close();
+  }
+
+  public String getDefaultOperator() {
+    Map<String, NodeType> types = this.getNodeTypes();
+    if (types.size() == 1) {
+      return types.keySet().toArray(new String[0])[0];
+    } else {
+      return reader.getManifest().get("defaultOperator", "none");
+    }
   }
 
   public abstract Iterator getIterator() throws IOException;

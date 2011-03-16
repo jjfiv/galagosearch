@@ -18,12 +18,12 @@ import org.galagosearch.tupleflow.Utility;
  * @author trevor
  */
 @InputClass(className = "org.galagosearch.tupleflow.types.XMLFragment")
-public class ManifestWriter implements Processor<XMLFragment> {
+public class XMLFragmentWriter implements Processor<XMLFragment> {
     String filename;
     Parameters result;
 
-    /** Creates a new instance of ManifestWriter */
-    public ManifestWriter(TupleFlowParameters p) throws IOException {
+    /** Creates a new instance of XMLFragmentWriter */
+    public XMLFragmentWriter(TupleFlowParameters p) throws IOException {
         if (p.getXML().containsKey("xml")) {
             Parameters.Value value = p.getXML().value().map().get("xml").get(0);
             result = new Parameters(value);

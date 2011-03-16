@@ -12,7 +12,8 @@ import org.galagosearch.core.index.DocumentLengthsWriter;
 import org.galagosearch.core.index.DocumentNameWriter;
 import org.galagosearch.core.index.ExtentIndexWriter;
 import org.galagosearch.core.index.ExtentValueIndexWriter;
-import org.galagosearch.core.index.ManifestWriter;
+import org.galagosearch.core.index.ParameterWriter;
+import org.galagosearch.core.index.XMLFragmentWriter;
 import org.galagosearch.core.parse.CollectionLengthCounterNDD;
 import org.galagosearch.core.parse.Porter2Stemmer;
 import org.galagosearch.core.parse.TagTokenizer;
@@ -79,21 +80,27 @@ public class BuildStageTemplates {
   /**
    * Write out document count and collection length information.
    */
+  public static Stage getWriteManifestStage(String stagename, Parameters p) {
+    Stage stage = new Stage(stagename);
+    stage.add(new Step(ParameterWriter.class, p));
+    return stage;
+  }
+
   public static Stage getWriteManifestStage(String stageName, File destination, String inputPipeName, Parameters p) throws IOException {
     return getGenericWriteStage(stageName, destination, inputPipeName,
-            ManifestWriter.class, new XMLFragment.NodePathOrder(), p);
+            XMLFragmentWriter.class, new XMLFragment.NodePathOrder(), p);
   }
 
   public static Stage getWriteManifestStage(String stageName, File destination, String inputPipeName) throws IOException {
     return getGenericWriteStage(stageName, destination, inputPipeName,
-            ManifestWriter.class, new XMLFragment.NodePathOrder(), new Parameters());
+            XMLFragmentWriter.class, new XMLFragment.NodePathOrder(), new Parameters());
   }
 
   public static Stage getWriteManifestStage(String stageName, File destination, String inputPipeName, String defaultPart) throws IOException {
     Parameters p = new Parameters();
-    p.set("default", defaultPart);
+    p.set("defaultPart", defaultPart);
     return getGenericWriteStage(stageName, destination, inputPipeName,
-            ManifestWriter.class, new XMLFragment.NodePathOrder(), p);
+            XMLFragmentWriter.class, new XMLFragment.NodePathOrder(), p);
   }
 
   public static Stage getWriteDatesStage(String stageName, File destination, String inputPipeName, Parameters p) throws IOException {

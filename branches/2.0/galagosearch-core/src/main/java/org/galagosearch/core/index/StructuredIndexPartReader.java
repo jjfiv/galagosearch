@@ -23,6 +23,9 @@ public interface StructuredIndexPartReader {
     public void close() throws IOException;
     /// Returns a list of node types that this index can provide.
     public Map<String, NodeType> getNodeTypes();
+
+    public String getDefaultOperator();
+
     /// Returns an iterator over the keys of the index.
     public KeyIterator getIterator() throws IOException;
     /// Returns an iterator corresponding to a query node from a StructuredQuery.

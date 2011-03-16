@@ -258,6 +258,7 @@ public class PositionIndexWriter implements
         Parameters actualParams = parameters.getXML();
         actualParams.add("writerClass", getClass().getName());
         actualParams.add("readerClass", PositionIndexReader.class.getName());
+        actualParams.add("defaultOperator", "counts");
         parallel = actualParams.get("parallel", false);
 
         // Let's get those XMLFragments in there if we're receiving

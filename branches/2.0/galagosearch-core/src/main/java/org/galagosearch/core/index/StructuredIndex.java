@@ -63,6 +63,22 @@ public class StructuredIndex {
     return location;
   }
 
+  // I'd really prefer to get this from the manifest, but writing the manifest reliably seems
+  // difficult right now, so just use it if available, otherwise use well-known defaults.
+  public StructuredIndexPartReader getDefaultPart() {
+    if (manifest.containsKey("defaultPart")) {
+      String part = manifest.get("defaultPart");
+      if (parts.containsKey(part)) {
+        return parts.get(part);
+      }
+    }
+    
+    // otherwise, try to default
+    if (parts.containsKey("stemmedPostings")) return parts.get("stemmedPostings");
+    if (parts.containsKey("postings")) return parts.get("postings");
+    return parts.values().toArray(new StructuredIndexPartReader[0])[0];
+  }
+
   public static String getPartPath(String index, String part) {
     return (index + File.separator + part);
   }

@@ -610,7 +610,7 @@ public class Parameters implements Serializable {
       copy(key, other);
     }
 
-    // HAX - copyoing transient pointers
+    // HAX - copying transient pointers
     if (other._transients != null) {	
 	for (String key : other._transients.keySet()) {
 	    setTransient(key, other.getTransient(key));
@@ -624,7 +624,7 @@ public class Parameters implements Serializable {
     p.copy(this);
     return p;
   }
-
+ 
   public void add(String key, List<Value> values) {
     _data.add(key, values);
   }
