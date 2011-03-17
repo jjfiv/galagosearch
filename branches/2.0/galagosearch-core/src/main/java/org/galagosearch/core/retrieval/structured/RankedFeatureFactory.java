@@ -5,7 +5,7 @@
 
 package org.galagosearch.core.retrieval.structured;
 
-import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
+import org.galagosearch.core.retrieval.traversal.TransformRootTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
@@ -49,9 +49,9 @@ static String[][] sOperatorLookup = {
     {TopDocsScoringIterator.class.getName(), "topdocs"}
   };
   static String[] sTraversalList = {
+    TransformRootTraversal.class.getName(),
     SequentialDependenceTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
-    AddCombineTraversal.class.getName(),
     WeightConversionTraversal.class.getName(),
     IndriWindowCompatibilityTraversal.class.getName(),
     TextFieldRewriteTraversal.class.getName(),

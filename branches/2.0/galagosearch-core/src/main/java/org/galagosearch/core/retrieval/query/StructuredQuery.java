@@ -252,10 +252,6 @@ public class StructuredQuery {
     }
 
     public static Node parse(String query) {
-      return parse(query, "combine");
-    }
-
-    public static Node parse(String query, String defaultOp) {
         StructuredLexer lexer = new StructuredLexer();
         ArrayList<StructuredLexer.Token> tokens;
         try {
@@ -273,7 +269,7 @@ public class StructuredQuery {
         } else if (arguments.size() == 1) {
             return arguments.get(0);
         } else {
-            return new Node(defaultOp, arguments, 0);
+            return new Node("root", arguments, 0);
         }
     }
 

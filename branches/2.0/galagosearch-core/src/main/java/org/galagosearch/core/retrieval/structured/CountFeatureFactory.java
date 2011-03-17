@@ -5,7 +5,7 @@
 
 package org.galagosearch.core.retrieval.structured;
 
-import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
+import org.galagosearch.core.retrieval.traversal.TransformRootTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
@@ -34,9 +34,12 @@ static String[][] sOperatorLookup = {
     {ExistentialIndicatorIterator.class.getName(), "any"},
     {BinaryCountIterator.class.getName(), "bcount"}
   };
+
+  // No features here that we know of - cannot produce scores.
   static String[][] sFeatureLookup = {};
 
   static String[] sTraversalList = {
+    TransformRootTraversal.class.getName(),
     IndriWindowCompatibilityTraversal.class.getName(),
     TextFieldRewriteTraversal.class.getName(),
   };

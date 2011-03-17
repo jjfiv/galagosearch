@@ -138,7 +138,7 @@ public class StructuredQueryTest extends TestCase {
         String query = "a.(b) a.(b,c)";
         Node result = StructuredQuery.parse(query);
         assertEquals(
-                "#combine( #smoothinside( #text:a() #field:b() ) #smoothinside( #text:a() #extentor( #field:b() #field:c() ) ) )",
+                "#root( #smoothinside( #text:a() #field:b() ) #smoothinside( #text:a() #extentor( #field:b() #field:c() ) ) )",
                 result.toString());
     }
 

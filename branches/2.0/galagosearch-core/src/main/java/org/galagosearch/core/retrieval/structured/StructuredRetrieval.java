@@ -114,7 +114,9 @@ public class StructuredRetrieval extends Retrieval {
     IndicatorIterator iterator = (IndicatorIterator) createIterator(queryTree, context);
     ArrayList<ScoredDocument> list = new ArrayList<ScoredDocument>();
     while (!iterator.isDone()) {
-      list.add(new ScoredDocument(iterator.currentIdentifier(), 1.0));
+      if (iterator.getStatus()) {
+        list.add(new ScoredDocument(iterator.currentIdentifier(), 1.0));
+      }
       iterator.next();
     }
     return list.toArray(new ScoredDocument[0]);
