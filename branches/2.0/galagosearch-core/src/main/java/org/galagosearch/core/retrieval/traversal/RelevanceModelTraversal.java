@@ -145,7 +145,7 @@ public class RelevanceModelTraversal implements Traversal {
 
 	    // And wrap it up
 	    newRoot = new Node("maxscore", expParams, newChildren, originalNode.getPosition());
-	    newRoot = retrieval.transformQuery(newRoot, "all");
+	    newRoot = retrieval.transformRankedQuery(newRoot, "all");
         }
         rModel.cleanup();
         return newRoot;

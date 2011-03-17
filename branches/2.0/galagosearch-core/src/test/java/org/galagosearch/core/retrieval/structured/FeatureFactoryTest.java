@@ -21,7 +21,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getClassName method, of class FeatureFactory.
      */
     public void testGetClassName() throws Exception {
-        FeatureFactory f = new FeatureFactory(new Parameters());
+        FeatureFactory f = new RankedFeatureFactory(new Parameters());
         String actual = f.getClassName(new Node("syn", "fakeargument"));
         assertEquals(SynonymIterator.class.getName(), actual);
     }
@@ -30,7 +30,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getFeatureClassName method, of class FeatureFactory.
      */
     public void testGetFeatureClassName() throws Exception {
-        FeatureFactory f = new FeatureFactory(new Parameters());
+        FeatureFactory f = new RankedFeatureFactory(new Parameters());
         Parameters p = new Parameters();
         p.add("default", "dirichlet");
         String actual = f.getFeatureClassName(p);
@@ -41,7 +41,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getClass method, of class FeatureFactory.
      */
     public void testGetClass() throws Exception {
-        FeatureFactory f = new FeatureFactory(new Parameters());
+        FeatureFactory f = new RankedFeatureFactory(new Parameters());
         Class c = f.getClass(new Node("combine", ""));
         assertEquals(UnfilteredCombinationIterator.class.getName(), c.getName());
     }
@@ -50,7 +50,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getNodeType method, of class FeatureFactory.
      */
     public void testGetNodeType() throws Exception {
-        FeatureFactory f = new FeatureFactory(new Parameters());
+        FeatureFactory f = new RankedFeatureFactory(new Parameters());
         NodeType type = f.getNodeType(new Node("combine", ""));
         Class c = type.getIteratorClass();
         assertEquals(UnfilteredCombinationIterator.class.getName(), c.getName());
@@ -60,7 +60,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of isUsableConstructor method, of class FeatureFactory.
      */
     public void testIsUsableConstructor() {
-        FeatureFactory f = new FeatureFactory(new Parameters());
+        FeatureFactory f = new RankedFeatureFactory(new Parameters());
         Class[] types = new Class[] { Parameters.class };
         ArrayList<StructuredIterator> iterators = new ArrayList();
         assertTrue(f.isUsableConstructor(types, iterators));
@@ -75,7 +75,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of argsForConstructor method, of class FeatureFactory.
      */
     public void testArgsForConstructor() {
-        FeatureFactory f = new FeatureFactory(new Parameters());
+        FeatureFactory f = new RankedFeatureFactory(new Parameters());
         Parameters p = new Parameters();
         Class[] types = new Class[] { Parameters.class };
         Object[] args = f.argsForConstructor(types, p, new ArrayList());
@@ -84,7 +84,7 @@ public class FeatureFactoryTest extends TestCase {
     }
 
     public void testArrayArgsForConstructor() {
-        FeatureFactory f = new FeatureFactory(new Parameters());
+        FeatureFactory f = new RankedFeatureFactory(new Parameters());
         ArrayList<StructuredIterator> iterators = new ArrayList();
         iterators.add(new NullExtentIterator());
         ExtentIterator[] fakeArray = new ExtentIterator[1];
@@ -101,7 +101,7 @@ public class FeatureFactoryTest extends TestCase {
      * Test of getIterator method, of class FeatureFactory.
      */
     public void testGetIterator() throws Exception {
-        FeatureFactory f = new FeatureFactory(new Parameters());
+        FeatureFactory f = new RankedFeatureFactory(new Parameters());
         ArrayList<StructuredIterator> iterators = new ArrayList();
         iterators.add(new NullExtentIterator());
         StructuredIterator iterator = f.getIterator(new Node("od", "5"), iterators);
@@ -119,7 +119,7 @@ public class FeatureFactoryTest extends TestCase {
             "    </operators>\n" +
             "</parameters>";
         Parameters p = new Parameters(config.getBytes("UTF-8"));
-        FeatureFactory f = new FeatureFactory(p);
+        FeatureFactory f = new RankedFeatureFactory(p);
 
         assertEquals("b", f.getClassName(new Node("a", new ArrayList())));
     }
@@ -143,7 +143,7 @@ public class FeatureFactoryTest extends TestCase {
             "    </traversals>\n" +
             "</parameters>";
         Parameters p = new Parameters(config.getBytes("UTF-8"));
-        FeatureFactory f = new FeatureFactory(p);
+        FeatureFactory f = new RankedFeatureFactory(p);
         List<String> traversalNames = f.getTraversalNames();
 
         assertEquals("a", traversalNames.get(0));

@@ -52,7 +52,11 @@ public class StructuredRetrieval extends Retrieval {
     featureParameters.add("collectionLength", indexStats.get("collectionLength"));
     featureParameters.add("documentCount", indexStats.get("documentCount"));
     featureParameters.add("retrievalGroup", "all"); // the value wont matter here
-    featureFactory = new FeatureFactory(featureParameters);
+    if (factoryParameters.get("queryType", "ranked").equals("count")) {
+      featureFactory = new CountFeatureFactory(featureParameters);
+    } else {
+      featureFactory = new RankedFeatureFactory(featureParameters);
+    }
     runner = null;
   }
 
@@ -101,21 +105,36 @@ public class StructuredRetrieval extends Retrieval {
     return p;
   }
 
+  public ScoredDocument[] runBooleanQuery(Node queryTree, Parameters parameters) throws Exception {
+    // Give it a context
+    DocumentContext context = new DocumentContext();
+
+    // construct the query iterators
+    System.err.printf("Running boolean query: %s\n", queryTree.toString());
+    IndicatorIterator iterator = (IndicatorIterator) createIterator(queryTree, context);
+    ArrayList<ScoredDocument> list = new ArrayList<ScoredDocument>();
+    while (!iterator.isDone()) {
+      list.add(new ScoredDocument(iterator.currentIdentifier(), 1.0));
+      iterator.next();
+    }
+    return list.toArray(new ScoredDocument[0]);
+  }
+
   /**
-   * Evaluates a query using document-at-a-time evaluation.
+   * Evaluates a probabilistic query using document-at-a-time evaluation.
    *
-   * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
+   * @param query A query tree that has been already transformed with StructuredRetrieval.transformRankedQuery.
    * @param parameters - query parameters (indexId, # requested, query type, transform)
    * @return
    * @throws java.lang.Exception
    */
-  public ScoredDocument[] runQuery(Node queryTree, Parameters parameters) throws Exception {
+  public ScoredDocument[] runRankedQuery(Node queryTree, Parameters parameters) throws Exception {
 
     // Give it a context
     DocumentContext context = new DocumentContext();
 
     // construct the query iterators
-    System.err.printf("Running query: %s\n", queryTree.toString());
+    System.err.printf("Running ranked query: %s\n", queryTree.toString());
     ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context);
     int requested = (int) parameters.get("requested", 1000);
 
@@ -183,7 +202,14 @@ public class StructuredRetrieval extends Retrieval {
     }
 
     try {
-      ScoredDocument[] results = runQuery(query, queryParams);
+      // use the query parameters to determine the type of query we're running
+      String runType = queryParams.get("querytype", "ranked");
+      ScoredDocument[] results;
+      if (runType.equals("boolean")) {
+        results = runBooleanQuery(query, queryParams);
+      } else {
+        results = runRankedQuery(query, queryParams);
+      }
 
       // Now add it to the output structure, but synchronously
       synchronized (queryResults) {
@@ -199,7 +225,7 @@ public class StructuredRetrieval extends Retrieval {
    * Evaluates a query using intID-at-a-time evaluation.
    *  - allowing user to sweep across parameters specified within the query
    *
-   * @param query A query tree that has been already transformed with StructuredRetrieval.transformQuery.
+   * @param query A query tree that has been already transformed with StructuredRetrieval.transformRankedQuery.
    * @param parameters - query parameters (indexId, # requested, query type, transform)
    * @return
    * @throws java.lang.Exception
@@ -354,7 +380,15 @@ public class StructuredRetrieval extends Retrieval {
     return iterator;
   }
 
-  public Node transformQuery(Node queryTree, String retrievalGroup) throws Exception {
+  public Node transformBooleanQuery(Node queryTree, String retrievalGroup) throws Exception {
+    List<Traversal> traversals = featureFactory.getTraversals(this);
+    for (Traversal traversal : traversals) {
+      queryTree = StructuredQuery.copy(traversal, queryTree);
+    }
+    return queryTree;
+  }
+
+  public Node transformRankedQuery(Node queryTree, String retrievalGroup) throws Exception {
     List<Traversal> traversals = featureFactory.getTraversals(this);
     for (Traversal traversal : traversals) {
       queryTree = StructuredQuery.copy(traversal, queryTree);
@@ -404,7 +438,6 @@ public class StructuredRetrieval extends Retrieval {
     return nodeType;
   }
 
-
   /**
    * Subclass that counts the number of occurrences of the provided
    * expression. If the expression does not produce a CountIterator
@@ -432,7 +465,7 @@ public class StructuredRetrieval extends Retrieval {
         String part = root.getParameters().get("part");
 
         if (index.containsPart(part)) {
-          StructuredIndexPartReader partReader = index.openLocalIndexPart( part );
+          StructuredIndexPartReader partReader = index.openLocalIndexPart(part);
           if (partReader instanceof AggregateReader) {
             termCount = ((AggregateReader) partReader).termCount(term);
             docCount = ((AggregateReader) partReader).documentCount(term);

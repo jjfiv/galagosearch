@@ -81,7 +81,7 @@ public class BatchParameterSweep {
       Parameters p = new Parameters();
       p.add("requested", Integer.toString(requested));
       Node root = StructuredQuery.parse(queryText);
-      Node transformed = retrieval.transformQuery(root, "all");
+      Node transformed = retrieval.transformRankedQuery(root, "all");
 
       ScoredDocument[] results = retrieval.runParameterSweep(transformed, p);
       for (int i = 0; i < results.length; i++) {

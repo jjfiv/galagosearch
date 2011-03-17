@@ -13,6 +13,7 @@ import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.structured.FeatureFactory;
+import org.galagosearch.core.retrieval.structured.RankedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
@@ -81,7 +82,7 @@ public class MultiRetrieval extends Retrieval {
    * @return
    * @throws Exception
    */
-  public ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception {
+  public ScoredDocument[] runRankedQuery(Node root, Parameters parameters) throws Exception {
     this.root = root;
     String retrievalGroup = parameters.get("retrievalGroup", "all");
     if (!retrievals.containsKey(retrievalGroup)) {
@@ -148,7 +149,7 @@ public class MultiRetrieval extends Retrieval {
     }
 
     try {
-      ScoredDocument[] results = runQuery(root, queryParams);
+      ScoredDocument[] results = runRankedQuery(root, queryParams);
 
       // Now add it to the output structure, but synchronously
       synchronized (queryResults) {
@@ -175,7 +176,7 @@ public class MultiRetrieval extends Retrieval {
     return StructuredQuery.parse(query);
   }
 
-  public Node transformQuery(Node queryTree, String retrievalGroup) throws Exception {
+  public Node transformRankedQuery(Node queryTree, String retrievalGroup) throws Exception {
     FeatureFactory ff = featureFactories.get(retrievalGroup);
     List<Traversal> traversals = ff.getTraversals(this);
     for (Traversal traversal : traversals) {
@@ -200,7 +201,7 @@ public class MultiRetrieval extends Retrieval {
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
       retrievalParts.put(retGroup, mergeParts(parts));
 
-      featureFactories.put(retGroup, new FeatureFactory(retrievalStatistics.get(retGroup)));
+      featureFactories.put(retGroup, new RankedFeatureFactory(retrievalStatistics.get(retGroup)));
     }
   }
 
@@ -322,5 +323,15 @@ public class MultiRetrieval extends Retrieval {
       return new NodeType((Class<? extends StructuredIterator>) Class.forName(iteratorClass));
     }
     return null;
+  }
+
+  @Override
+  public ScoredDocument[] runBooleanQuery(Node root, Parameters parameters) throws Exception {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public Node transformBooleanQuery(Node root, String retrievalGroup) throws Exception {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 }

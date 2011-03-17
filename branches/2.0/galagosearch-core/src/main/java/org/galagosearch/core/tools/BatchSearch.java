@@ -57,8 +57,8 @@ public class BatchSearch {
       Parameters p = new Parameters();
       p.add("requested", Integer.toString(requested));
       Node root = StructuredQuery.parse(queryText);
-      Node transformed = retrieval.transformQuery(root, "all");
-      ScoredDocument[] results = retrieval.runQuery(transformed, p);
+      Node transformed = retrieval.transformRankedQuery(root, "all");
+      ScoredDocument[] results = retrieval.runRankedQuery(transformed, p);
       for (int i = 0; i < results.length; i++) {
         double score = results[i].score;
         int rank = i + 1;

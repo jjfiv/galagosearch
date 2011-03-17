@@ -399,7 +399,7 @@ public class SearchWebHandler extends AbstractHandler {
     String retrievalGroup = request.getParameter("retrievalGroup");
     Node root = StructuredQuery.parse(nodeString);
     try {
-      Node transformed = search.retrieval.transformQuery(root, retrievalGroup);
+      Node transformed = search.retrieval.transformRankedQuery(root, retrievalGroup);
       PrintWriter writer = response.getWriter();
       XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
       response.setContentType("text/xml");

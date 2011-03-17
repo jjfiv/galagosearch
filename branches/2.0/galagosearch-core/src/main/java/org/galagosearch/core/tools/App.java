@@ -338,9 +338,11 @@ public class App {
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
     KeyIterator iterator = reader.getIterator();
     if (iterator.moveToKey(Utility.fromString(key))) {
-      do {
-        output.println(iterator.getValueString());
-      } while (iterator.nextKey() && iterator.getKey().equals(key));
+      ValueIterator vIter = iterator.getValueIterator();
+      while (!vIter.isDone()) {
+        output.printf("%s\t%s\n", iterator.getKey(), vIter.getEntry());
+        vIter.next();
+      }
     }
   }
 

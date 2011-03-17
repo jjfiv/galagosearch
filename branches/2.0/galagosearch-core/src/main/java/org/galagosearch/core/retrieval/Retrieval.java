@@ -56,9 +56,13 @@ public abstract class Retrieval implements Runnable {
 
     public abstract long docCount(Node root) throws Exception;
 
-    public abstract ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception;
+    public abstract ScoredDocument[] runBooleanQuery(Node root, Parameters parameters) throws Exception;
 
-    public abstract Node transformQuery(Node root, String retrievalGroup) throws Exception;
+    public abstract Node transformBooleanQuery(Node root, String retrievalGroup) throws Exception;
+
+    public abstract ScoredDocument[] runRankedQuery(Node root, Parameters parameters) throws Exception;
+
+    public abstract Node transformRankedQuery(Node root, String retrievalGroup) throws Exception;
 
     // These are to allow for asynchronous execution
     public abstract void runAsynchronousQuery(Node root, Parameters parameters, List<ScoredDocument> queryResults) throws Exception;

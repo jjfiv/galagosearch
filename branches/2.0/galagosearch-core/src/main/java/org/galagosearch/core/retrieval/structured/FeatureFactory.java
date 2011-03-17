@@ -14,15 +14,6 @@ import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.Traversal;
-import org.galagosearch.core.retrieval.traversal.AddCombineTraversal;
-import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
-import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
-import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
-import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
-import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
-import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
-import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
-import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
 
@@ -31,46 +22,10 @@ import org.galagosearch.tupleflow.Parameters.Value;
  * @author irmarc
  */
 public class FeatureFactory {
-  static String[][] sOperatorLookup = {
-    {FilteredCombinationIterator.class.getName(), "filter"},
-    {UnfilteredCombinationIterator.class.getName(), "combine"},
-    {SynonymIterator.class.getName(), "syn"},
-    {SynonymIterator.class.getName(), "synonym"},
-    {ExtentInsideIterator.class.getName(), "inside"},
-    {OrderedWindowIterator.class.getName(), "ordered"},
-    {OrderedWindowIterator.class.getName(), "od"},
-    {UnorderedWindowIterator.class.getName(), "unordered"},
-    {UnorderedWindowIterator.class.getName(), "uw"},
-    {UnorderedDocumentWindowIterator.class.getName(), "and"},
-    {ScaleIterator.class.getName(), "scale"},
-    {UnfilteredCombinationIterator.class.getName(), "rm"},
-    {UnfilteredCombinationIterator.class.getName(), "seqdep"},
-    {UnfilteredCombinationIterator.class.getName(), "bm25rf"},
-    {MaxScoreCombinationIterator.class.getName(), "maxscore"},
-    {UniversalIndicatorIterator.class.getName(), "all"},
-    {ExistentialIndicatorIterator.class.getName(), "any"}
-  };
-  static String[][] sFeatureLookup = {
-    {DirichletScoringIterator.class.getName(), "dirichlet"},
-    {JelinekMercerScoringIterator.class.getName(), "linear"},
-    {JelinekMercerScoringIterator.class.getName(), "jm"},
-    {BM25ScoringIterator.class.getName(), "bm25"},
-    {BM25RFScoringIterator.class.getName(), "bm25rf"},
-    {TopDocsScoringIterator.class.getName(), "topdocs"}
-  };
-  static String[] sTraversalList = {
-    SequentialDependenceTraversal.class.getName(),
-    NgramRewriteTraversal.class.getName(),
-    AddCombineTraversal.class.getName(),
-    WeightConversionTraversal.class.getName(),
-    IndriWindowCompatibilityTraversal.class.getName(),
-    TextFieldRewriteTraversal.class.getName(),
-    ImplicitFeatureCastTraversal.class.getName(),
-    RelevanceModelTraversal.class.getName(),
-    BM25RelevanceFeedbackTraversal.class.getName()
-  };
 
-  public FeatureFactory(Parameters parameters) {
+  public FeatureFactory(Parameters parameters,
+          String[][] sOperatorLookup, String[][] sFeatureLookup,
+          String[] sTraversalList) {
     operatorLookup = new HashMap<String, OperatorSpec>();
     featureLookup = new HashMap<String, OperatorSpec>();
     this.parameters = parameters;

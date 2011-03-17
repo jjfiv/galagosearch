@@ -117,7 +117,7 @@ public class Search {
 
   public SearchResult runQuery(String query, Parameters p, boolean summarize) throws Exception {
     Node root = StructuredQuery.parse(query);
-    Node transformed = retrieval.transformQuery(root, p.get("retrievalGroup","all"));
+    Node transformed = retrieval.transformRankedQuery(root, p.get("retrievalGroup","all"));
     SearchResult result = runTransformedQuery(transformed, p, summarize);
     result.query = root;
     result.queryAsString = query;
@@ -128,7 +128,7 @@ public class Search {
     int startAt = Integer.parseInt(p.get("startAt"));
     int count = Integer.parseInt(p.get("resultCount"));
 
-    ScoredDocument[] results = retrieval.runQuery(root, p);
+    ScoredDocument[] results = retrieval.runRankedQuery(root, p);
     SearchResult result = new SearchResult();
     Set<String> queryTerms = StructuredQuery.findQueryTerms(root);
     result.transformedQuery = root;

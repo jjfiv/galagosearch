@@ -150,7 +150,7 @@ public class StructuredRetrievalTest extends TestCase {
 
         Parameters p = new Parameters();
         p.add("requested", "5");
-        ScoredDocument[] result = retrieval.runQuery(root, p);
+        ScoredDocument[] result = retrieval.runRankedQuery(root, p);
 
         assertEquals(result.length, 5);
 

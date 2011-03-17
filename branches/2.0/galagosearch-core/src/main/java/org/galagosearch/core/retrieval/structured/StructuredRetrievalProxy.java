@@ -119,7 +119,7 @@ public class StructuredRetrievalProxy extends Retrieval {
     throw new UnsupportedOperationException("cannot create proxy iterator");
   }
 
-  public ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception {
+  public ScoredDocument[] runRankedQuery(Node root, Parameters parameters) throws Exception {
 
     int requested = (int) parameters.get("requested", 1000);
     String qtype = parameters.get("queryType", "complex");
@@ -156,7 +156,7 @@ public class StructuredRetrievalProxy extends Retrieval {
     return (handler.getResults());
   }
 
-  public Node transformQuery(Node queryTree, String retrievalGroup) throws Exception {
+  public Node transformRankedQuery(Node queryTree, String retrievalGroup) throws Exception {
     String query = queryTree.toString();
     StringBuilder request = new StringBuilder(indexUrl);
     String encoded = URLEncoder.encode(query, "UTF-8"); // need to web-escape
@@ -204,7 +204,7 @@ public class StructuredRetrievalProxy extends Retrieval {
 
   public void run() {
     try {
-      ScoredDocument[] docs = runQuery(query, queryParams);
+      ScoredDocument[] docs = runRankedQuery(query, queryParams);
 
       // Now add it to the accumulator, but synchronously
       synchronized (queryResults) {
@@ -276,6 +276,16 @@ public class StructuredRetrievalProxy extends Retrieval {
   @Override
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
     throw new UnsupportedOperationException("Not supported and never will be.");
+  }
+
+  @Override
+  public ScoredDocument[] runBooleanQuery(Node root, Parameters parameters) throws Exception {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public Node transformBooleanQuery(Node root, String retrievalGroup) throws Exception {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   // private classes
