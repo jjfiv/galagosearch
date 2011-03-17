@@ -335,12 +335,13 @@ public class App {
       return;
     }
     String key = args[2];
+    output.printf("Dumping key: %s\n", key);
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
     KeyIterator iterator = reader.getIterator();
     if (iterator.moveToKey(Utility.fromString(key))) {
       ValueIterator vIter = iterator.getValueIterator();
       while (!vIter.isDone()) {
-        output.printf("%s\t%s\n", iterator.getKey(), vIter.getEntry());
+        output.printf("%s\n", vIter.getEntry());
         vIter.next();
       }
     }
