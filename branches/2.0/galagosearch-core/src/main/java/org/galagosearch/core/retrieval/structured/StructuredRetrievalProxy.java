@@ -29,7 +29,7 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  * @author irmarc
  */
-public class StructuredRetrievalProxy extends Retrieval {
+public class StructuredRetrievalProxy implements Retrieval {
 
   String indexUrl;
   private SAXParser parser;

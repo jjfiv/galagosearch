@@ -6,7 +6,6 @@ import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
-import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
 import org.galagosearch.core.tools.App;
 import org.galagosearch.core.tools.AppTest;
 import org.galagosearch.tupleflow.Parameters;
@@ -92,7 +91,7 @@ public class IndicatorIteratorTest extends TestCase {
         Parameters p = new Parameters();
         p.add("retrievalGroup", "all");
         p.set("index", indexFile.getAbsolutePath());
-        StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(p);
+        StructuredRetrieval retrieval = (StructuredRetrieval) RetrievalFactory.instance(p);
 
         Node parsedTree = StructuredQuery.parse("#any( #counts:cat:part=postings() #counts:program:part=postings() )");
         DocumentContext context = new DocumentContext();
@@ -122,7 +121,7 @@ public class IndicatorIteratorTest extends TestCase {
         Parameters p = new Parameters();
         p.add("retrievalGroup", "all");
         p.set("index", indexFile.getAbsolutePath());
-        StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(p);
+        StructuredRetrieval retrieval = (StructuredRetrieval) RetrievalFactory.instance(p);
 
         Node parsedTree = StructuredQuery.parse("#all( #counts:document:part=postings() #counts:sample:part=postings() )");
         DocumentContext context = new DocumentContext();

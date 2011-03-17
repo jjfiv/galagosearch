@@ -33,7 +33,7 @@ import org.galagosearch.tupleflow.Utility;
  * @author trevor
  * @author irmarc
  */
-public class StructuredRetrieval extends Retrieval {
+public class StructuredRetrieval implements Retrieval {
 
   protected String indexId;
   protected StructuredIndex index;

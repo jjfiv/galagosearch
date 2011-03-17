@@ -5,6 +5,7 @@ import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
+import org.galagosearch.core.retrieval.structured.RetrievalFactory;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.core.tools.App;
 import org.galagosearch.core.tools.AppTest;
@@ -83,7 +84,7 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         p.add("retrievalGroup", "all");
         p.set("index", indexFile.getAbsolutePath());
         p.set("corpus", corpusFile.getAbsolutePath());
-        StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(p);
+        StructuredRetrieval retrieval = (StructuredRetrieval) RetrievalFactory.instance(p);
         RelevanceModelTraversal traversal = new RelevanceModelTraversal(p, retrieval);
 
         Node parsedTree = StructuredQuery.parse("#rm:fbTerms=3:fbDocs=2( #feature:dirichlet( #extents:fits:part=postings() ) )");
@@ -106,7 +107,7 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         p.add("retrievalGroup", "all");
         p.set("index", indexFile.getAbsolutePath());
         p.set("corpus", corpusFile.getAbsolutePath());
-        StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(p);
+        StructuredRetrieval retrieval = (StructuredRetrieval) RetrievalFactory.instance(p);
         BM25RelevanceFeedbackTraversal traversal = new BM25RelevanceFeedbackTraversal(p, retrieval);
         Node parsedTree = StructuredQuery.parse("#bm25rf:fbDocs=3:fbTerms=2( #feature:bm25( #extents:cat:part=postings() ) )");
         Node transformed = StructuredQuery.copy(traversal, parsedTree);

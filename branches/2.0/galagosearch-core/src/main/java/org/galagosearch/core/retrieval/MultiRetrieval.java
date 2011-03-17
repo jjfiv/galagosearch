@@ -24,7 +24,7 @@ import org.galagosearch.tupleflow.Parameters.Value;
  *
  * @author sjh
  */
-public class MultiRetrieval extends Retrieval {
+public class MultiRetrieval implements Retrieval {
 
   HashMap<String, ArrayList<Retrieval>> retrievals;
   HashMap<String, Parameters> retrievalStatistics;

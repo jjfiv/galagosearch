@@ -1,7 +1,6 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.tools;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 import org.galagosearch.core.retrieval.Retrieval;
@@ -9,6 +8,7 @@ import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
+import org.galagosearch.core.retrieval.structured.RetrievalFactory;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -68,7 +68,7 @@ public class BatchParameterSweep {
     List<Parameters.Value> queries = parameters.list("query");
 
     // open index
-    Retrieval retrieval = Retrieval.instance(parameters);
+    Retrieval retrieval = RetrievalFactory.instance(parameters);
 
     // record results requested
     int requested = (int) parameters.get("count", 1000);
