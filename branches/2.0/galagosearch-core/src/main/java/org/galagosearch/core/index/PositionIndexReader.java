@@ -65,8 +65,8 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
   }
 
   public interface AggregateIterator {
-
-    public int totalPositions();
+        public long totalEntries();
+        public long totalPositions();
   }
 
   public class TermExtentIterator extends KeyListReader.ListIterator
@@ -325,8 +325,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return ((long) documentCount);
     }
 
-    // TODO: Declare in an interface
-    public int totalPositions() {
+    public long totalPositions() {
       return totalPositionCount;
     }
   }
@@ -563,7 +562,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     }
 
     // TODO: Declare in an interface
-    public int totalPositions() {
+    public long totalPositions() {
       return collectionCount;
     }
   }
@@ -629,7 +628,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
   // unless the headers have already been loaded.
   // We need a better interface for these.
   // TODO:: Clean abstraction for this
-  public int documentCount(String term) throws IOException {
+  public long documentCount(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
     if (iterator == null) {
       return 0;
@@ -649,7 +648,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
   }
 
   // TODO: Clean abstraction for this
-  public int termCount(String term) throws IOException {
+  public long termCount(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
     if (iterator == null) {
       return 0;

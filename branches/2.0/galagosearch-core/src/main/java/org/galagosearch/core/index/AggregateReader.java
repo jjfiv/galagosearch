@@ -4,6 +4,6 @@ package org.galagosearch.core.index;
 import java.io.IOException;
 
 public interface AggregateReader {
-    public int documentCount(String term) throws IOException;
-    public int termCount(String term) throws IOException;
+    public long documentCount(String term) throws IOException;
+    public long termCount(String term) throws IOException;
 }

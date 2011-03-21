@@ -152,6 +152,7 @@ public class AppTest extends TestCase {
               + "<query><number>9</number><text>sample</text></query>\n"
               + "<query><number>10</number><text>nothing sample</text></query>\n"
               + "<query><number>14</number><text>#combine(#1(this is) sample)</text></query>\n"
+              + "<query><number>23</number><text>#combine( sample sample document document )</text></query>\n"
               + "</parameters>\n";
       queryFile = Utility.createTemporary();
       Utility.copyStringToFile(queries, queryFile);
@@ -166,13 +167,18 @@ public class AppTest extends TestCase {
 
       // Now, verify that some stuff exists
       String output = byteArrayStream.toString();
+
+      System.err.println(output);
+
       String expectedScores =
               "9 Q0 59 1 -1.38562925 galago\n"
               + "9 Q0 55 2 -1.38695903 galago\n"
               + "10 Q0 59 1 -2.08010799 galago\n"
               + "10 Q0 55 2 -2.08143777 galago\n"
               + "14 Q0 55 1 -1.73220460 galago\n"
-              + "14 Q0 59 2 -1.73353440 galago\n";
+              + "14 Q0 59 2 -1.73353440 galago\n"
+              + "23 Q0 59 1 -1.38562925 galago\n"
+              + "23 Q0 55 2 -1.38695903 galago\n";
 
       assertEquals(expectedScores, output);
 

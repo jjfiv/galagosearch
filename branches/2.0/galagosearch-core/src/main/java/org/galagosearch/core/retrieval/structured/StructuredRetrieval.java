@@ -14,6 +14,7 @@ import java.util.TreeMap;
 import org.galagosearch.core.index.AggregateReader;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.NameReader;
+import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.retrieval.query.Node;
@@ -341,14 +342,26 @@ public class StructuredRetrieval implements Retrieval {
 
     return StructuredQuery.parse(query);
   }
+  static HashMap<String, StructuredIterator> iteratorCache = new HashMap();
 
-  public StructuredIterator createIterator(Node node, DocumentContext context)
+  public StructuredIterator createIterator(Node node, DocumentContext context) throws Exception {
+    iteratorCache.clear();
+    return createNodeMergedIterator(node, context);
+  }
+
+  public StructuredIterator createNodeMergedIterator(Node node, DocumentContext context)
           throws Exception {
     ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
     StructuredIterator iterator;
+
+    // first check if the cache contains this node
+    if (iteratorCache.containsKey(node.toString())) {
+      return iteratorCache.get(node.toString());
+    }
+
     try {
       for (Node internalNode : node.getInternalNodes()) {
-        StructuredIterator internalIterator = createIterator(internalNode, context);
+        StructuredIterator internalIterator = createNodeMergedIterator(internalNode, context);
         internalIterators.add(internalIterator);
       }
 
@@ -362,25 +375,10 @@ public class StructuredRetrieval implements Retrieval {
     if (ContextualIterator.class.isInstance(iterator)) {
       ((ContextualIterator) iterator).setContext(context);
     }
-    return iterator;
-  }
 
-  public StructuredIterator createIterator(Node node) throws Exception {
-    ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
-    StructuredIterator iterator;
-    try {
-      for (Node internalNode : node.getInternalNodes()) {
-        StructuredIterator internalIterator = createIterator(internalNode);
-        internalIterators.add(internalIterator);
-      }
+    // we've created a new iterator - add to the cache for future nodes
+    iteratorCache.put(node.toString(), iterator);
 
-      iterator = index.getIterator(node);
-      if (iterator == null) {
-        iterator = featureFactory.getIterator(node, internalIterators);
-      }
-    } catch (Exception e) {
-      throw e;
-    }
     return iterator;
   }
 
@@ -455,51 +453,34 @@ public class StructuredRetrieval implements Retrieval {
    */
   public class NodeCountAggregator {
 
-    private int docCount;
-    private int termCount;
+    private long docCount;
+    private long termCount;
 
     public NodeCountAggregator(Node root) throws IOException, Exception {
-      // check if the root is a single term from a single posting list
-      // if so - get the part reader - cast to aggregate reader - return termCount( term )
-      if (((root.getOperator().equals("count"))
-              || (root.getOperator().equals("extents")))
-              && (root.getParameters().containsKey("part"))) {
+      docCount = 0;
+      termCount = 0;
 
-        String term = root.getDefaultParameter();
-        String part = root.getParameters().get("part");
-
-        if (index.containsPart(part)) {
-          StructuredIndexPartReader partReader = index.openLocalIndexPart(part);
-          if (partReader instanceof AggregateReader) {
-            termCount = ((AggregateReader) partReader).termCount(term);
-            docCount = ((AggregateReader) partReader).documentCount(term);
-          }
+      StructuredIterator structIterator = createIterator(root, null);
+      if (PositionIndexReader.AggregateIterator.class.isInstance(structIterator)) {
+        docCount = ((PositionIndexReader.AggregateIterator) structIterator).totalEntries();
+        termCount = ((PositionIndexReader.AggregateIterator) structIterator).totalPositions();
+      } else if (structIterator instanceof CountIterator) {
+        CountValueIterator iterator = (CountValueIterator) structIterator;
+        while (!iterator.isDone()) {
+          termCount += iterator.count();
+          docCount++;
+          iterator.next();
         }
       } else {
-
-        // otherwise we have to create an iterator + sum over count values
-        docCount = 0;
-        termCount = 0;
-
-        StructuredIterator structIterator = createIterator(root);
-        if (structIterator instanceof CountIterator) {
-          CountValueIterator iterator = (CountValueIterator) structIterator;
-          do {
-            termCount += iterator.count();
-            docCount++;
-            iterator.next();
-          } while (!iterator.isDone());
-        } else {
-          throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
-        }
+        throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
       }
     }
 
-    public int documentCount() throws IOException {
+    public long documentCount() throws IOException {
       return docCount;
     }
 
-    public int termCount() throws IOException {
+    public long termCount() throws IOException {
       return termCount;
     }
   }

@@ -173,7 +173,7 @@ public class TermSelectionValueModel implements ExpansionModel {
             Gram g = new Gram((String) a);
             try {
                 // Get df
-                int ft = reader.documentCount(g.term);
+                long ft = reader.documentCount(g.term);
                 double partone = java.lang.Math.pow(((ft + 0.0) / N), rt);
                 double parttwo = org.galagosearch.core.util.Math.binomialCoeff(R, rt);
                 g.score = partone * parttwo;
