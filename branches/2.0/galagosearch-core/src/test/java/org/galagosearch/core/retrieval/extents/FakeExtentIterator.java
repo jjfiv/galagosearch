@@ -46,7 +46,7 @@ public class FakeExtentIterator implements ExtentValueIterator, CountValueIterat
     return array;
   }
 
-  public int currentIdentifier() {
+  public int currentCandidate() {
     return data[index][0];
   }
 
@@ -64,12 +64,12 @@ public class FakeExtentIterator implements ExtentValueIterator, CountValueIterat
 
   public boolean hasMatch(int identifier) {
     if (isDone()) return false;
-    else return (currentIdentifier() == identifier);
+    else return (currentCandidate() == identifier);
   }
 
   public boolean moveTo(int identifier) throws IOException {
-    while (!isDone() && currentIdentifier() < identifier) {
-      next();
+    while (!isDone() && currentCandidate() < identifier) {
+      index++;
     }
     return hasMatch(identifier);
   }
@@ -92,7 +92,7 @@ public class FakeExtentIterator implements ExtentValueIterator, CountValueIterat
     if (isDone() && other.isDone()) {
       return 0;
     }
-    return currentIdentifier() - other.currentIdentifier();
+    return currentCandidate() - other.currentCandidate();
   }
 
   public String getEntry() throws IOException {

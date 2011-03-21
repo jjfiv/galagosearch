@@ -167,7 +167,7 @@ public class ExtentIndexReader extends KeyListReader {
     }
 
     public boolean hasMatch(int document) {
-      return (!isDone() && currentIdentifier() == document);
+      return (!isDone() && currentCandidate() == document);
     }
 
     // If we have skips - it's go time
@@ -224,7 +224,7 @@ public class ExtentIndexReader extends KeyListReader {
       }
     }
 
-    public int currentIdentifier() {
+    public int currentCandidate() {
       return currentDocument;
     }
 

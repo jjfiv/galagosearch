@@ -38,7 +38,10 @@ public class ExtentInsideIterator extends ExtentConjunctionIterator {
         super(new ExtentValueIterator[] { innerIterator, outerIterator });
         this.innerIterator = innerIterator;
         this.outerIterator = outerIterator;
-        findDocument();
+
+        if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+          loadExtents();
+        }
     }
 
     /**

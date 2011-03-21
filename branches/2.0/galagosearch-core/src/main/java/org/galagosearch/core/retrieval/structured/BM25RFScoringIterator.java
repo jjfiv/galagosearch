@@ -30,7 +30,7 @@ public class BM25RFScoringIterator extends ScoringFunctionIterator {
    */
   @Override
   public double score() {
-    if (iterator.currentIdentifier() == context.document) {
+    if (iterator.currentCandidate() == context.document) {
       return function.score(((CountIterator) iterator).count(), context.length);
     } else {
       return 0;

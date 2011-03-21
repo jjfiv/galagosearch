@@ -11,6 +11,9 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public class ExistentialIndicatorIterator extends IndicatorIterator {
 
+  private int document;
+  private boolean done;
+
   public ExistentialIndicatorIterator(Parameters p, ValueIterator[] children) {
     super(p, children);
     updateState();
@@ -20,7 +23,7 @@ public class ExistentialIndicatorIterator extends IndicatorIterator {
     int candidate = Integer.MAX_VALUE;
     for (ValueIterator iterator : iterators) {
       if (!iterator.isDone()) {
-      candidate = Math.min(candidate, iterator.currentIdentifier());
+      candidate = Math.min(candidate, iterator.currentCandidate());
       }
     }
     document = candidate;
@@ -29,32 +32,26 @@ public class ExistentialIndicatorIterator extends IndicatorIterator {
     }
   }
 
+  public int currentCandidate() {
+    return document;
+  }
+
+  public boolean isDone(){
+    return done;
+  }
+
   @Override
   public void reset() throws IOException {
-    super.reset();
+    for(ValueIterator i : iterators){
+      i.reset();
+    }
+    done = false;
     updateState();
   }
 
   @Override
   public boolean getStatus() {
     return (context.document == this.document);
-  }
-
-  /**
-   * Moves all iterators past the current internal document,
-   * but it ONLY moves docs in that condition;
-   * @return
-   * @throws IOException
-   */
-  public boolean next() throws IOException {
-    int newCandidate = Integer.MAX_VALUE;
-    for (ValueIterator iterator : iterators) {
-      while (iterator.currentIdentifier() <= document && !iterator.isDone()) {
-        iterator.next();
-      }
-    }
-    updateState();
-    return (!done);
   }
 
   public boolean moveTo(int identifier) throws IOException {
@@ -81,5 +78,22 @@ public class ExistentialIndicatorIterator extends IndicatorIterator {
       max = Math.max(max, iterator.totalEntries());
     }
     return max;
+  }
+
+  /**
+   * Moves all iterators past the current internal document,
+   * but it ONLY moves docs in that condition;
+   *
+   *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
+   *
+   * @return
+   * @throws IOException
+   */
+  public boolean next() throws IOException {
+    for (ValueIterator iterator : iterators) {
+      movePast(document);
+    }
+    updateState();
+    return (!done);
   }
 }

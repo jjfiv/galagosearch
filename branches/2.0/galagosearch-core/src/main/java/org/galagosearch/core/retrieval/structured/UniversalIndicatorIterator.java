@@ -13,6 +13,9 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public class UniversalIndicatorIterator extends IndicatorIterator {
 
+  private int document;
+  private boolean done;
+
   public UniversalIndicatorIterator(Parameters p, ValueIterator[] children) {
     super(p, children);
     // guarantees the correct order for the MoveIterators
@@ -22,47 +25,36 @@ public class UniversalIndicatorIterator extends IndicatorIterator {
         return (int) (it1.totalEntries() - it2.totalEntries());
       }
     });
-    try {
-      document = MoveIterators.moveAllToSameDocument(iterators);
-      done = (document == Integer.MAX_VALUE);
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
-    }
-  }
 
-  @Override
-  public void reset() throws IOException {
-    super.reset();
-    document = MoveIterators.moveAllToSameDocument(iterators);
+    document = MoveIterators.findMaximumDocument(iterators);
     done = (document == Integer.MAX_VALUE);
   }
 
-  @Override
+  public int currentCandidate() {
+    return document;
+  }
+
+  public void reset() throws IOException {
+    for (ValueIterator i : iterators) {
+      i.reset();
+    }
+    document = MoveIterators.findMaximumDocument(iterators);
+    done = (document == Integer.MAX_VALUE);
+  }
+
   public boolean getStatus() {
     return (context.document == this.document);
   }
 
-  /**
-   * Throws all iterators in a heap, moves the lowest one, then moves them all to the
-   * same location.
-   * @return
-   * @throws IOException
-   */
-  public boolean next() throws IOException {
-    PriorityQueue<ValueIterator> heap = new PriorityQueue<ValueIterator>();
-    heap.addAll(Arrays.asList(iterators));
-    heap.peek().next();
-    document = MoveIterators.moveAllToSameDocument(iterators);
-    done = (document == Integer.MAX_VALUE);
-    return (!done);
+  public boolean isDone() {
+    return done;
   }
 
   public boolean moveTo(int identifier) throws IOException {
-    boolean success = false;
     for (ValueIterator iterator : iterators) {
       iterator.moveTo(identifier);
     }
-    document = MoveIterators.moveAllToSameDocument(iterators);
+    document = MoveIterators.findMaximumDocument(iterators);
     return (document == identifier);
   }
 
@@ -81,5 +73,16 @@ public class UniversalIndicatorIterator extends IndicatorIterator {
       min = Math.min(min, iterator.totalEntries());
     }
     return min;
+  }
+
+  /**
+   * Moves the child iterators on until they find a common document
+   *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
+   */
+  public boolean next() throws IOException {
+    iterators[0].movePast(document);
+    document = MoveIterators.moveAllToSameDocument(iterators);
+    done = (document == Integer.MAX_VALUE);
+    return (!done);
   }
 }

@@ -86,7 +86,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
   private static class DocumentOrderComparator implements Comparator<ScoreValueIterator> {
 
     public int compare(ScoreValueIterator a, ScoreValueIterator b) {
-      return (a.currentIdentifier() - b.currentIdentifier());
+      return (a.currentCandidate() - b.currentCandidate());
     }
   }
 
@@ -117,7 +117,6 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
       return (a.totalEntries() < b.totalEntries() ? -1 : a.totalEntries() > b.totalEntries() ? 1 : 0);
     }
   }
-
   int requested;
   double threshold = 0;
   double potential;
@@ -214,7 +213,14 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    */
   @Override
   public boolean isDone() {
-    return (currentIdentifier() == Integer.MAX_VALUE);
+    return (currentCandidate() == Integer.MAX_VALUE);
+  }
+
+  public boolean hasMatch(int identifier) {
+    if ((!isDone()) && (currentCandidate() == identifier)) {
+      return true;
+    }
+    return false;
   }
 
   public long totalEntries() {
@@ -226,7 +232,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
   }
 
   @Override
-  public int currentIdentifier() {
+  public int currentCandidate() {
     int candidate = Integer.MAX_VALUE;
 
     // first check the topdocs
@@ -236,15 +242,18 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
     // Now look among the quorum iterators
     for (int i = 0; i < quorumIndex; i++) {
-      candidate = Math.min(candidate, scoreList.get(i).currentIdentifier());
+      candidate = Math.min(candidate, scoreList.get(i).currentCandidate());
     }
     lastReportedCandidate = candidate;
     return candidate;
   }
 
+  /**
+   *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
+   */
   public boolean next() throws IOException {
-    moveTo(currentIdentifier()+1);
-    return (isDone() == false);
+    movePast(currentCandidate());
+    return (!isDone());
   }
 
   @Override

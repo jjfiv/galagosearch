@@ -119,7 +119,7 @@ public class SparseFloatListReader extends KeyListReader {
       return context;
     }
 
-    public int currentIdentifier() {
+    public int currentCandidate() {
       return currentDocument;
     }
 

@@ -29,10 +29,6 @@ public class ScaleIterator extends TransformIterator {
       weights[i] = Double.parseDouble(weightStrings[i]);
     }
   }
-
-  public int currentIdentifier() {
-    return iterator.currentIdentifier();
-  }
   
   public double score() {
     return weight * ((ScoreIterator)iterator).score();

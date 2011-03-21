@@ -18,32 +18,8 @@ public class UnfilteredCombinationIterator extends ScoreCombinationIterator {
     super(parameters, childIterators);
   }
 
-  /**
-   * Moves all iterators at the current document to the next.
-   */
-  public boolean next() throws IOException {
-    int current = currentIdentifier();
-    boolean moved = false;
-    for (ScoreValueIterator iterator : iterators) {
-      if (!iterator.isDone() && iterator.currentIdentifier() == current) {
-        iterator.next();
-        moved = true;
-      }
-    }
-    return moved;
-  }
-
-  public int currentIdentifier() {
-    int candidate = Integer.MAX_VALUE;
-
-    for (ScoreValueIterator iterator : iterators) {
-      if (iterator.isDone()) {
-        continue;
-      }
-      candidate = Math.min(candidate, iterator.currentIdentifier());
-    }
-
-    return candidate;
+  public int currentCandidate() {
+    return MoveIterators.findMinimumDocument(iterators);
   }
 
   public boolean isDone() {
@@ -58,7 +34,7 @@ public class UnfilteredCombinationIterator extends ScoreCombinationIterator {
 
   public boolean hasMatch(int identifier) {
     for (ValueIterator iterator : iterators) {
-      if (!iterator.isDone() && iterator.currentIdentifier() == identifier) {
+      if (!iterator.isDone() && iterator.hasMatch(identifier)) {
         return true;
       }
     }
@@ -71,5 +47,18 @@ public class UnfilteredCombinationIterator extends ScoreCombinationIterator {
       max = Math.max(max, iterator.totalEntries());
     }
     return max;
+  }
+
+  /**
+   * Moves all iterators at the current document to the next.
+   *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
+   *  - implemented as movePast(current)
+   */
+  public boolean next() throws IOException {
+    int current = currentCandidate();
+    movePast(current);
+    int newcurrent = currentCandidate();
+    moveTo(newcurrent); // necessary for conjunctions
+    return (current != currentCandidate());
   }
 }

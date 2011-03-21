@@ -36,7 +36,7 @@ public class ScoreCombinationIteratorTest extends TestCase {
   public ScoreCombinationIterator mockIterator(Parameters parameters, ScoreValueIterator[] iterators) {
     return new ScoreCombinationIterator(parameters, iterators) {
 
-      public int currentIdentifier() {
+      public int currentCandidate() {
         throw new UnsupportedOperationException("Abstract method.");
       }
 

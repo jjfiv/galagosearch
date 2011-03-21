@@ -24,7 +24,7 @@ public class FakeScoreIterator implements ScoreValueIterator {
     this.index = 0;
   }
 
-  public int currentIdentifier() {
+  public int currentCandidate() {
     return docs[index];
   }
 
@@ -103,10 +103,10 @@ public class FakeScoreIterator implements ScoreValueIterator {
     if (isDone() && other.isDone()) {
       return 0;
     }
-    return currentIdentifier() - other.currentIdentifier();
+    return currentCandidate() - other.currentCandidate();
   }
 
   public String getEntry() throws IOException {
-    return currentIdentifier() + "," + score();
+    return currentCandidate() + "," + score();
   }
 }

@@ -85,13 +85,13 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         docLengths.reset();
         while (!extentIterator.isDone()) {
             count++;
-            docLengths.moveToKey(extentIterator.currentIdentifier());
-            assert (docLengths.getCurrentDocument() == extentIterator.currentIdentifier());
+            docLengths.moveToKey(extentIterator.currentCandidate());
+            assert (docLengths.getCurrentDocument() == extentIterator.currentCandidate());
             int length = docLengths.getCurrentLength();
             double probability = (0.0 + extentIterator.count())
                     / (0.0+length);
             tde = new TopDocsEntry();
-            tde.document = extentIterator.currentIdentifier();
+            tde.document = extentIterator.currentCandidate();
             tde.count = extentIterator.count();
             tde.doclength = length;
             tde.probability = probability;

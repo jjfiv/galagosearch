@@ -22,23 +22,76 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
       iterators[i] = extIterators[i];
     }
     this.extents = new ExtentArray();
-  }
 
-  // Move the lowest one forward first, then keep moving them forward
-  // until they all match on the id.
-  public boolean next() throws IOException {
-    if (!done) {
-      iterators[0].next();
-      findDocument();
+    document = MoveIterators.findMaximumDocument(iterators);
+
+    if(document == Integer.MAX_VALUE){
+      done = true;
     }
-    return (done == false);
   }
 
-  public int currentIdentifier() {
+
+  public int currentCandidate() {
     return document;
   }
 
-  public void findDocument() throws IOException {
+  public boolean isDone() {
+    return done;
+  }
+
+  /** moves all iterators to an identifier
+   *  - current document is the max of it's children
+   */
+  public boolean moveTo(int identifier) throws IOException {
+    extents.reset();
+
+    for (ValueIterator iterator : iterators) {
+      iterator.moveTo(identifier);
+      if(iterator.isDone()){
+        done = true;
+      }
+    }
+
+    document = MoveIterators.findMaximumDocument(iterators);
+
+    if( (!done) && (MoveIterators.allSameDocument(iterators)) ){
+      // try to load some extents (subclass does this)
+      extents.reset();
+      loadExtents();
+    }
+
+    return hasMatch(identifier);
+  }
+
+  public void reset() throws IOException {
+    for (ExtentIterator iterator : iterators) {
+      iterator.reset();
+    }
+    document = MoveIterators.findMaximumDocument(iterators);
+    done = false;
+    extents.reset();
+  }
+
+  public long totalEntries() {
+    long min = Long.MAX_VALUE;
+    for (ValueIterator iterator : iterators) {
+      min = Math.min(min, iterator.totalEntries());
+    }
+    return min;
+  }
+
+
+  /**
+   * Moves the child iterators on until they find a common document
+   *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
+   */
+  public boolean next() throws IOException {
+    iterators[0].movePast(document);
+    findDocument();
+    return (! done);
+  }
+
+  private void findDocument() throws IOException {
     while (!done) {
       // find a document that might have some matches
       document = MoveIterators.moveAllToSameDocument(iterators);
@@ -57,36 +110,7 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
       if (extents.getPositionCount() > 0) {
         break;
       }
-      iterators[0].next();
+      iterators[0].movePast(document);
     }
-  }
-
-  public boolean isDone() {
-    return done;
-  }
-
-  public boolean moveTo(int identifier) throws IOException {
-    for (ValueIterator iterator : iterators) {
-      iterator.moveTo(identifier);
-    }
-    findDocument();
-    return (document == identifier);
-  }
-
-  public void reset() throws IOException {
-    for (ExtentIterator iterator : iterators) {
-      iterator.reset();
-    }
-
-    done = false;
-    findDocument();
-  }
-
-  public long totalEntries() {
-    long min = Long.MAX_VALUE;
-    for (ValueIterator iterator : iterators) {
-      min = Math.min(min, iterator.totalEntries());
-    }
-    return min;
   }
 }

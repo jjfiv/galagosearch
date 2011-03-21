@@ -65,9 +65,10 @@ public abstract class ExtentCombinationIterator implements ExtentValueIterator, 
 
   /**
    * Returns whether or not this iterator is currently evaluating the identifier passed.
+   *  - And checks that there is some extent in the extent array
    */
   public boolean hasMatch(int identifier) {
-    return (currentIdentifier() == identifier);
+    return ((currentCandidate() == identifier) && (extents.getPositionCount() > 0));
   }
 
   /**
@@ -97,7 +98,7 @@ public abstract class ExtentCombinationIterator implements ExtentValueIterator, 
     if (isDone() && other.isDone()) {
       return 0;
     }
-    return currentIdentifier() - other.currentIdentifier();
+    return currentCandidate() - other.currentCandidate();
   }
 
   /**

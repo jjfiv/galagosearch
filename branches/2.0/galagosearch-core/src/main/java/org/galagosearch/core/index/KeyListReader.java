@@ -42,7 +42,7 @@ public abstract class KeyListReader extends KeyValueReader {
       if (isDone() && other.isDone()) {
         return 0;
       }
-      return currentIdentifier() - other.currentIdentifier();
+      return currentCandidate() - other.currentCandidate();
     }
 
     public long getByteLength() throws IOException {
@@ -58,7 +58,7 @@ public abstract class KeyListReader extends KeyValueReader {
     }
 
     public boolean hasMatch(int id) {
-      return (!isDone() && currentIdentifier() == id);
+      return (!isDone() && currentCandidate() == id);
     }
 
     public void movePast(int id) throws IOException {

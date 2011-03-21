@@ -42,7 +42,7 @@ public abstract class KeyToListIterator implements ValueIterator {
     return iterator.isDone();
   }
 
-  public int currentIdentifier() {
+  public int currentCandidate() {
     try {
       return Utility.toInt(iterator.getKeyBytes());
     } catch (IOException ioe) {
@@ -51,7 +51,7 @@ public abstract class KeyToListIterator implements ValueIterator {
   }
 
   public boolean hasMatch(int identifier) {
-    return (currentIdentifier() == identifier);
+    return (currentCandidate() == identifier);
   }
 
   public int compareTo(ValueIterator other) {
@@ -64,6 +64,6 @@ public abstract class KeyToListIterator implements ValueIterator {
     if (isDone() && other.isDone()) {
       return 0;
     }
-    return currentIdentifier() - other.currentIdentifier();
+    return currentCandidate() - other.currentCandidate();
   }
 }

@@ -35,30 +35,8 @@ public abstract class ExtentDisjunctionIterator extends ExtentCombinationIterato
     }
   }
 
-  public int currentIdentifier() {
+  public int currentCandidate() {
     return document;
-  }
-
-  public boolean next() throws IOException {
-    // find all activeIterators on the current id and move them forward
-    while (activeIterators.size() > 0 && activeIterators.peek().currentIdentifier() == document) {
-      ExtentValueIterator iter = activeIterators.poll();
-      iter.next();
-
-      if (!iter.isDone()) {
-        activeIterators.offer(iter);
-      }
-    }
-
-    if (!isDone()) {
-      document = activeIterators.peek().currentIdentifier();
-      extents.reset();
-      loadExtents();
-      return true;
-    } else {
-      document = Integer.MAX_VALUE;
-      return false;
-    }
   }
 
   public boolean isDone() {
@@ -76,8 +54,18 @@ public abstract class ExtentDisjunctionIterator extends ExtentCombinationIterato
     for (ValueIterator iterator : activeIterators) {
       iterator.moveTo(identifier);
     }
-    document = activeIterators.peek().currentIdentifier();
-    return (document == identifier);
+    if (!isDone()) {
+      document = activeIterators.peek().currentCandidate();
+      for (ValueIterator iterator : activeIterators) {
+        iterator.moveTo(document); // necessary for conjunctions
+      }
+      extents.reset();
+      loadExtents();
+      return true;
+    } else {
+      document = Integer.MAX_VALUE;
+      return false;
+    }
   }
 
   public void reset() throws IOException {
@@ -98,5 +86,31 @@ public abstract class ExtentDisjunctionIterator extends ExtentCombinationIterato
       max = Math.max(max, iterator.totalEntries());
     }
     return max;
+  }
+
+
+  /**
+   *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
+   */
+  public boolean next() throws IOException {
+    // find all activeIterators on the current id and move them forward
+    while (activeIterators.size() > 0 && activeIterators.peek().currentCandidate() == document) {
+      ExtentValueIterator iter = activeIterators.poll();
+      iter.movePast(document);
+
+      if (!iter.isDone()) {
+        activeIterators.offer(iter);
+      }
+    }
+
+    if (!isDone()) {
+      document = activeIterators.peek().currentCandidate();
+      extents.reset();
+      loadExtents();
+      return true;
+    } else {
+      document = Integer.MAX_VALUE;
+      return false;
+    }
   }
 }

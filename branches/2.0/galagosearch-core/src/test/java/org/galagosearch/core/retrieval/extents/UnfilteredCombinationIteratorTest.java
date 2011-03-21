@@ -35,13 +35,13 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
         UnfilteredCombinationIterator instance = new UnfilteredCombinationIterator(anyParameters,
                                                                                    iterators);
 
-        assertEquals(2, instance.currentIdentifier());
+        assertEquals(2, instance.currentCandidate());
         instance.movePast(2);
-        assertEquals(4, instance.currentIdentifier());
+        assertEquals(4, instance.currentCandidate());
         instance.movePast(4);
-        assertEquals(5, instance.currentIdentifier());
+        assertEquals(5, instance.currentCandidate());
         instance.movePast(5);
-        assertEquals(6, instance.currentIdentifier());
+        assertEquals(6, instance.currentCandidate());
     }
 
     public void testHasMatch() {
@@ -92,7 +92,7 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
                                                                                    iterators);
 
         instance.movePast(5);
-        assertEquals(6, instance.currentIdentifier());
+        assertEquals(6, instance.currentCandidate());
     }
 
     public void testMoveTo() throws Exception {
@@ -105,6 +105,6 @@ public class UnfilteredCombinationIteratorTest extends TestCase {
                                                                                    iterators);
 
         instance.moveTo(5);
-        assertEquals(5, instance.currentIdentifier());
+        assertEquals(5, instance.currentCandidate());
     }
 }

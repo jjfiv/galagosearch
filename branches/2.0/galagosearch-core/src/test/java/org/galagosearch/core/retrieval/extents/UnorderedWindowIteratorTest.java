@@ -26,6 +26,7 @@ public class UnorderedWindowIteratorTest extends TestCase {
         Parameters twoParam = new Parameters();
         twoParam.add("width", "2");
         UnorderedWindowIterator instance = new UnorderedWindowIterator(twoParam, iters);
+
         ExtentArray array = instance.extents();
         assertFalse(instance.isDone());
 
@@ -73,7 +74,9 @@ public class UnorderedWindowIteratorTest extends TestCase {
         UnorderedWindowIterator instance = new UnorderedWindowIterator(twoParam, iters);
         ExtentArray array = instance.extents();
         assertEquals(0, array.getPositionCount());
-        assertTrue(instance.isDone());
+        assertTrue( ! instance.isDone() );
+        instance.movePast( instance.currentCandidate() );
+        assertTrue( instance.isDone() );
     }
 
     public void testMultipleDocuments() throws IOException {

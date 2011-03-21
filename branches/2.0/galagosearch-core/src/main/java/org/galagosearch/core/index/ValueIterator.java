@@ -9,7 +9,7 @@ import org.galagosearch.core.retrieval.structured.StructuredIterator;
  */
 public interface ValueIterator extends BoundedIterator, Comparable<ValueIterator> {
 
-  int currentIdentifier();
+  int currentCandidate();
 
   boolean hasMatch(int identifier);
 

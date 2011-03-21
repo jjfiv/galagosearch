@@ -20,7 +20,18 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
     super(evIterators);
     this.width = (int) parameters.getAsDefault("width", -1);
     this.overlap = parameters.get("overlap", false);
-    findDocument();
+
+    if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+      loadExtents();
+    }
+  }
+
+  public void reset() throws IOException {
+    super.reset();
+
+    if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+      loadExtents();
+    }
   }
 
   public void loadExtents() {

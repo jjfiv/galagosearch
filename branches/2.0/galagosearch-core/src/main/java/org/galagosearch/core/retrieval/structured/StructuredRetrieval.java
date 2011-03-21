@@ -115,7 +115,7 @@ public class StructuredRetrieval implements Retrieval {
     ArrayList<ScoredDocument> list = new ArrayList<ScoredDocument>();
     while (!iterator.isDone()) {
       if (iterator.getStatus()) {
-        list.add(new ScoredDocument(iterator.currentIdentifier(), 1.0));
+        list.add(new ScoredDocument(iterator.currentCandidate(), 1.0));
       }
       iterator.next();
     }
@@ -145,20 +145,22 @@ public class StructuredRetrieval implements Retrieval {
     DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
 
     while (!iterator.isDone()) {
-      int document = iterator.currentIdentifier();
-      lengthsIterator.moveToKey(document);
-      int length = lengthsIterator.getCurrentLength();
-      // This context is shared among all scorers
-      context.document = document;
-      context.length = length;
-      double score = iterator.score();
-      CallTable.increment("scored");
-      if (queue.size() <= requested || queue.peek().score < score) {
-        ScoredDocument scoredDocument = new ScoredDocument(document, score);
-        queue.add(scoredDocument);
+      int document = iterator.currentCandidate();
+      if (iterator.hasMatch(document)) {
+        lengthsIterator.moveToKey(document);
+        int length = lengthsIterator.getCurrentLength();
+        // This context is shared among all scorers
+        context.document = document;
+        context.length = length;
+        double score = iterator.score();
+        CallTable.increment("scored");
+        if (queue.size() <= requested || queue.peek().score < score) {
+          ScoredDocument scoredDocument = new ScoredDocument(document, score);
+          queue.add(scoredDocument);
 
-        if (queue.size() > requested) {
-          queue.poll();
+          if (queue.size() > requested) {
+            queue.poll();
+          }
         }
       }
       iterator.next();
@@ -246,7 +248,7 @@ public class StructuredRetrieval implements Retrieval {
     DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
 
     while (!iterator.isDone()) {
-      int document = iterator.currentIdentifier();
+      int document = iterator.currentCandidate();
       lengthsIterator.moveToKey(document);
       int length = lengthsIterator.getCurrentDocument();
 

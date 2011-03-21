@@ -125,7 +125,7 @@ public class TopDocsReader extends KeyListReader {
       return (index >= numEntries);
     }
 
-    public int currentIdentifier() {
+    public int currentCandidate() {
       if (currentTopDoc != null) {
         return currentTopDoc.document;
       } else {

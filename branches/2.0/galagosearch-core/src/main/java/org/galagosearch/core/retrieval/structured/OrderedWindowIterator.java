@@ -18,7 +18,18 @@ public class OrderedWindowIterator extends ExtentConjunctionIterator {
   public OrderedWindowIterator(Parameters parameters, ExtentValueIterator[] iterators) throws IOException {
     super(iterators);
     this.width = (int) parameters.getAsDefault("width", -1);
-    findDocument();
+
+    if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+      loadExtents();
+    }
+  }
+
+  public void reset() throws IOException {
+    super.reset();
+
+    if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+      loadExtents();
+    }
   }
 
   public void loadExtents() {

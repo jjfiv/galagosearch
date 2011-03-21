@@ -313,7 +313,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return extentArray;
     }
 
-    public int currentIdentifier() {
+    public int currentCandidate() {
       return currentDocument;
     }
 
@@ -550,7 +550,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return documentIndex >= documentCount;
     }
 
-    public int currentIdentifier() {
+    public int currentCandidate() {
       return currentDocument;
     }
 

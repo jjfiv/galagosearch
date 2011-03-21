@@ -30,8 +30,6 @@ public abstract class IndicatorIterator implements ContextualIterator, ValueIter
 
   protected DocumentContext context;
   protected ValueIterator[] iterators;
-  protected boolean done;
-  protected int document;
 
   public IndicatorIterator(Parameters p, ValueIterator[] childIterators) {
     this.iterators = childIterators;
@@ -43,13 +41,6 @@ public abstract class IndicatorIterator implements ContextualIterator, ValueIter
 
   public void setContext(DocumentContext context) {
     this.context = context;
-  }
-
-  public void reset() throws IOException {
-    for (ValueIterator iterator : iterators) {
-      iterator.reset();
-    }
-    done = false;
   }
 
   /**
@@ -64,16 +55,8 @@ public abstract class IndicatorIterator implements ContextualIterator, ValueIter
 
   public abstract boolean getStatus();
 
-  public int currentIdentifier() {
-    return document;
-  }
-
   public boolean hasMatch(int identifier) {
-    return (document == identifier);
-  }
-
-  public boolean isDone() {
-    return done;
+    return (currentCandidate() == identifier);
   }
 
   public void movePast(int identifier) throws IOException {
@@ -90,6 +73,6 @@ public abstract class IndicatorIterator implements ContextualIterator, ValueIter
     if (isDone() && other.isDone()) {
       return 0;
     }
-    return currentIdentifier() - other.currentIdentifier();
+    return currentCandidate() - other.currentCandidate();
   }
 }

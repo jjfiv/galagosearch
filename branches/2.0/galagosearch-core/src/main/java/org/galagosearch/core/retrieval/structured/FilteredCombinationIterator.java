@@ -18,17 +18,8 @@ public class FilteredCombinationIterator extends ScoreCombinationIterator {
     super(parameters, childIterators);
   }
 
-  public int currentIdentifier() {
-    int candidate = 0;
-
-    for (ValueIterator iterator : iterators) {
-      if (iterator.isDone()) {
-        return Integer.MAX_VALUE;
-      }
-      candidate = Math.max(candidate, iterator.currentIdentifier());
-    }
-
-    return candidate;
+  public int currentCandidate() {
+    return MoveIterators.findMaximumDocument(iterators);
   }
 
   public boolean hasMatch(int document) {
@@ -50,15 +41,19 @@ public class FilteredCombinationIterator extends ScoreCombinationIterator {
     return false;
   }
 
-  public boolean next() throws IOException {
-    return (moveTo(currentIdentifier()+1));
-  }
-
   public long totalEntries() {
     long max = 0;
     for (ValueIterator iterator : iterators) {
       max = Math.max(max, iterator.totalEntries());
     }
     return max;
+  }
+
+  /**
+   *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
+   */
+  public boolean next() throws IOException {
+    MoveIterators.moveAllToSameDocument(iterators);
+    return (! isDone());
   }
 }

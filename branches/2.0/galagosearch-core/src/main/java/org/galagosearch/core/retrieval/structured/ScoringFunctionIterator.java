@@ -20,11 +20,9 @@ import org.galagosearch.core.util.CallTable;
  */
 public class ScoringFunctionIterator extends TransformIterator {
 
-  boolean done;
   ScoringFunction function;
   // parameter sweep functions
   ScoringFunction[] functions;
-  long total;
 
   public ScoringFunctionIterator(CountValueIterator iterator, ScoringFunction function) throws IOException {
     super(iterator);
@@ -47,7 +45,7 @@ public class ScoringFunctionIterator extends TransformIterator {
 
     // Used in counting # of score calls. Uncomment if you want to track that.
     //CallTable.increment("score_req");
-    if (iterator.currentIdentifier() == dc.document) {
+    if (iterator.currentCandidate() == dc.document) {
       count = ((CountIterator)iterator).count();
     }
     return function.score(count, dc.length);
@@ -58,7 +56,7 @@ public class ScoringFunctionIterator extends TransformIterator {
 
     // Used in counting # of score calls. Uncomment if you want to track that.
     //CallTable.increment("score_req");
-    if (iterator.currentIdentifier() == context.document) {
+    if (iterator.currentCandidate() == context.document) {
       count = ((CountIterator)iterator).count();
     }
     return function.score(count, context.length);
@@ -71,7 +69,7 @@ public class ScoringFunctionIterator extends TransformIterator {
     }
 
     int count = 0;
-    if (iterator.currentIdentifier() == context.document) {
+    if (iterator.currentCandidate() == context.document) {
       count = ((CountIterator)iterator).count();
     }
     TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();

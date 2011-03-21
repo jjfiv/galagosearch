@@ -23,7 +23,6 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
   double weightSum;
   ScoreValueIterator[] iterators;
   boolean done;
-  int document;
   // parameter sweep stuff
   double[][] weightLists = null; // double[parameterID][nodeID]
   double[] weightSums = null; // double[parameterID]
@@ -92,7 +91,7 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
     if (isDone() && other.isDone()) {
       return 0;
     }
-    return currentIdentifier() - other.currentIdentifier();
+    return currentCandidate() - other.currentCandidate();
   }
 
   public void movePast(int identifier) throws IOException {
@@ -128,10 +127,6 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
     return total / weightSum;
   }
 
-  public int currentIdentifier() {
-    return document;
-  }
-
   public boolean isDone() {
     return done;
   }
@@ -140,10 +135,6 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
     for (StructuredIterator iterator : iterators) {
       iterator.reset();
     }
-  }
-
-  public boolean hasMatch(int identifier) {
-    return (document == identifier);
   }
 
   public double minimumScore() {

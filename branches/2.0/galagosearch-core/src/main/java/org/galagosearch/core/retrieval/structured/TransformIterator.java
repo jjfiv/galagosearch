@@ -37,16 +37,12 @@ public abstract class TransformIterator implements ScoreValueIterator {
     return iterator.isDone();
   }
 
-  public int currentIdentifier() {
-    return iterator.currentIdentifier();
+  public int currentCandidate() {
+    return iterator.currentCandidate();
   }
 
   public boolean hasMatch(int identifier) {
     return iterator.hasMatch(identifier);
-  }
-
-  public boolean next() throws IOException {
-    return iterator.next();
   }
 
   public boolean moveTo(int identifier) throws IOException {
@@ -75,6 +71,13 @@ public abstract class TransformIterator implements ScoreValueIterator {
     if (isDone() && other.isDone()) {
       return 0;
     }
-    return currentIdentifier() - other.currentIdentifier();
+    return currentCandidate() - other.currentCandidate();
+  }
+
+  /**
+   *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
+   */
+  public boolean next() throws IOException {
+    return iterator.next();
   }
 }

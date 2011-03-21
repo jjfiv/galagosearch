@@ -34,8 +34,8 @@ public class BinaryCountIterator implements CountValueIterator
     return iterator.isDone();
   }
 
-  public int currentIdentifier() {
-    return iterator.currentIdentifier();
+  public int currentCandidate() {
+    return iterator.currentCandidate();
   }
 
   public boolean hasMatch(int identifier) {

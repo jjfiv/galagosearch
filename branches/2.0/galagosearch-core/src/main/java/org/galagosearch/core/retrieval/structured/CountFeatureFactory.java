@@ -29,7 +29,6 @@ static String[][] sOperatorLookup = {
     {OrderedWindowIterator.class.getName(), "od"},
     {UnorderedWindowIterator.class.getName(), "unordered"},
     {UnorderedWindowIterator.class.getName(), "uw"},
-    {UnorderedDocumentWindowIterator.class.getName(), "and"},
     {UniversalIndicatorIterator.class.getName(), "all"},
     {ExistentialIndicatorIterator.class.getName(), "any"},
     {BinaryCountIterator.class.getName(), "bcount"}

@@ -53,12 +53,12 @@ public class ScoringFunctionIteratorTest extends TestCase {
         
         assertFalse( instance.isDone() );
         
-        assertEquals( instance.currentIdentifier(), 1 );
+        assertEquals( instance.currentCandidate(), 1 );
         assertEquals( 4.0, instance.score(new DocumentContext(1, 3)));
         instance.movePast( 1 );
 
         assertFalse( instance.isDone() );
-        assertEquals( instance.currentIdentifier(), 5 );
+        assertEquals( instance.currentCandidate(), 5 );
         assertEquals( 5.0, instance.score(new DocumentContext(2, 5)));
         
         assertFalse( instance.isDone() );

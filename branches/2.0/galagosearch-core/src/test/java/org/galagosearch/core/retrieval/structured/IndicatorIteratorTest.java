@@ -98,7 +98,7 @@ public class IndicatorIteratorTest extends TestCase {
         ExistentialIndicatorIterator eii = (ExistentialIndicatorIterator) retrieval.createIterator(parsedTree, context);
 
         // initial state
-        assertEquals(2, eii.currentIdentifier());
+        assertEquals(2, eii.currentCandidate());
         context.document = 2;
         assertTrue(eii.hasMatch(2));
         assertEquals(1, eii.getIndicatorStatus());
@@ -106,7 +106,7 @@ public class IndicatorIteratorTest extends TestCase {
         assertFalse(eii.moveTo(3));
         context.document = 3;
         assertFalse(eii.getStatus());
-        assertEquals(4, eii.currentIdentifier());
+        assertEquals(4, eii.currentCandidate());
         context.document = 4;
         assertTrue(eii.getStatus());
 
@@ -128,7 +128,7 @@ public class IndicatorIteratorTest extends TestCase {
         UniversalIndicatorIterator uii = (UniversalIndicatorIterator) retrieval.createIterator(parsedTree, context);
 
         // initial state
-        assertEquals(0, uii.currentIdentifier());
+        assertEquals(0, uii.currentCandidate());
         context.document = 0;
         assertTrue(uii.hasMatch(0));
         assertEquals(1, uii.getIndicatorStatus());
@@ -136,12 +136,12 @@ public class IndicatorIteratorTest extends TestCase {
         assertFalse(uii.moveTo(1));
         context.document = 1;
         assertFalse(uii.getStatus());
-        assertEquals(2, uii.currentIdentifier());
+        assertEquals(2, uii.currentCandidate());
         context.document = 2;
         assertTrue(uii.getStatus());
 
         assertTrue(uii.next());
-        assertEquals(4, uii.currentIdentifier());
+        assertEquals(4, uii.currentCandidate());
         assertFalse(uii.next());
         assertTrue(uii.isDone());
 

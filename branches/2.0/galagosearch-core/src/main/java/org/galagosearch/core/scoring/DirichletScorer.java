@@ -33,7 +33,7 @@ public class DirichletScorer implements ScoringFunction {
                     count += iterator.count();
                     iterator.next();
                 }
-		iterator.reset();
+            iterator.reset();
             }
             if (count > 0) {
                 background = (double) count / (double) collectionLength;

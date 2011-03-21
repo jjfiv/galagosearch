@@ -47,7 +47,7 @@ public class NullExtentIterator implements ExtentValueIterator, CountValueIterat
     return 0;
   }
 
-  public int currentIdentifier() {
+  public int currentCandidate() {
     return Integer.MAX_VALUE;
   }
 
