@@ -1,7 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.retrieval.query;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
@@ -21,92 +21,101 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor, irmarc
  */
-public class NodeType {
-    private Class<? extends StructuredIterator> nodeClass;
+public class NodeType implements Serializable {
 
-    public NodeType(Class<? extends StructuredIterator> nodeClass) {
-        this.nodeClass = nodeClass;
+  private Class<? extends StructuredIterator> nodeClass;
+
+  public NodeType(Class<? extends StructuredIterator> nodeClass) {
+    this.nodeClass = nodeClass;
+  }
+
+  public Class<? extends StructuredIterator> getIteratorClass() {
+    return nodeClass;
+  }
+
+  public Class[] getInputs() throws Exception {
+    Constructor constructor = null;
+    try {
+      constructor = getConstructor();
+    } catch (Exception e) {
+      return new Class[0];
     }
-    
-    public Class<? extends StructuredIterator> getIteratorClass() {
-        return nodeClass;
+    return constructor.getParameterTypes();
+  }
+
+  public Class[] getParameterTypes(int length) throws Exception {
+    Class[] inputs = getInputs();
+    if (inputs == null) {
+      return new Class[0];
     }
-    
-    public Class[] getInputs() throws Exception {
-        Constructor constructor = null;
-        try {
-            constructor = getConstructor();
-        } catch(Exception e) {
-            return new Class[0];
+    if (inputs.length == 0) {
+      return new Class[0];
+    }
+    if (inputs[inputs.length - 1].isArray()) {
+      if (length < inputs.length - 1) {
+        // Not enough parameters.
+        return null;
+      } else {
+        Class[] result = new Class[length];
+        // Copy in classes for the first few parameters.
+        for (int i = 0; i < inputs.length - 1; ++i) {
+          result[i] = inputs[i];
         }
-        return constructor.getParameterTypes();
-    }
-    
-    public Class[] getParameterTypes(int length) throws Exception {
-        Class[] inputs = getInputs();
-        if (inputs == null) return new Class[0];
-        if (inputs.length == 0) return new Class[0];
-        if (inputs[inputs.length-1].isArray()) {
-            if (length < inputs.length-1) {
-                // Not enough parameters.
-                return null;
-            } else {
-                Class[] result = new Class[length];
-                // Copy in classes for the first few parameters.
-                for (int i = 0; i < inputs.length-1; ++i) {
-                    result[i] = inputs[i];
-                }
-                // Apply the array class type to the remaining slots.
-                for (int i = inputs.length-1; i < result.length; ++i) {
-                    result[i] = inputs[inputs.length-1].getComponentType();
-                }
-                return result;
-            }
-        } else {
-            if (length != inputs.length) {
-                return null;
-            } else {
-                return inputs;
-            }
+        // Apply the array class type to the remaining slots.
+        for (int i = inputs.length - 1; i < result.length; ++i) {
+          result[i] = inputs[inputs.length - 1].getComponentType();
         }
+        return result;
+      }
+    } else {
+      if (length != inputs.length) {
+        return null;
+      } else {
+        return inputs;
+      }
     }
-    
-    public boolean isStructuredIteratorOrArray(Class c) {
-        if (c.isArray() && StructuredIterator.class.isAssignableFrom(c.getComponentType()))
-            return true;
-        if (StructuredIterator.class.isAssignableFrom(c))
-            return true;
-        return false;
+  }
+
+  public boolean isStructuredIteratorOrArray(Class c) {
+    if (c.isArray() && StructuredIterator.class.isAssignableFrom(c.getComponentType())) {
+      return true;
     }
-    
-    public Constructor getConstructor() throws Exception {
-        for (Constructor constructor : nodeClass.getConstructors()) {
-            Class[] types = constructor.getParameterTypes();
-         
-            // The constructor needs at least one parameter.
-            if (types.length < 1)
-                continue;
-            // The first class needs to be a Parameters object.
-            if (!Parameters.class.isAssignableFrom(types[0]))
-                continue;
-            // Check arguments for valid argument types.
-            boolean validTypes = true;
-            for (int i = 1; i < types.length; ++i) {
-                if (!isStructuredIteratorOrArray(types[i])) {
-                    validTypes = false;
-                    break;
-                }
-            }
-            // If everything looks good, return this constructor.
-            if (validTypes) {
-                return constructor;
-            }
+    if (StructuredIterator.class.isAssignableFrom(c)) {
+      return true;
+    }
+    return false;
+  }
+
+  public Constructor getConstructor() throws Exception {
+    for (Constructor constructor : nodeClass.getConstructors()) {
+      Class[] types = constructor.getParameterTypes();
+
+      // The constructor needs at least one parameter.
+      if (types.length < 1) {
+        continue;
+      }
+      // The first class needs to be a Parameters object.
+      if (!Parameters.class.isAssignableFrom(types[0])) {
+        continue;
+      }
+      // Check arguments for valid argument types.
+      boolean validTypes = true;
+      for (int i = 1; i < types.length; ++i) {
+        if (!isStructuredIteratorOrArray(types[i])) {
+          validTypes = false;
+          break;
         }
-        
-        throw new Exception("No reasonable constructors were found for " + nodeClass.toString());
+      }
+      // If everything looks good, return this constructor.
+      if (validTypes) {
+        return constructor;
+      }
     }
 
-    public String toString() {
-	return nodeClass.getName();
-    }
+    throw new Exception("No reasonable constructors were found for " + nodeClass.toString());
+  }
+
+  public String toString() {
+    return nodeClass.getName();
+  }
 }

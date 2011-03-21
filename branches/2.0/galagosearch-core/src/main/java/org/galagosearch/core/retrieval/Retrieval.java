@@ -9,7 +9,7 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
-import org.galagosearch.core.retrieval.structured.StructuredRetrievalProxy;
+import org.galagosearch.core.retrieval.structured.RetiredProxy;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
 import org.ggf.drmaa.DrmaaException;
@@ -35,10 +35,6 @@ public interface Retrieval extends Runnable {
     public Parameters getAvailableParts(String retrievalGroup) throws IOException;
 
     public NodeType getNodeType(Node node, String retrievalGroup) throws Exception;
-    // provides a way to instantiate a node, given a retrieval object that has an index and
-    // featurefactory
-
-    public StructuredIterator createIterator(Node node) throws Exception;
 
     /**
      * Returns the count of the expression provided to the method. Therefore the

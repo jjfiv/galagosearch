@@ -69,10 +69,6 @@ public class MultiRetrieval implements Retrieval {
     }
   }
 
-  public StructuredIterator createIterator(Node node) throws Exception {
-    throw new UnsupportedOperationException("Semantics to instantiate iterator are unclear");
-  }
-
   /**
    *
    * Runs a query across all retrieval objects

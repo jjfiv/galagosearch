@@ -1,11 +1,13 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval;
 
+import java.io.Serializable;
+
 /**
  *
  * @author trevor, irmarc, sjh
  */
-public class ScoredDocument implements Comparable<ScoredDocument> {
+public class ScoredDocument implements Comparable<ScoredDocument>, Serializable {
 
   public ScoredDocument() {
     this(0, 0);

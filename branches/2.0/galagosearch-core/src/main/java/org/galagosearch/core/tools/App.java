@@ -15,13 +15,9 @@ import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
-import org.galagosearch.core.retrieval.Retrieval;
-import org.galagosearch.core.retrieval.query.Node;
-import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
 import org.galagosearch.tupleflow.FileOrderedReader;
-import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.execution.JobExecutor;
@@ -356,12 +352,12 @@ public class App {
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
     KeyIterator iterator = reader.getIterator();
     while (!iterator.isDone()) {
-	ValueIterator vIter = iterator.getValueIterator();
-	while (!vIter.isDone()) {
-	    output.println(vIter.getEntry());
-	    vIter.next();
-	}
-	iterator.nextKey();
+      ValueIterator vIter = iterator.getValueIterator();
+      while (!vIter.isDone()) {
+        output.println(vIter.getEntry());
+        vIter.next();
+      }
+      iterator.nextKey();
     }
   }
 
@@ -477,13 +473,13 @@ public class App {
     }
 
     Job job;
-    if(p.get("1", true)){
-        MakeCorpus mc = new MakeCorpus();
-        job = mc.getMakeCorpusJob(p);
+    if (p.get("1", true)) {
+      MakeCorpus mc = new MakeCorpus();
+      job = mc.getMakeCorpusJob(p);
     } else {
-        MakeCorpus mc = new MakeCorpus();
-        job = mc.getMakeCorpusJob(p);
-      }
+      MakeCorpus mc = new MakeCorpus();
+      job = mc.getMakeCorpusJob(p);
+    }
 
     boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
     if (printJob) {
@@ -505,102 +501,101 @@ public class App {
 
   /*
   private void handleMergeIndexes(String[] args) throws Exception {
-    // Remove 'merge-index' from the command.
-    args = Utility.subarray(args, 1);
+  // Remove 'merge-index' from the command.
+  args = Utility.subarray(args, 1);
 
-    if (args.length <= 0) {
-      commandHelp("merge-index");
-      return;
-    }
+  if (args.length <= 0) {
+  commandHelp("merge-index");
+  return;
+  }
 
-    // handle --links and --stemming flags
-    String[][] filtered = Utility.filterFlags(args);
+  // handle --links and --stemming flags
+  String[][] filtered = Utility.filterFlags(args);
 
-    String[] flags = filtered[0];
-    String[] nonFlags = filtered[1];
-    String newIndex = nonFlags[0];
-    String[] oldIndexes = Utility.subarray(nonFlags, 1);
+  String[] flags = filtered[0];
+  String[] nonFlags = filtered[1];
+  String newIndex = nonFlags[0];
+  String[] oldIndexes = Utility.subarray(nonFlags, 1);
 
-    Parameters p = new Parameters(flags);
-    p.set("command", Utility.join(args, " "));
-    p.set("outputIndex", newIndex);
-    for (String input : oldIndexes) {
-      p.add("inputIndexes", input);
-    }
+  Parameters p = new Parameters(flags);
+  p.set("command", Utility.join(args, " "));
+  p.set("outputIndex", newIndex);
+  for (String input : oldIndexes) {
+  p.add("inputIndexes", input);
+  }
 
-    // ensure galagoTemp has been set
-    p.set("galagoTemp", Utility.createGalagoTempDir(p.get("galagoTemp", "")).getAbsolutePath());
+  // ensure galagoTemp has been set
+  p.set("galagoTemp", Utility.createGalagoTempDir(p.get("galagoTemp", "")).getAbsolutePath());
 
-    MergeParallelIndexShards merger = new MergeParallelIndexShards();
-    Job job = merger.getJob(p);
+  MergeParallelIndexShards merger = new MergeParallelIndexShards();
+  Job job = merger.getJob(p);
 
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-    if (printJob) {
-      System.out.println(job.toString());
-      return;
-    }
+  boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
+  if (printJob) {
+  System.out.println(job.toString());
+  return;
+  }
 
-    int hash = (int) p.get("distrib", 0); // doesn't really matter in this case.
-    if (hash > 0) // all other numbers don't make any sense
-    {
-      job.properties.put("hashCount", Integer.toString(hash));
-    }
+  int hash = (int) p.get("distrib", 0); // doesn't really matter in this case.
+  if (hash > 0) // all other numbers don't make any sense
+  {
+  job.properties.put("hashCount", Integer.toString(hash));
+  }
 
-    ErrorStore store = new ErrorStore();
-    JobExecutor.runLocally(job, store, p);
-    if (store.hasStatements()) {
-      output.println(store.toString());
-    }
+  ErrorStore store = new ErrorStore();
+  JobExecutor.runLocally(job, store, p);
+  if (store.hasStatements()) {
+  output.println(store.toString());
+  }
   }
   
 
   private void handleNgram(String[] args) throws Exception {
-    if (args.length < 3) { // ngram index input
-      commandHelpNgram();
-      return;
-    }
-
-    String[][] filtered = Utility.filterFlags(args);
-
-    String[] flags = filtered[0];
-    String[] nonFlags = filtered[1];
-    String indexName = nonFlags[1];
-    String[] docs = Utility.subarray(nonFlags, 2);
-
-    Parameters p = new Parameters(flags);
-    p.add("indexPath", indexName);
-    for (String doc : docs) {
-      p.add("inputPaths", doc);
-    }
-
-    Job job;
-    if (nonFlags[0].contains("se")) {
-      BuildNgramIndexSE build = new BuildNgramIndexSE();
-      job = build.getIndexJob(p);
-    } else {
-      BuildNgramIndex build = new BuildNgramIndex();
-      job = build.getIndexJob(p);
-    }
-
-    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-    if (printJob) {
-      System.out.println(job.toString());
-      return;
-    }
-
-    int hash = (int) p.get("distrib", 0);
-    if (hash > 0) {
-      job.properties.put("hashCount", Integer.toString(hash));
-    }
-
-    ErrorStore store = new ErrorStore();
-    JobExecutor.runLocally(job, store, p);
-    if (store.hasStatements()) {
-      output.println(store.toString());
-    }
+  if (args.length < 3) { // ngram index input
+  commandHelpNgram();
+  return;
   }
-  */
 
+  String[][] filtered = Utility.filterFlags(args);
+
+  String[] flags = filtered[0];
+  String[] nonFlags = filtered[1];
+  String indexName = nonFlags[1];
+  String[] docs = Utility.subarray(nonFlags, 2);
+
+  Parameters p = new Parameters(flags);
+  p.add("indexPath", indexName);
+  for (String doc : docs) {
+  p.add("inputPaths", doc);
+  }
+
+  Job job;
+  if (nonFlags[0].contains("se")) {
+  BuildNgramIndexSE build = new BuildNgramIndexSE();
+  job = build.getIndexJob(p);
+  } else {
+  BuildNgramIndex build = new BuildNgramIndex();
+  job = build.getIndexJob(p);
+  }
+
+  boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
+  if (printJob) {
+  System.out.println(job.toString());
+  return;
+  }
+
+  int hash = (int) p.get("distrib", 0);
+  if (hash > 0) {
+  job.properties.put("hashCount", Integer.toString(hash));
+  }
+
+  ErrorStore store = new ErrorStore();
+  JobExecutor.runLocally(job, store, p);
+  if (store.hasStatements()) {
+  output.println(store.toString());
+  }
+  }
+   */
   private void handleBatchSearch(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelpBatchSearch();
@@ -617,6 +612,57 @@ public class App {
     }
 
     BatchParameterSweep.run(Utility.subarray(args, 1), output);
+  }
+
+  private void handleServer(Parameters p) throws Exception {
+    Search search = new Search(p);
+    int port = (int) p.get("port", 0);
+    if (port == 0) {
+      port = Utility.getFreePort();
+    } else {
+      if (!Utility.isFreePort(port)) {
+        throw new IOException("Tried to bind to port " + port + " which is in use.");
+      }
+    }
+    Server server = new Server(port);
+    server.addHandler(new StreamContextHandler(search, "/stream"));
+
+  }
+
+  private void handleServer(String[] args) throws Exception {
+    if (args.length <= 1) {
+      commandHelp("search");
+      return;
+    }
+
+    // This is put in there to handle ONLY a parameter file, since
+    // if you're loading multiple indexes you need to use a parameter file for it.
+    if (args.length == 2 && args[1].endsWith(".xml")) {
+      File f = new File(args[1]);
+      Parameters p = new Parameters(f);
+      handleServer(p);
+
+    } else {
+      String[][] filtered = Utility.filterFlags(Utility.subarray(args, 1));
+      String[] flags = filtered[0];
+      String[] inputs = filtered[1];
+      String indexPath = inputs[0];
+      String[] corpora = Utility.subarray(inputs, 1);
+
+      // Any flag marked '--parameters' marks a parameters file.
+      // We trim that part of the flag off so that the Parameters object will
+      // load it as a parameters file.
+      for (int i = 0; i < flags.length; ++i) {
+        flags[i] = flags[i].replace("--parameters=", "");
+      }
+
+      Parameters p = new Parameters(flags);
+      p.add("index", indexPath);
+      for (String corpus : corpora) {
+        p.add("corpus", corpus);
+      }
+      handleServer(p);
+    }
   }
 
   private void handleSearch(Parameters p) throws Exception {
@@ -680,14 +726,14 @@ public class App {
     BatchSearch.xCount(args, output);
   }
 
-    public void handleDocCount(String[] args) throws Exception {
+  public void handleDocCount(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelp("doccount");
       return;
     }
 
     BatchSearch.docCount(args, output);
- }
+  }
 
   public void handleEval(String[] args) throws IOException {
     org.galagosearch.core.eval.Main.internalMain(Utility.subarray(args, 1), output);
@@ -946,9 +992,9 @@ public class App {
       throw new UnsupportedOperationException("Need to re-implement");
       //handleMergeIndexes(args);
     } else if (command.equals("ngram")) {
-	//handleNgram(args);
+      //handleNgram(args);
     } else if (command.equals("ngram-se")) {
-	//handleNgram(args);
+      //handleNgram(args);
     } else if (command.equals("pagerank")) {
       throw new UnsupportedOperationException("Need to re-implement");
       //PageRankApp.main(args);

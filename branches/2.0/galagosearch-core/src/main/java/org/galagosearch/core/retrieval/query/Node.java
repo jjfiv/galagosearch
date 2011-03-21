@@ -1,6 +1,7 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.query;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,10 +15,10 @@ import org.galagosearch.tupleflow.Parameters;
  * be modified using StructuredQuery.copy, or analyzed by using StructuredQuery.walk.
  * Once the query is in the proper form, the query is converted into a tree of iterators
  * that can be evaluated.</p>
- * 
+ *
  * @author trevor
  */
-public class Node {
+public class Node implements Serializable {
     /// The query operator represented by this node, like "combine", "weight", "syn", etc.
     private String operator;
 

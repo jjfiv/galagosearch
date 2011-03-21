@@ -5,6 +5,8 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,10 +34,12 @@ public class RetrievalFactory {
    */
   static public Retrieval instance(String path, Parameters parameters) throws IOException {
     if (path.startsWith("http://")) {
-      return new StructuredRetrievalProxy(path, parameters);
+      // create a proxy, using the StructuredRetrievalProxy as the InvocationHandler
+      InvocationHandler ih = new StructuredRetrievalProxy(path, parameters);
+      return (Retrieval) Proxy.newProxyInstance(Retrieval.class.getClassLoader(),
+                            new Class[] { Retrieval.class }, ih);
     } else {
       // check for drmaa
-
       return new StructuredRetrieval(path, parameters);
     }
   }
