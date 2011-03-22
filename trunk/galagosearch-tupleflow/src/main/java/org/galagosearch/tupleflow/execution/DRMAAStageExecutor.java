@@ -246,15 +246,15 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
       hostname = "localhost";
     }
     if (hostname.contains("swarm")) {
-      setMemoryUsage("-Xmx3g", "-Xms3g");
+      setMemoryUsage("-Xmx4g", "-Xms4g");
       addNativeSpecification = true;
-      nativeSpecification_short = "-q all.q";
-      nativeSpecification_long = "-q long.q -l long=TRUE";
+      nativeSpecification_short = "-l mem_free=4G -w n";
+      nativeSpecification_long = "-l long=TRUE -l mem_free=4G -w n";
     } else if (hostname.contains("sydney")) {
       setMemoryUsage("-Xmx3500m", "-Xms3500m");
       addNativeSpecification = true;
-      nativeSpecification_short = "-q all.q -pe thread.all 2";
-      nativeSpecification_long = "-q all.q -pe thread.all 2";
+      nativeSpecification_short = "-l mem_free=3700mb -w n";
+      nativeSpecification_long = "-l mem_free=3700mb -w n";
     }
 
     // customize based upon arguments
