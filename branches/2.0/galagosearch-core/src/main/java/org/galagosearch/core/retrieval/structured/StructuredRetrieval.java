@@ -246,7 +246,8 @@ public class StructuredRetrieval implements Retrieval {
 
     // now there should be an iterator at the root of this tree
     HashMap<String, PriorityQueue<ScoredDocument>> queues = new HashMap();
-    DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
+    DocumentLengthsReader.KeyIterator lengthsIterator = null;
+    lengthsIterator = index.getLengthsIterator();
 
     while (!iterator.isDone()) {
       int document = iterator.currentCandidate();

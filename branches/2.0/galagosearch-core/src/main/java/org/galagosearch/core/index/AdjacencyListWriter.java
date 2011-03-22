@@ -45,15 +45,9 @@ public class AdjacencyListWriter implements
     }
 
     public void addDestination(byte[] destination) throws IOException {
-      if (idType.equals("int")) {
-        int converted = Utility.toInt(destination);
-        data.add(converted - lastID);
-        lastID = converted;
-      } else {
-        // need to know how many bytes to grab later
-        data.add(destination.length);
-        data.add(destination);
-      }
+      int converted = Utility.toInt(destination);
+      data.add(converted - lastID);
+      lastID = converted;
       numNeighbors++;
     }
 
@@ -75,15 +69,12 @@ public class AdjacencyListWriter implements
   }
   IndexWriter writer;
   InvertedList list = null;
-  String idType;
 
   /** Creates a new instance of AdjacencyListWriter */
   public AdjacencyListWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
     writer = new IndexWriter(parameters);
     writer.getManifest().add("readerClass", AdjacencyListReader.class.getName());
     writer.getManifest().add("writerClass", getClass().getName());
-    idType = parameters.getXML().get("idType", "bytes");
-    writer.getManifest().add("idType", idType);
   }
 
   public void processSource(byte[] source) throws IOException {
@@ -116,7 +107,6 @@ public class AdjacencyListWriter implements
       list = new InvertedList(object.source);
       lastSource = object.source;
     }
-    
     list.addDestination(object.destination);
     list.addWeight(object.weight);
   }

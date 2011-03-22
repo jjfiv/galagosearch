@@ -12,7 +12,7 @@ import org.galagosearch.tupleflow.Utility;
  *
  * @author irmarc
  */
-public class AdjacencyNameReader extends KeyValueReader {
+public class AdjacencyNameReader extends NameReader {
 
   public AdjacencyNameReader(GenericIndexReader reader) throws IOException {
     super(reader);
@@ -38,6 +38,11 @@ public class AdjacencyNameReader extends KeyValueReader {
       throw new UnsupportedOperationException(
               "Index doesn't support operator: " + node.getOperator());
     }
+  }
+
+  @Override
+  public String get(int identifier) throws IOException {
+    return Utility.toString(reader.getValueBytes(Utility.fromInt(identifier)));
   }
 
   public class KeyIterator extends KeyValueReader.Iterator {

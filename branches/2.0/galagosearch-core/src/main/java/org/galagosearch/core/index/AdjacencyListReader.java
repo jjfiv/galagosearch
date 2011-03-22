@@ -51,11 +51,7 @@ public class AdjacencyListReader extends KeyListReader {
     }
 
     public ValueIterator getValueIterator() throws IOException {
-      if (idType.equals("int")) {
-        return new IntegerListIterator(iterator);
-      } else {
-        return new DataListIterator(iterator);
-      }
+      return new IntegerListIterator(iterator);
     }
   }
 
@@ -181,118 +177,13 @@ public class AdjacencyListReader extends KeyListReader {
       throw new UnsupportedOperationException("Not supported yet.");
     }
   }
-  
-  public class Neighbor {
-    public Neighbor(byte[] id, double w) { identifier = id; weight = w; }
-    public byte[] identifier;
-    double weight;
-    public String toString() { return "<"+Utility.toString(identifier) + "," + weight + ">"; }
-  }
-
-  public class DataListIterator extends KeyListReader.ListIterator
-          implements DataIterator<Neighbor>, ValueIterator {
-
-    VByteInput stream;
-    int neighborhood;
-    int index;
-    int currentIdentifier;
-    Neighbor currentNeighbor;
-    DocumentContext context;
-
-    public DataListIterator(GenericIndexReader.Iterator iterator) throws IOException {
-      reset(iterator);
-    }
-
-    void read() throws IOException {
-      index += 1;
-
-      if (index < neighborhood) {
-        int size = stream.readInt();
-        byte[] buffer = new byte[size];
-        stream.readFully(buffer);
-        double score = stream.readDouble();
-        currentNeighbor = new Neighbor(buffer, score);
-        currentIdentifier++;
-      }
-    }
-
-    public String getEntry() {
-      StringBuilder builder = new StringBuilder();
-
-      builder.append(getKey());
-      builder.append(",");
-      builder.append(currentNeighbor.toString());
-      return builder.toString();
-    }
-
-    public boolean next() throws IOException {
-      read();
-      if (!isDone()) {
-        return true;
-      }
-      return false;
-    }
-
-    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
-      DataStream buffered = iterator.getValueStream();
-      stream = new VByteInput(buffered);
-      neighborhood = stream.readInt();
-      index = -1;
-      key = iterator.getKey();
-      currentIdentifier = 0;
-      if (neighborhood > 0) {
-        read();
-      }
-    }
-
-    public void reset() throws IOException {
-      throw new UnsupportedOperationException("This iterator does not reset without the parent KeyIterator.");
-    }
-
-    public int currentCandidate() {
-      return currentIdentifier;
-    }
-
-    public boolean hasMatch(int id) {
-      return id == currentIdentifier;
-    }
-
-    public boolean moveTo(int index) throws IOException {
-      while (!isDone() && index > currentIdentifier) {
-        read();
-      }
-      return hasMatch(index);
-    }
-
-    public void movePast(int index) throws IOException {
-      while (!isDone() && index >= currentIdentifier) {
-        read();
-      }
-    }
-
-    public boolean isDone() {
-      return index >= neighborhood;
-    }
-
-    public long totalEntries() {
-      return neighborhood;
-    }
-
-    public Neighbor getData() {
-      return currentNeighbor;
-    }
-  }
-
-  String idType;
 
   public AdjacencyListReader(String pathname) throws FileNotFoundException, IOException {
     super(pathname);
-    idType = reader.getManifest().get("idType");
   }
 
   public AdjacencyListReader(GenericIndexReader reader) {
     super(reader);
-    idType = reader.getManifest().get("idType");
   }
 
 
@@ -301,20 +192,12 @@ public class AdjacencyListReader extends KeyListReader {
   }
 
   public ValueIterator getListIterator() throws IOException {
-    if (idType.equals("int")) {
       return new IntegerListIterator(reader.getIterator());
-    } else {
-      return new DataListIterator(reader.getIterator());
-    }
   }
 
   public ValueIterator getScores(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
-    if (idType.equals("int")) {
-      return new IntegerListIterator(reader.getIterator());
-    } else {
-      return new DataListIterator(reader.getIterator());
-    }
+    return new IntegerListIterator(iterator);
   }
 
   public void close() throws IOException {
@@ -323,7 +206,7 @@ public class AdjacencyListReader extends KeyListReader {
 
   public Map<String, NodeType> getNodeTypes() {
     HashMap<String, NodeType> nodeTypes = new HashMap<String, NodeType>();
-    nodeTypes.put("neighbors", new NodeType(Iterator.class));
+    nodeTypes.put("neighbors", new NodeType(IntegerListIterator.class));
     return nodeTypes;
   }
 
