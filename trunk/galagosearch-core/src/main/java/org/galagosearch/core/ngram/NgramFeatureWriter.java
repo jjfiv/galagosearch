@@ -29,13 +29,12 @@ public class NgramFeatureWriter implements Processor<NgramFeature> {
   
   public NgramFeatureWriter(TupleFlowParameters parameters) throws IOException, NoSuchAlgorithmException{
     File folder = new File(parameters.getXML().get("filterFolder"));
-    writer =  getTemporaryWriter(folder);
+    writer =  getTemporaryWriter(folder + File.separator + "features." + parameters.getInstanceId());
   }
   
-  private FileOrderedWriter<NgramFeature> getTemporaryWriter(File dir) throws IOException {
-    File temporary = File.createTempFile("features", "", dir);
-    FileOrderedWriter<NgramFeature> writer = new FileOrderedWriter<NgramFeature>(temporary, new NgramFeature.FileFilePositionOrder());
-    return writer;
+  private FileOrderedWriter<NgramFeature> getTemporaryWriter(String file) throws IOException {
+    FileOrderedWriter<NgramFeature> tempWriter = new FileOrderedWriter<NgramFeature>(file, new NgramFeature.FileFilePositionOrder());
+    return tempWriter;
   }
 
   long count = 0;

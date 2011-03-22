@@ -218,6 +218,7 @@ public class BuildNgramIndexSE {
     this.threshold = (int) p.get("threshold", 2);
     this.indexPath = new File(p.get("indexPath")).getAbsolutePath(); // fail if no path.
     this.filterTempDir = p.get("galagoTemp") + File.separator + "filterData";
+    this.filterTempDir = new File(this.filterTempDir).getAbsolutePath();
 
     ArrayList<String> inputPaths = new ArrayList();
     List<Value> vs = p.list("inputPaths");
