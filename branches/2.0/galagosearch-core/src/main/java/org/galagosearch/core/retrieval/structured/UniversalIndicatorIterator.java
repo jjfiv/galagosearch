@@ -11,7 +11,7 @@ import org.galagosearch.tupleflow.Parameters;
  * Implements the #all indicator operator.
  * @author irmarc
  */
-public class UniversalIndicatorIterator extends IndicatorIterator {
+public class UniversalIndicatorIterator extends AbstractIndicator {
 
   private int document;
   private boolean done;

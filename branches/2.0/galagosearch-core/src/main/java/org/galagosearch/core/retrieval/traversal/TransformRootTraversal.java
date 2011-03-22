@@ -7,7 +7,7 @@ import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.CountIterator;
-import org.galagosearch.core.retrieval.structured.IndicatorIterator;
+import org.galagosearch.core.retrieval.structured.AbstractIndicator;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.core.retrieval.structured.ScoreIterator;
 import org.galagosearch.core.retrieval.structured.ScoringFunctionIterator;
@@ -148,6 +148,6 @@ public class TransformRootTraversal implements Traversal {
       return false;
     }
     Class outputClass = nodeType.getIteratorClass();
-    return IndicatorIterator.class.isAssignableFrom(outputClass);
+    return AbstractIndicator.class.isAssignableFrom(outputClass);
   }
 }

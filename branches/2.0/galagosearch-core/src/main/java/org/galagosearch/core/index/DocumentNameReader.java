@@ -61,7 +61,7 @@ public class DocumentNameReader extends NameReader {
 
   public Map<String, NodeType> getNodeTypes() {
     HashMap<String, NodeType> types = new HashMap<String, NodeType>();
-    types.put("names", new NodeType(Iterator.class));
+    types.put("names", new NodeType(ValueIterator.class));
     return types;
   }
 

@@ -15,9 +15,9 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public class BinaryCountIterator implements CountValueIterator
 {
-  IndicatorIterator iterator;
+  AbstractIndicator iterator;
 
-  public BinaryCountIterator(Parameters p, IndicatorIterator i) {
+  public BinaryCountIterator(Parameters p, AbstractIndicator i) {
     iterator = i;
   }
 

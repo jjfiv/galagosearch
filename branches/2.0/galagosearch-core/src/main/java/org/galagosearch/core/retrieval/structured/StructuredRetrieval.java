@@ -112,7 +112,7 @@ public class StructuredRetrieval implements Retrieval {
 
     // construct the query iterators
     System.err.printf("Running boolean query: %s\n", queryTree.toString());
-    IndicatorIterator iterator = (IndicatorIterator) createIterator(queryTree, context);
+    AbstractIndicator iterator = (AbstractIndicator) createIterator(queryTree, context);
     ArrayList<ScoredDocument> list = new ArrayList<ScoredDocument>();
     while (!iterator.isDone()) {
       if (iterator.getStatus()) {

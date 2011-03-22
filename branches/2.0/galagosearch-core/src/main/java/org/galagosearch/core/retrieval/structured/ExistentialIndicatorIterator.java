@@ -9,7 +9,7 @@ import org.galagosearch.tupleflow.Parameters;
  * Implements the #any indicator operator.
  * @author irmarc
  */
-public class ExistentialIndicatorIterator extends IndicatorIterator {
+public class ExistentialIndicatorIterator extends AbstractIndicator {
 
   private int document;
   private boolean done;

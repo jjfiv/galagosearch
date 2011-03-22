@@ -107,6 +107,7 @@ public class AdjacencyListReader extends KeyListReader {
       stream = new VByteInput(buffered);
       neighborhood = stream.readInt();
       index = -1;
+      this.key = iterator.getKey();
       currentIdentifier = 0;
       if (neighborhood > 0) {
         read();
