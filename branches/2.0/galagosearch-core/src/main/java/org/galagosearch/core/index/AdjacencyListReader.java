@@ -197,7 +197,10 @@ public class AdjacencyListReader extends KeyListReader {
 
   public ValueIterator getScores(String term) throws IOException {
     GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
-    return new IntegerListIterator(iterator);
+    if (iterator != null) {
+      return new IntegerListIterator(iterator);
+    }
+    return null;
   }
 
   public void close() throws IOException {

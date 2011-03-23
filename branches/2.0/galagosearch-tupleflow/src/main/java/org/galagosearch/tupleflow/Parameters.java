@@ -498,6 +498,37 @@ public class Parameters implements Serializable {
     return new Parser();
   }
 
+    /**
+     * Recursive method built to return a flat representation of
+     * this parameter object. It's difficult to traverse the Parameters
+     * if you don't know the internal nodes - it should be an easier representation
+     * to deal with.
+     */
+    public ArrayList<ArrayList<String>> flatten() {
+	ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
+	recursivelyFlatten(_data, new ArrayList<String>(), paths);
+	return paths;
+    }
+
+    private void recursivelyFlatten(Value v, ArrayList<String> parentPath, ArrayList<ArrayList<String>> paths) {
+
+	if (v.toString().equals("")) {
+	    Map<String, List<Value>> map = v.map();
+	    for (String key : map.keySet()) {
+		ArrayList<String> copy = (ArrayList<String>) parentPath.clone();
+		copy.add(key);
+		for (Value inner : map.get(key)) {
+		    recursivelyFlatten(inner, copy, paths);
+		}
+	    }
+	} else {
+	    ArrayList<String> copy = (ArrayList<String>) parentPath.clone();
+	    copy.add(v.toString());
+	    paths.add(copy);
+	}
+    }
+
+
   /**
    * Gets the value for this key.  You can retrieve a nested value
    * using a path syntax, e.g. get("a/b/c").

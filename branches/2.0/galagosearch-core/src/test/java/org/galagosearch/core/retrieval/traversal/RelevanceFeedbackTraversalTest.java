@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
-import org.galagosearch.core.retrieval.structured.RetrievalFactory;
+import org.galagosearch.core.retrieval.RetrievalFactory;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.core.tools.App;
 import org.galagosearch.core.tools.AppTest;

@@ -1,6 +1,7 @@
 
 package org.galagosearch.core.retrieval.structured;
 
+import org.galagosearch.core.retrieval.RetrievalFactory;
 import java.io.File;
 import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.Retrieval;

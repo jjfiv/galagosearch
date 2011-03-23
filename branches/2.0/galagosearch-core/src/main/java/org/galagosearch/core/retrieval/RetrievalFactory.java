@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.galagosearch.core.retrieval.structured;
+package org.galagosearch.core.retrieval;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import org.galagosearch.core.retrieval.MultiRetrieval;
 import org.galagosearch.core.retrieval.Retrieval;
+import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.core.retrieval.structured.StructuredRetrievalProxy;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
 
@@ -47,8 +49,9 @@ public class RetrievalFactory {
   static public Retrieval instance(Parameters parameters) throws IOException, Exception {
     List<Value> indexes = parameters.list("index");
 
-    String path, id;
-
+    String path;
+    ArrayList<String> ids = new ArrayList<String>();
+    
     // first check if there is only one index provided.
     if (indexes.size() == 1) {
       Value value = indexes.get(0);
@@ -63,27 +66,29 @@ public class RetrievalFactory {
     // otherwise we have a multi-index
     HashMap<String, ArrayList<Retrieval>> retrievals = new HashMap();
     for (Value value : indexes) {
-      id = "all";
+      ids.clear();
+      ids.add("all");
       if (value.containsKey("path")) {
         path = value.get("path").toString();
         if (value.containsKey("id")) {
-          id = value.get("id").toString();
+          ids.addAll(value.stringList("id"));
         }
       } else {
         path = value.toString();
       }
-      if (!retrievals.containsKey(id)) {
-        retrievals.put(id, new ArrayList<Retrieval>());
-      }
 
+      // Load up the groups for this index
       try {
         Retrieval r = instance(path, parameters);
-        retrievals.get(id).add(r);
-        if (!id.equals("all")) {
-          retrievals.get("all").add(r); // Always put it in default as well
+        for (String id : ids) {
+          if (!retrievals.containsKey(id)) {
+            retrievals.put(id, new ArrayList<Retrieval>());
+          }
+          retrievals.get(id).add(r);
         }
       } catch (Exception e) {
-        System.err.println("Unable to load index (" + id + ") at path " + path + ": " + e.getMessage());
+        System.err.println("Unable to load index (" + parameters.toString() + ") at path " + path + ": " + e.getMessage());
+        e.printStackTrace(System.err);
       }
     }
 

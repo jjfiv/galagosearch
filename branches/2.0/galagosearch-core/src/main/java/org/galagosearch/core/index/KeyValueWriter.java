@@ -48,7 +48,6 @@ public abstract class KeyValueWriter<T> implements Processor<T> {
 
     public void close() throws IOException {
         writer.close();
-        System.err.printf("Wrote %d entries.\n", count);
     }
 
     public void process(T i) throws IOException {

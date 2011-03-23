@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
@@ -195,7 +198,8 @@ public class MultiRetrieval implements Retrieval {
       }
       retrievalStatistics.put(retGroup, mergeStats(stats));
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
-      retrievalParts.put(retGroup, mergeParts(parts));
+      Parameters merged = mergeParts(parts);
+      retrievalParts.put(retGroup, merged);
 
       featureFactories.put(retGroup, new RankedFeatureFactory(retrievalStatistics.get(retGroup)));
     }
@@ -218,12 +222,82 @@ public class MultiRetrieval implements Retrieval {
 
   }
 
-  // this function intersects the set of availiable parts
-  // ASSUMPTION: part names correspond to unique index part concepts (that could be merged)
+  // This takes the intersection of parts from constituent retrievals, and determines which
+  // part/operator pairs are ok to search on given the current retrievalGroup. We assume that
+  // a part is valid if it has at least one usable operator, and an operator is usable if the
+  // iteratorClass that implements it is the same across all constituents under a given part.
   private Parameters mergeParts(List<Parameters> ps) {
+
+    // First get all iteratorClasses for all part/operator pairs.
+    HashMap<String, HashMap<String, ArrayList<String>>> handlers = new HashMap<String, HashMap<String, ArrayList<String>>>();
+    for (Parameters p : ps) {
+      ArrayList<ArrayList<String>> paths = p.flatten();
+      for (ArrayList<String> path : paths) {
+        if (path.get(0).equals("nodeType")) {
+          if (!handlers.containsKey(path.get(1))) {
+            handlers.put(path.get(1), new HashMap<String, ArrayList<String>>());
+          }
+          HashMap<String, ArrayList<String>> map = handlers.get(path.get(1));
+          if (!map.containsKey(path.get(2))) {
+            map.put(path.get(2), new ArrayList<String>());
+          }
+          map.get(path.get(2)).add(path.get(3));
+        }
+      }
+    }
+
+    // Ok, now any handler path that has more than 1 iteratorClass has to be tossed to keep consistency
+    // during retrieval
+    ArrayList<ArrayList<String>> remainingHandlers = new ArrayList<ArrayList<String>>();
+    for (String partName : handlers.keySet()) {
+      HashMap<String, ArrayList<String>> map = handlers.get(partName);
+      for (String operator : map.keySet()) {
+        if (map.get(operator).size() == 1) {
+          // Only one type of iteratorClass, so this operator's good
+          ArrayList<String> good = new ArrayList<String>();
+          good.add(partName);
+          good.add(operator);
+          good.add(map.get(operator).get(0));
+          remainingHandlers.add(good);
+        }
+      }
+    }
+
+    // Now use the remainingHandlers to determine what goes in the merged
+    // parameter set
+    Parameters intersection = new Parameters();
+    for (ArrayList<String> path : remainingHandlers) {
+      // Add the part
+      intersection.add("part", path.get(0));
+      // Now add the nodeType
+      intersection.add("nodeType/" + path.get(0) + "/" + path.get(1), path.get(2));
+    }
+
+    return intersection;
+  }
+
+  private class PathComp implements Comparator<ArrayList<String>> {
+
+    public int compare(ArrayList<String> a1, ArrayList<String> a2) {
+      int result = (a1.size() - a2.size());
+      if (result != 0) {
+        return result;
+      }
+
+      for (int i = 0; i < a1.size(); i++) {
+        if (!a1.get(i).equals(a2.get(i))) {
+          return -1;
+        }
+      }
+      return 0;
+    }
+  }
+
+  private Parameters mergeParts2(List<Parameters> ps) {
     Parameters intersection = ps.get(0).clone();
     for (String partName : intersection.stringList("part")) {
       for (Parameters p : ps) {
+        System.err.printf("Parts: %s\n", p.toString());
         // if some index does not contain the correct part - delete it and all node Classes
         if (!p.stringList("part").contains(partName)) {
           for (Value v : intersection.list("part")) {

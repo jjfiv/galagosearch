@@ -8,7 +8,7 @@ import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
-import org.galagosearch.core.retrieval.structured.RetrievalFactory;
+import org.galagosearch.core.retrieval.RetrievalFactory;
 import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;

@@ -12,7 +12,7 @@ import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
-import org.galagosearch.core.retrieval.structured.RetrievalFactory;
+import org.galagosearch.core.retrieval.RetrievalFactory;
 import org.galagosearch.core.store.DocumentIndexStore;
 import org.galagosearch.core.store.DocumentStore;
 import org.galagosearch.core.store.NullStore;

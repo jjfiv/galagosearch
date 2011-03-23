@@ -1,6 +1,7 @@
 package org.galagosearch.core.retrieval.structured;
 
 import gnu.trove.TObjectDoubleHashMap;
+import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -13,14 +14,14 @@ public class BoostingIterator extends TransformIterator {
 
   double beta;
 
-  public BoostingIterator(Parameters p, AbstractIndicator inner) {
-    super(inner);
+  public BoostingIterator(Parameters p, IndicatorIterator inner) {
+    super((ValueIterator)inner);
     beta = p.get("beta", 0.5D);
   }
 
 
   public double score() {
-    if (((AbstractIndicator) iterator).getStatus()) {
+    if (((IndicatorIterator) iterator).getStatus()) {
       return beta;
     } else {
       return 0.0;
@@ -28,7 +29,7 @@ public class BoostingIterator extends TransformIterator {
   }
 
   public double score(DocumentContext context) {
-    if (((AbstractIndicator) iterator).getStatus()) {
+    if (((IndicatorIterator) iterator).getStatus()) {
       return beta;
     } else {
       return 0.0;
