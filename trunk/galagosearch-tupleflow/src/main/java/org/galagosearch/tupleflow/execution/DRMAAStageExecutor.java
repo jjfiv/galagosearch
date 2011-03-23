@@ -376,10 +376,14 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
         if (addNativeSpecification) {
           if (jobPaths.size() == 1) {
             // if there's only one job - long queue
-            template.setNativeSpecification(nativeSpecification_long);
+            if(nativeSpecification_long.length() > 0){
+              template.setNativeSpecification(nativeSpecification_long);
+            }
           } else {
             // otherwise use the shortt queue
+            if(nativeSpecification_short.length() > 0){
             template.setNativeSpecification(nativeSpecification_short);
+            }
           }
         }
 
