@@ -37,7 +37,13 @@ public class NgramFeatureThresholder extends StandardStep<NgramFeature, NgramFea
     if ((current.size() > 0) &&
         (Utility.compare(ngram.feature, current.get(0).feature) == 0)){
       current.add(ngram);
+
+      while(current.size() > threshold ){
+        processor.process( current.remove(0) );
+      }
+
     } else {
+      
       if(current.size() >= threshold){
         for(NgramFeature n : current){
           processor.process( n );
