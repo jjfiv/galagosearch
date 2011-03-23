@@ -7,9 +7,11 @@ package org.galagosearch.core.retrieval.structured;
 
 import org.galagosearch.core.retrieval.traversal.TransformRootTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
+import org.galagosearch.core.retrieval.traversal.FullDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
 import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
+import org.galagosearch.core.retrieval.traversal.PRMSTraversal;
 import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
 import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
@@ -33,7 +35,6 @@ static String[][] sOperatorLookup = {
     {UnorderedWindowIterator.class.getName(), "uw"},
     {ScaleIterator.class.getName(), "scale"},
     {UnfilteredCombinationIterator.class.getName(), "rm"},
-    {UnfilteredCombinationIterator.class.getName(), "seqdep"},
     {UnfilteredCombinationIterator.class.getName(), "bm25rf"},
     {MaxScoreCombinationIterator.class.getName(), "maxscore"},
     {UniversalIndicatorIterator.class.getName(), "all"},
@@ -49,8 +50,10 @@ static String[][] sOperatorLookup = {
     {BoostingIterator.class.getName(), "boost"}
   };
   static String[] sTraversalList = {
-    TransformRootTraversal.class.getName(),
+    PRMSTraversal.class.getName(),
     SequentialDependenceTraversal.class.getName(),
+    FullDependenceTraversal.class.getName(),
+    TransformRootTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
     WeightConversionTraversal.class.getName(),
     IndriWindowCompatibilityTraversal.class.getName(),
