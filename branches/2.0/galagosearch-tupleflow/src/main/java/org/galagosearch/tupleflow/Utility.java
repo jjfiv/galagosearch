@@ -3,6 +3,7 @@ package org.galagosearch.tupleflow;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
@@ -16,7 +17,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
-import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -514,6 +514,20 @@ public class Utility {
       }
       output.write(data, 0, bytesRead);
     }
+  }
+
+  /**
+   * Copies data from the input stream and returns a String (UTF-8 if not specified)
+   */
+  public static String copyStreamToString(InputStream input, String encoding) throws IOException {
+    encoding = (encoding == null) ? "UTF-8": encoding;
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    copyStream(input, baos);
+    return baos.toString(encoding);
+  }
+
+  public static String copyStreamToString(InputStream input) throws IOException {
+    return copyStreamToString(input, "UTF-8");
   }
 
   /**
