@@ -25,7 +25,7 @@ import org.galagosearch.core.tools.Search.SearchResult;
 import org.galagosearch.core.tools.Search.SearchResultItem;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
-import org.mortbay.jetty.handler.AbstractHandler;
+import org.mortbay.jetty.handler.ContextHandler;
 import org.znerd.xmlenc.XMLOutputter;
 
 /**
@@ -62,7 +62,7 @@ import org.znerd.xmlenc.XMLOutputter;
  *
  * @author trevor, irmarc
  */
-public class SearchWebHandler extends AbstractHandler {
+public class SearchWebHandler extends ContextHandler {
 
   Search search;
 
@@ -85,33 +85,6 @@ public class SearchWebHandler extends AbstractHandler {
     return builder.toString();
   }
 
-  /*
-  public void handleDocumentNames(HttpServletRequest request, HttpServletResponse response) throws IOException {
-  String idsStr = request.getParameter("ids");
-  String[] ids = idsStr.split(",");
-  PrintWriter writer = response.getWriter();
-  XMLOutputter outputter = new XMLOutputter(writer, "UTF-8");
-  response.setContentType("text/xml");
-  outputter.startTag("response");
-  for (String id : ids) {
-  String documentName = search.getDocumentName(Integer.parseInt(id));
-  outputter.startTag("result");
-
-  outputter.startTag("id");
-  outputter.pcdata(id);
-  outputter.endTag();
-
-  outputter.startTag("name");
-  outputter.pcdata(documentName);
-  outputter.endTag();
-
-  outputter.endTag();
-  }
-  outputter.endTag(); // response
-  outputter.endDocument();
-  }
-   * 
-   */
   public void handleDocument(HttpServletRequest request, HttpServletResponse response) throws IOException {
     request.getParameterMap();
     String identifier = request.getParameter("identifier");
@@ -502,10 +475,6 @@ public class SearchWebHandler extends AbstractHandler {
       }
     } else if (request.getPathInfo().equals("/document")) {
       handleDocument(request, response);
-
-      //} else if (request.getPathInfo().equals("/documentnames")) {
-      //handleDocumentNames(request, response);
-
     } else if (request.getPathInfo().equals("/searchxml")) {
       try {
         handleSearchXML(request, response);

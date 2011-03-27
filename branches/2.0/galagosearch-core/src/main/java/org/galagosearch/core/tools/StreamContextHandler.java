@@ -17,8 +17,7 @@ public class StreamContextHandler extends ContextHandler {
 
   Search search;
 
-  public StreamContextHandler(Search search, String contextPath) {
-    super(contextPath);
+  public StreamContextHandler(Search search) {
     this.search = search;
   }
 
@@ -47,13 +46,12 @@ public class StreamContextHandler extends ContextHandler {
       // NOW we can get the method itself and invoke it on our retrieval object
       // with the extracted arguments
       Method m = search.retrieval.getClass().getDeclaredMethod(methodName, argTypes);
-      Object result = m.invoke(search.retrieval, arguments);
+      Object result = m.invoke(search.getRetrieval(), arguments);
 
       // Finally send back our result
       ObjectOutputStream oos = new ObjectOutputStream(response.getOutputStream());
       oos.writeObject(result);
       response.flushBuffer();
-
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

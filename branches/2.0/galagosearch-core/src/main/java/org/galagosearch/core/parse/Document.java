@@ -31,11 +31,15 @@ public class Document implements Serializable {
     public String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append("Identifier: ").append(identifier).append("\n");
-      sb.append("Metadata: ");
+      sb.append("Metadata: \n");
       for (Map.Entry<String, String> entry : metadata.entrySet()) {
         sb.append("<");
         sb.append(entry.getKey()).append(",").append(entry.getValue());
         sb.append("> ");
+      }
+      sb.append("Term vector: \n");
+      for (String s : terms) {
+        sb.append(s).append("\n");
       }
       sb.append("\n");
       sb.append("Text :").append(text);

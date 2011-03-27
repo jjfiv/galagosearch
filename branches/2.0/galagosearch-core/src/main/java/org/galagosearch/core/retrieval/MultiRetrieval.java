@@ -9,7 +9,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
@@ -20,6 +19,7 @@ import org.galagosearch.core.retrieval.structured.RankedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  * This class allows searching over a set of Retrievals
@@ -42,8 +42,7 @@ public class MultiRetrieval implements Retrieval {
   public MultiRetrieval(HashMap<String, ArrayList<Retrieval>> indexes, Parameters p) throws Exception {
 
     this.retrievals = indexes;
-
-    initRetrieval();
+    initRetrieval(p);
   }
 
   public void close() throws IOException {
@@ -57,6 +56,7 @@ public class MultiRetrieval implements Retrieval {
 
   // function accumulates statistics accross index subset
   public Parameters getRetrievalStatistics(String retGroup) throws IOException {
+    System.err.printf("MR checking for group %s (%b)\n", retGroup, retrievalStatistics.containsKey(retGroup));
     if (retrievalStatistics.containsKey(retGroup)) {
       return retrievalStatistics.get(retGroup);
     } else {
@@ -96,7 +96,7 @@ public class MultiRetrieval implements Retrieval {
 
     // Asynchronous retrieval
     String indexId = parameters.get("indexId", "0");
-
+    System.err.printf("Distributing query: %s\n", this.root.toString());
     for (int i = 0; i < subset.size(); i++) {
       Parameters shardParams = shardTemplate.clone();
       shardParams.set("indexId", indexId + "." + Integer.toString(i));
@@ -184,23 +184,30 @@ public class MultiRetrieval implements Retrieval {
     return queryTree;
   }
 
-  private void initRetrieval() throws IOException {
+  private void initRetrieval(Parameters externalParameters) throws IOException {
     retrievalStatistics = new HashMap();
     retrievalParts = new HashMap();
     featureFactories = new HashMap();
-
+    Parameters p;
     for (String retGroup : retrievals.keySet()) {
       ArrayList<Parameters> stats = new ArrayList();
       ArrayList<Parameters> parts = new ArrayList();
       for (Retrieval r : retrievals.get(retGroup)) {
-        stats.add(r.getRetrievalStatistics(retGroup));
-        parts.add(r.getAvailableParts(retGroup));
+        p = r.getRetrievalStatistics(retGroup);
+        stats.add(p);
+        p = r.getAvailableParts(retGroup);
+        parts.add(p);
       }
-      retrievalStatistics.put(retGroup, mergeStats(stats));
+      System.err.printf("Merging components for RG %s\n", retGroup);
+      p = mergeStats(stats);
+      p.add("traversals", externalParameters.list("traversals"));
+      p.add("operators", externalParameters.list("operators"));
+      System.err.printf("After adding external parameters: %s\n", p.toString());
+      retrievalStatistics.put(retGroup, p);
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
-      Parameters merged = mergeParts(parts);
-      retrievalParts.put(retGroup, merged);
-
+      
+      p = mergeParts(parts);
+      retrievalParts.put(retGroup, p);
       featureFactories.put(retGroup, new RankedFeatureFactory(retrievalStatistics.get(retGroup)));
     }
   }
@@ -217,7 +224,7 @@ public class MultiRetrieval implements Retrieval {
     Parameters out = new Parameters();
     out.set("collectionLength", Long.toString(cl));
     out.set("documentCount", Long.toString(dc));
-
+    System.err.printf("After merging, stats are: %s\n", out);
     return out;
 
   }
@@ -229,17 +236,18 @@ public class MultiRetrieval implements Retrieval {
   private Parameters mergeParts(List<Parameters> ps) {
 
     // First get all iteratorClasses for all part/operator pairs.
-    HashMap<String, HashMap<String, ArrayList<String>>> handlers = new HashMap<String, HashMap<String, ArrayList<String>>>();
+    HashMap<String, HashMap<String, HashSet<String>>> handlers = new HashMap<String, HashMap<String, HashSet<String>>>();
     for (Parameters p : ps) {
+      System.err.printf("merge candidate: %s\n", p);
       ArrayList<ArrayList<String>> paths = p.flatten();
       for (ArrayList<String> path : paths) {
         if (path.get(0).equals("nodeType")) {
           if (!handlers.containsKey(path.get(1))) {
-            handlers.put(path.get(1), new HashMap<String, ArrayList<String>>());
+            handlers.put(path.get(1), new HashMap<String, HashSet<String>>());
           }
-          HashMap<String, ArrayList<String>> map = handlers.get(path.get(1));
+          HashMap<String, HashSet<String>> map = handlers.get(path.get(1));
           if (!map.containsKey(path.get(2))) {
-            map.put(path.get(2), new ArrayList<String>());
+            map.put(path.get(2), new HashSet<String>());
           }
           map.get(path.get(2)).add(path.get(3));
         }
@@ -250,15 +258,19 @@ public class MultiRetrieval implements Retrieval {
     // during retrieval
     ArrayList<ArrayList<String>> remainingHandlers = new ArrayList<ArrayList<String>>();
     for (String partName : handlers.keySet()) {
-      HashMap<String, ArrayList<String>> map = handlers.get(partName);
+      HashMap<String, HashSet<String>> map = handlers.get(partName);
       for (String operator : map.keySet()) {
         if (map.get(operator).size() == 1) {
           // Only one type of iteratorClass, so this operator's good
           ArrayList<String> good = new ArrayList<String>();
           good.add(partName);
           good.add(operator);
-          good.add(map.get(operator).get(0));
+          good.add(map.get(operator).toArray(new String[0])[0]);
+          System.err.printf("retaining operator: %s\n", Utility.join(good.toArray(new String[0]), ","));
           remainingHandlers.add(good);
+        } else {
+          System.err.printf("Operator %s has %d operators - dropping. Set is [%s]\n", operator, map.get(operator).size(),
+                  Utility.join(map.get(operator).toArray(new String[0])));
         }
       }
     }
@@ -272,7 +284,7 @@ public class MultiRetrieval implements Retrieval {
       // Now add the nodeType
       intersection.add("nodeType/" + path.get(0) + "/" + path.get(1), path.get(2));
     }
-
+    System.err.printf("After merging, parts are: %s\n", intersection);
     return intersection;
   }
 

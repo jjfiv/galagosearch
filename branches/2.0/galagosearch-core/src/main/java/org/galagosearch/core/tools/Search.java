@@ -26,9 +26,9 @@ import org.galagosearch.tupleflow.Parameters.Value;
  */
 public class Search {
 
-  SnippetGenerator generator;
-  DocumentStore store;
-  Retrieval retrieval;
+  protected SnippetGenerator generator;
+  protected DocumentStore store;
+  protected Retrieval retrieval;
 
   public Search(Parameters params) throws Exception {
     this.store = getDocumentStore(params.list("corpus"));
@@ -36,7 +36,11 @@ public class Search {
     generator = new SnippetGenerator();
   }
 
-  private DocumentStore getDocumentStore(List<Value> corpora) throws IOException {
+  public Retrieval getRetrieval() {
+    return retrieval;
+  }
+
+  protected DocumentStore getDocumentStore(List<Value> corpora) throws IOException {
     DocumentStore store = null;
     if (corpora.size() > 0) {
       ArrayList<DocumentReader> readers = new ArrayList<DocumentReader>();

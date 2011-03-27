@@ -4,7 +4,11 @@ package org.galagosearch.core.tools;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.Map.Entry;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.DocumentNameReader;
 import org.galagosearch.core.index.GenericIndexReader;
@@ -21,7 +25,11 @@ import org.galagosearch.tupleflow.FileOrderedReader;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.execution.JobExecutor;
+import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.AbstractHandler;
+import org.mortbay.jetty.handler.ContextHandler;
+import org.mortbay.jetty.handler.HandlerList;
 
 /**
  * TODO: Make distributed jobs generate their own tmp directories, to avoid collisions.
@@ -29,13 +37,13 @@ import org.mortbay.jetty.Server;
  */
 public class App {
 
-  private PrintStream output;
+  protected PrintStream output;
 
   public App(PrintStream out) {
     output = out;
   }
 
-  private void commandHelpBatchSearch() {
+  protected void commandHelpBatchSearch() {
     output.println("galago batch-search <args>");
     output.println();
     output.println("  Runs a batch of queries against an index and produces TREC-formatted");
@@ -67,7 +75,7 @@ public class App {
     output.println("  </parameters>");
   }
 
-  private void commandHelpParameterSweep() {
+  protected void commandHelpParameterSweep() {
     output.println("galago parameter-sweep <args>");
     output.println();
     output.println("  This command allows parameter sweeping to be performed in parallel.");
@@ -111,7 +119,7 @@ public class App {
     output.println("  </parameters>");
   }
 
-  private void commandHelpBuild() {
+  protected void commandHelpBuild() {
     output.println("galago build[-fast] [flags] <index> (<input>)+");
     output.println();
     output.println("  Builds a Galago StructuredIndex with TupleFlow, using one thread ");
@@ -155,7 +163,7 @@ public class App {
     output.println("                           [default = 10]");
   }
 
-  private void commandHelpNgram() {
+  protected void commandHelpNgram() {
     output.println("galago ngram[-se] [flags] <index> (<input>)+");
     output.println();
     output.println("  Builds a Galago StructuredIndex ngram part file with TupleFlow, using");
@@ -199,7 +207,7 @@ public class App {
     output.println("                           [default = 10]");
   }
 
-  private void handleBuildTopdocs(String[] args) throws Exception {
+  protected void handleBuildTopdocs(String[] args) throws Exception {
     if (args.length < 5) {
       commandHelp(args[0]);
       return;
@@ -242,7 +250,7 @@ public class App {
     }
   }
 
-  private void handleBuild(String[] args) throws Exception {
+  protected void handleBuild(String[] args) throws Exception {
     if (args.length < 3) { // build index input
       commandHelpBuild();
       return;
@@ -297,7 +305,7 @@ public class App {
     }
   }
 
-  private void handleDoc(String[] args) throws IOException {
+  protected void handleDoc(String[] args) throws IOException {
     if (args.length <= 2) {
       commandHelp(args[0]);
       return;
@@ -311,7 +319,7 @@ public class App {
     output.println(document.text);
   }
 
-  private void handleDocId(String[] args) throws IOException {
+  protected void handleDocId(String[] args) throws IOException {
     if (args.length <= 2) {
       commandHelp(args[0]);
       return;
@@ -325,7 +333,7 @@ public class App {
     output.println(docNum);
   }
 
-  private void handleDumpKeyValue(String[] args) throws IOException {
+  protected void handleDumpKeyValue(String[] args) throws IOException {
     if (args.length <= 2) {
       commandHelp(args[0]);
       return;
@@ -343,7 +351,7 @@ public class App {
     }
   }
 
-  private void handleDumpIndex(String[] args) throws IOException {
+  protected void handleDumpIndex(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
       return;
@@ -361,7 +369,7 @@ public class App {
     }
   }
 
-  private void handleDumpCorpus(String[] args) throws IOException {
+  protected void handleDumpCorpus(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
       return;
@@ -383,7 +391,7 @@ public class App {
     }
   }
 
-  private void handleDumpConnection(String[] args) throws IOException {
+  protected void handleDumpConnection(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
       return;
@@ -396,7 +404,7 @@ public class App {
     }
   }
 
-  private void handleDumpKeys(String[] args) throws IOException {
+  protected void handleDumpKeys(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
       return;
@@ -426,7 +434,7 @@ public class App {
     }
   }
 
-  private void handleDumpLengths(String[] args) throws IOException {
+  protected void handleDumpLengths(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
       return;
@@ -439,7 +447,7 @@ public class App {
     } while (iterator.nextKey());
   }
 
-  private void handleDumpNames(String[] args) throws IOException {
+  protected void handleDumpNames(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
       return;
@@ -452,7 +460,7 @@ public class App {
     } while (iterator.nextKey());
   }
 
-  private void handleMakeCorpus(String[] args) throws Exception {
+  protected void handleMakeCorpus(String[] args) throws Exception {
     if (args.length <= 2) {
       commandHelp(args[0]);
       return;
@@ -500,7 +508,7 @@ public class App {
   }
 
   /*
-  private void handleMergeIndexes(String[] args) throws Exception {
+  protected void handleMergeIndexes(String[] args) throws Exception {
   // Remove 'merge-index' from the command.
   args = Utility.subarray(args, 1);
 
@@ -550,7 +558,7 @@ public class App {
   }
   
 
-  private void handleNgram(String[] args) throws Exception {
+  protected void handleNgram(String[] args) throws Exception {
   if (args.length < 3) { // ngram index input
   commandHelpNgram();
   return;
@@ -596,7 +604,7 @@ public class App {
   }
   }
    */
-  private void handleBatchSearch(String[] args) throws Exception {
+  protected void handleBatchSearch(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelpBatchSearch();
       return;
@@ -605,7 +613,7 @@ public class App {
     BatchSearch.run(Utility.subarray(args, 1), output);
   }
 
-  private void handleParameterSweep(String[] args) throws Exception {
+  protected void handleParameterSweep(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelp("parameter-sweep");
       return;
@@ -614,7 +622,28 @@ public class App {
     BatchParameterSweep.run(Utility.subarray(args, 1), output);
   }
 
-  private void handleServer(Parameters p) throws Exception {
+  protected class MappingHandler extends AbstractHandler {
+    HashMap<String, Handler> handlers;
+    public MappingHandler() {
+      handlers = new HashMap<String, Handler>();
+    }
+
+    public void setHandler(String s, Handler h) {
+      handlers.put(s, h);
+    }
+
+    public void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) throws IOException, ServletException {
+      String path = request.getPathInfo();
+      Handler h = handlers.get(path);
+      if (h != null) {
+        h.handle(target, request, response, dispatch);
+      } else {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+    }
+  }
+
+  protected void handleSearch(Parameters p) throws Exception {
     Search search = new Search(p);
     int port = (int) p.get("port", 0);
     if (port == 0) {
@@ -625,63 +654,17 @@ public class App {
       }
     }
     Server server = new Server(port);
-    server.addHandler(new StreamContextHandler(search, "/stream"));
-
-  }
-
-  private void handleServer(String[] args) throws Exception {
-    if (args.length <= 1) {
-      commandHelp("search");
-      return;
-    }
-
-    // This is put in there to handle ONLY a parameter file, since
-    // if you're loading multiple indexes you need to use a parameter file for it.
-    if (args.length == 2 && args[1].endsWith(".xml")) {
-      File f = new File(args[1]);
-      Parameters p = new Parameters(f);
-      handleServer(p);
-
-    } else {
-      String[][] filtered = Utility.filterFlags(Utility.subarray(args, 1));
-      String[] flags = filtered[0];
-      String[] inputs = filtered[1];
-      String indexPath = inputs[0];
-      String[] corpora = Utility.subarray(inputs, 1);
-
-      // Any flag marked '--parameters' marks a parameters file.
-      // We trim that part of the flag off so that the Parameters object will
-      // load it as a parameters file.
-      for (int i = 0; i < flags.length; ++i) {
-        flags[i] = flags[i].replace("--parameters=", "");
-      }
-
-      Parameters p = new Parameters(flags);
-      p.add("index", indexPath);
-      for (String corpus : corpora) {
-        p.add("corpus", corpus);
-      }
-      handleServer(p);
-    }
-  }
-
-  private void handleSearch(Parameters p) throws Exception {
-    Search search = new Search(p);
-    int port = (int) p.get("port", 0);
-    if (port == 0) {
-      port = Utility.getFreePort();
-    } else {
-      if (!Utility.isFreePort(port)) {
-        throw new IOException("Tried to bind to port " + port + " which is in use.");
-      }
-    }
-    Server server = new Server(port);
-    server.addHandler(new SearchWebHandler(search));
+    MappingHandler mh = new MappingHandler();
+    mh.setHandler("/stream", new StreamContextHandler(search));
+    mh.setHandler("/xml", new XMLContextHandler(search));
+    mh.setHandler("/json", new JSONContextHandler(search));
+    mh.setHandler("/web", new SearchWebHandler(search));
+    server.addHandler(mh);
     server.start();
     output.println("Server: http://localhost:" + port);
   }
 
-  private void handleSearch(String[] args) throws Exception {
+  protected void handleSearch(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelp("search");
       return;

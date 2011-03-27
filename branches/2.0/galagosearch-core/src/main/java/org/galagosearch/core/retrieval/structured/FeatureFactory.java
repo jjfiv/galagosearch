@@ -52,6 +52,7 @@ public class FeatureFactory {
       String className = value.get("class");
       String order = value.get("order", "after");
       List<Value> params = value.list("parameters");
+      System.err.printf("Found traversal: %s (%s)\n", className, order);
       if (className == null) {
         throw new RuntimeException("class is required in traversal declarations.");
       }
