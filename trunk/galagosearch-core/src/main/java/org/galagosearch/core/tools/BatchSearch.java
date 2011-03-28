@@ -11,6 +11,8 @@ import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Utility;
+import org.tartarus.snowball.ext.englishStemmer;
 
 /**
  *
@@ -82,6 +84,105 @@ public class BatchSearch {
     }
 
   }
+
+  
+  public static void xCount(String[] args, PrintStream out) throws Exception {
+    englishStemmer stemmer = null;
+    Parameters p = new Parameters(Utility.subarray(args, 1));
+    Retrieval r = Retrieval.instance(p);
+
+    String defPart = "";
+    Parameters availableParts = r.getAvailableParts("all");
+    List<String> available = availableParts.stringList("part");
+    if (available.contains("stemmedPostings")) {
+      defPart = "stemmedPostings";
+      stemmer = new englishStemmer();
+    } else if (available.contains("postings")) {
+      defPart = "postings";
+    }
+
+    long count;
+    for (Parameters.Value v : p.list("x")) {
+      String q = v.toString();
+      // System.err.println(q);
+      if (q.contains("#")) {
+        count = r.xCount(q);
+      } else {
+      
+        String termOp = "#counts:" + q + ":part=" + defPart + "()";
+
+        if(stemmer != null){
+          stemmer.setCurrent(q);
+          stemmer.stem();
+          String stemmed = stemmer.getCurrent();
+          termOp = "#counts:" + stemmed + ":part=" + defPart + "()";
+        }
+
+        count = r.xCount(termOp);
+      }
+      out.println(count + "\t" + q);
+    }
+    r.close();
+  }
+
+  public static void docCount(String[] args, PrintStream out) throws Exception {
+    Parameters p = new Parameters(Utility.subarray(args, 1));
+    Retrieval r = Retrieval.instance(p);
+
+    String defPart = "";
+    Parameters availableParts = r.getAvailableParts("all");
+    List<String> available = availableParts.stringList("part");
+    if (available.contains("stemmedPostings")) {
+      defPart = "stemmedPostings";
+    } else if (available.contains("postings")) {
+      defPart = "postings";
+    }
+
+    long count;
+    for (Parameters.Value v : p.list("x")) {
+      String q = v.toString();
+      if (q.contains("#")) {
+        count = r.docCount(q);
+      } else {
+        String termOp = "#counts:" + q + ":part=" + defPart + "()";
+        count = r.docCount(termOp);
+      }
+      out.println(count + "\t" + q);
+    }
+    r.close();
+  }
+
+
+  public static void queryLeafCounter(String[] args, PrintStream out) throws Exception {
+    Parameters p = new Parameters(Utility.subarray(args, 1));
+    Retrieval r = Retrieval.instance(p);
+
+    List<Parameters.Value> queries = p.list("query");
+
+    for (Parameters.Value query : queries) {
+
+      String queryText = query.get("text");
+      Node root = StructuredQuery.parse(queryText);
+      Node transformed = r.transformQuery(root, "all");
+
+      traverseXCount(transformed, r, out, query.get("number"));
+    }
+  }
+
+  private static void traverseXCount(Node n, Retrieval r, PrintStream o, String prefix) throws Exception{
+    // if we have a feature - we want to count the child
+    if( n.getOperator().equals( "feature" ) ){
+      Node child = n.getInternalNodes().get(0);
+      long c = r.xCount(child);
+      o.println( c + "\t" + prefix + "\t" + child.toString() );
+    } else {
+      for(Node child : n.getInternalNodes()){
+        traverseXCount(child, r, o, prefix);
+      }
+    }
+  }
+
+  
 
   public static void main(String[] args) throws Exception {
     run(args, System.out);

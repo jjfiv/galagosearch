@@ -111,7 +111,7 @@ public class Search {
   }
 
   public long xcount(String nodeString) throws Exception {
-      return this.retrieval.xcount(nodeString);
+      return this.retrieval.xCount(nodeString);
   }
 
   public SearchResult runQuery(String query, Parameters p, boolean summarize) throws Exception {

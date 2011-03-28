@@ -220,7 +220,7 @@ public class StructuredRetrievalProxy extends Retrieval {
   }
 
   @Override
-  public long xcount(String nodeString) throws Exception {
+  public long xCount(String nodeString) throws Exception {
 
     StringBuilder request = new StringBuilder(indexUrl);
     String encoded = URLEncoder.encode(nodeString, "UTF-8"); // need to web-escape
@@ -242,8 +242,35 @@ public class StructuredRetrievalProxy extends Retrieval {
     return (handler.getCount());
   }
 
-  public long xcount(Node root) throws Exception {
-    return xcount(root.toString());
+  public long xCount(Node root) throws Exception {
+    return xCount(root.toString());
+  }
+
+  @Override
+  public long docCount(String nodeString) throws Exception {
+
+    StringBuilder request = new StringBuilder(indexUrl);
+    String encoded = URLEncoder.encode(nodeString, "UTF-8"); // need to web-escape
+    request.append("/doccount?expression=").append(encoded);
+    URL resource = new URL(request.toString());
+    HttpURLConnection connection = (HttpURLConnection) resource.openConnection();
+    connection.setRequestMethod("GET");
+
+    // Hook up an xml handler to the input stream to directly generate the results, as opposed
+    // to buffering them up
+    if (parser == null) {
+      parser = SAXParserFactory.newInstance().newSAXParser();
+    }
+
+    // might be a better way to do this....
+    XCountHandler handler = new XCountHandler();
+    parser.parse(connection.getInputStream(), handler);
+    connection.disconnect();
+    return (handler.getCount());
+  }
+
+  public long docCount(Node root) throws Exception {
+    return docCount(root.toString());
   }
 
   // this function is for the query transform function (which should not be completed here)

@@ -347,20 +347,41 @@ public class StructuredRetrieval extends Retrieval {
    * @return Number of times the expression occurs.
    * @throws Exception
    */
-  public long xcount(String nodeString) throws Exception {
+  public long xCount(String nodeString) throws Exception {
 
     // first parse the node
     Node root = StructuredQuery.parse(nodeString);
-    return xcount(root);
+    return xCount(root);
   }
 
-  public long xcount(Node root) throws Exception {
+  public long xCount(Node root) throws Exception {
     StructuredIterator structIterator = createIterator(root);
     if (structIterator instanceof CountIterator) {
       CountIterator iterator = (CountIterator) structIterator;
       long count = 0;
       do { // works for iterators that are always done (#all - see ExtentIndexReader)
         count += iterator.count();
+        iterator.nextEntry();
+      } while (!iterator.isDone());
+      return count;
+    } else {
+      throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
+  }
+  }
+  public long docCount(String nodeString) throws Exception {
+
+    // first parse the node
+    Node root = StructuredQuery.parse(nodeString);
+    return docCount(root);
+  }
+
+  public long docCount(Node root) throws Exception {
+    StructuredIterator structIterator = createIterator(root);
+    if (structIterator instanceof CountIterator) {
+      CountIterator iterator = (CountIterator) structIterator;
+      long count = 0;
+      do { // works for iterators that are always done (#all - see ExtentIndexReader)
+        count += 1;
         iterator.nextEntry();
       } while (!iterator.isDone());
       return count;

@@ -59,7 +59,7 @@ public class FrequenceFilteringTraversal implements Traversal {
         return node;
       }
 
-      long count = retrieval.xcount(child);
+      long count = retrieval.xCount(child);
       if(count < threshold){
         // this term can not exist in the index
         child.getParameters().set("default", "!");

@@ -72,23 +72,23 @@ public class XCountTest extends TestCase {
         StructuredRetrieval retrieval = (StructuredRetrieval) Retrieval.instance(p);
 
         Node simpleTermExtents = StructuredQuery.parse("#extents:cat:part=postings()");
-        long xc = retrieval.xcount(simpleTermExtents.toString());
+        long xc = retrieval.xCount(simpleTermExtents.toString());
         //System.err.println(xc);
         assert(xc == 5);
 
 
         Node simpleTermCounts = StructuredQuery.parse("#counts:a:part=postings()");
-        xc = retrieval.xcount(simpleTermCounts.toString());
+        xc = retrieval.xCount(simpleTermCounts.toString());
         //System.err.println(xc);
         assert(xc == 5);
 
         Node orderedWindow = StructuredQuery.parse("#od:2(#extents:cat:part=postings() #extents:cat:part=postings())");
-        xc = retrieval.xcount(orderedWindow.toString());
+        xc = retrieval.xCount(orderedWindow.toString());
         //System.err.println(xc);
         assert(xc == 2);
 
         Node extent = StructuredQuery.parse("#inside(#extents:a:part=postings() #extents:p:part=extents())");
-        xc = retrieval.xcount(extent.toString());
+        xc = retrieval.xCount(extent.toString());
         //System.err.println(xc);
         assert(xc == 3);
 

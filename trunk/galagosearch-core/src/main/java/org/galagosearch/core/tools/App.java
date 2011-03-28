@@ -669,6 +669,34 @@ public class App {
     }
   }
 
+
+  public void handleQueryLeafCount(String[] args) throws Exception {
+    if (args.length <= 1) {
+      commandHelp("xcount");
+      return;
+    }
+
+    BatchSearch.queryLeafCounter(args, output);
+  }
+  
+  public void handleXCount(String[] args) throws Exception {
+    if (args.length <= 1) {
+      commandHelp("xcount");
+      return;
+    }
+
+    BatchSearch.xCount(args, output);
+  }
+
+  public void handleDocCount(String[] args) throws Exception {
+    if (args.length <= 1) {
+      commandHelp("doccount");
+      return;
+    }
+
+    BatchSearch.docCount(args, output);
+  }
+
   public void handleEval(String[] args) throws IOException {
     org.galagosearch.core.eval.Main.internalMain(Utility.subarray(args, 1), output);
   }
@@ -707,6 +735,8 @@ public class App {
     output.println("   pagerank");
     output.println("   parameter-sweep");
     output.println("   search");
+    output.println("   xcount");
+    output.println("   doccount");
   }
 
   public void commandHelp(String command) throws IOException {
@@ -772,6 +802,18 @@ public class App {
       output.println();
       output.println("  Dumps all names from a names folder created by DocumentNamesWriter2.");
       output.println("  This is only for the documentNames folder produced by a Galago indexing job.");
+    } else if (command.equals("xcount")) {
+      output.println("galago xcount --x=<countable-query> --index=<index> ");
+      output.println();
+      output.println("  Returns the number of times the countable-query occurs.");
+      output.println("  More than one index and expression can be specified.");
+      output.println("  Examples of countable-expressions: terms, ordered windows and unordered windows.");
+    } else if (command.equals("doccount")) {
+      output.println("galago doccount --x=<countable-query> --index=<index> ");
+      output.println();
+      output.println("  Returns the number of documents that contain the countable-query.");
+      output.println("  More than one index and expression can be specified.");
+      output.println("  Examples of countable-expressions: terms, ordered windows and unordered windows.");
     } else if (command.equals("eval")) {
       org.galagosearch.core.eval.Main.usage(output);
     } else if (command.equals("make-corpus")) {
@@ -921,6 +963,12 @@ public class App {
       PageRankApp.main(args);
     } else if (command.equals("parameter-sweep")) {
       handleParameterSweep(args);
+    } else if (command.equals("xcount")) {
+      handleXCount(args);
+    } else if (command.equals("doccount")) {
+      handleDocCount(args);
+    } else if (command.equals("qlcount")) {
+      handleQueryLeafCount(args);
     } else if (command.equals("start-parallel")) {
       IndexShardControl.start(args, output);
     } else if (command.equals("stop-parallel")) {

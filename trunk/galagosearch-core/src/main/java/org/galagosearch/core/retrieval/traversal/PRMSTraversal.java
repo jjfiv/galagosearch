@@ -59,7 +59,7 @@ public class PRMSTraversal implements Traversal {
                 par2.add("default", field);
                 par2.add("part", "extents");
                 Node all = new Node("all", par2, new ArrayList(), 0);
-                long f_length = retrieval.xcount(all.toString());
+                long f_length = retrieval.xCount(all.toString());
                 fieldLengths.put(field, f_length);
                 System.err.println(field.toString() + " : " + f_length);
             }
@@ -92,7 +92,7 @@ public class PRMSTraversal implements Traversal {
 //                    data.add(n_inside);
 //                    Node n_smoothed = new Node("feature", par3, data, n_inside.getPosition());
 
-                    long f_term_field = retrieval.xcount(n_inside.toString());
+                    long f_term_field = retrieval.xCount(n_inside.toString());
                     double f_term_field_prob = (double)f_term_field / fieldLengths.get(field);
                     termFields.add(n_inside);
                     weights.set( Integer.toString(i) , Double.toString(f_term_field_prob));
