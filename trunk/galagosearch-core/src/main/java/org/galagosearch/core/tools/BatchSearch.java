@@ -160,12 +160,14 @@ public class BatchSearch {
     List<Parameters.Value> queries = p.list("query");
 
     for (Parameters.Value query : queries) {
-
       String queryText = query.get("text");
-      Node root = StructuredQuery.parse(queryText);
-      Node transformed = r.transformQuery(root, "all");
-
-      traverseXCount(transformed, r, out, query.get("number"));
+      try{
+        Node root = StructuredQuery.parse(queryText);
+        Node transformed = r.transformQuery(root, "all");
+        traverseXCount(transformed, r, out, query.get("number"));
+      } catch (Exception e){
+        System.err.println( "Died on :" + queryText );
+      }
     }
   }
 
