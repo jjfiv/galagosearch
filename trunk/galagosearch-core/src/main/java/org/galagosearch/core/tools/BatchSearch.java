@@ -164,27 +164,43 @@ public class BatchSearch {
       try{
         Node root = StructuredQuery.parse(queryText);
         Node transformed = r.transformQuery(root, "all");
-        traverseXCount(transformed, r, out, query.get("number"));
+        String output = traverseXCount(transformed, r, query.get("number"));
+        out.print(output);
       } catch (Exception e){
-        System.err.println( "Died on :" + queryText );
+        // System.err.println( "Died on :" + queryText );
+        // ignored
       }
     }
   }
 
-  private static void traverseXCount(Node n, Retrieval r, PrintStream o, String prefix) throws Exception{
+  private static String traverseXCount(Node n, Retrieval r, String prefix) throws Exception{
     // if we have a feature - we want to count the child
     if( n.getOperator().equals( "feature" ) ){
       Node child = n.getInternalNodes().get(0);
       long c = r.xCount(child);
-      o.println( c + "\t" + prefix + "\t" + child.toString() );
+      return (c + "\t" + prefix + "\t" + getText(child) + "\n");
     } else {
+      StringBuilder sb = new StringBuilder();
       for(Node child : n.getInternalNodes()){
-        traverseXCount(child, r, o, prefix);
+        sb.append(traverseXCount(child, r, prefix));
       }
+      return sb.toString();
     }
   }
 
-  
+  private static String getText(Node n){
+    if(n.getOperator().startsWith("count") ||
+            n.getOperator().startsWith("extent")){
+      return n.getDefaultParameter();
+    } else {
+      StringBuilder sb = new StringBuilder();
+      for(Node c : n.getInternalNodes()){
+        sb.append( getText(c) );
+        sb.append( " " );
+      }
+      return sb.toString();
+    }
+  }
 
   public static void main(String[] args) throws Exception {
     run(args, System.out);
