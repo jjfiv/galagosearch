@@ -453,7 +453,7 @@ public class IndexWriter extends GenericIndexWriter {
 
     public void add(IndexElement list) throws IOException {
         if (list.key().length >= 256 || list.key().length >= blockSize / 4) {
-            throw new IOException("Key is too long.");
+            throw new IOException(String.format("Key %s is too long.", Utility.toString(list.key())));
         }
         if (needsFlush(list)) {
             flush();

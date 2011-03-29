@@ -250,6 +250,18 @@ public class SnippetGenerator {
         return generateSnippet(document, positions, queryTerms);
     }
 
+    public String getSnippet(String documentText, int startPos) throws IOException {
+      ArrayList<TagTokenizer.Pair> positions = new ArrayList();
+      Document document = parseAsDocument(documentText, positions);
+      // ...and the rest is a filthy hack. Ugh. -- irmarc
+      SnippetRegion region = new SnippetRegion(document.terms.get(startPos), startPos, width, document.terms.size());
+      ArrayList<SnippetRegion> regions = new ArrayList<SnippetRegion>();
+      regions.add(region);
+      Snippet wrapper = new Snippet(regions);
+      String result = buildHtmlString(wrapper, document, positions);
+      return result;
+    }
+
     private String generateSnippet(
             final Document document,
             final ArrayList<TagTokenizer.Pair> positions,

@@ -51,6 +51,14 @@ public class DocumentIndexWriter implements Processor<Document> {
         VByteOutput output = new VByteOutput(new DataOutputStream(stream));
         
         output.writeString(document.text);
+        output.writeBoolean(document.writeTerms);
+        if (document.writeTerms) {
+          output.writeInt(document.terms.size());
+          for (String t : document.terms) {
+            output.writeString(t);
+          }
+        }
+
         for (Map.Entry<String, String> entry : document.metadata.entrySet()) {
             output.writeString(entry.getKey());
             output.writeString(entry.getValue());

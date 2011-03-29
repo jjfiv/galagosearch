@@ -10,12 +10,13 @@ import java.util.Map;
 public class Document implements Serializable {
     public Document() {
         this.metadata = new HashMap<String, String>();
+        writeTerms = false;
     }
 
     public Document(String identifier, String text) {
+        this();
         this.identifier = identifier;
         this.text = text;
-        this.metadata = new HashMap<String, String>();
     }
 
     public String identifier;
@@ -27,6 +28,7 @@ public class Document implements Serializable {
     
     public int fileId;
     public int totalFileCount;
+    public boolean writeTerms;
 
     public String toString() {
       StringBuilder sb = new StringBuilder();

@@ -3,6 +3,7 @@ package org.galagosearch.core.index.corpus;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import org.galagosearch.core.index.GenericIndexReader;
@@ -78,11 +79,18 @@ public class DocumentIndexReader extends DocumentReader {
       document.identifier = key;
       document.text = input.readString();
       document.metadata = new HashMap<String, String>();
+      document.writeTerms = input.readBoolean();
+      if (document.writeTerms) {
+        int count = input.readInt();
+        document.terms = new ArrayList<String>();
+        for (int i = 0; i < count; i++) {
+          document.terms.add(input.readString());
+        }
+      }
 
       while (!stream.isDone()) {
         String mapKey = input.readString();
         String mapValue = input.readString();
-
         document.metadata.put(mapKey, mapValue);
       }
 
