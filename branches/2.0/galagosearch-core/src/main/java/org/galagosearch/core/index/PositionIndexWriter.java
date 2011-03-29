@@ -302,7 +302,9 @@ public class PositionIndexWriter implements
 
     invertedList = new PositionsList();
     invertedList.setWord(wordBytes);
-
+    if (wordBytes.length > 255) {
+	System.err.printf("TOO LONG (%d): %s\n", wordBytes.length, Utility.toString(wordBytes));
+    }
     assert lastWord == null || 0 != Utility.compare(lastWord, wordBytes) : "Duplicate word";
     lastWord = wordBytes;
   }
