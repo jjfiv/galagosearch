@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
+import org.galagosearch.core.index.PositionFieldIndexWriter;
 import org.galagosearch.core.parse.AdditionalTextCombiner;
 import org.galagosearch.core.parse.AnchorTextCreator;
 import org.galagosearch.core.index.corpus.CorpusWriter;
@@ -19,6 +20,7 @@ import org.galagosearch.core.parse.LinkExtractor;
 import org.galagosearch.core.parse.NumberedDocument;
 import org.galagosearch.core.parse.NumberedDocumentDataExtractor;
 import org.galagosearch.core.parse.NumberedExtentExtractor;
+import org.galagosearch.core.parse.NumberedExtentPostingsExtractor;
 import org.galagosearch.core.parse.NumberedPostingsPositionExtractor;
 import org.galagosearch.core.parse.TagTokenizer;
 import org.galagosearch.core.parse.UniversalParser;
@@ -27,6 +29,7 @@ import org.galagosearch.core.types.DocumentData;
 import org.galagosearch.core.types.DocumentSplit;
 import org.galagosearch.core.types.ExtractedLink;
 import org.galagosearch.core.types.KeyValuePair;
+import org.galagosearch.core.types.FieldNumberWordPosition;
 import org.galagosearch.core.types.NumberWordPosition;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.types.NumberedExtent;
@@ -65,6 +68,7 @@ public class BuildFastIndex {
     stage.addInput("splits", new DocumentSplit.FileIdOrder());
     stage.addOutput("numberedPostings", new NumberWordPosition.WordDocumentPositionOrder());
     stage.addOutput("numberedExtents", new NumberedExtent.ExtentNameNumberBeginOrder());
+    stage.addOutput("numberedExtentPostings", new FieldNumberWordPosition.FieldWordDocumentPositionOrder());
     stage.addOutput("numberedDocumentData", new NumberedDocumentData.NumberOrder());
     if (stemming) {
       stage.addOutput("numberedStemmedPostings", new NumberWordPosition.WordDocumentPositionOrder());
@@ -111,12 +115,16 @@ public class BuildFastIndex {
     ArrayList<Step> extents =
             BuildStageTemplates.getExtractionSteps("numberedExtents", NumberedExtentExtractor.class,
             new NumberedExtent.ExtentNameNumberBeginOrder());
+    ArrayList<Step> extentPostings =
+            BuildStageTemplates.getExtractionSteps("numberedExtentPostings", NumberedExtentPostingsExtractor.class,
+            new FieldNumberWordPosition.FieldWordDocumentPositionOrder());
     ArrayList<Step> documentData =
             BuildStageTemplates.getExtractionSteps("numberedDocumentData", NumberedDocumentDataExtractor.class,
             new NumberedDocumentData.NumberOrder());
 
     processingForkTwo.groups.add(text);
     processingForkTwo.groups.add(extents);
+    processingForkTwo.groups.add(extentPostings);
     processingForkTwo.groups.add(documentData);
     if (stemming) {
       ArrayList<Step> stemmedSteps = new ArrayList<Step>();
@@ -200,6 +208,23 @@ public class BuildFastIndex {
     return stage;
   }
 
+  /** 
+   */
+  public Stage getWriteExtentPostingsStage(String stageName, String inputName, String indexName) {
+    Stage stage = new Stage(stageName);
+
+    stage.addInput(inputName, new FieldNumberWordPosition.FieldWordDocumentPositionOrder());
+    // stage.addInput("collectionLength", new XMLFragment.NodePathOrder());
+    stage.add(new InputStep(inputName));
+    Parameters p = new Parameters();
+    p.add("filename", indexPath + File.separator + indexName);
+    // p.add("pipename", "collectionLength");
+    stage.add(new Step(PositionFieldIndexWriter.class, p));
+    return stage;
+  }
+
+
+
   public Stage getParallelIndexKeyWriterStage(String name, String input, Parameters indexParameters) {
     Stage stage = new Stage(name);
 
@@ -235,9 +260,17 @@ public class BuildFastIndex {
       this.corpusParameters.add("filename", new File(p.get("corpusPath")).getAbsolutePath());
     }
 
+//    ArrayList<String> fieldNames = new ArrayList();
+//    List<Value> vs2 = p.list("fieldNames");
+//    for (Value v : vs2) {
+//      job.add(getWriteExtentPostingsStage("writeExtentPostings", "numberedPostings", v.toString()));
+//    }
+
+
     job.add(BuildStageTemplates.getSplitStage(inputPaths, DocumentSource.class));
     job.add(getParsePostingsStage());
     job.add(getWritePostingsStage("writePostings", "numberedPostings", "postings"));
+    job.add(getWriteExtentPostingsStage("writeExtentPostings", "numberedExtentPostings", "field."));
     job.add(BuildStageTemplates.getWriteExtentsStage("writeExtents", new File(indexPath, "extents"), "numberedExtents"));
     job.add(BuildStageTemplates.getWriteNamesStage("writeNames", new File(indexPath, "names"), "numberedDocumentData"));
     job.add(BuildStageTemplates.getWriteLengthsStage("writeLengths", new File(indexPath, "lengths"), "numberedDocumentData"));
@@ -248,6 +281,7 @@ public class BuildFastIndex {
     job.connect("parsePostings", "writeNames", ConnectionAssignmentType.Combined);
     job.connect("parsePostings", "writeExtents", ConnectionAssignmentType.Combined);
     job.connect("parsePostings", "writePostings", ConnectionAssignmentType.Combined);
+    job.connect("parsePostings", "writeExtentPostings", ConnectionAssignmentType.Combined);
     job.connect("parsePostings", "collectionLength", ConnectionAssignmentType.Combined);
     job.connect("collectionLength", "writePostings", ConnectionAssignmentType.Combined);
 

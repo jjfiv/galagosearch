@@ -83,6 +83,9 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
 
   public TagTokenizer(TupleFlowParameters parameters) {
     this();
+      
+    //System.err.println(parameters.getXML().toString());
+
     List<String> fields = parameters.getXML().stringList("field");
     for (String f : fields) {
       whitelist.add(Pattern.compile(f));
@@ -670,7 +673,6 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
       for (BeginTag tag : tagList) {
         for (Pattern p : whitelist) {
           if (p.matcher(tag.name).matches()) {
-            System.err.printf("(1) Adding tag %s\n", tag.name);
             result.add(new Tag(tag.name, tag.attributes, tag.termPosition, tag.termPosition));
             break;
           }
@@ -681,7 +683,6 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
     for (ClosedTag tag : closedTags) {
       for (Pattern p : whitelist) {
         if (p.matcher(tag.name).matches()) {
-          System.err.printf("(2) Adding tag %s\n", tag.name);
           result.add(new Tag(tag.name, tag.attributes, tag.termStart, tag.termEnd));
           break;
         }

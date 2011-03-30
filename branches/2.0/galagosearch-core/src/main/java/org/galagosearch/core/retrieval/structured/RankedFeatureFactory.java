@@ -16,6 +16,7 @@ import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
 import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
+import org.galagosearch.core.retrieval.traversal.PRMSTraversal;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -54,6 +55,7 @@ static String[][] sOperatorLookup = {
     SequentialDependenceTraversal.class.getName(),
     FullDependenceTraversal.class.getName(),
     TransformRootTraversal.class.getName(),
+    PRMSTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
     WeightConversionTraversal.class.getName(),
     IndriWindowCompatibilityTraversal.class.getName(),
