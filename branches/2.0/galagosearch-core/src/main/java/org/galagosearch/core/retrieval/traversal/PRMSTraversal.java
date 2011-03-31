@@ -26,6 +26,7 @@ public class PRMSTraversal implements Traversal {
 
   private int levels;
   String[] fieldList;
+  String[] weightList = null;
   Retrieval retrieval;
 
   public PRMSTraversal(Parameters parameters, Retrieval retrieval) {
@@ -45,21 +46,21 @@ public class PRMSTraversal implements Traversal {
 
       // Fetch the field list parameter from the query
       fieldList = original.getParameters().get("fields").split(",");
-      for (String field : fieldList) {
-        System.err.println("field : " + field);
+      try
+      {
+        weightList = original.getParameters().get("weights").split(",");
       }
-
-      // Get the field length using 'all' operator
-//      Map<String, Long> fieldLengths = new HashMap<String, Long>();
-//      for (String field : fieldList) {
-//        Parameters par2 = new Parameters();
-//        par2.add("default", field);
-//        par2.add("part", "extents");
-//        Node all = new Node("all", par2, new ArrayList(), 0);
-//        long f_length = retrieval.xCount(all.toString());
-//        fieldLengths.put(field, f_length);
-//        System.err.println(field.toString() + " : " + f_length);
-//      }
+      catch(java.lang.IllegalArgumentException e)
+      {
+        
+      }
+      // Get the field length
+      Map<String, Long> fieldLengths = new HashMap<String, Long>();
+      for (String field : fieldList) {
+        Parameters p = retrieval.getRetrievalStatistics();
+        long f_length = Integer.parseInt(p.get("field."+field+"/collectionLength"));
+        fieldLengths.put(field, f_length);
+      }
 
       ArrayList<Node> children = original.getInternalNodes();
       ArrayList<Node> terms = new ArrayList<Node>();
@@ -69,40 +70,22 @@ public class PRMSTraversal implements Traversal {
         int i = 0;
         for (String field : fieldList) {
 
-          // #counts:term:part=field.fid()
-
           Parameters par1 = new Parameters();
           par1.add("default", child.getDefaultParameter());
           par1.add("part", "field."+field);
           Node termCount = new Node("counts", par1, new ArrayList(), 0);
-
-
-//          Parameters par1 = new Parameters();
-//          par1.add("default", child.getDefaultParameter());
-//          par1.add("part", "postings");
-//          Node extents1 = new Node("extents", par1, new ArrayList(), 0);
-//
-//          Parameters par2 = new Parameters();
-//          par2.add("default", field);
-//          par2.add("part", "extents");
-//          Node extents2 = new Node("extents", par2, new ArrayList(), 0);
-//
-//          ArrayList<Node> pair = new ArrayList<Node>();
-//          pair.add(extents1);
-//          pair.add(extents2);
-//          Node n_inside = new Node("inside", new Parameters(), pair, 0);
-//
-//                    Parameters par3 = new Parameters();
-//                    par3.add("default", "dirichlet");
-//                    par3.add("mu", "1000");
-//                    ArrayList<Node> data = new ArrayList<Node>();
-//                    data.add(n_inside);
-//                    Node n_smoothed = new Node("feature", par3, data, n_inside.getPosition());
-
-          long f_term_field = retrieval.xCount(termCount);
-          System.err.println("f_term_field : "+f_term_field);
-//          double f_term_field_prob = (double) f_term_field / fieldLengths.get(field);
-//          weights.set(Integer.toString(i), Double.toString(f_term_field_prob));
+          if(weightList != null)
+          {
+            weights.set(Integer.toString(i), weightList[i]);
+            //System.err.println("field weight : "+weightList[i]);
+          }
+          else
+          {
+            long f_term_field = retrieval.xCount(termCount);
+            //System.err.println("f_term_field : "+f_term_field);
+            double f_term_field_prob = (double) f_term_field / fieldLengths.get(field);
+            weights.set(Integer.toString(i), Double.toString(f_term_field_prob));
+          }
           termFields.add(termCount);
           i++;
         }

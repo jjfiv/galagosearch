@@ -226,7 +226,10 @@ public class BuildStageTemplates {
     Parameters extractedParams = new Parameters();
     for (String key : step.listKeys()) {
       if (key.equals("class")) continue;
-      extractedParams.add(key, step.get(key));
+
+      for(Value v : step.list(key)){
+        extractedParams.add(key, v.toString());
+      }
     }
 
     // Return step encapsulating the class and params

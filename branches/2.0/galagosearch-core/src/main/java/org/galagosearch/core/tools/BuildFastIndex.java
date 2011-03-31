@@ -250,6 +250,12 @@ public class BuildFastIndex {
     for (Value v : vs) {
       inputPaths.add(v.toString());
     }
+    
+    for(String f : p.get("field").split(",")){
+      //System.err.println("field list : " + f);
+      p.add("tokenizer/field", f);
+    }
+    
     // ensure the index folder exists
     Utility.makeParentDirectories(indexPath);
 
