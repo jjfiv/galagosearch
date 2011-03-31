@@ -11,7 +11,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor
  */
-@RequiredStatistics(statistics = {"collectionLength"})
+@RequiredStatistics(statistics = {"collectionLength","mu"})
 public class DirichletScorer implements ScoringFunction {
 
     double background;

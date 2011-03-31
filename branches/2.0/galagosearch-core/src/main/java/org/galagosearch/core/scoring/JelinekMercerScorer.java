@@ -11,7 +11,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author irmarc
  */
-@RequiredStatistics(statistics = {"collectionLength"})
+@RequiredStatistics(statistics = {"collectionLength","lambda"})
 public class JelinekMercerScorer implements ScoringFunction {
 
     double background;
@@ -20,6 +20,7 @@ public class JelinekMercerScorer implements ScoringFunction {
     public JelinekMercerScorer(Parameters parameters, CountValueIterator iterator) throws IOException {
 
         lambda = parameters.get("lambda", 0.5);
+        //System.err.println("lambda = " + lambda);
         if (parameters.containsKey("collectionProbability")) {
             background = parameters.get("collectionProbability", 0.0001);
         } else {
@@ -46,7 +47,7 @@ public class JelinekMercerScorer implements ScoringFunction {
 
     public double score(int count, int length) {
         double foreground = (double) count / (double) length;
-        return Math.log((lambda * foreground) + ((1 - lambda) * background));
+        return Math.log(((1 - lambda) * foreground) + (lambda * background));
     }
 
     public String getParameterString(){

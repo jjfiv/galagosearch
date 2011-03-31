@@ -30,7 +30,8 @@ public class JelinekMercerScoringIterator extends ScoringFunctionIterator {
     for (int i = 0; i < lambdaSet.length; i++) {
       Parameters fnp = new Parameters();
       fnp.copy(p);
-      fnp.set("mu", lambdaSet[i]);
+      fnp.set("lambda", lambdaSet[i]);
+      //System.err.println("lambda = " + lambdaSet[i]);
       fns[i] = new JelinekMercerScorer(fnp, it);
     }
     return fns;

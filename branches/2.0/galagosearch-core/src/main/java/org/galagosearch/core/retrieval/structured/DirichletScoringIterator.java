@@ -16,7 +16,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author irmarc
  */
-@RequiredStatistics(statistics = {"collectionLength"})
+@RequiredStatistics(statistics = {"collectionLength","mu"})
 public class DirichletScoringIterator extends ScoringFunctionIterator {
   public DirichletScoringIterator(Parameters p, CountValueIterator it)
           throws IOException {
