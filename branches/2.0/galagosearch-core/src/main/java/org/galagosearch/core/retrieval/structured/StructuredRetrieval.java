@@ -77,9 +77,18 @@ public class StructuredRetrieval implements Retrieval {
    * </parameters>
    */
   public Parameters getRetrievalStatistics(String _retGroup) throws IOException {
+    return getRetrievalStatistics();
+  }
+
+  public Parameters getRetrievalStatistics() throws IOException {
     Parameters p = new Parameters();
     p.add("collectionLength", Long.toString(index.getCollectionLength()));
     p.add("documentCount", Long.toString(index.getDocumentCount()));
+    
+    for (String part : index.getPartNames()){
+      p.copy(index.getPartStatistics(part) );
+    }
+
     return p;
   }
   /*
@@ -111,7 +120,7 @@ public class StructuredRetrieval implements Retrieval {
     DocumentContext context = new DocumentContext();
 
     // construct the query iterators
-    System.err.printf("Running boolean query: %s\n", queryTree.toString());
+    // System.err.printf("Running boolean query: %s\n", queryTree.toString());
     AbstractIndicator iterator = (AbstractIndicator) createIterator(queryTree, context);
     ArrayList<ScoredDocument> list = new ArrayList<ScoredDocument>();
     while (!iterator.isDone()) {
@@ -137,7 +146,7 @@ public class StructuredRetrieval implements Retrieval {
     DocumentContext context = new DocumentContext();
 
     // construct the query iterators
-    System.err.printf("Running ranked query: %s\n", queryTree.toString());
+    //System.err.printf("Running ranked query: %s\n", queryTree.toString());
     ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context);
     int requested = (int) parameters.get("requested", 1000);
 

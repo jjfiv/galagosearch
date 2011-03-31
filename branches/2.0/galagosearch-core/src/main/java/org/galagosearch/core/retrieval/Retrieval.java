@@ -26,9 +26,11 @@ public interface Retrieval extends Runnable {
 
     public void close() throws IOException;
 
-    // should return collections statistics (collection length + documentCount)
+    // should return collections statistics (collection length + documentCount) for each part
     // retrievalGroup controls the set of retrievals that should be used -- MultiRetrieval only
+    public Parameters getRetrievalStatistics() throws IOException;
     public Parameters getRetrievalStatistics(String retrievalGroup) throws IOException;
+
     // should return availiable parts (postings + extents + ...) and nodeTypes (count + extents)
     // retrievalGroup controls the set of retrievals that should be used -- MultiRetrieval only
 

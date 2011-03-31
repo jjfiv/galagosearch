@@ -60,6 +60,10 @@ public class RetiredProxy implements Retrieval {
    *  </part>
    * </parameters>
    */
+  public Parameters getRetrievalStatistics() throws IOException {
+    return getRetrievalStatistics("all");
+  }
+
   public Parameters getRetrievalStatistics(String retGroup) throws IOException {
     StringBuilder request = new StringBuilder(indexUrl);
     String encoded = URLEncoder.encode(query.toString(), "UTF-8"); // need to web-escape

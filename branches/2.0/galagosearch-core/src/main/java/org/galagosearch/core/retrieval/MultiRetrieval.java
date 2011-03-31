@@ -55,6 +55,10 @@ public class MultiRetrieval implements Retrieval {
   }
 
   // function accumulates statistics accross index subset
+  public Parameters getRetrievalStatistics() throws IOException {
+    return getRetrievalStatistics("all");
+  }
+
   public Parameters getRetrievalStatistics(String retGroup) throws IOException {
     System.err.printf("MR checking for group %s (%b)\n", retGroup, retrievalStatistics.containsKey(retGroup));
     if (retrievalStatistics.containsKey(retGroup)) {
@@ -188,32 +192,34 @@ public class MultiRetrieval implements Retrieval {
     retrievalStatistics = new HashMap();
     retrievalParts = new HashMap();
     featureFactories = new HashMap();
-    Parameters p;
+    Parameters partSet;
+    Parameters statsSet;
     for (String retGroup : retrievals.keySet()) {
       ArrayList<Parameters> stats = new ArrayList();
       ArrayList<Parameters> parts = new ArrayList();
       for (Retrieval r : retrievals.get(retGroup)) {
-        p = r.getRetrievalStatistics(retGroup);
-        stats.add(p);
-        p = r.getAvailableParts(retGroup);
-        parts.add(p);
+        statsSet = r.getRetrievalStatistics(retGroup);
+        stats.add(statsSet);
+        partSet = r.getAvailableParts(retGroup);
+        parts.add(partSet);
       }
       System.err.printf("Merging components for RG %s\n", retGroup);
-      p = mergeStats(stats);
-      p.add("traversals", externalParameters.list("traversals"));
-      p.add("operators", externalParameters.list("operators"));
-      System.err.printf("After adding external parameters: %s\n", p.toString());
-      retrievalStatistics.put(retGroup, p);
+      partSet = mergeParts(parts);
+      retrievalParts.put(retGroup, partSet);
+
+      statsSet = mergeStats(stats, partSet);
+      statsSet.add("traversals", externalParameters.list("traversals"));
+      statsSet.add("operators", externalParameters.list("operators"));
+      System.err.printf("After adding external parameters: %s\n", statsSet.toString());
+      retrievalStatistics.put(retGroup, statsSet);
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
       
-      p = mergeParts(parts);
-      retrievalParts.put(retGroup, p);
       featureFactories.put(retGroup, new RankedFeatureFactory(retrievalStatistics.get(retGroup)));
     }
   }
 
   // this function accumulates statistics collected from the subordinate retrievals
-  private Parameters mergeStats(List<Parameters> ps) {
+  private Parameters mergeStats(List<Parameters> ps, Parameters parts) {
     long cl = 0;
     long dc = 0;
     for (Parameters p : ps) {
@@ -224,6 +230,18 @@ public class MultiRetrieval implements Retrieval {
     Parameters out = new Parameters();
     out.set("collectionLength", Long.toString(cl));
     out.set("documentCount", Long.toString(dc));
+
+    for(String part : parts.stringList("part")){
+      long pcl = 0;
+      long pdc = 0;
+      for (Parameters p : ps) {
+        pcl += Long.parseLong(p.get("collectionLength"));
+        pdc += Long.parseLong(p.get("documentCount"));
+      }
+      out.set(part + "/collectionLength", Long.toString(pcl));
+      out.set(part + "/documentCount", Long.toString(pdc));
+   }
+
     System.err.printf("After merging, stats are: %s\n", out);
     return out;
 

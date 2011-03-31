@@ -221,6 +221,13 @@ public class StructuredIndex {
   public long getDocumentCount() {
     return parts.get("postings").getManifest().get("statistics/documentCount", 0L);
   }
+  
+  public Parameters getPartStatistics( String part) {
+    Parameters p = new Parameters();
+    p.add( part+"/collectionLength" , Long.toString(parts.get(part).getManifest().get("statistics/collectionLength", 0L)));
+    p.add( part+"/documentCount" , Long.toString(parts.get(part).getManifest().get("statistics/documentCount", 0L)));
+    return p;
+  }
 
   public void close() throws IOException {
     for (StructuredIndexPartReader part : parts.values()) {

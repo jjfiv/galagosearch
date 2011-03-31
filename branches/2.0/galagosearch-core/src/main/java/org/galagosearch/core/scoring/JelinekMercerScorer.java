@@ -47,7 +47,7 @@ public class JelinekMercerScorer implements ScoringFunction {
 
     public double score(int count, int length) {
         double foreground = (double) count / (double) length;
-        return Math.log(((1 - lambda) * foreground) + (lambda * background));
+        return Math.log((lambda * foreground) + ((1-lambda) * background));
     }
 
     public String getParameterString(){
