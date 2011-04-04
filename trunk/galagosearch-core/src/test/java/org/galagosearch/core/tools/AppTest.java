@@ -168,6 +168,7 @@ public class AppTest extends TestCase {
 
             // Now, verify that some stuff exists
             String output = byteArrayStream.toString();
+			output = output.replaceAll("\r","");
             String expectedScores =
                     "9 Q0 59 1 -1.38562925 galago\n"
                     + "9 Q0 55 2 -1.38695903 galago\n"
@@ -184,6 +185,7 @@ public class AppTest extends TestCase {
 
             new App(printStream).run(new String[]{"dump-keys", corpusFile.getAbsolutePath() + File.separator + "key.index"});
             output = byteArrayStream.toString();
+			output = output.replaceAll("\r","");
             assertEquals("55\n59\n", output);
 
             // Verify doc works
@@ -192,6 +194,7 @@ public class AppTest extends TestCase {
 
             new App(printStream).run(new String[]{"doc", corpusFile.getAbsolutePath(), "55"});
             output = byteArrayStream.toString();
+			output = output.replaceAll("\r","");
             assertEquals("<TEXT>\nThis is a sample document</TEXT>\n\n", output);
 
             // Verify dump-index works
@@ -203,6 +206,7 @@ public class AppTest extends TestCase {
                     File.separator);
             new App(printStream).run(new String[]{"dump-index", postingsName});
             output = byteArrayStream.toString();
+			output = output.replaceAll("\r","");
             assertEquals("a,0,2\n"
                     + "document,0,4\n"
                     + "document,1,1\n"

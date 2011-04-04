@@ -1,3 +1,4 @@
+// BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.traversal;
 
 import java.io.IOException;

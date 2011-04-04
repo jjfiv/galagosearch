@@ -1,3 +1,4 @@
+// BSD License (http://www.galagosearch.org/license)
 /**
  * This is an alternative the CompressedByteBuffer. Instead of using an ArrayList
  * to hold Byte objects, which is insanely wasteful b/c of boxing, we hold primitive

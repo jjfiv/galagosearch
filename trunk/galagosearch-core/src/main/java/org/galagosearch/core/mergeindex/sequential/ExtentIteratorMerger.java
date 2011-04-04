@@ -1,3 +1,4 @@
+// BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.mergeindex.sequential;
 
 import java.io.IOException;
@@ -6,7 +7,6 @@ import java.util.PriorityQueue;
 import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 import org.galagosearch.core.mergeindex.KeyExtent;
 import org.galagosearch.core.retrieval.structured.Extent;
-import org.galagosearch.core.retrieval.structured.IndexIterator;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.InputClass;
@@ -18,7 +18,7 @@ import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.Verified;
 
 @Verified
-@InputClass(className = "org.galagosearch.core.mergeindex.ExtentIndexIterator")
+@InputClass(className = "org.galagosearch.core.retrieval.structured.ExtentIndexIterator")
 @OutputClass(className = "org.galagosearch.core.mergeindex.KeyExtent")
 public class ExtentIteratorMerger extends StandardStep<ExtentIndexIterator, KeyExtent> {
 

@@ -1,3 +1,4 @@
+// BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.mergeindex;
 
 import org.galagosearch.core.retrieval.structured.Extent;

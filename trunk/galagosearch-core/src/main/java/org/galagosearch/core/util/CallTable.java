@@ -1,3 +1,4 @@
+// BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.util;
 
 import gnu.trove.TObjectLongHashMap;

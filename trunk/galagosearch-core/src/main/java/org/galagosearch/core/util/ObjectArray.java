@@ -1,18 +1,25 @@
 // BSD License (http://www.galagosearch.org/license)
 
 package org.galagosearch.core.util;
+import java.lang.reflect.Array;
 
 public class ObjectArray<T> {
-  Object[] _array;
+  Class<T> myClass;
+  T[] _array;
   int _position;
 
-  public ObjectArray(int capacity) {
-    _array = new Object[capacity];
+  public ObjectArray(Class<T> c, int capacity) {
+	myClass=c;
+    _array = (T[])Array.newInstance(myClass,capacity);
     _position = 0;
   }
 
-  public ObjectArray() {
-    this(16);
+  //must explicitly supply the class at instantiation  
+  public ObjectArray(Class<T> c) {
+    this(c,16);
+  }
+  
+  private ObjectArray(){
   }
 
   public void add(T value) {
@@ -33,8 +40,8 @@ public class ObjectArray<T> {
     return _position;
   }
 
-  private Object[] _copyArray(int newSize) {
-    Object[] result = new Object[newSize];
+  private T[] _copyArray(int newSize) {
+    T[] result = (T[])Array.newInstance(myClass,newSize);
     System.arraycopy(_array, 0, result, 0, _position);
     return result;
   }
