@@ -3,6 +3,7 @@ package org.galagosearch.core.retrieval;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import org.galagosearch.core.retrieval.query.Node;
@@ -12,9 +13,6 @@ import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
 import org.galagosearch.core.retrieval.structured.StructuredRetrievalProxy;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
-import org.ggf.drmaa.DrmaaException;
-import org.ggf.drmaa.Session;
-import org.ggf.drmaa.SessionFactory;
 
 /**
  * <p>This is a base class for all kinds of retrieval classes.  Historically this was
@@ -101,7 +99,7 @@ public abstract class Retrieval implements Runnable {
         }
 
         // otherwise we have a multi-index
-        HashMap<String, ArrayList<Retrieval>> retrievals = new HashMap();
+        HashMap<String, Collection<Retrieval>> retrievals = new HashMap();
         for (Value value : indexes) {
             id = "all";
             if (value.containsKey("path")) {

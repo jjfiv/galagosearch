@@ -4,6 +4,7 @@ package org.galagosearch.core.retrieval;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,26 +27,27 @@ import org.galagosearch.tupleflow.Parameters.Value;
  */
 public class MultiRetrieval extends Retrieval {
 
-  HashMap<String, ArrayList<Retrieval>> retrievals;
-  HashMap<String, Parameters> retrievalStatistics;
-  HashMap<String, Parameters> retrievalParts;
-  HashMap<String, FeatureFactory> featureFactories;
+  protected HashMap<String, Collection<Retrieval>> retrievals;
+  protected HashMap<String, Parameters> retrievalStatistics;
+  protected HashMap<String, Parameters> retrievalParts;
+  protected HashMap<String, FeatureFactory> featureFactories;
   // for asynchronous retrieval
-  Thread runner;
-  Node root = null;
-  Parameters queryParams;
-  List<ScoredDocument> queryResults;
+  protected Thread runner;
+  protected Node root = null;
+  protected Parameters queryParams;
+  protected Parameters retrievalParams;
+  protected List<ScoredDocument> queryResults;
 
-  public MultiRetrieval(HashMap<String, ArrayList<Retrieval>> indexes, Parameters p) throws Exception {
+  public MultiRetrieval(HashMap<String, Collection<Retrieval>> indexes, Parameters p) throws Exception {
 
-    this.retrievals = indexes;
-    
+    retrievals = indexes;
+    retrievalParams = p;
     initRetrieval();
   }
 
   public void close() throws IOException {
     for (String desc : retrievals.keySet()) {
-      ArrayList<Retrieval> collGroup = retrievals.get(desc);
+     Collection<Retrieval> collGroup = retrievals.get(desc);
       for (Retrieval r : collGroup) {
         r.close();
       }
@@ -90,7 +92,7 @@ public class MultiRetrieval extends Retrieval {
       // Print a fail, then return null
       throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + root.toString() + "'");
     }
-    ArrayList<Retrieval> subset = retrievals.get(retrievalGroup);
+    Collection<Retrieval> subset = retrievals.get(retrievalGroup);
     List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
 
     Parameters shardTemplate = parameters.clone();
@@ -98,11 +100,12 @@ public class MultiRetrieval extends Retrieval {
     // Asynchronous retrieval
     String indexId = parameters.get("indexId", "0");
 
-    for (int i = 0; i < subset.size(); i++) {
+    int i =0;
+    for (Retrieval r : subset) {
       Parameters shardParams = shardTemplate.clone();
       shardParams.set("indexId", indexId + "." + Integer.toString(i));
-      Retrieval r = subset.get(i);
       r.runAsynchronousQuery(this.root, shardParams, queryResults);
+      i++;
     }
 
     // Wait for a finished list
@@ -205,7 +208,7 @@ public class MultiRetrieval extends Retrieval {
   }
 
   // this function accumulates statistics collected from the subordinate retrievals
-  private Parameters mergeStats(List<Parameters> ps) {
+  protected Parameters mergeStats(List<Parameters> ps) {
     long cl = 0;
     long dc = 0;
     for (Parameters p : ps) {
@@ -223,7 +226,7 @@ public class MultiRetrieval extends Retrieval {
 
   // this function intersects the set of availiable parts
   // ASSUMPTION: part names correspond to unique index part concepts (that could be merged)
-  private Parameters mergeParts(List<Parameters> ps) {
+  protected Parameters mergeParts(List<Parameters> ps) {
     Parameters intersection = ps.get(0).clone();
     for (String partName : intersection.stringList("part")) {
       for (Parameters p : ps) {
@@ -261,7 +264,7 @@ public class MultiRetrieval extends Retrieval {
       // Print a fail, then return null
       throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + nodeString + "'");
     }
-    ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
+    Collection<Retrieval> selected = retrievals.get(retrievalGroup);
     long count = 0;
     for (Retrieval r : selected) {
       count += r.xCount(nodeString);
@@ -290,7 +293,7 @@ public class MultiRetrieval extends Retrieval {
       // Print a fail, then return null
       throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + nodeString + "'");
     }
-    ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
+    Collection<Retrieval> selected = retrievals.get(retrievalGroup);
     long count = 0;
     for (Retrieval r : selected) {
       count += r.docCount(nodeString);

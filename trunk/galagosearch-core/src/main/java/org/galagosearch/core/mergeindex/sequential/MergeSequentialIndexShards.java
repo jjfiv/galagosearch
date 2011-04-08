@@ -4,7 +4,6 @@ package org.galagosearch.core.mergeindex.sequential;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import org.galagosearch.core.index.DocumentLengthsWriter;
 import org.galagosearch.core.index.DocumentNameWriter;
 import org.galagosearch.core.index.ExtentIndexWriter;
@@ -47,12 +46,12 @@ import org.galagosearch.tupleflow.execution.StageConnectionPoint;
  */
 public class MergeSequentialIndexShards {
 
-  ArrayList<String> diskShardPaths = new ArrayList();
+  Iterable<String> diskShardPaths;
   String outputIndexPath;
   //ArrayList<Index> inputIndexes = new ArrayList();
   boolean stemming = false;
 
-  public MergeSequentialIndexShards(ArrayList<String> diskShardPaths, String outputIndexPath) throws IOException {
+  public MergeSequentialIndexShards(Iterable<String> diskShardPaths, String outputIndexPath) throws IOException {
 
     this.diskShardPaths = diskShardPaths;
     this.outputIndexPath = outputIndexPath;
