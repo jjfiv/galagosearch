@@ -102,7 +102,6 @@ public class TagTokenizer implements Source<Document>, Processor<Document> {
     closedTags = new ArrayList<ClosedTag>();
     tokenPositions = new ArrayList<Pair>();
     whitelist = new ArrayList<Pattern>();
-    whitelist.add(Pattern.compile("html")); // assume we accept html tags
   }
 
   protected static boolean[] buildSplits() {

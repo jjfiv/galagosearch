@@ -29,6 +29,7 @@ public class TagTokenizerTest extends TestCase {
         TagTokenizer tokenizer = new TagTokenizer();
         tokenizer.addField("title");
         tokenizer.addField("a");
+	tokenizer.addField("html");
         Document document = new Document();
         tokenizer.setProcessor(new NullProcessor(Document.class));
 
