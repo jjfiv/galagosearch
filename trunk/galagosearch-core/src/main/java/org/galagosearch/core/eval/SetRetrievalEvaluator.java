@@ -34,9 +34,11 @@ public class SetRetrievalEvaluator {
         double sumAveragePrecision = 0;
 
         for (RetrievalEvaluator evaluator : _evaluators) {
-            sumAveragePrecision += evaluator.averagePrecision();
+          double val = evaluator.averagePrecision();
+          if( ! Double.isNaN(val) ){
+            sumAveragePrecision += val;
+          }
         }
-
         return sumAveragePrecision / (double) _evaluators.size();
     }
 
@@ -48,7 +50,10 @@ public class SetRetrievalEvaluator {
         double sumBinaryPreference = 0;
 
         for (RetrievalEvaluator evaluator : _evaluators) {
-            sumBinaryPreference += evaluator.binaryPreference();
+          double val = evaluator.binaryPreference();
+          if( ! Double.isNaN(val) ){
+            sumBinaryPreference += val;
+          }
         }
 
         return sumBinaryPreference / (double) _evaluators.size();
@@ -62,7 +67,10 @@ public class SetRetrievalEvaluator {
         double productAveragePrecision = 0;
 
         for (RetrievalEvaluator evaluator : _evaluators) {
-            productAveragePrecision *= evaluator.averagePrecision();
+          double val = evaluator.averagePrecision();
+          if( ! Double.isNaN(val) ){
+            productAveragePrecision *= val;
+          }
         }
 
         return Math.pow(productAveragePrecision, 1.0 / _evaluators.size());
@@ -102,7 +110,10 @@ public class SetRetrievalEvaluator {
         double sumRPrecision = 0;
 
         for (RetrievalEvaluator evaluator : _evaluators) {
-            sumRPrecision += evaluator.rPrecision();
+          double val = evaluator.rPrecision();
+          if( ! Double.isNaN(val) ){
+            sumRPrecision += val;
+          }
         }
 
         return sumRPrecision / _evaluators.size();
@@ -115,20 +126,26 @@ public class SetRetrievalEvaluator {
         double sumNDCG = 0;
 
         for (RetrievalEvaluator evaluator : _evaluators) {
-            sumNDCG += evaluator.normalizedDiscountedCumulativeGain();
+          double val = evaluator.normalizedDiscountedCumulativeGain();
+          if( ! Double.isNaN(val) ){
+            sumNDCG += val;
+          }
         }
 
         return sumNDCG / _evaluators.size();
     }
 
     /**
-     * Returns the mean of the NDCG values for all queries.
+     * Returns the mean of the NDCGdocret values for all queries.
      */
     public double meanNormalizedDiscountedCumulativeGain(int documentsRetrieved) {
         double sumNDCG = 0;
 
         for (RetrievalEvaluator evaluator : _evaluators) {
-            sumNDCG += evaluator.normalizedDiscountedCumulativeGain(documentsRetrieved);
+          double val = evaluator.normalizedDiscountedCumulativeGain(documentsRetrieved);
+          if( ! Double.isNaN(val) ){
+            sumNDCG += val;
+          }
         }
 
         return sumNDCG / _evaluators.size();

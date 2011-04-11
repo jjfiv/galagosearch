@@ -55,6 +55,8 @@ public class BatchSearch {
 
     // for each query, run it, get the results, print in TREC format
     int index = 0;
+    long starttime = System.currentTimeMillis();
+    long sumtime = 0;
     for (Parameters.Value query : queries) {
 
       String queryText = query.get("text");
@@ -68,7 +70,11 @@ public class BatchSearch {
         System.err.println("Transformed:" + transformed.toString());
       }
 
+      long querystarttime = System.currentTimeMillis();
       ScoredDocument[] results = retrieval.runQuery(transformed, internalParameters);
+      long queryendtime = System.currentTimeMillis();
+      sumtime += queryendtime - querystarttime;
+
       for (int i = 0; i < results.length; i++) {
         double score = results[i].score;
         int rank = i + 1;
@@ -83,6 +89,10 @@ public class BatchSearch {
       CallTable.reset();
     }
 
+    long endtime = System.currentTimeMillis();
+    System.err.println( "TotalTime: " + (endtime - starttime) );
+    System.err.println( "AvgTime: " + ((endtime - starttime)/queries.size()) );
+    System.err.println( "AvgQueryTime: " + (sumtime/queries.size()) );
   }
 
   
@@ -164,6 +174,11 @@ public class BatchSearch {
       try{
         Node root = StructuredQuery.parse(queryText);
         Node transformed = r.transformQuery(root, "all");
+
+        //System.err.println( queryText );
+        //System.err.println( root.toString() );
+        //System.err.println( transformed.toString() );
+
         String output = traverseXCount(transformed, r, query.get("number"));
         out.print(output);
       } catch (Exception e){
