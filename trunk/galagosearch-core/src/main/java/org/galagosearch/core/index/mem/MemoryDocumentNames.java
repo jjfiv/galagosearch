@@ -26,6 +26,11 @@ public class MemoryDocumentNames {
     return names.getBuffer()[docNum - offset];
   }
 
+  int getDocumentId(String document) {
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+
   // Allow documentNames data to be iterated over 
   // (in document number order)
   public Iterator getIterator(){

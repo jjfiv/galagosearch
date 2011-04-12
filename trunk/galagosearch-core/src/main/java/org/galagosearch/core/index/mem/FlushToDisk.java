@@ -163,7 +163,7 @@ public class FlushToDisk {
     // flush postings
     flushPostings(index.getExtentIterator("postings"), outputFolder + File.separator + "parts" + File.separator + "postings");
     // flush stemmed
-    if (index.isStemmed()) {
+    if (index.getPartNames().contains("stemmedPostings")) {
       flushPostings(index.getExtentIterator("stemmedPostings"), outputFolder + File.separator + "parts" + File.separator + "stemmedPostings");
     }
   }
@@ -254,7 +254,7 @@ public class FlushToDisk {
     });
 
     // flush stemmed
-    if (index.isStemmed()) {
+    if (index.getPartNames().contains("stemmedPostings")) {
       threads.add(new Thread() {
 
         @Override
