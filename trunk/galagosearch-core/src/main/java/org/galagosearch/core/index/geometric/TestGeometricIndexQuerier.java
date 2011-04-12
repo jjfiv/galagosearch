@@ -44,7 +44,8 @@ public class TestGeometricIndexQuerier implements Processor<NumberedDocument> {
       try {
         runQueries();
       } catch (Exception ex) {
-        Logger.getLogger(TestGeometricIndexQuerier.class.getName()).log(Level.SEVERE, null, "Failed to run queries\n" + ex.toString());
+        Logger.getLogger(TestGeometricIndexQuerier.class.getName()).log(Level.SEVERE, "Failed to run queries\n");
+        ex.printStackTrace();
       }
     }
   }
@@ -62,6 +63,7 @@ public class TestGeometricIndexQuerier implements Processor<NumberedDocument> {
     Parameters internalParameters = queries.clone();
     internalParameters.set("query", "");
     internalParameters.set("print_calls", "");
+    internalParameters.set("retrievalGroup","all");
 
     // for each query, run it, get the results, print in TREC format
     int index = 0;

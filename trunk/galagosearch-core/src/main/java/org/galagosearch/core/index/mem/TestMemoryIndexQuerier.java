@@ -47,7 +47,8 @@ public class TestMemoryIndexQuerier implements Processor<NumberedDocument> {
       try {
         runQueries();
       } catch (Exception ex) {
-        Logger.getLogger(TestMemoryIndexQuerier.class.getName()).log(Level.SEVERE, null, "Failed to run queries\n" + ex.toString());
+
+        Logger.getLogger(TestMemoryIndexQuerier.class.getName()).log(Level.SEVERE, "Failed to run queries\n" , ex);
       }
     }
   }
