@@ -182,6 +182,18 @@ public class Node implements Serializable {
         if (operator != null && !other.getOperator().equals(operator)) {
             return false;
         }
+        
+        String thisDefault = this.getDefaultParameter();
+        String thatDefault = other.getDefaultParameter();
+
+        if ((thisDefault == null && thatDefault != null) ||
+                (thisDefault != null && thatDefault == null)) {
+          return false;
+        }
+        if (thisDefault != null && !thisDefault.equals(thatDefault)) {
+          return false;
+        }
+
         if (internalNodes.size() != other.getInternalNodes().size()) {
             return false;
         }

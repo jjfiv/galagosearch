@@ -28,8 +28,6 @@ import org.galagosearch.tupleflow.execution.JobExecutor;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.AbstractHandler;
-import org.mortbay.jetty.handler.ContextHandler;
-import org.mortbay.jetty.handler.HandlerList;
 
 /**
  * TODO: Make distributed jobs generate their own tmp directories, to avoid collisions.
@@ -921,7 +919,7 @@ public class App {
       usage();
     }
   }
-
+  
   public void run(String[] args) throws Exception {
     if (args.length < 1) {
       usage();

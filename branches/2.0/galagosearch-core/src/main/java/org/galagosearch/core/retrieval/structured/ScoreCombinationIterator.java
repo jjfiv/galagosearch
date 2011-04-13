@@ -19,14 +19,14 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public abstract class ScoreCombinationIterator implements ScoreValueIterator {
 
-  double[] weights;
-  double weightSum;
-  ScoreValueIterator[] iterators;
-  boolean done;
+  protected double[] weights;
+  protected double weightSum;
+  protected ScoreValueIterator[] iterators;
+  protected boolean done;
   // parameter sweep stuff
-  double[][] weightLists = null; // double[parameterID][nodeID]
-  double[] weightSums = null; // double[parameterID]
-  String[] parameterStrings = null; // String[parameterID]
+  protected double[][] weightLists = null; // double[parameterID][nodeID]
+  protected double[] weightSums = null; // double[parameterID]
+  protected String[] parameterStrings = null; // String[parameterID]
 
   public ScoreCombinationIterator(Parameters parameters,
           ScoreValueIterator[] childIterators) {

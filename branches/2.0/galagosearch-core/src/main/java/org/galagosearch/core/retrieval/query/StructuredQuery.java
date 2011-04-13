@@ -290,4 +290,5 @@ public class StructuredQuery {
 
         return queryTerms;
     }
+
 }
