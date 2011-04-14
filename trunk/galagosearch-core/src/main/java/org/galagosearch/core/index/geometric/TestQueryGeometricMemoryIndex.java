@@ -122,7 +122,7 @@ public class TestQueryGeometricMemoryIndex {
     
     String hash = p.get("distrib", "0");
     String tempFolderPath = p.get("galagoTemp", "");
-    indexBlockSize = (int) p.get("blockSize", 300); // could use 50000
+    indexBlockSize = (int) p.get("blockSize", 600); // could use 50000
     radix = (int) p.get("radix", 3);
     mergeMode = p.get("mergeMode", "local");
 

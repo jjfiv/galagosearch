@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import org.galagosearch.core.index.mem.FlushToDisk;
 import org.galagosearch.core.index.mem.MemoryIndex;
+import org.galagosearch.core.index.mem.MemoryParameters;
 import org.galagosearch.core.index.mem.MemoryRetrieval;
 import org.galagosearch.core.mergeindex.sequential.MergeSequentialIndexShards;
 import org.galagosearch.core.parse.NumberedDocument;
@@ -60,7 +61,8 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
   MemoryIndex currentMemoryIndex;
   GeometricPartitions geometricParts;
   Parameters retrievalParameters = new Parameters();
-  private Retrieval currentMemoryRetrieval;
+  Parameters statistics;
+  private MemoryRetrieval currentMemoryRetrieval;
 
   public GeometricIndex(TupleFlowParameters parameters) throws Exception {
 
@@ -84,8 +86,10 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     // initialisation
     globalDocumentCount = 0;
     indexBlockCount = 0;
+    retrievalParameters.add("retrievalGroup", "all");
 
     resetCurrentMemoryIndex();
+    updateRetrieval();
   }
 
   public void process(NumberedDocument doc) throws IOException {
@@ -132,10 +136,13 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
       // first flush the index to disk
       (new FlushToDisk()).flushMemoryIndex(flushingMemoryIndex, shardFolder.getAbsolutePath(), false);
       // indicate that the flushing part of this thread is done
+      
+      synchronized (geometricParts) {
+      updateRetrieval();
       flushingMemoryIndex.close();
 
       // add flushed index to the set of bins -- needs to be a synconeous action
-      synchronized (geometricParts) {
+      
         geometricParts.add(1, shardFolder.getAbsolutePath());
       }
 
@@ -228,6 +235,14 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     currentMemoryRetrieval = new MemoryRetrieval(currentMemoryIndex, retrievalParameters);
     ArrayList<Retrieval> allRetrievals = new ArrayList<Retrieval>(r.size() + 1);
     allRetrievals.addAll(r);
+
+    ArrayList<Parameters> staticParameters = new ArrayList<Parameters>();
+    for(Retrieval ret: r ){
+        staticParameters.add(ret.getRetrievalStatistics("all"));
+    }
+
+    statistics = new MemoryParameters((MemoryRetrieval)currentMemoryRetrieval, mergeStats(staticParameters));
+    statistics.add("retrievalGroup", "all");
     allRetrievals.add(currentMemoryRetrieval);
     retrievals.put("all", allRetrievals);
     initRetrieval();
@@ -243,19 +258,15 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
 
   //since we know all the retrievals will be the same, just return any of them
   public Parameters getAvailableParts(String retGroup) throws IOException {
-    return retrievals.get("all").iterator().next().getAvailableParts("all");
+    return currentMemoryRetrieval.getAvailableParts("all");
   }
 
-  //does not use retGroup, assume "all"
   public Parameters getRetrievalStatistics(String retGroup) throws IOException {
-    ArrayList<Parameters> stats = new ArrayList();
-    stats.add(currentMemoryRetrieval.getRetrievalStatistics(retGroup));
-    for (Retrieval r : retrievals.get(retGroup)) {
-      stats.add(r.getRetrievalStatistics(retGroup));
-    }
-    return mergeStats(stats);
-  }
 
+    return statistics;
+
+  }
+  
   // Sub - Classes
   private class Bin {
 

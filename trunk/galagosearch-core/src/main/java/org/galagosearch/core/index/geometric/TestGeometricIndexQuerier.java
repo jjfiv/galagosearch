@@ -63,7 +63,6 @@ public class TestGeometricIndexQuerier implements Processor<NumberedDocument> {
     Parameters internalParameters = queries.clone();
     internalParameters.set("query", "");
     internalParameters.set("print_calls", "");
-    internalParameters.set("retrievalGroup","all");
 
     // for each query, run it, get the results, print in TREC format
     int index = 0;
