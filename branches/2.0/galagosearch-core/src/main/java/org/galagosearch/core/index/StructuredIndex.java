@@ -23,6 +23,7 @@ public class StructuredIndex {
   DocumentLengthsReader lengthsReader;
   NameReader namesReader;
   Map<String, StructuredIndexPartReader> parts;
+  Map<String, HashMap<String, StructuredIndexPartReader>> modifiers;
   File location;
   Parameters manifest = new Parameters();
   HashMap<String, String> defaultIndexOperators = new HashMap<String, String>();
@@ -35,15 +36,18 @@ public class StructuredIndex {
       throw new IOException(String.format("%s is not a directory.", indexPath));
     }
 
-    // Check manifest
+    // Load all parts
     parts = new HashMap<String, StructuredIndexPartReader>();
     for (File part : location.listFiles()) {
-      StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
-      if (reader == null) {
-        continue;
+      if (part.getName().equals("mods")) {
+        initializeModifiers(part.getAbsoluteFile());
+      } else {
+        StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
+        if (reader == null) {
+          continue;
+        }
+        parts.put(part.getName(), reader);
       }
-      parts.put(part.getName(), reader);
-
     }
 
     // Initialize these now b/c they're so common
@@ -57,6 +61,22 @@ public class StructuredIndex {
     }
 
     initializeIndexOperators();
+  }
+
+  protected void initializeModifiers(File modDirectory) throws IOException {
+    modifiers = new HashMap<String, HashMap<String, StructuredIndexPartReader>>();
+    for (File part: modDirectory.listFiles()) {
+      StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
+      if (reader == null) {
+        continue;
+      }
+      String name = part.getName();
+      String[] nameParts = name.split(".");
+      if (modifiers.containsKey(nameParts[0])) {
+        modifiers.put(nameParts[0], new HashMap<String, StructuredIndexPartReader>());
+      }
+      modifiers.get(nameParts[0]).put(nameParts[1], reader);
+    }
   }
 
   public File getIndexLocation() {
@@ -146,6 +166,11 @@ public class StructuredIndex {
     return parts.containsKey(partName);
   }
 
+  public boolean containsModifier(String partName, String modifierName) {
+    return (modifiers.containsKey(partName) &&
+            modifiers.get(partName).containsKey(modifierName));
+  }
+
   void initializeIndexOperators() {
     for (Entry<String, StructuredIndexPartReader> entry : parts.entrySet()) {
       String partName = entry.getKey();
@@ -191,11 +216,30 @@ public class StructuredIndex {
     return part;
   }
 
+  private boolean isModifierEligible(Node node) {
+    Parameters p = node.getParameters();
+    return (p.containsKey("part") && containsPart(p.get("part")) &&
+            p.containsKey("mod") && containsModifier(p.get("part"), p.get("mod")));
+  }
+
+  // This hack needs to be properly coded
+  private void modify(ValueIterator iter, Node node) throws IOException {
+    if (KeyListReader.ListIterator.class.isInstance(iter)) {
+      Parameters p = node.getParameters();
+      StructuredIndexPartReader modder = modifiers.get(p.get("part")).get("mod");
+      ValueIterator mod = modder.getIterator(node);
+      ((KeyListReader.ListIterator)iter).addModifier(p.get("mod"), mod);
+    }
+  }
+
   public ValueIterator getIterator(Node node) throws IOException {
     ValueIterator result = null;
     StructuredIndexPartReader part = getIndexPart(node);
     if (part != null) {
       result = part.getIterator(node);
+      if (isModifierEligible(node)) {
+        modify(result, node);
+      }
       if (result == null) {
         result = new NullExtentIterator();
       }

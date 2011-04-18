@@ -2,7 +2,9 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import org.galagosearch.core.retrieval.structured.CountIterator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -29,6 +31,7 @@ public abstract class KeyListReader extends KeyValueReader {
     protected GenericIndexReader.Iterator source;
     protected byte[] key;
     protected long dataLength;
+    protected Map<String, Object> modifiers = null;
 
     public abstract String getEntry();
       
@@ -43,6 +46,20 @@ public abstract class KeyListReader extends KeyValueReader {
         return 0;
       }
       return currentCandidate() - other.currentCandidate();
+    }
+
+    public void addModifier(String k, Object m) {
+      if (modifiers == null) modifiers = new HashMap<String, Object>();
+      modifiers.put(k, m);
+    }
+
+    public Set<String> getAvailableModifiers() {
+      return modifiers.keySet();
+    }
+
+    public Object getModifier(String modKey) {
+      if (modifiers == null) return null;
+      return modifiers.get(modKey);
     }
 
     public long getByteLength() throws IOException {

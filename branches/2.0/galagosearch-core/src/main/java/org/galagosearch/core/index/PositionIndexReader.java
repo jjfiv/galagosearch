@@ -109,7 +109,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     //
     // Even though we check for skips multiple times, in terms of how the data is loaded
     // its easier to do the parts when appropriate
-    private void initialize() throws IOException {
+    protected void initialize() throws IOException {
       input.seek(startPosition);
       DataInput stream = new VByteInput(input);
 
@@ -371,7 +371,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     //
     // Even though we check for skips multiple times, in terms of how the data is loaded
     // its easier to do the parts when appropriate
-    private void initialize() throws IOException {
+    protected void initialize() throws IOException {
       input.seek(startPosition);
       DataInput stream = new VByteInput(input);
 
