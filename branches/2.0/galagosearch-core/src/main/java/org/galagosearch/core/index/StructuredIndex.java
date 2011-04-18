@@ -23,7 +23,7 @@ public class StructuredIndex {
   DocumentLengthsReader lengthsReader;
   NameReader namesReader;
   Map<String, StructuredIndexPartReader> parts;
-  Map<String, HashMap<String, StructuredIndexPartReader>> modifiers;
+  Map<String, HashMap<String, StructuredIndexPartModifier>> modifiers;
   File location;
   Parameters manifest = new Parameters();
   HashMap<String, String> defaultIndexOperators = new HashMap<String, String>();
@@ -38,6 +38,7 @@ public class StructuredIndex {
 
     // Load all parts
     parts = new HashMap<String, StructuredIndexPartReader>();
+    modifiers = new HashMap<String, HashMap<String, StructuredIndexPartModifier>>();
     for (File part : location.listFiles()) {
       if (part.getName().equals("mods")) {
         initializeModifiers(part.getAbsoluteFile());
@@ -64,18 +65,17 @@ public class StructuredIndex {
   }
 
   protected void initializeModifiers(File modDirectory) throws IOException {
-    modifiers = new HashMap<String, HashMap<String, StructuredIndexPartReader>>();
     for (File part: modDirectory.listFiles()) {
-      StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
-      if (reader == null) {
+      StructuredIndexPartModifier modifier = openIndexModifier(part.getAbsolutePath());
+      if (modifier == null) {
         continue;
       }
       String name = part.getName();
       String[] nameParts = name.split(".");
       if (modifiers.containsKey(nameParts[0])) {
-        modifiers.put(nameParts[0], new HashMap<String, StructuredIndexPartReader>());
+        modifiers.put(nameParts[0], new HashMap<String, StructuredIndexPartModifier>());
       }
-      modifiers.get(nameParts[0]).put(nameParts[1], reader);
+      modifiers.get(nameParts[0]).put(nameParts[1], modifier);
     }
   }
 
@@ -156,6 +156,55 @@ public class StructuredIndex {
     return partReader;
   }
 
+    public static StructuredIndexPartModifier openIndexModifier(String path) throws IOException {
+    GenericIndexReader reader = GenericIndexReader.getIndexReader(path);
+    if (reader == null) {
+      return null;
+    }
+
+    if (!reader.getManifest().containsKey("readerClass")) {
+      throw new IOException("Tried to open an index part at " + path + ", but the "
+              + "file has no readerClass specified in its manifest. "
+              + "(the readerClass is the class that knows how to decode the "
+              + "contents of the file)");
+    }
+
+    String className = reader.getManifest().get("readerClass", (String) null);
+    Class readerClass;
+    try {
+      readerClass = Class.forName(className);
+    } catch (ClassNotFoundException e) {
+      throw new IOException("Class " + className + ", which was specified as the readerClass "
+              + "in " + path + ", could not be found.");
+    }
+
+    if (!StructuredIndexPartModifier.class.isAssignableFrom(readerClass)) {
+      throw new IOException(className + " is not a StructuredIndexPartModifier subclass.");
+    }
+
+    Constructor c;
+    try {
+      c = readerClass.getConstructor(GenericIndexReader.class);
+    } catch (NoSuchMethodException ex) {
+      throw new IOException(className + " has no constructor that takes a single "
+              + "IndexReader argument.");
+    } catch (SecurityException ex) {
+      throw new IOException(className + " doesn't have a suitable constructor that "
+              + "this code has access to (SecurityException)");
+    }
+
+    StructuredIndexPartModifier partModifier;
+    try {
+      partModifier = (StructuredIndexPartModifier) c.newInstance(reader);
+    } catch (Exception ex) {
+      IOException e = new IOException("Caught an exception while instantiating "
+              + "a StructuredIndexPartModifier: ");
+      e.initCause(ex);
+      throw e;
+    }
+    return partModifier;
+  }
+
   /**
    * Tests to see if a named index part exists.
    *
@@ -216,19 +265,17 @@ public class StructuredIndex {
     return part;
   }
 
-  private boolean isModifierEligible(Node node) {
-    Parameters p = node.getParameters();
-    return (p.containsKey("part") && containsPart(p.get("part")) &&
-            p.containsKey("mod") && containsModifier(p.get("part"), p.get("mod")));
-  }
-
   // This hack needs to be properly coded
   private void modify(ValueIterator iter, Node node) throws IOException {
     if (KeyListReader.ListIterator.class.isInstance(iter)) {
       Parameters p = node.getParameters();
-      StructuredIndexPartReader modder = modifiers.get(p.get("part")).get("mod");
-      ValueIterator mod = modder.getIterator(node);
-      ((KeyListReader.ListIterator)iter).addModifier(p.get("mod"), mod);
+      if (modifiers.containsKey(p.get("part", "none"))) {
+        HashMap<String, StructuredIndexPartModifier> partModifiers = modifiers.get(p.get("part"));
+        if (partModifiers.containsKey(p.get("mod", "none"))) {
+          StructuredIndexPartModifier modder = partModifiers.get(p.get("mod"));
+          ((KeyListReader.ListIterator)iter).addModifier(p.get("mod"), modder.getModification(node));
+        }
+      }
     }
   }
 
@@ -237,9 +284,7 @@ public class StructuredIndex {
     StructuredIndexPartReader part = getIndexPart(node);
     if (part != null) {
       result = part.getIterator(node);
-      if (isModifierEligible(node)) {
-        modify(result, node);
-      }
+      modify(result, node);
       if (result == null) {
         result = new NullExtentIterator();
       }
