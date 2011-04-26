@@ -12,6 +12,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Utility;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
@@ -39,9 +41,8 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
   // Flag to set the verbose mode (either on or off)
   public boolean verbose;
   // For use with user-defined native specifications
-  public boolean addNativeSpecification;
-  public String nativeSpecification_short;
-  public String nativeSpecification_long;
+  public String nativeSpecification_each;
+  public String nativeSpecification_combined;
   // Use the 'java' specified in the env. variable JAVA_HOME --
   // we don't know what version of java the user called us with :(
   public String command = System.getenv("JAVA_HOME") + File.separator
@@ -230,9 +231,8 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
     setMemoryUsage(MEMORY_X, MEMORY_S);
     nodeTempDir = NODE_TEMP_DIR;
     verbose = false;
-    addNativeSpecification = false;
-    nativeSpecification_short = "";
-    nativeSpecification_long = "";
+    nativeSpecification_each = "-w n";
+    nativeSpecification_combined = "-w n";
     // CIIR specific parameters
     // First get the hostname
     String hostname;
@@ -242,18 +242,22 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
     } catch (UnknownHostException ex) {
       hostname = "localhost";
     }
-    if (hostname.contains("swarm")) {
-      setMemoryUsage("-Xmx2g", "-Xms2g");
-      addNativeSpecification = true;
-      nativeSpecification_short = "-l protein=TRUE -l mem_free=2G -l mem_token=2G -w n";
-      nativeSpecification_long = "-l protein=TRUE -l mem_free=2G -l mem_token=2G -w n";
-    } else if (hostname.contains("sydney")) {
-      setMemoryUsage("-Xmx3500m", "-Xms3500m");
-      addNativeSpecification = true;
-      nativeSpecification_short = "-l mem_free=4G -w n";
-      nativeSpecification_long = "-l mem_free=4G -w n";
-    }
 
+    Parameters defaults = Utility.getDrmaaOptions();
+    if (defaults.containsKey("mem")) {
+      String mem = defaults.get("mem");
+      assert (! mem.startsWith("-X")): "Error: mem parameter in .galagopref file should not start with '-Xmx' or '-Xms'.";
+      setMemoryUsage("-Xmx" + defaults.get("mem"), "-Xms" + defaults.get("mem"));
+    }
+    if (defaults.containsKey("nativeSpec")) {
+      setNativeSpecification(defaults.get("nativeSpec"));
+    }
+    if (defaults.containsKey("nativeSpecEach")) {
+      nativeSpecification_each = nativeSpecification_each + " " + defaults.get("nativeSpecEach");
+    }
+    if (defaults.containsKey("nativeSpecCombined")) {
+      nativeSpecification_combined = nativeSpecification_combined + " " + defaults.get("nativeSpecCombined");
+    }
 
     // customize based upon arguments
 
@@ -267,10 +271,9 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
       } else if (args[i].startsWith("-v")) {
         verbose = true;
       } else if (args[i].startsWith("-ns=")) {
-        addNativeSpecification = true;
-        nativeSpecification_short = args[i].replaceAll("^-ns=", "");
-        nativeSpecification_short.replaceAll("(^\")|(\"$)", "");
-        nativeSpecification_long = nativeSpecification_short;
+        String ns = args[i].replaceAll("^-ns=", "");
+        ns.replaceAll("(^\")|(\"$)", "");
+        setNativeSpecification(ns);
       } else {
         System.out.println("Ignoring unknown argument: " + args[i]);
       }
@@ -299,9 +302,8 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
    * @param nativeSpecification The specification to set.
    */
   public void setNativeSpecification(String nativeSpecification) {
-    this.addNativeSpecification = true;
-    this.nativeSpecification_short = nativeSpecification;
-    this.nativeSpecification_long = nativeSpecification;
+    this.nativeSpecification_each = nativeSpecification_each + " " + nativeSpecification;
+    this.nativeSpecification_combined = nativeSpecification_combined + " " + nativeSpecification;
   }
 
   /**
@@ -371,17 +373,15 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
 
         // If the user wants the jobs submitted to a particular
         // queue, set that here.
-        if (addNativeSpecification) {
-          if (jobPaths.size() == 1) {
-            // if there's only one job - long queue
-            if (nativeSpecification_long.length() > 0) {
-              template.setNativeSpecification(nativeSpecification_long);
-            }
-          } else {
-            // otherwise use the shortt queue
-            if (nativeSpecification_short.length() > 0) {
-              template.setNativeSpecification(nativeSpecification_short);
-            }
+        if (jobPaths.size() == 1) {
+          // if there's only one job - long queue
+          if (nativeSpecification_combined.length() > 0) {
+            template.setNativeSpecification(nativeSpecification_combined);
+          }
+        } else {
+          // otherwise use the shortt queue
+          if (nativeSpecification_each.length() > 0) {
+            template.setNativeSpecification(nativeSpecification_each);
           }
         }
 

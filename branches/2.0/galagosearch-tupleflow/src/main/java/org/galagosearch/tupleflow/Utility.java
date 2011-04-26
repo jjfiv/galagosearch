@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
+import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.execution.Step;
 
 /**
@@ -37,29 +38,44 @@ public class Utility {
    * Put all initialization here
    */
   static {
-    // Initialization of the tmp locations
 
-    // try to find a prefs file for it
-    HashSet<String> holder = new HashSet<String>();
+    Parameters prefParameters = new Parameters();
+    HashSet<String> tmpHolder = new HashSet<String>();
+    // try to find a prefs file
+
     try {
       String homeDirectory = System.getProperty("user.home");
-      File prefsFile = new File(homeDirectory + "/" + ".galagotmp");
+      File prefsFile = new File(homeDirectory + File.separator + ".galago.conf");
       if (prefsFile.exists()) {
-        BufferedReader reader = new BufferedReader(new FileReader(prefsFile));
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-          String trimmed = line.trim();
-          if (!holder.contains(trimmed)) {
-            holder.add(trimmed);
+        prefParameters = new Parameters(prefsFile);
+        if (prefParameters.containsKey("tmpdir")) {
+          for (String tmp : prefParameters.stringList("tmpdir")) {
+            tmpHolder.add(tmp);
           }
         }
-        reader.close();
       }
     } catch (IOException ioe) {
       LOG.warning("Unable to locate pref file. Using default temp location.");
     }
-    roots = holder.toArray(new String[0]);
+
+    preferences = prefParameters;
+    roots = tmpHolder.toArray(new String[0]);
+    if (prefParameters.containsKey("drmaa")) {
+      drmaaOptions = new Parameters(prefParameters.list("drmaa").get(0));
+    } else {
+      drmaaOptions = new Parameters();
+    }
+  }
+
+  private static Parameters preferences;
+  private static Parameters drmaaOptions;
+
+  /**
+   * Drmaa parameters
+   *
+   */
+  public static Parameters getDrmaaOptions() {
+    return drmaaOptions;
   }
 
   /**
@@ -77,7 +93,6 @@ public class Utility {
       parent.mkdirs();
     }
   }
-
 
   public static void makeParentDirectories(String filename) {
     makeParentDirectories(new File(filename));
@@ -520,7 +535,7 @@ public class Utility {
    * Copies data from the input stream and returns a String (UTF-8 if not specified)
    */
   public static String copyStreamToString(InputStream input, String encoding) throws IOException {
-    encoding = (encoding == null) ? "UTF-8": encoding;
+    encoding = (encoding == null) ? "UTF-8" : encoding;
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     copyStream(input, baos);
     return baos.toString(encoding);
