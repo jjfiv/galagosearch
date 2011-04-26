@@ -1,11 +1,14 @@
 #summary Information about the .galago.conf file
 
-= Galago Configuration File `=
+= Galago Configuration File =
 
 == File Structure ==
 
 The galago.conf file allows you to specify parameters that are constant for a given system. The file should be written to the home directory, specifically:
-  * ~/.galago.conf
+
+{{{
+~/.galago.conf
+}}}
 
 This file should be a parameter file. No particular settings are required, there are default values that will be used.
 
@@ -14,6 +17,7 @@ This file should be a parameter file. No particular settings are required, there
 {{{
 <tmpdir>/path/to/folder</tmpdir>
 }}}
+
 Specifies a writable temporary data location. Default is the system variable $TMPDIR.
 
 {{{
@@ -23,8 +27,8 @@ Specifies a writable temporary data location. Default is the system variable $TM
  <nativeSpecEach>...</nativeSpecEach>
  <nativeSpecCombined>...</nativeSpecCombined>
 </drmaa>
-}}
-Block of parameters for the drmaa interface. <mem> specifies the amount of memory to use at each node. <nativeSpec> is a string that lists parameters for the drmaa interface. The <nativeSpecEach> and <nativeSpecCombined> parameters provides control over the job submission for these different types of stages. 
+}}}
+Block of parameters for the drmaa interface. `<mem>` specifies the amount of memory to use at each node. `<nativeSpec>` is a string that lists parameters for the drmaa interface. The `<nativeSpecEach>` and `<nativeSpecCombined>` parameters provides control over the job submission for these different types of stages. 
 
 Parameter options for this interface may be further extended in the future.
 
