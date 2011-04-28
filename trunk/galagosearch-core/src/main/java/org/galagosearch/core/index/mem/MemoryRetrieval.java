@@ -98,6 +98,10 @@ public class MemoryRetrieval extends Retrieval {
         // construct the query iterators
         DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
         int count = (int) parameters.get("count", 1000);
+        if (count == 0) {
+        	System.out.println("Warning. " + queryTree.toString() + " has 0 count.");
+        	return new ScoredDocument[0];
+        }
 
         // now there should be an iterator at the root of this tree
         PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
@@ -111,11 +115,11 @@ public class MemoryRetrieval extends Retrieval {
             iterator.setScoringContext(document, length);
             double score = iterator.score();
             CallTable.increment("scored");
-            if (queue.size() <= count || queue.peek().score < score) {
+            if (count ==-1 || queue.size() <= count || queue.peek().score< score) {
                 ScoredDocument scoredDocument = new ScoredDocument(document, score);
-                queue.add(scoredDocument);
+                queue.offer(scoredDocument);
 
-                if (queue.size() > count) {
+                if (count > 0 && queue.size() > count) {
                     queue.poll();
                 }
             }

@@ -23,6 +23,7 @@ import org.galagosearch.tupleflow.NullProcessor;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.Verified;
 
 /*
@@ -88,7 +89,7 @@ public class MemoryIndex implements Processor<NumberedDocument> {
       }
       for (int i = 0; i < doc.terms.size(); i++) {
         if (doc.terms.get(i) != null) {
-          postings.addPosting(doc.terms.get(i), doc.number, i);
+          postings.addPosting(Utility.fromString(doc.terms.get(i)), doc.number, i);
         }
       }
 
@@ -98,7 +99,7 @@ public class MemoryIndex implements Processor<NumberedDocument> {
         stemmer.process(doc);
         for (int i = 0; i < doc.terms.size(); i++) {
           if (doc.terms.get(i) != null) {
-            stemmedPostings.addPosting(doc.terms.get(i),
+            stemmedPostings.addPosting(Utility.fromString(doc.terms.get(i)),
                     doc.number, i);
           }
         }

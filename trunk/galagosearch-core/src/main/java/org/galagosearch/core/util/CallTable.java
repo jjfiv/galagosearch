@@ -11,7 +11,7 @@ import java.io.PrintStream;
  * @author irmarc
  */
 public class CallTable {
-    private static TObjectLongHashMap counts = new TObjectLongHashMap();
+    private static TObjectLongHashMap<String> counts = new TObjectLongHashMap();
     private static boolean on = true;
     private CallTable() {}
 
