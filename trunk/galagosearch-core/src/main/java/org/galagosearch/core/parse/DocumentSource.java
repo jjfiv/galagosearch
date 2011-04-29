@@ -209,71 +209,6 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
     }
   }
 
-  private void processSplit(String fileName, String fileType, boolean isCompressed) throws IOException {
-    DocumentSplit split = new DocumentSplit(fileName, fileType, isCompressed, new byte[0], new byte[0], fileId, totalFileCount);
-    fileId++;
-    if (emitSplits) {
-      processor.process(split);
-      if (inputCounter != null) inputCounter.increment();
-    }
-  }
-
-  private void processDirectory(File root) throws IOException {
-    for (File file : root.listFiles()) {
-      if (file.isHidden()) {
-        continue;
-      }
-      if (file.isDirectory()) {
-        processDirectory(file);
-      } else {
-        processFile(file.getAbsolutePath());
-      }
-    }
-  }
-
-  public void run() throws IOException {
-    // first count the total number of files
-    emitSplits = false;
-    if (parameters.getXML().containsKey("directory")) {
-      List<Value> directories = parameters.getXML().list("directory");
-
-      for (Value directory : directories) {
-        File directoryFile = new File(directory.toString());
-        processDirectory(directoryFile);
-      }
-    }
-    if (parameters.getXML().containsKey("filename")) {
-      List<Value> files = parameters.getXML().list("filename");
-
-      for (Value file : files) {
-        processFile(file.toString());
-      }
-    }
-
-    // we now have an accurate count of emitted files / splits
-    totalFileCount = fileId;
-    fileId = 0; // reset to enumerate splits
-
-    // now process each file
-    emitSplits = true;
-    if (parameters.getXML().containsKey("directory")) {
-      List<Value> directories = parameters.getXML().list("directory");
-
-      for (Value directory : directories) {
-        File directoryFile = new File(directory.toString());
-        processDirectory(directoryFile);
-      }
-    } else if (parameters.getXML().containsKey("filename")) {
-      List<Value> files = parameters.getXML().list("filename");
-
-      for (Value file : files) {
-        processFile(file.toString());
-      }
-    }
-
-    processor.close();
-  }
-
   // For now we assume <doc> tags, so we read in one doc
   // (i.e. <doc> to </doc>), and look for the following
   // tags: <docno> and (<text> or <html>)
@@ -331,6 +266,81 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
       ioe.printStackTrace(System.err);
       return null;
     }
+  }
+
+
+  private void processSplit(String fileName, String fileType, boolean isCompressed) throws IOException {
+    DocumentSplit split = new DocumentSplit(fileName, fileType, isCompressed, new byte[0], new byte[0], fileId, totalFileCount);
+    fileId++;
+    if (emitSplits) {
+      processor.process(split);
+      if (inputCounter != null) inputCounter.increment();
+    }
+  }
+
+  private void processDirectory(File root) throws IOException {
+    for (File file : root.listFiles()) {
+      if (file.isHidden()) {
+        continue;
+      }
+      if (file.isDirectory()) {
+        processDirectory(file);
+      } else {
+        processFile(file.getAbsolutePath());
+      }
+    }
+  }
+
+  public void processAllSplits() throws IOException {
+    // first count the total number of files
+    emitSplits = false;
+    if (parameters.getXML().containsKey("directory")) {
+      List<Value> directories = parameters.getXML().list("directory");
+
+      for (Value directory : directories) {
+        File directoryFile = new File(directory.toString());
+        processDirectory(directoryFile);
+      }
+    }
+    if (parameters.getXML().containsKey("filename")) {
+      List<Value> files = parameters.getXML().list("filename");
+
+      for (Value file : files) {
+        processFile(file.toString());
+      }
+    }
+
+    // we now have an accurate count of emitted files / splits
+    totalFileCount = fileId;
+    fileId = 0; // reset to enumerate splits
+
+    // now process each file
+    emitSplits = true;
+    if (parameters.getXML().containsKey("directory")) {
+      List<Value> directories = parameters.getXML().list("directory");
+
+      for (Value directory : directories) {
+        File directoryFile = new File(directory.toString());
+        processDirectory(directoryFile);
+      }
+    } else if (parameters.getXML().containsKey("filename")) {
+      List<Value> files = parameters.getXML().list("filename");
+
+      for (Value file : files) {
+        processFile(file.toString());
+      }
+    }
+  }
+
+  public void run() throws IOException {
+      processAllSplits();
+      close();
+  }
+
+  //makes it easier for future extension
+  //and so that external class don't need to access processor directly
+  public void close() throws IOException {
+      processor.close();
   }
 
   public void setProcessor(Step processor) throws IncompatibleProcessorException {

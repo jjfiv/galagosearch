@@ -12,7 +12,7 @@ import org.galagosearch.tupleflow.Parameters;
  * 
  * @author trevor
  */
-class FileParser implements DocumentStreamParser {
+public class FileParser implements DocumentStreamParser {
     BufferedReader reader;
     String identifier;
 

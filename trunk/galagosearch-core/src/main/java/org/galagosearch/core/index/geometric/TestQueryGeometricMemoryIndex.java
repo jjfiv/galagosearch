@@ -77,7 +77,7 @@ public class TestQueryGeometricMemoryIndex {
     stage.add(new Step(MemoryChecker.class));
 
     Parameters p = new Parameters();
-    p.add("directory", outputIndexDir);
+    p.add("shardDirectory", outputIndexDir);
     p.add("indexBlockSize", Integer.toString(indexBlockSize));
     p.add("radix", Integer.toString(radix));
     p.add("mergeMode", mergeMode);

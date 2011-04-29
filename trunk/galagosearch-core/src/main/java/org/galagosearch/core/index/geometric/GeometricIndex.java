@@ -72,7 +72,7 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     super(new HashMap<String, Collection<Retrieval>>(), new Parameters());
 
 
-    shardDirectory = parameters.getXML().get("directory");
+    shardDirectory = parameters.getXML().get("shardDirectory");
     stemming = (boolean) parameters.getXML().get("stemming", false);
     mergeMode = parameters.getXML().get("mergeMode", "local");
 
