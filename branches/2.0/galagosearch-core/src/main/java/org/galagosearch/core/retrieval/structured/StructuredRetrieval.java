@@ -142,6 +142,8 @@ public class StructuredRetrieval implements Retrieval {
    */
   public ScoredDocument[] runRankedQuery(Node queryTree, Parameters parameters) throws Exception {
 
+    long start = System.currentTimeMillis();
+
     // Give it a context
     DocumentContext context = new DocumentContext();
 
@@ -153,6 +155,7 @@ public class StructuredRetrieval implements Retrieval {
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
     DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
+
 
     while (!iterator.isDone()) {
       int document = iterator.currentCandidate();
@@ -175,7 +178,8 @@ public class StructuredRetrieval implements Retrieval {
       }
       iterator.next();
     }
-
+    long runtime = System.currentTimeMillis() - start;
+    CallTable.increment("realtime", runtime);
     String indexId = parameters.get("indexId", "0");
     return getArrayResults(queue, indexId);
   }
