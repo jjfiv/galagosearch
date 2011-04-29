@@ -56,8 +56,7 @@ public class ExtentIndexReader extends KeyListReader {
     VByteInput data;
     BufferedFileDataStream dataStream;
     RandomAccessFile input;
-    long startPosition, endPosition, dataLength;
-    byte[] key;
+    long startPosition, endPosition;
     int documentCount;
     int options;
     int currentDocument;
@@ -166,6 +165,7 @@ public class ExtentIndexReader extends KeyListReader {
       return false;
     }
 
+    @Override
     public boolean hasMatch(int document) {
       return (!isDone() && currentCandidate() == document);
     }

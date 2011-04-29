@@ -133,7 +133,7 @@ public class App {
     output.println("          Files may be gzip compressed (.gz).");
     output.println("<index>:  The directory path of the index to produce.");
     output.println();
-    output.println("Flags:");
+    output.println("Algorithm Flags:");
     output.println("  --links={true|false}:    Selects whether to collect anchor text ");
     output.println("                           [default=false]");
     output.println("  --printJob={plan|dot|none}: Simply prints the execution plan of a Tupleflow-based job then exits.");
@@ -146,6 +146,10 @@ public class App {
     output.println("                           Note that this is optional, if no path is supplied,");
     output.println("                           then no corpus will be created.");
     output.println("                           [default=None]");
+    output.println();
+    output.println("Tupleflow Flags:");
+    output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
+    output.println("                           [default=false]");
     output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
     output.println("                           [default=local]");
     output.println("  --port={int<65000} :     port number for web based progress monitoring. ");
@@ -162,33 +166,46 @@ public class App {
   }
 
   protected void commandHelpNgram() {
-    output.println("galago ngram[-se] [flags] <index> (<input>)+");
+    output.println("galago window[-se] [flags] <index> (<input>)+");
     output.println();
-    output.println("  Builds a Galago StructuredIndex ngram part file with TupleFlow, using");
-    output.println("  one thread for each CPU core on your computer.  While some debugging output ");
+    output.println("  Builds a Galago StructuredIndex window index file using TupleFlow. Program");
+    output.println("  uses one thread for each CPU core on your computer.  While some debugging output ");
     output.println("  will be displayed on the screen, most of the status information will");
     output.println("  appear on a web page.  A URL should appear in the command output ");
     output.println("  that will direct you to the status page.");
     output.println();
-    output.println("  ngram-se will produce an identical ngram index in a temporary-space efficient manner.");
-    output.println("  Space efficiency is gained by reading through the corpus twice.");
+    output.println("  window-se will produce an identical window index use a two-pass ");
+    output.println("  space efficient algorithm. ");
     output.println();
-
+    output.println("  Ordered or unordered windows can be generated. We match the #od and");
+    output.println("  #uw operator definitions (See query language). Width of an ordered window");
+    output.println("  is the maximum distance between words. Width of an unordered window is");
+    output.println("  the differencebetween the location of the last word and the location of \n");
+    output.println("  the first word.");
+    output.println();
     output.println("<input>:  Can be either a file or directory, and as many can be");
     output.println("          specified as you like.  Galago can read html, xml, txt, ");
     output.println("          arc (Heritrix), trectext, trecweb and corpus files.");
     output.println("          Files may be gzip compressed (.gz).");
     output.println("<index>:  The directory path of the existing index (over the same corpus).");
     output.println();
-    output.println("Flags:");
-    output.println("  --n={int >= 2}:          Selects the value of n (any reasonable value is possible)");
+    output.println("Algorithm Flags:");
+    output.println("  --n={int >= 2}:          Selects the number of terms in each window (any reasonable value is possible).");
     output.println("                           [default = 2]");
+    output.println("  --width={int >= 1}:      Selects the width of the window (Note: ordered windows are different to unordered windows).");
+    output.println("                           [default = 1]");
+    output.println("  --ordered={true|false}:  Selects ordered or unordered windows.");
+    output.println("                           [default = true]");
     output.println("  --threshold={int >= 1}:  Selects the minimum number length of any inverted list.");
     output.println("                           Larger values will produce smaller indexes.");
     output.println("                           [default = 2]");
-    output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
-    output.println("                           [default=false]");
+    output.println("  --usedocfreq={true|false}: Determines if the threshold is applied to term freq or doc freq.");
+    output.println("                           [default = false]");
     output.println("  --stemming={true|false}: Selects whether to build a stemmed ngram inverted list.");
+    output.println("                           [default=false]");
+    output.println();
+    output.println("Tupleflow Flags:");
+    output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
     output.println("                           [default=false]");
     output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
     output.println("                           [default=local]");
@@ -271,10 +288,6 @@ public class App {
     Job job;
     if (nonFlags[0].contains("fast")) {
       BuildFastIndex build = new BuildFastIndex();
-      job = build.getIndexJob(p);
-
-    } else if (nonFlags[0].contains("parallel")) {
-      BuildParallelIndex build = new BuildParallelIndex();
       job = build.getIndexJob(p);
 
     } else {
@@ -554,54 +567,54 @@ public class App {
   output.println(store.toString());
   }
   }
-  
-
-  protected void handleNgram(String[] args) throws Exception {
-  if (args.length < 3) { // ngram index input
-  commandHelpNgram();
-  return;
-  }
-
-  String[][] filtered = Utility.filterFlags(args);
-
-  String[] flags = filtered[0];
-  String[] nonFlags = filtered[1];
-  String indexName = nonFlags[1];
-  String[] docs = Utility.subarray(nonFlags, 2);
-
-  Parameters p = new Parameters(flags);
-  p.add("indexPath", indexName);
-  for (String doc : docs) {
-  p.add("inputPaths", doc);
-  }
-
-  Job job;
-  if (nonFlags[0].contains("se")) {
-  BuildNgramIndexSE build = new BuildNgramIndexSE();
-  job = build.getIndexJob(p);
-  } else {
-  BuildNgramIndex build = new BuildNgramIndex();
-  job = build.getIndexJob(p);
-  }
-
-  boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-  if (printJob) {
-  System.out.println(job.toString());
-  return;
-  }
-
-  int hash = (int) p.get("distrib", 0);
-  if (hash > 0) {
-  job.properties.put("hashCount", Integer.toString(hash));
-  }
-
-  ErrorStore store = new ErrorStore();
-  JobExecutor.runLocally(job, store, p);
-  if (store.hasStatements()) {
-  output.println(store.toString());
-  }
-  }
    */
+
+  protected void handleWindow(String[] args) throws Exception {
+    if (args.length < 3) { // minimal usage: ngram index input
+      commandHelpNgram();
+      return;
+    }
+
+    String[][] filtered = Utility.filterFlags(args);
+
+    String[] flags = filtered[0];
+    String[] nonFlags = filtered[1];
+    String indexName = nonFlags[1];
+    String[] docs = Utility.subarray(nonFlags, 2);
+
+    Parameters p = new Parameters(flags);
+    p.add("indexPath", indexName);
+    for (String doc : docs) {
+      p.add("inputPaths", doc);
+    }
+
+    Job job;
+    //if (nonFlags[0].contains("se")) {
+      //BuildWindowIndexSE build = new BuildWindowIndexSE();
+      //job = build.getIndexJob(p);
+    //} else {
+      BuildWindowIndex build = new BuildWindowIndex();
+      job = build.getIndexJob(p);
+    //}
+
+    boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
+    if (printJob) {
+      System.out.println(job.toString());
+      return;
+    }
+
+    int hash = (int) p.get("distrib", 0);
+    if (hash > 0) {
+      job.properties.put("hashCount", Integer.toString(hash));
+    }
+
+    ErrorStore store = new ErrorStore();
+    JobExecutor.runLocally(job, store, p);
+    if (store.hasStatements()) {
+      output.println(store.toString());
+    }
+  }
+
   protected void handleBatchSearch(String[] args) throws Exception {
     if (args.length <= 1) {
       commandHelpBatchSearch();
@@ -621,7 +634,9 @@ public class App {
   }
 
   protected class MappingHandler extends AbstractHandler {
+
     HashMap<String, Handler> handlers;
+
     public MappingHandler() {
       handlers = new HashMap<String, Handler>();
     }
@@ -746,10 +761,10 @@ public class App {
     output.println("   dump-names");
     output.println("   eval");
     output.println("   make-corpus");
-    output.println("   merge-index");
-    output.println("   ngram");
-    output.println("   ngram-se");
-    output.println("   pagerank");
+    //output.println("   merge-index");
+    output.println("   window");
+    output.println("   window-se");
+    //output.println("   pagerank");
     output.println("   parameter-sweep");
     output.println("   search");
     output.println("   xcount");
@@ -919,7 +934,7 @@ public class App {
       usage();
     }
   }
-  
+
   public void run(String[] args) throws Exception {
     if (args.length < 1) {
       usage();
@@ -944,8 +959,6 @@ public class App {
     } else if (command.equals("build")) {
       handleBuild(args);
     } else if (command.equals("build-fast")) {
-      handleBuild(args);
-    } else if (command.equals("build-parallel")) {
       handleBuild(args);
     } else if (command.equals("build-topdocs")) {
       handleBuildTopdocs(args);
@@ -972,10 +985,10 @@ public class App {
     } else if (command.equals("merge-index")) {
       throw new UnsupportedOperationException("Need to re-implement");
       //handleMergeIndexes(args);
-    } else if (command.equals("ngram")) {
-      //handleNgram(args);
-    } else if (command.equals("ngram-se")) {
-      //handleNgram(args);
+    } else if (command.equals("window")) {
+      handleWindow(args);
+    } else if (command.equals("window-se")) {
+      handleWindow(args);
     } else if (command.equals("pagerank")) {
       throw new UnsupportedOperationException("Need to re-implement");
       //PageRankApp.main(args);
