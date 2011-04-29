@@ -103,11 +103,10 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
 
     public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
         FileSource.verify(parameters, handler);
-
         String partPath = parameters.getXML().get("filename");
         try {
             if (!GenericIndexReader.isIndex(partPath)){
-                handler.addError(partPath + " is not an index file.");
+              handler.addError(partPath + " is not an index file.");
             }
         } catch (FileNotFoundException fnfe) {
             handler.addError(partPath + " could not be found.");

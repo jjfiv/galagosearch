@@ -248,11 +248,9 @@ public class SplitIndexReader extends GenericIndexReader {
         File f = new File(pathname);
 
         assert f.exists() : "Path not found: " + f.getAbsolutePath();
-
         if (!f.isDirectory()) {
             f = f.getParentFile();
         }
-
         File index = new File(f.getAbsolutePath() + File.separator + "key.index");
         File data = new File(f.getAbsolutePath() + File.separator + "0");
         if (index.exists() &&

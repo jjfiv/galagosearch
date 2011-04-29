@@ -214,7 +214,7 @@ public abstract class GenericIndexReader {
         if (SplitIndexReader.isParallelIndex(pathname)) {
             return true;
         }
-        if (IndexReader.isIndex(pathname)) {
+        if (IndexReader.isIndexFile(pathname)) {
             return true;
         }
         return false;
