@@ -117,7 +117,7 @@ public class MultiRetrieval extends Retrieval {
     Collections.sort(queryResults);
 
     // get the best {requested} results
-    int requested = (int) parameters.get("requested", 1000);
+    int requested = (int) parameters.get("count", 1000);
 
     return queryResults.subList(0, Math.min(queryResults.size(), requested)).toArray(new ScoredDocument[0]);
   }
