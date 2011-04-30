@@ -19,6 +19,7 @@ import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
+import org.galagosearch.core.index.StructuredIndexPartModifier;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
 import org.galagosearch.tupleflow.FileOrderedReader;
@@ -378,6 +379,16 @@ public class App {
       }
       iterator.nextKey();
     }
+  }
+
+  protected void handleDumpModifier(String[] args) throws IOException {
+    if (args.length <= 1) {
+      commandHelp(args[0]);
+      return;
+    }
+    
+    StructuredIndexPartModifier modifier = StructuredIndex.openIndexModifier(args[1]);
+    modifier.printContents(System.out);
   }
 
   protected void handleDumpCorpus(String[] args) throws IOException {
@@ -758,6 +769,7 @@ public class App {
     output.println("   dump-keys");
     output.println("   dump-keyvalue");
     output.println("   dump-lengths");
+    output.println("   dump-modifier");
     output.println("   dump-names");
     output.println("   eval");
     output.println("   make-corpus");
@@ -807,6 +819,10 @@ public class App {
       output.println("galago dump-corpus <corpus>");
       output.println();
       output.println("  Dumps all documents from a corpus file to stdout.");
+    } else if (command.equals("dump-modifier")) {
+      output.println("galago dump-modifier <modifier file>");
+      output.println();
+      output.println("  Dumps the contents of the specified modifier file.");
     } else if (command.equals("dump-index")) {
       output.println("galago dump-index <index-part>");
       output.println();
@@ -970,6 +986,8 @@ public class App {
       handleDumpConnection(args);
     } else if (command.equals("dump-corpus")) {
       handleDumpCorpus(args);
+    } else if (command.equals("dump-modifier")) {
+      handleDumpModifier(args);
     } else if (command.equals("dump-index")) {
       handleDumpIndex(args);
     } else if (command.equals("dump-keys")) {

@@ -87,7 +87,7 @@ public class WindowProducer extends StandardStep<NumberedDocument, Window> {
     // print(window);
     if (window.size() == n) {
       processor.process(new Window(file, filePosition, currentDocument, currentBegin, currentEnd, ConvertToBytes(window)));
-      windows.increment();
+      if (windows != null) windows.increment();
       filePosition++;
 
     } else {
@@ -107,7 +107,7 @@ public class WindowProducer extends StandardStep<NumberedDocument, Window> {
       LinkedList<String> sortedWindow = new LinkedList(window);
       Collections.sort(sortedWindow, Collections.reverseOrder());
       processor.process(new Window(file, filePosition, currentDocument, currentBegin, currentEnd, ConvertToBytes(sortedWindow)));
-      windows.increment();
+      if (windows != null) windows.increment();
       filePosition++;
 
     } else {

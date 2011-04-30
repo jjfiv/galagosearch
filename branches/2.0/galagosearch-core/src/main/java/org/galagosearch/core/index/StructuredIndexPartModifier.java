@@ -1,6 +1,7 @@
 package org.galagosearch.core.index;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.tupleflow.Parameters;
 
@@ -29,7 +30,7 @@ public interface StructuredIndexPartModifier {
   public String getSourcePart();
 
   /**
-   * Returns the string form of the modifier. This is described/expected in a node in its parameters,
+   * Returns the string form of the modifier. This is described/expected from a node in its parameters,
    * as "mod=name", for example, "mod=topdocs".
    * @return
    */
@@ -55,4 +56,9 @@ public interface StructuredIndexPartModifier {
    * @return
    */
   public boolean isEligible(Node node);
+
+  /**
+   * Dumps the contents of the modifier file. Basically just for visual inspection.
+   */
+  public void printContents(PrintStream out) throws IOException;
 }
