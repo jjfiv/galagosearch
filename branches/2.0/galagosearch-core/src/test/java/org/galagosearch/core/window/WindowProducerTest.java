@@ -24,12 +24,18 @@ public class WindowProducerTest extends TestCase {
 
   public void testOrderedWindowProduction() throws IOException, IncompatibleProcessorException {
     // Document:
-    NumberedDocument doc = new NumberedDocument();
-    doc.number = 10;
-    doc.terms = Arrays.asList(new String[]{"1","9","2","8","3","7","4","6","5"});
+    NumberedDocument doc1 = new NumberedDocument();
+    doc1.fileId = 1;
+    doc1.number = 10;
+    doc1.terms = Arrays.asList(new String[]{"1","9","2","8","3","7","4","6","5"});
               // "5","6","4","7","3","8","2","9","1"} );
 
-    WindowProcessor catcher = new WindowProcessor();
+   NumberedDocument doc2 = new NumberedDocument();
+    doc2.fileId = 2;
+    doc2.number = 10;
+    doc2.terms = Arrays.asList(new String[]{"5","6","4","7","3","8","2","9","1"} );
+    
+    Catcher<Window> catcher = new Catcher();
 
     // first try bi-grams ~(#od:1(a b))
     Parameters p = new Parameters();
@@ -39,7 +45,7 @@ public class WindowProducerTest extends TestCase {
     WindowProducer bigramProducer = new WindowProducer(new FakeParameters(p));
     bigramProducer.setProcessor( catcher );
 
-    bigramProducer.process( doc );
+    bigramProducer.process( doc1 );
 
     assert( catcher.data.size() == 15 );
     assert( Utility.toString( catcher.data.get(0).data ).equals("1~9") );
@@ -56,6 +62,15 @@ public class WindowProducerTest extends TestCase {
     assert( catcher.data.get(7).begin == 3 );
     assert( catcher.data.get(7).end == 5 );
 
+
+    assert( catcher.data.get(9).file == 1 );
+    assert( catcher.data.get(10).filePosition == 10 );
+
+    bigramProducer.process( doc2 );
+
+    assert( catcher.data.get(17).file == 2 );
+    assert( catcher.data.get(18).filePosition == 3 );
+
   }
 
   public void testUnorderedWindowProduction() throws IOException, IncompatibleProcessorException {
@@ -65,7 +80,7 @@ public class WindowProducerTest extends TestCase {
     doc.terms = Arrays.asList(new String[]{"1","9","2","8","3","7","4","6","5"});
               // "5","6","4","7","3","8","2","9","1"} );
 
-    WindowProcessor catcher = new WindowProcessor();
+    Catcher<Window> catcher = new Catcher();
 
     // first try bi-grams ~(#od:1(a b))
     Parameters p = new Parameters();
@@ -95,15 +110,15 @@ public class WindowProducerTest extends TestCase {
   }
 
 
-  public class WindowProcessor implements Processor<Window> {
+  public class Catcher<T> implements Processor<T> {
 
-    ArrayList<Window> data = new ArrayList();
+    ArrayList<T> data = new ArrayList();
 
     public void reset(){
       data = new ArrayList();
     }
 
-    public void process(Window object) throws IOException {
+    public void process(T object) throws IOException {
       data.add(object);
     }
 

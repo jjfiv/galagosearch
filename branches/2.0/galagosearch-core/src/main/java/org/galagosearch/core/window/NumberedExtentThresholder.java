@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 import org.galagosearch.core.types.NumberedExtent;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.OutputClass;
 import org.galagosearch.tupleflow.StandardStep;
@@ -30,26 +32,33 @@ public class NumberedExtentThresholder extends StandardStep<NumberedExtent, Numb
   long debug_total_count = 0;
   int threshold;
   boolean threshdf;
-  ArrayList<NumberedExtent> current;
+  LinkedList<NumberedExtent> current;
   boolean currentPassesThreshold;
+
+  Counter discards;
+  Counter passing;
 
   public NumberedExtentThresholder(TupleFlowParameters parameters) throws IOException, NoSuchAlgorithmException {
     threshold = Integer.parseInt(parameters.getXML().get("threshold"));
     threshdf = Boolean.parseBoolean(parameters.getXML().get("threshdf"));
-    current = new ArrayList();
+    current = new LinkedList();
+
+    discards = parameters.getCounter("Discarded Extents");
+    passing = parameters.getCounter("Passed Extents");
   }
 
   public void process(NumberedExtent ne) throws IOException {
     debug_total_count++;
 
     if ((current.size() > 0)
-            && (Utility.compare(ne.extentName, current.get(0).extentName) == 0)) {
-      current.add(ne);
+            && (Utility.compare(ne.extentName, current.peekFirst().extentName) == 0)) {
+      current.offerLast(ne);
       emitExtents();
     } else {
       emitExtents();
+      discards.incrementBy( current.size() );
       current.clear();
-      current.add(ne);
+      current.offerLast(ne);
       currentPassesThreshold = false;
     }
   }
@@ -70,9 +79,12 @@ public class NumberedExtentThresholder extends StandardStep<NumberedExtent, Numb
         currentPassesThreshold = true;
       }
     }
+
+    // now actually emit Extents
     if (currentPassesThreshold) {
       while (current.size() > 0) {
-        processor.process(current.remove(0));
+        processor.process(current.pollFirst());
+        passing.increment();
       }
     }
   }

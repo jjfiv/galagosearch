@@ -10,8 +10,8 @@ package org.galagosearch.core.window;
 public class Window {
   
   // location in file for filtering (SpaceEfficient) //
-  //public int file;
-  //public long filePosition;
+  public int file;
+  public long filePosition;
 
   // indexing data //
   public byte[] data;
@@ -19,9 +19,9 @@ public class Window {
   public int begin;
   public int end;
 
-  public Window(int document, int begin, int end, byte[] data){
-    //this.file = file;
-    //this.filePosition = filePosition;
+  public Window(int file, long filePosition, int document, int begin, int end, byte[] data){
+    this.file = file;
+    this.filePosition = filePosition;
     this.document = document;
     this.begin = begin;
     this.end = end;

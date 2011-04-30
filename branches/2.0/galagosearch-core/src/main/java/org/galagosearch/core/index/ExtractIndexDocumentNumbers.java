@@ -2,6 +2,7 @@
 
 package org.galagosearch.core.index;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.galagosearch.core.parse.Document;
@@ -26,12 +27,11 @@ import org.galagosearch.tupleflow.execution.Verified;
 @InputClass(className = "org.galagosearch.core.parse.Document")
 @OutputClass(className = "org.galagosearch.core.parse.NumberedDocument")
 public class ExtractIndexDocumentNumbers extends StandardStep<Document, NumberedDocument> {
-    StructuredIndex index;
-    int i = 0;
+    private final DocumentNameReader.KeyIterator namesIterator;
     
     public ExtractIndexDocumentNumbers(TupleFlowParameters parameters) throws IOException{
-      String indexPath = parameters.getXML().get("indexPath");
-      index = new StructuredIndex(indexPath);
+      String namesPath = parameters.getXML().get("indexPath") + File.separator + "names.reverse";
+      namesIterator = ((DocumentNameReader) StructuredIndex.openIndexPart(namesPath)).getIterator();
     }
     
     public void process(Document doc) throws IOException {
@@ -39,17 +39,12 @@ public class ExtractIndexDocumentNumbers extends StandardStep<Document, Numbered
       if(doc instanceof NumberedDocument){
         numdoc = (NumberedDocument) doc;
       } else{
-        numdoc = new NumberedDocument();
-        numdoc.identifier = doc.identifier;
-        numdoc.metadata = doc.metadata;
-        numdoc.tags = doc.tags;
-        numdoc.terms = doc.terms;
-        numdoc.text = doc.text;
+        numdoc = new NumberedDocument(doc);
       }
       try{
-        numdoc.number = index.getIdentifier(doc.identifier);
+        namesIterator.moveToKey( numdoc.identifier );
+        numdoc.number = namesIterator.getCurrentIdentifier();
       } catch (Exception e){
-        //System.err.println("can not find name: " + doc.identifier);
         throw new IOException("Can not find document number for document: " + doc.identifier);
       }
       processor.process(numdoc);

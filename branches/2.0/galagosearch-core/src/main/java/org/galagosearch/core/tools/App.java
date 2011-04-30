@@ -165,7 +165,7 @@ public class App {
     output.println("                           [default = 10]");
   }
 
-  protected void commandHelpNgram() {
+  protected void commandHelpWindow() {
     output.println("galago window[-se] [flags] <index> (<input>)+");
     output.println();
     output.println("  Builds a Galago StructuredIndex window index file using TupleFlow. Program");
@@ -571,7 +571,7 @@ public class App {
 
   protected void handleWindow(String[] args) throws Exception {
     if (args.length < 3) { // minimal usage: ngram index input
-      commandHelpNgram();
+      commandHelpWindow();
       return;
     }
 
@@ -583,19 +583,19 @@ public class App {
     String[] docs = Utility.subarray(nonFlags, 2);
 
     Parameters p = new Parameters(flags);
+    p.set("command", Utility.join(args, " "));
     p.add("indexPath", indexName);
     for (String doc : docs) {
       p.add("inputPaths", doc);
     }
 
+    if(args[0].contains("se")){
+      p.add("spaceEfficient", "true");
+    }
+
     Job job;
-    //if (nonFlags[0].contains("se")) {
-      //BuildWindowIndexSE build = new BuildWindowIndexSE();
-      //job = build.getIndexJob(p);
-    //} else {
-      BuildWindowIndex build = new BuildWindowIndex();
-      job = build.getIndexJob(p);
-    //}
+    BuildWindowIndex build = new BuildWindowIndex();
+    job = build.getIndexJob(p);
 
     boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
     if (printJob) {
@@ -778,8 +778,8 @@ public class App {
       commandHelpParameterSweep();
     } else if (command.equals("build") || command.equals("build-fast") || command.equals("build-parallel")) {
       commandHelpBuild();
-    } else if (command.startsWith("ngram")) {
-      commandHelpNgram();
+    } else if (command.startsWith("window")) {
+      commandHelpWindow();
     } else if (command.startsWith("pagerank")) {
       //PageRankApp.commandHelpPageRank();
     } else if (command.startsWith("build-topdocs")) {

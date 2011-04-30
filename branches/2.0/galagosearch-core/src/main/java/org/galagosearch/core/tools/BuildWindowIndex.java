@@ -1,5 +1,4 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.tools;
 
 import java.io.File;
@@ -7,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.galagosearch.core.index.ExtentIndexWriter;
-import org.galagosearch.core.index.PositionIndexWriter;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.ExtractIndexDocumentNumbers;
 import org.galagosearch.core.window.WindowProducer;
@@ -16,9 +14,13 @@ import org.galagosearch.core.parse.Porter2Stemmer;
 import org.galagosearch.core.parse.TagTokenizer;
 import org.galagosearch.core.parse.UniversalParser;
 import org.galagosearch.core.types.DocumentSplit;
-import org.galagosearch.core.types.NumberWordPosition;
 import org.galagosearch.core.types.NumberedExtent;
+import org.galagosearch.core.types.TextFeature;
+import org.galagosearch.core.window.ExtractLocations;
 import org.galagosearch.core.window.NumberedExtentThresholder;
+import org.galagosearch.core.window.TextFeatureThresholder;
+import org.galagosearch.core.window.WindowFeaturer;
+import org.galagosearch.core.window.WindowFilter;
 import org.galagosearch.core.window.WindowToNumberedExtent;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
@@ -41,6 +43,8 @@ import org.galagosearch.tupleflow.execution.Step;
  * @author sjh
  */
 public class BuildWindowIndex {
+
+  boolean spaceEfficient;
   String indexPath;
   boolean stemming;
   int n;
@@ -52,7 +56,7 @@ public class BuildWindowIndex {
   public Stage getSplitStage(ArrayList<String> inputs) throws IOException {
     Stage stage = new Stage("inputSplit");
     stage.add(new StageConnectionPoint(ConnectionPointType.Output, "splits",
-        new DocumentSplit.FileNameStartKeyOrder()));
+            new DocumentSplit.FileIdOrder()));
 
     Parameters p = new Parameters();
     for (String input : inputs) {
@@ -68,26 +72,95 @@ public class BuildWindowIndex {
     }
 
     stage.add(new Step(DocumentSource.class, p));
-    stage.add(Utility.getSorter(new DocumentSplit.FileNameStartKeyOrder()));
+    stage.add(Utility.getSorter(new DocumentSplit.FileIdOrder()));
     stage.add(new OutputStep("splits"));
     return stage;
   }
 
-  public Stage getParsePostingsStage(){
+  public Stage getParseFilterStage() {
+    // reads through the corpus
+    Stage stage = new Stage("parseFilter");
+
+    stage.add(new StageConnectionPoint(
+            ConnectionPointType.Input,
+            "splits", new DocumentSplit.FileIdOrder()));
+    stage.add(new StageConnectionPoint(
+            ConnectionPointType.Output,
+            "featureData", new TextFeature.FeatureOrder()));
+
+    stage.add(new InputStep("splits"));
+    stage.add(new Step(UniversalParser.class));
+    stage.add(new Step(TagTokenizer.class));
+    if (stemming) {
+      stage.add(new Step(Porter2Stemmer.class));
+    }
+
+    // Document numbers don't really matter - they are dropped by the Featurer.
+    Parameters p = new Parameters();
+    p.add("indexPath", indexPath);
+    stage.add(new Step(ExtractIndexDocumentNumbers.class, p));
+
+    Parameters p2 = new Parameters();
+    p2.add("n", Integer.toString(n));
+    p2.add("width", Integer.toString(width));
+    p2.add("ordered", Boolean.toString(ordered));
+    stage.add(new Step(WindowProducer.class, p2));
+
+    stage.add(new Step(WindowFeaturer.class));
+
+    stage.add(Utility.getSorter(new TextFeature.FeatureOrder()));
+
+    stage.add(new OutputStep("featureData"));
+
+    return stage;
+  }
+
+  public Stage getReduceFilterStage() {
+    Stage stage = new Stage("reduceFilter");
+    stage.add(new StageConnectionPoint(
+            ConnectionPointType.Input,
+            "featureData", new TextFeature.FeatureOrder()));
+    stage.add(new StageConnectionPoint(
+            ConnectionPointType.Output,
+            "filterData", new TextFeature.FileFilePositionOrder()));
+
+    stage.add(new InputStep("featureData"));
+
+    Parameters p = new Parameters();
+    p.add("threshold", Integer.toString(threshold));
+    stage.add(new Step(TextFeatureThresholder.class, p));
+
+    stage.add(Utility.getSorter(new TextFeature.FileFilePositionOrder()));
+
+    // discards feature data - leaving only locations (data = byte[0]).
+    stage.add(new Step(ExtractLocations.class));
+
+    stage.add(new OutputStep("filterData"));
+
+    return stage;
+  }
+
+  public Stage getParsePostingsStage() {
     // reads through the corpus
     Stage stage = new Stage("parsePostings");
 
     stage.add(new StageConnectionPoint(
-        ConnectionPointType.Input,
-        "splits", new DocumentSplit.FileNameStartKeyOrder()));
+            ConnectionPointType.Input,
+            "splits", new DocumentSplit.FileIdOrder()));
     stage.add(new StageConnectionPoint(
-        ConnectionPointType.Output,
-        "windows", new NumberedExtent.ExtentNameNumberBeginOrder()));
+            ConnectionPointType.Output,
+            "windows", new NumberedExtent.ExtentNameNumberBeginOrder()));
 
-    stage.add(new InputStep("splits"));      
+    if (spaceEfficient) {
+      stage.add(new StageConnectionPoint(
+              ConnectionPointType.Input,
+              "filterData", new TextFeature.FileFilePositionOrder()));
+    }
+
+    stage.add(new InputStep("splits"));
     stage.add(new Step(UniversalParser.class));
     stage.add(new Step(TagTokenizer.class));
-    if(stemming){
+    if (stemming) {
       stage.add(new Step(Porter2Stemmer.class));
     }
 
@@ -101,9 +174,15 @@ public class BuildWindowIndex {
     p2.add("ordered", Boolean.toString(ordered));
     stage.add(new Step(WindowProducer.class, p2));
 
+    if (spaceEfficient) {
+      Parameters p3 = new Parameters();
+      p3.add("filterStream", "filterData");
+      stage.add(new Step(WindowFilter.class, p3));
+    }
+
     stage.add(new Step(WindowToNumberedExtent.class));
 
-    stage.add( Utility.getSorter( new NumberedExtent.ExtentNameNumberBeginOrder()));
+    stage.add(Utility.getSorter(new NumberedExtent.ExtentNameNumberBeginOrder()));
 
     stage.add(new OutputStep("windows"));
     return stage;
@@ -113,8 +192,8 @@ public class BuildWindowIndex {
     Stage stage = new Stage(stageName);
 
     stage.add(new StageConnectionPoint(
-        ConnectionPointType.Input, inputName,
-        new NumberedExtent.ExtentNameNumberBeginOrder()));
+            ConnectionPointType.Input, inputName,
+            new NumberedExtent.ExtentNameNumberBeginOrder()));
 
     stage.add(new InputStep(inputName));
 
@@ -139,41 +218,59 @@ public class BuildWindowIndex {
     this.threshold = (int) p.get("threshold", 2);
     this.threshdf = p.get("usedocfreq", false);
 
+    spaceEfficient = p.get("spaceEfficient", false);
+    if (threshold <= 1) {
+      // no point being space efficient.
+      spaceEfficient = false;
+    }
+
     this.indexPath = new File(p.get("indexPath")).getAbsolutePath(); // fail if no path.
 
     ArrayList<String> inputPaths = new ArrayList();
     List<Value> vs = p.list("inputPaths");
-    for(Value v : vs){
+    for (Value v : vs) {
       inputPaths.add(v.toString());
     }
 
     // we intend to add to the index;
     // so verify that the index submitted is a valid index
-    try{
+    try {
       StructuredIndex i = new StructuredIndex(indexPath);
-    } catch (Exception e){
+    } catch (Exception e) {
       throw new IOException("Index " + indexPath + "is not a valid index\n" + e.toString());
     }
 
     String indexName;
-    if(ordered)
-      indexName = "n" + n + "-w" + width + "-ordered" + "-h" + threshold ;
-    else
-      indexName = "n" + n + "-w" + width + "-unordered" + "-h" + threshold;
+    if (ordered) {
+      indexName = "n" + n + "-w" + width + "-ordered-h" + threshold;
+    } else {
+      indexName = "n" + n + "-w" + width + "-unordered-h" + threshold;
+    }
 
-    if(threshdf)
+    if (threshdf) {
       indexName += "-docfreq";
+    }
 
-    if(stemming)
+    if (stemming) {
       indexName += "-stemmed";
+    }
 
 
     job.add(getSplitStage(inputPaths));
+
     job.add(getParsePostingsStage());
     job.add(getWritePostingsStage("writePostings", "windows", indexName));
 
-    job.connect("inputSplit", "parsePostings", ConnectionAssignmentType.Each);       
+    job.connect("inputSplit", "parsePostings", ConnectionAssignmentType.Each);
     job.connect("parsePostings", "writePostings", ConnectionAssignmentType.Combined);
+
+    if (spaceEfficient) {
+      job.add(getParseFilterStage());
+      job.add(getReduceFilterStage());
+      job.connect("inputSplit", "parseFilter", ConnectionAssignmentType.Each);
+      job.connect("parseFilter", "reduceFilter", ConnectionAssignmentType.Each);
+      job.connect("reduceFilter", "parsePostings", ConnectionAssignmentType.Each, new TextFeature.FileOrder().getOrderSpec(), -1);
+    }
 
     return job;
   }

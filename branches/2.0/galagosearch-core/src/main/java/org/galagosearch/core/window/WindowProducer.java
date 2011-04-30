@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.galagosearch.core.parse.NumberedDocument;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.OutputClass;
 import org.galagosearch.tupleflow.StandardStep;
@@ -33,11 +34,17 @@ public class WindowProducer extends StandardStep<NumberedDocument, Window> {
   LinkedList<String> window;
   int currentDocument;
   int currentBegin;
+  int file = -1;
+  long filePosition;
+
+  Counter windows;
 
   public WindowProducer(TupleFlowParameters parameters) throws IOException {
     this.n = Integer.parseInt(parameters.getXML().get("n"));
     this.width = Integer.parseInt(parameters.getXML().get("width"));
     this.ordered = Boolean.parseBoolean(parameters.getXML().get("ordered"));
+
+    windows = parameters.getCounter("Windows Produced");
   }
 
   /*
@@ -50,6 +57,11 @@ public class WindowProducer extends StandardStep<NumberedDocument, Window> {
     //if this document is not big enough to contain any ngrams
     if (doc.terms.size() < n) {
       return;
+    }
+
+    if (file != doc.fileId) {
+      file = doc.fileId;
+      filePosition = 0;
     }
 
     window = new LinkedList();
@@ -74,11 +86,14 @@ public class WindowProducer extends StandardStep<NumberedDocument, Window> {
   private void extractOrderedWindows(List<String> terms, int currentEnd) throws IOException {
     // print(window);
     if (window.size() == n) {
-      processor.process(new Window(currentDocument, currentBegin, currentEnd, ConvertToBytes(window)));
+      processor.process(new Window(file, filePosition, currentDocument, currentBegin, currentEnd, ConvertToBytes(window)));
+      windows.increment();
+      filePosition++;
+
     } else {
       // System.err.println("loop = " + (currentEnd+1) + "\t" + (currentEnd + this.width));
       for (int i = currentEnd + 1; i < (currentEnd + this.width + 1); i++) {
-        if( i < terms.size() ){
+        if (i < terms.size()) {
           window.push(terms.get(i));
           extractOrderedWindows(terms, i);
           window.pop();
@@ -91,10 +106,13 @@ public class WindowProducer extends StandardStep<NumberedDocument, Window> {
     if (window.size() == n) {
       LinkedList<String> sortedWindow = new LinkedList(window);
       Collections.sort(sortedWindow, Collections.reverseOrder());
-      processor.process(new Window(currentDocument, currentBegin, currentEnd, ConvertToBytes(sortedWindow)));
+      processor.process(new Window(file, filePosition, currentDocument, currentBegin, currentEnd, ConvertToBytes(sortedWindow)));
+      windows.increment();
+      filePosition++;
+
     } else {
       for (int i = currentEnd + 1; i < currentBegin + width; i++) {
-        if( i < terms.size() ){
+        if (i < terms.size()) {
           window.push(terms.get(i));
           extractUnorderedWindows(terms, i);
           window.pop();
@@ -105,15 +123,15 @@ public class WindowProducer extends StandardStep<NumberedDocument, Window> {
 
   private static byte[] ConvertToBytes(List<String> windowData) {
     StringBuilder sb = new StringBuilder();
-    sb.append(windowData.get( windowData.size() - 1 ));
-    for (int i = (windowData.size()-2); i >= 0; i--) {
+    sb.append(windowData.get(windowData.size() - 1));
+    for (int i = (windowData.size() - 2); i >= 0; i--) {
       sb.append("~").append(windowData.get(i));
     }
     return Utility.fromString(sb.toString());
   }
 
   private void print(LinkedList<String> window) {
-    for(String w : window){
+    for (String w : window) {
       System.err.print(w + " ");
     }
     System.err.println();
