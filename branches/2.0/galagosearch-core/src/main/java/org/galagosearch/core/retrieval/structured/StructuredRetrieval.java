@@ -145,7 +145,7 @@ public class StructuredRetrieval implements Retrieval {
     long start = System.currentTimeMillis();
 
     // Give it a context
-    DocumentContext context = new DocumentContext();
+    DocumentContext context = ContextFactory.createContext(parameters);
 
     // construct the query iterators
     //System.err.printf("Running ranked query: %s\n", queryTree.toString());

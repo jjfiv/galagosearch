@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+// BSD License (http://www.galagosearch.org/license)
 
 package org.galagosearch.core.retrieval.structured;
 
@@ -9,7 +6,7 @@ import java.io.IOException;
 
 /**
  *
- * @author marc
+ * @author irmarc
  */
 public interface ContextualIterator extends StructuredIterator {
   public DocumentContext getContext();

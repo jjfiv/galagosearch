@@ -47,7 +47,6 @@ static String[][] sOperatorLookup = {
     {JelinekMercerScoringIterator.class.getName(), "jm"},
     {BM25ScoringIterator.class.getName(), "bm25"},
     {BM25RFScoringIterator.class.getName(), "bm25rf"},
-    {TopDocsScoringIterator.class.getName(), "topdocs"},
     {BoostingIterator.class.getName(), "boost"}
   };
   static String[] sTraversalList = {

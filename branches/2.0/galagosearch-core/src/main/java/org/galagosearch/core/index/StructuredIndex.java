@@ -265,9 +265,16 @@ public class StructuredIndex {
     return part;
   }
 
-  // This hack needs to be properly coded
+  /**
+   * Modifies the constructed iterator to contain any modifications
+   * requested, if they are found.
+   * 
+   * @param iter
+   * @param node
+   * @throws IOException
+   */
   private void modify(ValueIterator iter, Node node) throws IOException {
-    if (KeyListReader.ListIterator.class.isInstance(iter)) {
+    if (ModifiableIterator.class.isInstance(iter)) {
       Parameters p = node.getParameters();
       if (modifiers.containsKey(p.get("part", "none"))) {
         HashMap<String, StructuredIndexPartModifier> partModifiers = modifiers.get(p.get("part"));

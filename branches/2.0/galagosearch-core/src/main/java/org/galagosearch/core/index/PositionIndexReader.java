@@ -5,12 +5,16 @@ import java.io.DataInput;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import org.galagosearch.core.index.TopDocsReader.TopDocument;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.CountValueIterator;
+import org.galagosearch.core.retrieval.structured.DocumentContext;
 import org.galagosearch.core.retrieval.structured.ExtentValueIterator;
+import org.galagosearch.core.retrieval.structured.TopDocsContext;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.DataStream;
@@ -564,6 +568,16 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     // TODO: Declare in an interface
     public long totalPositions() {
       return collectionCount;
+    }
+
+    // This will pass up topdocs information if it's available
+    public void setContext(DocumentContext context) {
+      if (TopDocsContext.class.isAssignableFrom(context.getClass()) &&
+              this.hasModifier("topdocs")) {
+        ((TopDocsContext)context).hold = ((ArrayList<TopDocument>) getModifier("topdocs"));
+        // remove the pointer to the mod (don't need it anymore)
+        this.modifiers.remove("topdocs");
+      }
     }
   }
 

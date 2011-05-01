@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.galagosearch.core.retrieval.structured.ModifiableIterator;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -25,7 +26,7 @@ public abstract class KeyListReader extends KeyValueReader {
     super(r);
   }
 
-  public abstract class ListIterator implements ValueIterator {
+  public abstract class ListIterator implements ValueIterator, ModifiableIterator {
 
     public static final int HAS_SKIPS = 0x01;
     protected GenericIndexReader.Iterator source;
@@ -55,6 +56,10 @@ public abstract class KeyListReader extends KeyValueReader {
 
     public Set<String> getAvailableModifiers() {
       return modifiers.keySet();
+    }
+
+    public boolean hasModifier(String key) {
+      return modifiers.containsKey(key);
     }
 
     public Object getModifier(String modKey) {

@@ -2,6 +2,7 @@ package org.galagosearch.core.retrieval.structured;
 
 /**
  * Currently represents the context that the entire query processor shares.
+ * This is the most basic context we use
  *
  * @author irmarc
  */

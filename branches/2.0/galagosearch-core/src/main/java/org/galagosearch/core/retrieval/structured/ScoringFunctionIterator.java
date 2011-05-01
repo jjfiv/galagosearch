@@ -20,9 +20,9 @@ import org.galagosearch.core.util.CallTable;
  */
 public class ScoringFunctionIterator extends TransformIterator {
 
-  ScoringFunction function;
+  protected ScoringFunction function;
   // parameter sweep functions
-  ScoringFunction[] functions;
+  protected ScoringFunction[] functions;
 
   public ScoringFunctionIterator(CountValueIterator iterator, ScoringFunction function) throws IOException {
     super(iterator);

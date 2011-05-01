@@ -15,8 +15,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.PriorityQueue;
-import org.galagosearch.core.index.TopDocsReader;
 import org.galagosearch.core.index.TopDocsReader.TopDocument;
 import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.scoring.ScoringFunction;
@@ -60,7 +60,35 @@ import org.galagosearch.tupleflow.Parameters;
 @RequiredStatistics(statistics = {"index"})
 public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
-  private class Placeholder implements Comparable<Placeholder> {
+  public static class TopDocsIterator {
+    int index;
+    ArrayList<TopDocument> docs;
+
+    public TopDocsIterator(ArrayList<TopDocument> a) {
+      docs = a;
+      index = 0;
+    }
+
+    public boolean isDone() {
+      return (index >= docs.size());
+    }
+
+    public void movePast(int document) {
+      while (!isDone() && docs.get(index).document < document) {
+        index++;
+      }
+    }
+
+    public boolean hasMatch(int document) {
+      return (!isDone() & docs.get(index).document == document);
+    }
+
+    public TopDocument getCurrentTopDoc() {
+      return docs.get(index);
+    }
+  }
+
+  public static class Placeholder implements Comparable<Placeholder> {
 
     int document;
     double score;
@@ -129,26 +157,21 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
   ArrayList<ScoreValueIterator> scoreList;
   ArrayList<Placeholder> R;
   TIntHashSet ids;
-  DocumentContext context;
+  DocumentContext context = null;
 
   public MaxScoreCombinationIterator(Parameters parameters,
           ScoreValueIterator[] childIterators) throws IOException {
     super(parameters, childIterators);
     requested = (int) parameters.get("requested", 100);
-    R = new ArrayList<Placeholder>();
+    //R = new ArrayList<Placeholder>();
     ids = new TIntHashSet();
-    topdocsCandidates = new TIntArrayList();
+    //topdocsCandidates = new TIntArrayList();
     scoreList = new ArrayList<ScoreValueIterator>(iterators.length);
     weightLookup = new TObjectDoubleHashMap();
-    ArrayList<ScoreValueIterator> topdocs = new ArrayList<ScoreValueIterator>();
     for (int i = 0; i < iterators.length; i++) {
       ScoreValueIterator si = iterators[i];
       weightLookup.put(si, weights[i]);
-      if (TopDocsScoringIterator.class.isAssignableFrom(si.getClass())) {
-        topdocs.add(si);
-      }
     }
-    cacheScores(topdocs);
     scoreList.addAll(Arrays.asList(iterators));
     String sort = parameters.get("sort", "length");
     if (sort.equals("weight")) {
@@ -156,12 +179,6 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     } else {
       Collections.sort(scoreList, new TotalCandidateComparator());
     }
-    for (int i = 0; i < iterators.length; i++) {
-      ScoreValueIterator si = iterators[i];
-      potential += weights[i] * si.maximumScore();
-      minimum += weights[i] * si.minimumScore();
-    }
-    computeQuorum();
   }
 
   @Override
@@ -390,20 +407,23 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    * that have topdocs, giving us a partial evaluation, and therefore a better
    * threshold bound - we also move the scored count up in order to activate the
    * threshold sooner.
+   *
+   * Note that this makes the assumption that all scoring function formulae are
+   * identical, and they have been identically parameterized.
    */
-  protected void cacheScores(ArrayList<ScoreValueIterator> topdocs) throws IOException {
+  protected void cacheScores(HashMap<ScoreValueIterator, ArrayList<TopDocument>> topdocs) throws IOException {
     // Iterate over the lists, scoring as we go - they are doc-ordered after all
     TObjectIntHashMap loweredCount = new TObjectIntHashMap();
-    PriorityQueue<TopDocsReader.ListIterator> toScore = new PriorityQueue<TopDocsReader.ListIterator>();
-    HashMap<TopDocsReader.ListIterator, TopDocsScoringIterator> lookup =
-            new HashMap<TopDocsReader.ListIterator, TopDocsScoringIterator>();
+    PriorityQueue<TopDocsIterator> toScore = new PriorityQueue<TopDocsIterator>();
+    ScoringFunction fn = ((ScoringFunctionIterator) iterators[0]).getScoringFunction();
     TIntDoubleHashMap scores = new TIntDoubleHashMap();
-    for (ScoreValueIterator si : topdocs) {
-      TopDocsScoringIterator tdsi = (TopDocsScoringIterator) si;
-      TopDocsReader.ListIterator it = tdsi.getTopDocs();
+    HashMap<TopDocsIterator, ScoringFunctionIterator> lookup =
+            new HashMap<TopDocsIterator, ScoringFunctionIterator>();
+    for (Map.Entry<ScoreValueIterator, ArrayList<TopDocument>> td : topdocs.entrySet()) {
+      TopDocsIterator it = new TopDocsIterator(td.getValue());
       if (it != null) {
         toScore.add(it);
-        lookup.put(it, tdsi);
+        lookup.put(it, (ScoringFunctionIterator) td.getKey());
       }
     }
 
@@ -417,7 +437,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
     // Now we can simply iterate until done
     while (!toScore.peek().isDone()) {
-      TopDocsReader.ListIterator it = toScore.poll();
+      TopDocsIterator it = toScore.poll();
       TopDocument td = it.getCurrentTopDoc();
 
       // Need the background score first
@@ -429,21 +449,18 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
       scores.put(td.document, score);
       // Score it using this iterator
-      ScoringFunction fn = lookup.get(it).getScoringFunction();
       score = weightLookup.get(lookup.get(it))
               * (fn.score(td.count, td.length) - fn.score(0, td.length));
       scores.adjustValue(td.document, score);
-      lookup.get(it).lowerMaximumScore(score);
       it.movePast(td.document);
       // Now score w/ the others
-      for (TopDocsReader.ListIterator tdrit : toScore) {
+      for (TopDocsIterator tdrit : toScore) {
         if (tdrit.hasMatch(td.document)) {
           TopDocument other = tdrit.getCurrentTopDoc();
           fn = lookup.get(tdrit).getScoringFunction();
           score = weightLookup.get(lookup.get(tdrit))
                   * (fn.score(other.count, other.length) - fn.score(0, other.length));
           scores.adjustValue(other.document, score);
-          lookup.get(tdrit).lowerMaximumScore(score);
           tdrit.movePast(other.document); // scored - move on
         }
       }
@@ -469,6 +486,25 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
   }
 
   public void setContext(DocumentContext context) {
+
+    // look for topdocs - but only the first time we set the context
+    if (context == null) {
+      if (TopDocsContext.class.isAssignableFrom(context.getClass())) {
+        try {
+          cacheScores(((TopDocsContext)context).topdocs);
+        } catch (IOException ioe) {
+          // Do nothing?
+        }
+        ((TopDocsContext)context).topdocs.clear(); // all done!
+        for (int i = 0; i < iterators.length; i++) {
+          ScoreValueIterator si = iterators[i];
+          potential += weights[i] * si.maximumScore();
+          minimum += weights[i] * si.minimumScore();
+        }
+     }
+      // This needs to be called regardless
+      computeQuorum();
+    }
     this.context = context;
   }
 

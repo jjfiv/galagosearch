@@ -52,7 +52,6 @@ public class FeatureFactory {
       String className = value.get("class");
       String order = value.get("order", "after");
       List<Value> params = value.list("parameters");
-      System.err.printf("Found traversal: %s (%s)\n", className, order);
       if (className == null) {
         throw new RuntimeException("class is required in traversal declarations.");
       }
@@ -89,6 +88,7 @@ public class FeatureFactory {
     traversals.addAll(insteadTraversals);
     traversals.addAll(afterTraversals);
 
+    // Load external operators
     for (Value value : parameters.list("operators/operator")) {
       String className = value.get("class");
       String operatorName = value.get("name");
@@ -101,6 +101,21 @@ public class FeatureFactory {
 
       spec.className = className;
       operatorLookup.put(operatorName, spec);
+    }
+
+    // Load external features
+    for (Value value : parameters.list("features/feature")) {
+      String className = value.get("class");
+      String operatorName = value.get("name");
+      List<Value> params = value.list("parameters");
+      OperatorSpec spec = new OperatorSpec();
+
+      if (params != null && params.size() > 0) {
+        spec.parameters.copy(new Parameters(params.get(0)));
+      }
+
+      spec.className = className;
+      featureLookup.put(operatorName, spec);
     }
   }
 
