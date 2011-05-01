@@ -5,6 +5,7 @@
 
 package org.galagosearch.core.tools;
 
+import java.io.File;
 import java.io.IOException;
 import org.galagosearch.core.index.TopDocsWriter;
 import org.galagosearch.core.parse.TopDocsScanner;
@@ -12,6 +13,7 @@ import org.galagosearch.core.parse.VocabularySource;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.TopDocsEntry;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ConnectionAssignmentType;
 import org.galagosearch.tupleflow.execution.ConnectionPointType;
 import org.galagosearch.tupleflow.execution.InputStep;
@@ -69,6 +71,9 @@ public class BuildTopDocs {
         Parameters p = new Parameters();
         p.set("directory", this.indexPath);
         p.set("part", this.partName);
+        p.set("filename", Utility.join(new String[]{this.indexPath, "mod", "topdocs"}, File.separator));
+        p.set("part", this.partName);
+        p.set("name", "topdocs");
         stage.add(new InputStep("topdocs"));
         stage.add(new Step(TopDocsWriter.class, p));
         return stage;

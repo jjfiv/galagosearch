@@ -74,9 +74,6 @@ public class TopDocsWriter implements TopDocsEntry.WordDocumentOrder.ShreddedPro
   TopDocsList currentList;
 
   public TopDocsWriter(TupleFlowParameters parameters) throws Exception {
-    String partPath = StructuredIndex.getPartPath(parameters.getXML().get("directory"), parameters.getXML().get("part"))
-            + ".topdocs";
-    parameters.getXML().set("filename", partPath);
     writer = new IndexWriter(parameters);
     writer.getManifest().add("writerClass", getClass().getName());
     writer.getManifest().add("readerClass", TopDocsReader.class.getName());

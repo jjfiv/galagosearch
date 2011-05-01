@@ -24,7 +24,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor, irmarc
  */
-@RequiredStatistics(statistics = {"retrievalGroup", "scorer", "mu", "lambda"})
+@RequiredStatistics(statistics = {"retrievalGroup", "scorer", "mu", "lambda", "mod"})
 public class ImplicitFeatureCastTraversal implements Traversal {
 
   Retrieval retrieval;
@@ -52,7 +52,11 @@ public class ImplicitFeatureCastTraversal implements Traversal {
     data.add(child);
     String scorerType = parameters.get("scorer", "dirichlet");
     Node smoothed = new Node("feature", scorerType, data, child.getPosition());
-    // TODO - add in smoothing parameters
+    // TODO - add in smoothing parameters, modifiers
+    Parameters p = smoothed.getParameters();
+    if (parameters.containsKey("mod")) {
+      p.add("mod", parameters.get("mod"));
+    }
 
     if (!parameters.get("topdocs", false)) {
       return smoothed;
