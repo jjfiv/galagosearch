@@ -50,16 +50,18 @@ public class Utility {
 
         while ((line = reader.readLine()) != null) {
           String trimmed = line.trim();
-          if (!holder.contains(trimmed)) {
-            holder.add(trimmed);
+          File f = new File(trimmed);
+          if (!f.isDirectory()) {
+            f.mkdirs();
           }
+          holder.add(trimmed);
         }
         reader.close();
       }
     } catch (IOException ioe) {
       LOG.warning("Unable to locate pref file. Using default temp location.");
     }
-    roots = holder.toArray(new String[0]);
+    roots = holder; //.toArray(new String[0]);
   }
 
   /**
@@ -478,7 +480,29 @@ public class Utility {
     return temporary;
   }
   // So that we're not reading the file containing these OVER and OVER
-  private static String[] roots;
+  private static HashSet<String> roots;
+
+  // dynamically add to the set of roots
+  public static void addTemporaryDirectory(String path) {
+    File f = new File(path);
+    if (!f.isDirectory()) {
+      f.mkdirs();
+    }
+    roots.add(path);
+  }
+
+  /**
+   * remove all data from all temp directories - be very careful when using this function!
+   * 
+   * @throws IOException
+   */
+  public static void cleanTemporaryDirectories() throws IOException {
+    for(String root : roots){
+      File f = new File(root);
+      Utility.deleteDirectory(f);
+      f.mkdir();
+    }
+  }
 
   public static String getBestTemporaryLocation(long requiredSpace) throws IOException {
     for (String root : roots) {
