@@ -7,6 +7,8 @@ package org.galagosearch.core.tools;
 
 import java.io.File;
 import java.io.IOException;
+import org.galagosearch.core.index.AbstractModifier;
+import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.TopDocsWriter;
 import org.galagosearch.core.parse.TopDocsScanner;
 import org.galagosearch.core.parse.VocabularySource;
@@ -39,8 +41,7 @@ public class BuildTopDocs {
                 new KeyValuePair.KeyOrder()));
 
         Parameters p = new Parameters();
-        p.set("directory", this.indexPath);
-        p.set("part", this.partName);
+        p.set("filename", StructuredIndex.getPartPath(this.indexPath, this.partName));
         stage.add(new Step(VocabularySource.class, p));
         stage.add(new OutputStep("terms"));
         return stage;
@@ -71,9 +72,8 @@ public class BuildTopDocs {
         Parameters p = new Parameters();
         p.set("directory", this.indexPath);
         p.set("part", this.partName);
-        p.set("filename", Utility.join(new String[]{this.indexPath, "mod", "topdocs"}, File.separator));
-        p.set("part", this.partName);
         p.set("name", "topdocs");
+	p.set("filename", AbstractModifier.getModifierName(this.indexPath, this.partName, "topdocs"));
         stage.add(new InputStep("topdocs"));
         stage.add(new Step(TopDocsWriter.class, p));
         return stage;

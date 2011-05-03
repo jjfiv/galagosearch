@@ -43,6 +43,10 @@ public abstract class AbstractModifier implements StructuredIndexPartModifier {
     return name;
   }
 
+  public static String getModifierName(String dir, String part, String name) {
+      return String.format("%s/mod/%s.%s", dir, part, name);
+  }
+
   public Parameters getManifest() {
     return reader.getManifest();
   }

@@ -29,7 +29,7 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
 
 /**
  *
- * @author marc
+ * @author irmarc
  */
 @InputClass(className="org.galagosearch.core.types.KeyValuePair", order={"+key"})
 @OutputClass(className="org.galagosearch.core.types.TopDocsEntry", order={"+word", "+document"})
@@ -62,7 +62,7 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
         topdocs = new PriorityQueue<TopDocsEntry>(size, new NWPComparator());
         String indexLocation = parameters.getXML().get("directory");
         docReader = new DocumentLengthsReader(indexLocation +
-                File.separator + "documentLengths");
+                File.separator + "lengths");
         docLengths = docReader.getIterator();
         partReader = new PositionIndexReader(StructuredIndex.getPartPath(indexLocation, parameters.getXML().get("part")));
         counter = parameters.getCounter("lists scanned");
