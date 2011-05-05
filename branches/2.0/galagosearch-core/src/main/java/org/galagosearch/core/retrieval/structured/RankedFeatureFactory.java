@@ -10,6 +10,7 @@ import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
 import org.galagosearch.core.retrieval.traversal.FullDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
+import org.galagosearch.core.retrieval.traversal.InsideToFieldPartTraversal;
 import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.PRMSTraversal;
 import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
@@ -55,6 +56,7 @@ static String[][] sOperatorLookup = {
     FullDependenceTraversal.class.getName(),
     TransformRootTraversal.class.getName(),
     PRMSTraversal.class.getName(),
+    InsideToFieldPartTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
     WeightConversionTraversal.class.getName(),
     IndriWindowCompatibilityTraversal.class.getName(),
