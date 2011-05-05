@@ -24,7 +24,6 @@ public class WindowToNumberedExtent extends StandardStep<Window, NumberedExtent>
 
   public void process(Window window) throws IOException {
     processor.process(
-            new NumberedExtent(window.data, window.document, window.begin, window.end));
+       new NumberedExtent(window.data, window.document, window.begin, window.end));
   }
-
 }

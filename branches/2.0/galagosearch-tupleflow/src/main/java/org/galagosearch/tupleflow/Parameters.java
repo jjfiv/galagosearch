@@ -166,6 +166,26 @@ public class Parameters implements Serializable {
       }
     }
 
+    public void remove(String key){
+      if (key.contains("/")) {
+        String fields[] = key.split("/", 2);
+        String subKey = fields[1];
+        String rootKey = fields[0];
+        Value subValue = null;
+
+        if (!containsKey(rootKey)) {
+          //if the root key doesn't exist the sub key can't
+          return;
+        }
+        subValue = list(rootKey).get(0);
+        subValue.remove(subKey);
+
+      } else {
+        this._map.remove(key);
+      }
+      
+    }
+
     @Override
     public String toString() {
       return _string.toString();
@@ -673,6 +693,11 @@ public class Parameters implements Serializable {
     stringValue.set(value);
     List<Value> values = Collections.singletonList(stringValue);
     _data.set(key, values);
+  }
+
+  // remove a key if it exists
+  public void remove(String key){
+    _data.remove(key);
   }
 
   public List<Value> list(String key) {

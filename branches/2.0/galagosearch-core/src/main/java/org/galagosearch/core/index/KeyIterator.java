@@ -12,8 +12,6 @@ import org.galagosearch.tupleflow.DataStream;
  * the index to be easily printed.  DumpIndex uses this functionality
  * to dump the contents of any Galago index.
  *
- * (12/21/2010, irmarc): Added the skipToKey method to allow for better navigation.
- *
  * (2/22/2011, irmarc): Refactored into the index package to indicate this is functionality
  *                      that a disk-based iterator should have.
  *

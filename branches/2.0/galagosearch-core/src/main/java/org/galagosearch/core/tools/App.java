@@ -20,6 +20,7 @@ import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
 import org.galagosearch.core.index.StructuredIndexPartModifier;
+import org.galagosearch.core.index.merge.MergeIndexes;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
 import org.galagosearch.tupleflow.FileOrderedReader;
@@ -773,7 +774,7 @@ public class App {
     output.println("   dump-names");
     output.println("   eval");
     output.println("   make-corpus");
-    //output.println("   merge-index");
+    output.println("   merge-index");
     output.println("   window");
     output.println("   window-se");
     //output.println("   pagerank");
@@ -792,6 +793,8 @@ public class App {
       commandHelpBuild();
     } else if (command.startsWith("window")) {
       commandHelpWindow();
+    } else if (command.startsWith("merge-index")) {
+      MergeIndexes.commandHelpMerge();
     } else if (command.startsWith("pagerank")) {
       //PageRankApp.commandHelpPageRank();
     } else if (command.startsWith("build-topdocs")) {
@@ -896,31 +899,6 @@ public class App {
       output.println("                           [default=0]");
       output.println("  --distrib={int > 1}:     Selects the number of simultaneous jobs to create");
       output.println("                           [default = 10]");
-    } else if (command.equals("merge-index")) {
-      output.println("galago merge-index [<flags>+] <output> (<input>)+");
-      output.println();
-      output.println("  Merges 2 or more indexes. Assumes that the document numberings");
-      output.println("  are non-unique. So all documents are assigned new internal numbers.");
-      output.println();
-      output.println("<output>:  Directory to be created that contains the merged index");
-      output.println();
-      output.println("<input>:  Directory containing an index to be merged ");
-      output.println();
-      output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
-      output.println("                           [default=false]");
-      output.println("  --mode={local|threaded|drmaa}: Selects which executor to use ");
-      output.println("                           [default=local]");
-      output.println("  --port={int<65000} :     port number for web based progress monitoring. ");
-      output.println("                           [default=randomly selected free port]");
-      output.println("  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir ");
-      output.println("                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]");
-      output.println("  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete");
-      output.println("                           0 --> keep all data");
-      output.println("                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)");
-      output.println("                           2 --> delete entire temp directory");
-      output.println("                           [default=0]");
-      output.println("  --distrib={int > 1}:     Selects the number of simultaneous jobs to create");
-      output.println("                           [default = 10]");
     } else if (command.equals("search")) {
       output.println("galago search [--parameters=<filename>] <index> <corpus>+");
       output.println();
@@ -1001,8 +979,7 @@ public class App {
     } else if (command.equals("make-corpus")) {
       handleMakeCorpus(args);
     } else if (command.equals("merge-index")) {
-      throw new UnsupportedOperationException("Need to re-implement");
-      //handleMergeIndexes(args);
+      MergeIndexes.main(args);
     } else if (command.equals("window")) {
       handleWindow(args);
     } else if (command.equals("window-se")) {

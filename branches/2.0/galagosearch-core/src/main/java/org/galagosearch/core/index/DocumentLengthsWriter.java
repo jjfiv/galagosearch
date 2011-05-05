@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import org.galagosearch.core.index.merge.DocumentLengthsMerger;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
@@ -42,7 +43,8 @@ public class DocumentLengthsWriter extends KeyValueWriter<NumberedDocumentData> 
   public DocumentLengthsWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
     super(parameters, "Document lengths written");
     Parameters p = writer.getManifest();
-    p.set("writerClass", getClass().getName());
+    p.set("writerClass", DocumentLengthsWriter.class.getName());
+    p.set("mergerClass", DocumentLengthsMerger.class.getName());
     p.set("readerClass", DocumentLengthsReader.class.getName());
 
     bstream = new ByteArrayOutputStream();

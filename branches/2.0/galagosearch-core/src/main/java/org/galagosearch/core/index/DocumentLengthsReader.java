@@ -77,7 +77,7 @@ public class DocumentLengthsReader extends KeyValueReader {
     }
 
     public int getCurrentLength() throws IOException {
-	return Utility.uncompressInt(iterator.getValueBytes(), 0);
+      return Utility.uncompressInt(iterator.getValueBytes(), 0);
     }
 
     public boolean isDone() {

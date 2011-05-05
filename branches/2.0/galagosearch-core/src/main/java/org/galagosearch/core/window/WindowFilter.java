@@ -32,7 +32,6 @@ public class WindowFilter extends StandardStep<Window, Window> {
   long dropCount = 0;
   long totalCount = 0;
 
-  Counter total;
   Counter dropped;
   Counter passed;
 
@@ -41,13 +40,11 @@ public class WindowFilter extends StandardStep<Window, Window> {
     filterStream = parameters.getTypeReader( filterStreamName );
     filterHead = filterStream.read();
 
-    total = parameters.getCounter("Total Windows Tested");
     dropped = parameters.getCounter("Windows Dropped");
     passed = parameters.getCounter("Windows Passed");
   }
   
   public void process(Window w) throws IOException {
-    total.increment();
     totalCount++;
 
     // skip filterstream to the correct file
@@ -68,11 +65,11 @@ public class WindowFilter extends StandardStep<Window, Window> {
         (filterHead.file == w.file) &&
         (filterHead.filePosition == w.filePosition)){
       processor.process( w );
-      passed.increment();
+      if (passed != null) passed.increment();
     } else {
       // otherwise ignore it
       dropCount++;
-      dropped.increment();
+      if(dropped != null) dropped.increment();
     }
   }
   

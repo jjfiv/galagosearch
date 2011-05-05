@@ -56,7 +56,7 @@ public class NumberedExtentThresholder extends StandardStep<NumberedExtent, Numb
       emitExtents();
     } else {
       emitExtents();
-      discards.incrementBy( current.size() );
+      if(discards != null) discards.incrementBy( current.size() );
       current.clear();
       current.offerLast(ne);
       currentPassesThreshold = false;
@@ -84,7 +84,7 @@ public class NumberedExtentThresholder extends StandardStep<NumberedExtent, Numb
     if (currentPassesThreshold) {
       while (current.size() > 0) {
         processor.process(current.pollFirst());
-        passing.increment();
+        if(passing != null) passing.increment();
       }
     }
   }

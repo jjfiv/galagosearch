@@ -6,9 +6,8 @@ import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
-import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
 import org.galagosearch.core.types.KeyValuePair;
-import org.galagosearch.core.types.NumberWordPosition;
+import org.galagosearch.core.types.NumberedExtent;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.OutputClass;
@@ -45,10 +44,10 @@ import org.galagosearch.tupleflow.types.XMLFragment;
  *
  * @author trevor, irmarc
  */
-@InputClass(className = "org.galagosearch.core.types.NumberWordPosition", order = {"+word", "+document", "+position"})
+@InputClass(className = "org.galagosearch.core.types.NumberedExtent", order = {"+extentName", "+number", "+begin"})
 @OutputClass(className = "org.galagosearch.core.types.KeyValuePair", order = {"+key"})
-public class PositionIndexWriter implements
-        NumberWordPosition.WordDocumentPositionOrder.ShreddedProcessor,
+public class WindowIndexWriter implements
+        NumberedExtent.ExtentNameNumberBeginOrder.ShreddedProcessor,
         Source<KeyValuePair> // parallel index data output
 {
 
@@ -57,7 +56,8 @@ public class PositionIndexWriter implements
     public PositionsList() {
       documents = new CompressedRawByteBuffer();
       counts = new CompressedRawByteBuffer();
-      positions = new CompressedRawByteBuffer();
+      begins = new CompressedRawByteBuffer();
+      ends = new CompressedRawByteBuffer();
       header = new CompressedByteBuffer();
 
       if ((options & KeyListReader.ListIterator.HAS_SKIPS) == KeyListReader.ListIterator.HAS_SKIPS) {
@@ -83,7 +83,7 @@ public class PositionIndexWriter implements
       }
 
       header.add(documentCount);
-      header.add(totalPositionCount);
+      header.add(totalWindowCount);
 
       if (skips != null && skips.length() > 0) {
         header.add(skipDistance);
@@ -93,7 +93,8 @@ public class PositionIndexWriter implements
 
       header.add(documents.length());
       header.add(counts.length());
-      header.add(positions.length());
+      header.add(begins.length());
+      header.add(ends.length());
       if (skips != null && skips.length() > 0) {
         header.add(skips.length());
         header.add(skipPositions.length());
@@ -105,7 +106,8 @@ public class PositionIndexWriter implements
 
       listLength += header.length();
       listLength += counts.length();
-      listLength += positions.length();
+      listLength += begins.length();
+      listLength += ends.length();
       listLength += documents.length();
       if (skips != null) {
         listLength += skips.length();
@@ -125,8 +127,11 @@ public class PositionIndexWriter implements
       counts.write(output);
       counts.clear();
 
-      positions.write(output);
-      positions.clear();
+      begins.write(output);
+      begins.clear();
+
+      ends.write(output);
+      ends.clear();
 
       if (skips != null && skips.length() > 0) {
         skips.write(output);
@@ -143,8 +148,8 @@ public class PositionIndexWriter implements
     public void setWord(byte[] word) {
       this.word = word;
       this.lastDocument = 0;
-      this.lastPosition = 0;
-      this.totalPositionCount = 0;
+      this.lastBegin = 0;
+      this.totalWindowCount = 0;
       this.positionCount = 0;
       if (skips != null) {
         this.docsSinceLastSkip = 0;
@@ -171,17 +176,18 @@ public class PositionIndexWriter implements
       documents.add(documentID - lastDocument);
       lastDocument = documentID;
 
-      lastPosition = 0;
+      lastBegin = 0;
       positionCount = 0;
       documentCount++;
 
     }
 
-    public void addPosition(int position) throws IOException {
+    public void addWindow(int begin, int end) throws IOException {
       positionCount++;
-      totalPositionCount++;
-      positions.add(position - lastPosition);
-      lastPosition = position;
+      totalWindowCount++;
+      begins.add(begin - lastBegin);
+      lastBegin = begin;
+      ends.add(end - lastBegin);
     }
 
     private void updateSkipInformation() {
@@ -198,29 +204,30 @@ public class PositionIndexWriter implements
           // absolute values
           skipPositions.add(documents.length());
           skipPositions.add(counts.length());
-          skipPositions.add(positions.length());
+          skipPositions.add(begins.length());
           lastDocumentSkip = documents.length();
           lastCountSkip = counts.length();
-          lastPositionSkip = positions.length();
+          lastPositionSkip = begins.length();
         } else {
           // d-gap skip
           skipPositions.add(documents.length() - lastDocumentSkip);
           skipPositions.add(counts.length() - lastCountSkip);
-          skipPositions.add((long) (positions.length() - lastPositionSkip));
+          skipPositions.add((long) (begins.length() - lastPositionSkip));
         }
         numSkips++;
       }
     }
     private long lastDocument;
-    private int lastPosition;
+    private int lastBegin;
     private int positionCount;
     private int documentCount;
-    private int totalPositionCount;
+    private int totalWindowCount;
     public byte[] word;
     public CompressedByteBuffer header;
     public CompressedRawByteBuffer documents;
     public CompressedRawByteBuffer counts;
-    public CompressedRawByteBuffer positions;
+    public CompressedRawByteBuffer begins;
+    public CompressedRawByteBuffer ends;
     // to support skipping
     private long lastDocumentSkipped;
     private long lastSkipPosition;
@@ -245,7 +252,6 @@ public class PositionIndexWriter implements
   int skipDistance;
   int skipResetDistance;
   byte[] lastWord;
-  boolean hasStats;
   TIntHashSet uniqueDocs;
   // parallel index stuff
   boolean parallel;
@@ -253,24 +259,14 @@ public class PositionIndexWriter implements
   /**
    * Creates a new instance of PositionIndexWriter
    */
-  public PositionIndexWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
+  public WindowIndexWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
     Parameters actualParams = parameters.getXML();
-    actualParams.add("writerClass", getClass().getName());
-    actualParams.add("readerClass", PositionIndexReader.class.getName());
+    actualParams.add("writerClass", WindowIndexWriter.class.getName());
+    actualParams.add("readerClass", WindowIndexReader.class.getName());
     actualParams.add("defaultOperator", "counts");
 
     // Let's get those XMLFragments in there if we're receiving
-    if (actualParams.containsKey("pipename")) {
-      TypeReader<XMLFragment> collectionStats = parameters.getTypeReader(actualParams.get("pipename"));
-      XMLFragment frag;
-      while ((frag = collectionStats.read()) != null) {
-        actualParams.add("statistics/" + frag.nodePath, frag.innerText);
-      }
-      hasStats = true;
-    } else {
-      hasStats = false;
-      uniqueDocs = new TIntHashSet();
-    }
+    uniqueDocs = new TIntHashSet();
 
     writer = new IndexWriter(parameters);
 
@@ -282,11 +278,9 @@ public class PositionIndexWriter implements
     // more options here?
   }
 
-  public void processWord(byte[] wordBytes) throws IOException {
+  public void processExtentName(byte[] wordBytes) throws IOException {
     if (invertedList != null) {
-      if (!hasStats) {
-        collectionLength += invertedList.totalPositionCount;
-      }
+      collectionLength += invertedList.totalWindowCount;
       invertedList.close();
       writer.add(invertedList);
 
@@ -304,21 +298,21 @@ public class PositionIndexWriter implements
     lastWord = wordBytes;
   }
 
-  public void processDocument(int document) throws IOException {
+  public void processNumber(long document) throws IOException {
     invertedList.addDocument(document);
     documentCount++;
-    if (!hasStats) {
-      uniqueDocs.add(document);
-    }
+    uniqueDocs.add((int) document);
     maximumDocumentNumber = Math.max(document, maximumDocumentNumber);
   }
 
-  public void processPosition(int position) throws IOException {
-    invertedList.addPosition(position);
+  int currentBegin;
+  public void processBegin(int begin) throws IOException {
+    //invertedList.addBegin(begin);
+    currentBegin = begin;
   }
 
-  public void processTuple() {
-    // does nothing
+  public void processTuple(int end) throws IOException {
+    invertedList.addWindow(currentBegin, end);
   }
 
   private void resetDocumentCount() {
@@ -328,22 +322,18 @@ public class PositionIndexWriter implements
 
   public void close() throws IOException {
     if (invertedList != null) {
-      if (!hasStats) {
-        collectionLength += invertedList.totalPositionCount;
-      }
+      collectionLength += invertedList.totalWindowCount;
       invertedList.close();
       writer.add(invertedList);
     }
 
     // Add stats to the manifest if needed
-    if (!hasStats) {
-      Parameters manifest = writer.getManifest();
-      if (!manifest.containsKey("statistics/documentCount")) {
-        manifest.add("statistics/documentCount", Long.toString(uniqueDocs.size()));
-      }
-      if (!manifest.containsKey("statistics/collectionLength")) {
-        manifest.add("statistics/collectionLength", Long.toString(collectionLength));
-      }
+    Parameters manifest = writer.getManifest();
+    if (!manifest.containsKey("statistics/documentCount")) {
+      manifest.add("statistics/documentCount", Long.toString(uniqueDocs.size()));
+    }
+    if (!manifest.containsKey("statistics/collectionLength")) {
+      manifest.add("statistics/collectionLength", Long.toString(collectionLength));
     }
 
     writer.close();

@@ -58,7 +58,7 @@ public class TextFeatureThresholder extends StandardStep<TextFeature, TextFeatur
     } else {
       // try to emit any passing extents
       emitExtents();
-      notPassing.incrementBy( current.size() );
+      if (notPassing != null) notPassing.incrementBy( current.size() );
       current.clear();
       current.offerLast(tf);
       currentPassesThreshold = false;
@@ -79,7 +79,7 @@ public class TextFeatureThresholder extends StandardStep<TextFeature, TextFeatur
     if (currentPassesThreshold) {
       while (current.size() > 0) {
         processor.process(current.poll());
-        passing.increment();
+        if (passing != null) passing.increment();
       }
     }
   }

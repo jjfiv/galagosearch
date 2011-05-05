@@ -8,6 +8,7 @@ import java.util.List;
 import org.galagosearch.core.index.ExtentIndexWriter;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.ExtractIndexDocumentNumbers;
+import org.galagosearch.core.index.WindowIndexWriter;
 import org.galagosearch.core.window.WindowProducer;
 import org.galagosearch.core.parse.DocumentSource;
 import org.galagosearch.core.parse.Porter2Stemmer;
@@ -204,7 +205,7 @@ public class BuildWindowIndex {
 
     Parameters p2 = new Parameters();
     p2.add("filename", indexPath + File.separator + indexName);
-    stage.add(new Step(ExtentIndexWriter.class, p2));
+    stage.add(new Step(WindowIndexWriter.class, p2));
     return stage;
   }
 

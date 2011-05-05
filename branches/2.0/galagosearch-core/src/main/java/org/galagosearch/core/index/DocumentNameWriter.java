@@ -4,6 +4,7 @@ package org.galagosearch.core.index;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import org.galagosearch.core.index.merge.DocumentNameMerger;
 
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberedDocumentData;
@@ -41,12 +42,19 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     // make a folder
     String fileName = parameters.getXML().get("filename");
     
-    Parameters p = new Parameters();
-    p.copy(parameters.getXML());
-    p.set("order", "forward");
-    IndexWriterProcessor writerFL = new IndexWriterProcessor(fileName, p);
-    p.set("order", "backward");
-    IndexWriterProcessor writerRL = new IndexWriterProcessor(fileName + ".reverse", p);
+    Parameters pforward = new Parameters();
+    pforward.copy(parameters.getXML());
+    pforward.set("order", "forward");
+    pforward.set("writerClass", DocumentNameWriter.class.getName());
+    pforward.set("mergerClass", DocumentNameMerger.class.getName());
+    pforward.set("readerClass", DocumentNameReader.class.getName());
+
+    IndexWriterProcessor writerFL = new IndexWriterProcessor(fileName, pforward);
+
+    Parameters preverse = pforward.clone();
+    preverse.set("order", "backward");
+    preverse.remove("mergerClass");
+    IndexWriterProcessor writerRL = new IndexWriterProcessor(fileName + ".reverse", preverse);
     
     sorterFL = new Sorter<KeyValuePair>(new KeyValuePair.KeyOrder());
     sorterRL = new Sorter<KeyValuePair>(new KeyValuePair.KeyOrder());
@@ -90,8 +98,6 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     }
   }
 
-
-
   /*
    * Translates the Key Value Pairs to Generic elements + writes them to the index
    */
@@ -100,8 +106,6 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
     public IndexWriterProcessor(String fileName, Parameters p) throws IOException{
       // default uncompressed index is fine
       writer = new IndexWriter(fileName, p);
-      writer.getManifest().set("writerClass", getClass().getName());
-      writer.getManifest().set("readerClass", DocumentNameReader.class.getName());
     }
     
     public void process(KeyValuePair kvp) throws IOException {

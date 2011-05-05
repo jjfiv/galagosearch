@@ -51,12 +51,7 @@ public class ExtentIndexWriter implements NumberedExtent.ExtentNameNumberBeginOr
         parameters.getXML().add("readerClass", ExtentIndexReader.class.getName());
         parameters.getXML().add("writerClass", getClass().toString());
 
-        parallel = parameters.getXML().get("parallel", false);
-        if (parallel) {
-            writer = new SplitIndexValueWriter(parameters);
-        } else {
-            writer = new IndexWriter(parameters);
-        }
+        writer = new IndexWriter(parameters);
         header = parameters.getXML();
     }
 
