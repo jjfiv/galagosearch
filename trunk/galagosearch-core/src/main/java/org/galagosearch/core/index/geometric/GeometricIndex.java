@@ -136,14 +136,12 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
       // first flush the index to disk
       (new FlushToDisk()).flushMemoryIndex(flushingMemoryIndex, shardFolder.getAbsolutePath(), false);
       // indicate that the flushing part of this thread is done
-      
-      synchronized (geometricParts) {
-      updateRetrieval();
-      flushingMemoryIndex.close();
 
-      // add flushed index to the set of bins -- needs to be a synconeous action
-      
+      synchronized (geometricParts) {
         geometricParts.add(1, shardFolder.getAbsolutePath());
+        updateRetrieval();
+        flushingMemoryIndex.close();
+        // add flushed index to the set of bins -- needs to be a synconeous action
       }
 
     } catch (IOException e) {
@@ -238,11 +236,11 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     allRetrievals.addAll(r);
 
     ArrayList<Parameters> staticParameters = new ArrayList<Parameters>();
-    for(Retrieval ret: r ){
-        staticParameters.add(ret.getRetrievalStatistics("all"));
+    for (Retrieval ret : r) {
+      staticParameters.add(ret.getRetrievalStatistics("all"));
     }
 
-    statistics = new MemoryParameters((MemoryRetrieval)currentMemoryRetrieval, mergeStats(staticParameters));
+    statistics = new MemoryParameters((MemoryRetrieval) currentMemoryRetrieval, mergeStats(staticParameters));
     statistics.add("retrievalGroup", "all");
     allRetrievals.add(currentMemoryRetrieval);
     retrievals.put("all", allRetrievals);
@@ -267,7 +265,7 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     return statistics;
 
   }
-  
+
   // Sub - Classes
   private class Bin {
 

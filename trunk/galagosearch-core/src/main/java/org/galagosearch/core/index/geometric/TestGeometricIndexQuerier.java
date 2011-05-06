@@ -33,7 +33,7 @@ public class TestGeometricIndexQuerier implements Processor<NumberedDocument> {
 
   public TestGeometricIndexQuerier(TupleFlowParameters parameters) throws Exception {
     indexer = new GeometricIndex(parameters);
-    frequency = parameters.getXML().get("queryFreq", 501);
+    frequency = parameters.getXML().get("queryFreq", 100);
     queries = new Parameters(new File(parameters.getXML().get("queryFile")));
   }
 

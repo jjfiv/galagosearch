@@ -82,6 +82,7 @@ public class TestQueryGeometricMemoryIndex {
     p.add("radix", Integer.toString(radix));
     p.add("mergeMode", mergeMode);
     p.add("queryFile", queryFile);
+    p.add("stemming", "true");
     stage.add(new Step(TestGeometricIndexQuerier.class, p));
 
     return stage;
@@ -122,8 +123,8 @@ public class TestQueryGeometricMemoryIndex {
     
     String hash = p.get("distrib", "0");
     String tempFolderPath = p.get("galagoTemp", "");
-    indexBlockSize = (int) p.get("blockSize", 600); // could use 50000
-    radix = (int) p.get("radix", 3);
+    indexBlockSize = (int) p.get("blockSize", 100); // could use 50000
+    radix = (int) p.get("radix", 2);
     mergeMode = p.get("mergeMode", "local");
 
     queryFile = p.get("queryFile");
