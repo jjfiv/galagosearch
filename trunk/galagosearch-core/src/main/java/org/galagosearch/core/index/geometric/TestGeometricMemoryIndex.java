@@ -76,10 +76,11 @@ public class TestGeometricMemoryIndex {
     stage.add(new Step(MemoryChecker.class));
 
     Parameters p = new Parameters();
-    p.add("directory", outputIndexDir);
+    p.add("shardDirectory", outputIndexDir);
     p.add("indexBlockSize", Integer.toString(indexBlockSize));
     p.add("radix", Integer.toString(radix));
     p.add("mergeMode", mergeMode);
+    p.add("stemming", "true");
     stage.add(new Step(GeometricIndex.class, p));
 
     return stage;
@@ -118,9 +119,9 @@ public class TestGeometricMemoryIndex {
     
     Parameters p = new Parameters(flags);
     
-    String hash = p.get("distrib", "0");
+    String hash = p.get("distrib", "1");
     String tempFolderPath = p.get("galagoTemp", "");
-    indexBlockSize = (int) p.get("blockSize", 300); // could use 50000
+    indexBlockSize = (int) p.get("blockSize", 100); // could use 50000
     radix = (int) p.get("radix", 3);
     mergeMode = p.get("mergeMode", "local");
 

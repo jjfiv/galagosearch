@@ -73,7 +73,7 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
 
 
     shardDirectory = parameters.getXML().get("shardDirectory");
-    stemming = (boolean) parameters.getXML().get("stemming", false);
+    stemming = (boolean) parameters.getXML().get("stemming", true);
     mergeMode = parameters.getXML().get("mergeMode", "local");
 
     // 10,000 is a small testing value -- 50,000 is probably a better choice.
@@ -227,6 +227,7 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
   private void resetCurrentMemoryIndex() {
     Parameters parameters = new Parameters();
     parameters.set("firstDocumentId", Long.toString(globalDocumentCount));
+    parameters.set("stemming", Boolean.toString(stemming));
     currentMemoryIndex = new MemoryIndex(parameters);
   }
 

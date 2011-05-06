@@ -59,11 +59,11 @@ public class MergeSequentialIndexShards {
     for (String path : this.diskShardPaths) {
       // check for valid indexes
       StructuredIndex i = new StructuredIndex(path);
-      i.close();
       System.err.println("inputIndex = " + path);
       if (i.containsPart("stemmedPostings")) {
         stemming = true;
       }
+      i.close();
     }
 
     // ensure the output folders exist
