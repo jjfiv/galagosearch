@@ -4,12 +4,7 @@ package org.galagosearch.core.retrieval.structured;
 import gnu.trove.TObjectDoubleHashMap;
 import gnu.trove.TObjectProcedure;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -23,236 +18,235 @@ import org.galagosearch.tupleflow.Parameters;
  */
 public abstract class ScoreCombinationIterator extends DocumentOrderedScoreIterator {
 
-    double[] weights;
-    double weightSum;
-    DocumentOrderedScoreIterator[] iterators;
-    boolean done;
-    // parameter sweep stuff
-    double[][] weightLists = null; // double[parameterID][nodeID]
-    double[] weightSums = null; // double[parameterID]
-    String[] parameterStrings = null; // String[parameterID]
-    long total;
+  double[] weights;
+  double weightSum;
+  DocumentOrderedScoreIterator[] iterators;
+  boolean done;
+  // parameter sweep stuff
+  double[][] weightLists = null; // double[parameterID][nodeID]
+  double[] weightSums = null; // double[parameterID]
+  String[] parameterStrings = null; // String[parameterID]
+  long total;
 
-    public ScoreCombinationIterator(Parameters parameters,
-            DocumentOrderedScoreIterator[] childIterators) {
+  public ScoreCombinationIterator(Parameters parameters,
+          DocumentOrderedScoreIterator[] childIterators) {
 
-        weights = new double[childIterators.length];
-        weightSum = 0.0;
-        int parameterSetSize = 1;
-	total = 0;
-        String[] weightStrings = parameters.get(Integer.toString(0), "1.0").split(",");
-        // check if we need to initialize our arrays
-        parameterSetSize = weightStrings.length;
-        weightLists = new double[parameterSetSize][childIterators.length];
-        weightSums = new double[parameterSetSize];
-        parameterStrings = new String[parameterSetSize];
-        StringBuilder[] parameterStringBuilders = new StringBuilder[parameterSetSize];
-        Arrays.fill(weightSums, 0.0);
+    weights = new double[childIterators.length];
+    weightSum = 0.0;
+    int parameterSetSize = 1;
+    total = 0;
+    String[] weightStrings = parameters.get(Integer.toString(0), "1.0").split(",");
+    // check if we need to initialize our arrays
+    parameterSetSize = weightStrings.length;
+    weightLists = new double[parameterSetSize][childIterators.length];
+    weightSums = new double[parameterSetSize];
+    parameterStrings = new String[parameterSetSize];
+    StringBuilder[] parameterStringBuilders = new StringBuilder[parameterSetSize];
+    Arrays.fill(weightSums, 0.0);
 
-        for (int i = 0; i < weights.length; i++) {
-            weightStrings = parameters.get(Integer.toString(i), "1.0").split(",");
-            weights[i] = Double.parseDouble(weightStrings[0]);
-            weightSum += weights[i];
-	    total = Math.max(total, childIterators[i].totalCandidates());
+    for (int i = 0; i < weights.length; i++) {
+      weightStrings = parameters.get(Integer.toString(i), "1.0").split(",");
+      weights[i] = Double.parseDouble(weightStrings[0]);
+      weightSum += weights[i];
+      total = Math.max(total, childIterators[i].totalCandidates());
 
-            assert parameterSetSize == weightStrings.length : "COMBINE NODE ERROR : all weight lists need to be the same size";
+      assert parameterSetSize == weightStrings.length : "COMBINE NODE ERROR : all weight lists need to be the same size";
 
-            for (int j = 0; j < parameterSetSize; j++) {
-                weightLists[j][i] = Double.parseDouble(weightStrings[j]);
-                weightSums[j] += weightLists[j][i];
-                if (parameterStringBuilders[j] == null) {
-                    parameterStringBuilders[j] = new StringBuilder("#combine");
-                }
-                parameterStringBuilders[j].append(":").append(i).append("=").append(weightLists[j][i]);
-            }
+      for (int j = 0; j < parameterSetSize; j++) {
+        weightLists[j][i] = Double.parseDouble(weightStrings[j]);
+        weightSums[j] += weightLists[j][i];
+        if (parameterStringBuilders[j] == null) {
+          parameterStringBuilders[j] = new StringBuilder("#combine");
         }
-
-        for (int j = 0; j < parameterSetSize; j++) {
-            parameterStrings[j] = parameterStringBuilders[j].toString();
-        }
-
-        this.iterators = childIterators;
-	if (total < Long.MAX_VALUE) { // do this if none of our children are "infinity"
-	    total = 0;
-	    for (DocumentOrderedScoreIterator it : childIterators) {
-		total += it.totalCandidates();
-	    }
-	}
+        parameterStringBuilders[j].append(":").append(i).append("=").append(weightLists[j][i]);
+      }
     }
 
-    public long totalCandidates() {
-	return total;
+    for (int j = 0; j < parameterSetSize; j++) {
+      parameterStrings[j] = parameterStringBuilders[j].toString();
     }
 
-    public double score() {
-        double total = 0;
+    this.iterators = childIterators;
+    if (total < Long.MAX_VALUE) { // do this if none of our children are "infinity"
+      total = 0;
+      for (DocumentOrderedScoreIterator it : childIterators) {
+        total += it.totalCandidates();
+      }
+    }
+  }
 
-        for (int i = 0; i < iterators.length; i++) {
-	    double score = iterators[i].score();
-            total += weights[i] * score;
-        }
-        return total / weightSum;
+  public long totalCandidates() {
+    return total;
+  }
+
+  public double score() {
+    double total = 0;
+
+    for (int i = 0; i < iterators.length; i++) {
+      double score = iterators[i].score();
+      total += weights[i] * score;
+    }
+    return total / weightSum;
+  }
+
+  public double score(int document, int length) {
+    double score = 0;
+
+    for (int i = 0; i < iterators.length; i++) {
+      score += weights[i] * iterators[i].score(document, length);
+    }
+    return score / weightSum;
+  }
+
+  public void movePast(int document) throws IOException {
+    for (DocumentOrderedIterator iterator : iterators) {
+      iterator.movePast(document);
+    }
+  }
+
+  public void moveTo(int document) throws IOException {
+    for (DocumentOrderedIterator iterator : iterators) {
+      iterator.moveTo(document);
+    }
+  }
+
+  public boolean skipToDocument(int document) throws IOException {
+    for (DocumentOrderedIterator iterator : iterators) {
+      iterator.skipToDocument(document);
+    }
+    return hasMatch(document);
+  }
+
+  public void reset() throws IOException {
+    for (DocumentOrderedIterator iterator : iterators) {
+      iterator.reset();
+    }
+  }
+
+  public double minimumScore() {
+    double min = 0;
+    for (int i = 0; i < iterators.length; i++) {
+      min += weights[i] * iterators[i].minimumScore();
+    }
+    return (min / weightSum);
+  }
+
+  public double maximumScore() {
+    double max = 0;
+    for (int i = 0; i < iterators.length; i++) {
+      max += weights[i] * iterators[i].maximumScore();
+    }
+    return (max / weightSum);
+  }
+
+  //***********************//
+  //  parameter sweep code //
+  //***********************//
+  public TObjectDoubleHashMap<String> parameterSweepScore() {
+    // first get all of the child scores - there are some cases to consider
+    // map(child id -> scoreMap(paramString -> score))
+    final TObjectDoubleHashMap<String>[] childScoreMaps = new TObjectDoubleHashMap[iterators.length];
+    for (int i = 0; i < iterators.length; i++) {
+      childScoreMaps[i] = iterators[i].parameterSweepScore();
     }
 
-    public double score(int document, int length) {
-        double score = 0;
+    // special case : parallel child lists of smoothing nodes
+    //  - each child has returned a matching set of scores
+    //  - eg: each child has been dirichlet smoothed (where each smoother used the same set of mus)
+    if (checkForParallelSmoothingScoreMaps(childScoreMaps)) {
+      final TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
 
-        for (int i = 0; i < iterators.length; i++) {
-            score += weights[i] * iterators[i].score(document, length);
-        }
-        return score / weightSum;
-    }
+      // for each set of combination weights
+      for (int j = 0; j < weightLists.length; j++) {
+        StringBuilder sb = new StringBuilder(parameterStrings[j]).append("(");
+        final String prefix = sb.toString();
+        final int fj = j;
+        // for each aligned child parameter compute the weighted combination
+        childScoreMaps[0].forEachKey(new TObjectProcedure<String>() {
 
-    public void movePast(int document) throws IOException {
-        for (DocumentOrderedIterator iterator : iterators) {
-            iterator.movePast(document);
-        }
-    }
-
-    public void moveTo(int document) throws IOException {
-        for (DocumentOrderedIterator iterator : iterators) {
-            iterator.moveTo(document);
-        }
-    }
-
-    public boolean skipToDocument(int document) throws IOException {
-        for (DocumentOrderedIterator iterator : iterators) {
-            iterator.skipToDocument(document);
-        }
-        return hasMatch(document);
-    }
-
-    public void reset() throws IOException {
-        for (DocumentOrderedIterator iterator : iterators) {
-            iterator.reset();
-        }
-    }
-
-    public double minimumScore() {
-	double min = 0;
-	for (int i = 0; i < iterators.length; i++) {
-	    min += weights[i] * iterators[i].minimumScore();
-	}
-	return (min / weightSum);
-    }
-
-    public double maximumScore() {
-	double max = 0;
-	for (int i = 0; i < iterators.length; i++) {
-	    max += weights[i] * iterators[i].maximumScore();
-	}
-	return (max / weightSum);
-    }
-
-
-    //***********************//
-    //  parameter sweep code //
-    //***********************//
-    public TObjectDoubleHashMap<String> parameterSweepScore() {
-        // first get all of the child scores - there are some cases to consider
-        // map(child id -> scoreMap(paramString -> score))
-        final TObjectDoubleHashMap<String>[] childScoreMaps = new TObjectDoubleHashMap[iterators.length];
-        for (int i = 0; i < iterators.length; i++) {
-            childScoreMaps[i] = iterators[i].parameterSweepScore();
-        }
-
-        // special case : parallel child lists of smoothing nodes
-        //  - each child has returned a matching set of scores
-        //  - eg: each child has been dirichlet smoothed (where each smoother used the same set of mus)
-        if (checkForParallelSmoothingScoreMaps(childScoreMaps)) {
-            final TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
-
-            // for each set of combination weights
-            for (int j = 0; j < weightLists.length; j++) {
-                StringBuilder sb = new StringBuilder(parameterStrings[j]).append("(");
-                final String prefix = sb.toString();
-                final int fj = j;
-                // for each aligned child parameter compute the weighted combination
-                childScoreMaps[0].forEachKey(new TObjectProcedure<String>() {
-
-                    public boolean execute(String childParameters) {
-                        StringBuilder sbclone = new StringBuilder(prefix);
-                        double total = 0.0;
-                        for (int i = 0; i < iterators.length; i++) {
-                            sbclone.append(" ").append(childParameters);
-                            total += weightLists[fj][i] * childScoreMaps[i].get(childParameters);
-                        }
-                        results.put(sbclone.append(" )").toString(), total / weightSums[fj]);
-                        return true;
-                    }
-                });
-            }
-
-            return results;
-        }
-
-        // more common case: non-matching children
-        //  - eg: #combine( w1 #combine( 3 children ) w2 #combine( 2 children ) )
-        //  - this option tries to do the complete cross product of the children
-        //     with the parameter sweep of the current node
-        //  << could be overkill for some uses - but will ensure the desired sweep is a subset of the results >>
-        TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
-
-        // for each set of combination weights
-        for (int j = 0; j < weightLists.length; j++) {
-
-            // do a cross-product of child parameters
-            double[] totals = new double[1];
-            totals[0] = 0.0;
-            StringBuilder[] resultsParameters = new StringBuilder[1];
-            resultsParameters[0] = new StringBuilder(parameterStrings[j]).append("(");
-
+          public boolean execute(String childParameters) {
+            StringBuilder sbclone = new StringBuilder(prefix);
+            double total = 0.0;
             for (int i = 0; i < iterators.length; i++) {
-                // prepare the new list of totals and parameter strings
-                double[] newTotals = new double[totals.length * childScoreMaps[i].size()];
-                StringBuilder[] newParameterStrings = new StringBuilder[newTotals.length];
-                int index = 0;
-
-                for (String childParameters : childScoreMaps[i].keys(new String[0])) {
-                    for (int t = 0; t < totals.length; t++) {
-                        newTotals[index] = totals[t] + (weightLists[j][i] * childScoreMaps[i].get(childParameters));
-                        newParameterStrings[index] = new StringBuilder(resultsParameters[t]).append(" ").append(childParameters);
-                        index++;
-                    }
-                }
-                // replace old totals with new totals
-                totals = newTotals;
-                resultsParameters = newParameterStrings;
+              sbclone.append(" ").append(childParameters);
+              total += weightLists[fj][i] * childScoreMaps[i].get(childParameters);
             }
+            results.put(sbclone.append(" )").toString(), total / weightSums[fj]);
+            return true;
+          }
+        });
+      }
 
-            // now we have a full set of totals + parameterStrings
-            for (int t = 0; t < totals.length; t++) {
-                results.put((resultsParameters[t].append(" )").toString()), (totals[t] / weightSums[j]));
-            }
-        }
-        return results;
+      return results;
     }
 
-    private boolean checkForParallelSmoothingScoreMaps(final TObjectDoubleHashMap<String>[] childScoreMaps) {
-        int childSize = childScoreMaps[0].size();
-        for (int i = 1; i < childScoreMaps.length; i++) {
-            if (childSize != childScoreMaps[i].size()) {
-                return false;
-            }
+    // more common case: non-matching children
+    //  - eg: #combine( w1 #combine( 3 children ) w2 #combine( 2 children ) )
+    //  - this option tries to do the complete cross product of the children
+    //     with the parameter sweep of the current node
+    //  << could be overkill for some uses - but will ensure the desired sweep is a subset of the results >>
+    TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
+
+    // for each set of combination weights
+    for (int j = 0; j < weightLists.length; j++) {
+
+      // do a cross-product of child parameters
+      double[] totals = new double[1];
+      totals[0] = 0.0;
+      StringBuilder[] resultsParameters = new StringBuilder[1];
+      resultsParameters[0] = new StringBuilder(parameterStrings[j]).append("(");
+
+      for (int i = 0; i < iterators.length; i++) {
+        // prepare the new list of totals and parameter strings
+        double[] newTotals = new double[totals.length * childScoreMaps[i].size()];
+        StringBuilder[] newParameterStrings = new StringBuilder[newTotals.length];
+        int index = 0;
+
+        for (String childParameters : childScoreMaps[i].keys(new String[0])) {
+          for (int t = 0; t < totals.length; t++) {
+            newTotals[index] = totals[t] + (weightLists[j][i] * childScoreMaps[i].get(childParameters));
+            newParameterStrings[index] = new StringBuilder(resultsParameters[t]).append(" ").append(childParameters);
+            index++;
+          }
         }
+        // replace old totals with new totals
+        totals = newTotals;
+        resultsParameters = newParameterStrings;
+      }
 
-        if (!childScoreMaps[0].forEachKey(new TObjectProcedure<String>() {
+      // now we have a full set of totals + parameterStrings
+      for (int t = 0; t < totals.length; t++) {
+        results.put((resultsParameters[t].append(" )").toString()), (totals[t] / weightSums[j]));
+      }
+    }
+    return results;
+  }
 
-            public boolean execute(String k) {
-                for (int i = 1; i < childScoreMaps.length; i++) {
-                    // if any string contains a '#' then it was created by an operator not a smoothing node
-                    if (k.contains("#")) {
-                        return false;
-                    }
-                    if (!childScoreMaps[i].containsKey(k)) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        })) {
+  private boolean checkForParallelSmoothingScoreMaps(final TObjectDoubleHashMap<String>[] childScoreMaps) {
+    int childSize = childScoreMaps[0].size();
+    for (int i = 1; i < childScoreMaps.length; i++) {
+      if (childSize != childScoreMaps[i].size()) {
+        return false;
+      }
+    }
+
+    if (!childScoreMaps[0].forEachKey(new TObjectProcedure<String>() {
+
+      public boolean execute(String k) {
+        for (int i = 1; i < childScoreMaps.length; i++) {
+          // if any string contains a '#' then it was created by an operator not a smoothing node
+          if (k.contains("#")) {
             return false;
+          }
+          if (!childScoreMaps[i].containsKey(k)) {
+            return false;
+          }
         }
         return true;
+      }
+    })) {
+      return false;
     }
+    return true;
+  }
 }

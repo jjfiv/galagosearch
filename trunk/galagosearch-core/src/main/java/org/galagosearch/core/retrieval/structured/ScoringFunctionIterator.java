@@ -3,11 +3,8 @@ package org.galagosearch.core.retrieval.structured;
 
 import gnu.trove.TObjectDoubleHashMap;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.scoring.ScoringFunction;
-import org.galagosearch.core.util.CallTable;
 
 /**
  * An iterator that converts a count iterator's count into a score.
@@ -30,9 +27,9 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
     this.function = function;
     this.functions = null; // null implies that we can not perform a parameter sweep
     if (PositionIndexReader.Iterator.class.isAssignableFrom(iterator.getClass())) {
-	total = ((PositionIndexReader.Iterator) iterator).totalDocuments();
+      total = ((PositionIndexReader.Iterator) iterator).totalDocuments();
     } else {
-	total = Long.MAX_VALUE;
+      total = Long.MAX_VALUE;
     }
   }
 
@@ -41,17 +38,17 @@ public class ScoringFunctionIterator extends DocumentOrderedScoreIterator {
     this(iterator, functions[0]);
     this.functions = functions;
   }
-    
+
   public long totalCandidates() {
-      return total;
+    return total;
   }
 
   public ScoringFunction getScoringFunction() {
-      return function;
+    return function;
   }
 
   public double score() {
-      return score(documentToScore, lengthOfDocumentToScore);
+    return score(documentToScore, lengthOfDocumentToScore);
   }
 
   public double score(int document, int length) {

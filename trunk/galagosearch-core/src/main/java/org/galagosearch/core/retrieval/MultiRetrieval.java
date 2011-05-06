@@ -114,7 +114,7 @@ public class MultiRetrieval extends Retrieval {
     }
 
     // sort the results
-    Collections.sort(queryResults);
+    Collections.sort(queryResults, Collections.reverseOrder());
 
     // get the best {requested} results
     int requested = (int) parameters.get("count", 1000);

@@ -47,11 +47,11 @@ public class StructuredRetrieval extends Retrieval {
     Parameters indexStats = getRetrievalStatistics("all");
 
     // this allows the user to set collectionLength or documentCount manually in the parameters
-    if(! featureParameters.containsKey("collectionLength")){
-        featureParameters.add("collectionLength", indexStats.get("collectionLength"));
+    if (!featureParameters.containsKey("collectionLength")) {
+      featureParameters.add("collectionLength", indexStats.get("collectionLength"));
     }
-    if(! featureParameters.containsKey("documentCount")){
-        featureParameters.add("documentCount", indexStats.get("documentCount"));
+    if (!featureParameters.containsKey("documentCount")) {
+      featureParameters.add("documentCount", indexStats.get("documentCount"));
     }
     featureParameters.add("retrievalGroup", "all"); // the value wont matter here
     featureFactory = new DocumentOrderedFeatureFactory(featureParameters);
@@ -114,13 +114,13 @@ public class StructuredRetrieval extends Retrieval {
   public ScoredDocument[] runQuery(Node queryTree, Parameters parameters) throws Exception {
 
     // construct the query iterators
-      DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
+    DocumentOrderedScoreIterator iterator = (DocumentOrderedScoreIterator) createIterator(queryTree);
     int count = (int) parameters.get("count", 1000);
 
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
     NumberedDocumentDataIterator lengthsIterator = index.getDocumentLengthsIterator();
-    
+
     while (!iterator.isDone()) {
       int document = iterator.currentCandidate();
       lengthsIterator.skipTo(document);
@@ -221,7 +221,7 @@ public class StructuredRetrieval extends Retrieval {
       iterator.setScoringContext(document, length);
       TObjectDoubleHashMap<String> scores = iterator.parameterSweepScore();
 
-      for (String params : scores.keys( new String[0] )) {
+      for (String params : scores.keys(new String[0])) {
         if (!queues.containsKey(params)) {
           queues.put(params, new PriorityQueue());
         }
@@ -366,8 +366,9 @@ public class StructuredRetrieval extends Retrieval {
       return count;
     } else {
       throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
+    }
   }
-  }
+
   public long docCount(String nodeString) throws Exception {
 
     // first parse the node
@@ -387,7 +388,7 @@ public class StructuredRetrieval extends Retrieval {
       return count;
     } else {
       throw new IllegalArgumentException("Node " + root.toString() + " did not return a counting iterator.");
-  }
+    }
   }
 
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {

@@ -531,7 +531,7 @@ public class SearchWebHandler extends AbstractHandler {
     Parameters p = new Parameters();
     p.add("indexId", id);
     p.add("queryType", qtype);
-    p.add("requested", Integer.toString(startAt + resultCount));
+    p.add("count", Integer.toString(startAt + resultCount));
     p.add("startAt", Integer.toString(startAt));
     p.add("resultCount", Integer.toString(resultCount));
     p.add("retrievalGroup", retGroup);

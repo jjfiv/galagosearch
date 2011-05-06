@@ -116,14 +116,14 @@ public class MemoryExtents implements StructuredIndexPartReader{
       }
     }
     
-    public boolean skipTo(byte[] inkey) {
-    	keyIterator = extents.navigableKeySet().tailSet(inkey , true).iterator();
-    	if(keyIterator.next().equals(key)) {
-    		key=inkey;
-    		load();
-    		return true;
-    	}
-    	return false;
+    public boolean skipTo(byte[] newkey) {
+      keyIterator = extents.tailMap(newkey).keySet().iterator();
+      if (keyIterator.next().equals(newkey) ) {
+        key = newkey;
+        load();
+        return true;
+      }
+      return false;
     }
     
     public String getKey() {

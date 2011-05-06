@@ -83,6 +83,7 @@ public class Search {
     public String url;
     public Map<String, String> metadata;
     public String summary;
+    public int internalId;
     public double score;
   }
 
@@ -140,6 +141,7 @@ public class Search {
       Document document = getDocument(identifier);
       SearchResultItem item = new SearchResultItem();
 
+      item.internalId = results[i].document;
       item.rank = i + 1;
       item.identifier = identifier;
       item.displayTitle = identifier;

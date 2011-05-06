@@ -53,7 +53,7 @@ public class MemoryIndex implements Processor<NumberedDocument> {
   }
 
   public MemoryIndex(Parameters parameters) {
-    stemming = (boolean) parameters.get("stemming", false);
+    stemming = (boolean) parameters.get("stemming", true);
     int documentNumberOffset = (int) parameters.get("firstDocumentId", 0);
     lastDocId = documentNumberOffset - 1;
 

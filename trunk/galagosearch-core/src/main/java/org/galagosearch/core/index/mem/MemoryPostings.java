@@ -136,10 +136,10 @@ public class MemoryPostings implements StructuredIndexPartReader {
       }
     }
 
-    public boolean skipTo(byte[] inkey) {
-      keyIterator = postings.navigableKeySet().tailSet(key, true).iterator();
-      if (keyIterator.next().equals(key)) {
-        key = inkey;
+    public boolean skipTo(byte[] newkey) {
+      keyIterator = postings.tailMap(newkey).keySet().iterator();
+      if (Utility.compare(keyIterator.next(), newkey) == 0) {
+        key = newkey;
         load();
         return true;
       }
@@ -265,7 +265,7 @@ public class MemoryPostings implements StructuredIndexPartReader {
   }
 
   public IndexIterator getIterator(Node node) throws IOException {
-    return getIterator(node.getDefaultParameter("term"));
+    return getIterator(node.getDefaultParameter());
   }
 
   public void close() throws IOException {
