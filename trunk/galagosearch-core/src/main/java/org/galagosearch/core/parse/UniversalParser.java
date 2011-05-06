@@ -29,10 +29,10 @@ import org.galagosearch.tupleflow.Parameters;
 @InputClass(className = "org.galagosearch.core.types.DocumentSplit")
 @OutputClass(className = "org.galagosearch.core.parse.Document")
 public class UniversalParser extends StandardStep<DocumentSplit, Document> {
-  private Counter documentCounter;
-  private Parameters parameters;
-  private long count = 0;
-  private Logger LOG = Logger.getLogger(getClass().toString());
+  protected Counter documentCounter;
+  protected Parameters parameters;
+  protected long count = 0;
+  protected Logger LOG = Logger.getLogger(getClass().toString());
 
 
   public UniversalParser(TupleFlowParameters parameters) {
