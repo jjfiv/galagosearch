@@ -6,16 +6,13 @@ package org.galagosearch.core.index.merge;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.types.DocumentSplit;
-import org.galagosearch.tupleflow.FakeParameters;
 import org.galagosearch.tupleflow.InputClass;
-import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.TypeReader;
@@ -69,9 +66,7 @@ public class IndexPartMergeManager implements Processor<DocumentSplit> {
       Class m = Class.forName(mergerClassName);
       Constructor c = m.getConstructor( TupleFlowParameters.class );
 
-      System.err.println( "GOT CONSTRUCTOR. " );
       GenericIndexMerger merger = (GenericIndexMerger) c.newInstance( parameters );
-      System.err.println( "GOT INSTANCE. " );
 
       merger.setDocumentMapping( mappingData );
       merger.setInputs( indexPartReaders );

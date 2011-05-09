@@ -4,16 +4,14 @@ package org.galagosearch.core.index;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
-import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
+import org.galagosearch.core.index.merge.ExtentIndexMerger;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.TupleFlowParameters;
-import org.galagosearch.tupleflow.execution.Verified;
 import org.galagosearch.core.types.NumberedExtent;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
-import org.galagosearch.tupleflow.Linkage;
 import org.galagosearch.tupleflow.OutputClass;
 import org.galagosearch.tupleflow.Source;
 import org.galagosearch.tupleflow.Step;
@@ -49,10 +47,12 @@ public class ExtentIndexWriter implements NumberedExtent.ExtentNameNumberBeginOr
      */
     public ExtentIndexWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
         parameters.getXML().add("readerClass", ExtentIndexReader.class.getName());
+        parameters.getXML().add("mergerClass", ExtentIndexMerger.class.getName());
         parameters.getXML().add("writerClass", getClass().toString());
 
         writer = new IndexWriter(parameters);
         header = parameters.getXML();
+        
     }
 
     public void processExtentName(byte[] wordBytes) throws IOException {

@@ -250,7 +250,12 @@ public class ExtentIndexReader extends KeyListReader {
   }
 
   public KeyIterator getIterator() throws IOException {
-    return new KeyIterator(reader);
+    GenericIndexReader.Iterator iterator = reader.getIterator();
+    if(iterator != null){
+      return new KeyIterator(reader);
+    } else {
+      return null;
+    }
   }
 
   public ListIterator getListIterator() throws IOException {

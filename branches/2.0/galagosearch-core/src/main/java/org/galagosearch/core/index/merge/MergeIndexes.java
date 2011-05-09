@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.types.DocumentMappingData;
 import org.galagosearch.core.types.DocumentSplit;
@@ -99,7 +101,7 @@ public class MergeIndexes {
       for(String part : partNames){
         if( i.openLocalIndexPart(part).getManifest().containsKey("mergerClass") ){
           mergableParts.add( part );
-          System.err.println( part + "\t" + i.openLocalIndexPart(part).getManifest().get("mergerClass") );
+          // System.err.println( part + "\t" + i.openLocalIndexPart(part).getManifest().get("mergerClass") );
         }
       }
 
@@ -109,6 +111,11 @@ public class MergeIndexes {
       }
       sharedParts.retainAll( mergableParts );
       i.close();
+    }
+
+    // log the parts to be merged.
+    for(String part : sharedParts){
+      Logger.getLogger(getClass().getName()).log(Level.INFO, "Merging Part: " + part);
     }
 
     job.add( getNumberIndexStage( ) );

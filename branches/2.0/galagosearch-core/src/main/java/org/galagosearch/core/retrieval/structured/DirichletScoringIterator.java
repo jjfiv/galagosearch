@@ -20,24 +20,7 @@ import org.galagosearch.tupleflow.Parameters;
 public class DirichletScoringIterator extends ScoringFunctionIterator {
   public DirichletScoringIterator(Parameters p, CountValueIterator it)
           throws IOException {
-    super(it, makeFunctions(p, it));
-  }
-
-  /** Parameter Sweep Code
-   *  - returns a set of functions : 1 for each mu parameter
-   */
-  public static DirichletScorer[] makeFunctions(Parameters p, CountValueIterator it) throws IOException {
-    // Extract the set of mus
-    String[] muSet = p.get("mu", "1500").split(",");
-    DirichletScorer[] fns = new DirichletScorer[muSet.length];
-
-    for (int i = 0; i < muSet.length; i++) {
-      Parameters fnp = new Parameters();
-      fnp.copy(p);
-      fnp.set("mu", muSet[i]);
-      fns[i] = new DirichletScorer(fnp, it);
-    }
-    return fns;
+    super(it, new DirichletScorer(p, it) );
   }
 
   public double maximumScore() {

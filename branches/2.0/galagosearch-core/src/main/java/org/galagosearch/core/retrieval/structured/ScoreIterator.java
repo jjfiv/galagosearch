@@ -42,11 +42,4 @@ public interface ScoreIterator extends ContextualIterator {
    *
    */
   public double minimumScore();
-
-  /**
-   * Produce a set of scores for the current candidate
-   *  - the set of scores correspond to the set of parameters input by the user.
-   *
-   */
-  public TObjectDoubleHashMap<String> parameterSweepScore();
 }

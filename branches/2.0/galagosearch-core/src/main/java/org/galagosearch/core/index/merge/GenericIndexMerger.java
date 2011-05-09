@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
+import org.galagosearch.core.index.KeyIterator;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
@@ -17,23 +18,22 @@ import org.galagosearch.tupleflow.TupleFlowParameters;
  */
 public abstract class GenericIndexMerger<T> {
 
+  // document mapping data
   protected boolean mappingKeys;
   protected DocumentMappingReader mappingReader = null;
+  // input readers
   protected PriorityQueue<KeyIteratorWrapper> queue;
   protected HashMap<KeyIteratorWrapper, Integer> partIds;
-  protected Processor<T> output;
+  // output writer
+  protected Processor<T> writer = null;
 
   public GenericIndexMerger(TupleFlowParameters parameters) throws Exception {
     String outputClass = (parameters.getXML().get("writerClass"));
-    System.err.println( outputClass );
-    Class clazz = Class.forName(outputClass);
-    System.err.println( clazz );
-    Constructor c = clazz.getConstructor(TupleFlowParameters.class);
-    System.err.println( c );
-    output = (Processor<T>) c.newInstance(parameters);
 
     queue = new PriorityQueue();
     partIds = new HashMap();
+
+    writer = createIndexWriter(parameters);
   }
 
   public void setDocumentMapping(DocumentMappingReader mappingReader) {
@@ -43,9 +43,12 @@ public abstract class GenericIndexMerger<T> {
   // this requires that the mappingReader has been set.
   public void setInputs(HashMap<StructuredIndexPartReader, Integer> readers) throws IOException {
     for (StructuredIndexPartReader r : readers.keySet()) {
-      KeyIteratorWrapper w = new KeyIteratorWrapper(readers.get(r), r.getIterator(), mappingKeys, mappingReader);
-      queue.offer(w);
-      partIds.put(w, readers.get(r));
+      KeyIterator iterator = r.getIterator();
+      if (iterator != null) {
+        KeyIteratorWrapper w = new KeyIteratorWrapper(readers.get(r), iterator, mappingKeys, mappingReader);
+        queue.offer(w);
+        partIds.put(w, readers.get(r));
+      }
     }
   }
 
@@ -63,16 +66,20 @@ public abstract class GenericIndexMerger<T> {
       performValueMerge(key, head);
 
       for (KeyIteratorWrapper i : head) {
-        if (i.nextKey()) {
+        if ( i.nextKey() ) {
           queue.offer(i);
         }
       }
     }
   }
 
-  public abstract void performValueMerge(byte[] key, List<KeyIteratorWrapper> keyIterators) throws IOException;
-
   public void close() throws IOException {
-    output.close();
+    writer.close();
   }
+
+  // creates the writer object - needs to be implemented for each merger
+  public abstract Processor<T> createIndexWriter(TupleFlowParameters parameters) throws Exception;
+
+  // merges the of values for the current key
+  public abstract void performValueMerge(byte[] key, List<KeyIteratorWrapper> keyIterators) throws IOException;
 }

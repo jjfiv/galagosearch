@@ -467,8 +467,11 @@ public class IndexWriter extends GenericIndexWriter {
 
     public void close() throws IOException {
         flush();
-        
+
         byte[] vocabularyData = vocabulary.data();
+        if(vocabularyData.length == 0){
+          manifest.add("emptyIndexFile", "true");
+        }
         byte[] xmlData = manifest.toString().getBytes("UTF-8");
         long vocabularyOffset = filePosition;
         long manifestOffset = filePosition + vocabularyData.length;

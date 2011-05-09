@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
+import org.galagosearch.core.index.merge.PositionIndexMerger;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberWordPosition;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
@@ -256,6 +257,7 @@ public class PositionIndexWriter implements
   public PositionIndexWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
     Parameters actualParams = parameters.getXML();
     actualParams.add("writerClass", getClass().getName());
+    actualParams.add("mergerClass", PositionIndexMerger.class.getName());
     actualParams.add("readerClass", PositionIndexReader.class.getName());
     actualParams.add("defaultOperator", "counts");
 

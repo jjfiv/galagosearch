@@ -16,18 +16,10 @@ import org.galagosearch.tupleflow.Parameters;
 public class ScaleIterator extends TransformIterator {
 
   double weight;
-  double[] weights;
 
   public ScaleIterator(Parameters parameters, ScoreValueIterator iterator) throws IllegalArgumentException {
     super(iterator);
-    String[] weightStrings = parameters.get("default", "1.0").split(",");
-    weight = Double.parseDouble(weightStrings[0]);
-
-    // parameter sweep init
-    weights = new double[weightStrings.length];
-    for (int i = 0; i < weightStrings.length; i++) {
-      weights[i] = Double.parseDouble(weightStrings[i]);
-    }
+    weight = Double.parseDouble(parameters.get("default", "1.0"));
   }
   
   public double score() {
@@ -36,31 +28,6 @@ public class ScaleIterator extends TransformIterator {
 
   public double score(DocumentContext context) {
     return weight * ((ScoreIterator)iterator).score(context);
-  }
-
-  /**
-   *  Parameter Sweep Code
-   */
-  public TObjectDoubleHashMap<String> parameterSweepScore() {
-    final TObjectDoubleHashMap<String> results = new TObjectDoubleHashMap();
-    final TObjectDoubleHashMap<String> childResults = ((ScoreIterator)iterator).parameterSweepScore();
-    for (int i = 0; i < weights.length; i++) {
-      final int j = i;
-      childResults.forEachKey(new TObjectProcedure<String>() {
-
-        public boolean execute(String childParam) {
-          double r = weights[j] * childResults.get(childParam);
-          StringBuilder p = new StringBuilder("#scale:");
-          p.append(weights[j]);
-          p.append("(");
-          p.append(childParam);
-          p.append(")");
-          results.put(p.toString(), r);
-          return true;
-        }
-      });
-    }
-    return results;
   }
 
   public double maximumScore() {

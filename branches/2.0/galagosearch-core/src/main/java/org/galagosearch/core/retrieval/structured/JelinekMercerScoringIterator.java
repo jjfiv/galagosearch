@@ -18,7 +18,7 @@ public class JelinekMercerScoringIterator extends ScoringFunctionIterator {
 
     public JelinekMercerScoringIterator(Parameters p, CountValueIterator it)
             throws IOException {
-    super(it, makeFunctions(p, it));
+    super(it, new JelinekMercerScorer(p, it));
   }
 
   /**
@@ -36,24 +36,6 @@ public class JelinekMercerScoringIterator extends ScoringFunctionIterator {
       }
     }
     this.context = context;
-  }
-
-  /** Parameter Sweep Code
-   *  - returns a set of functions : 1 for each lambda parameter
-   */
-  public static JelinekMercerScorer[] makeFunctions(Parameters p, CountValueIterator it) throws IOException {
-    // Extract the set of mus
-    String[] lambdaSet = p.get("lambda", "0.5").split(",");
-    JelinekMercerScorer[] fns = new JelinekMercerScorer[lambdaSet.length];
-
-    for (int i = 0; i < lambdaSet.length; i++) {
-      Parameters fnp = new Parameters();
-      fnp.copy(p);
-      fnp.set("lambda", lambdaSet[i]);
-      //System.err.println("lambda = " + lambdaSet[i]);
-      fns[i] = new JelinekMercerScorer(fnp, it);
-    }
-    return fns;
   }
 
   /**

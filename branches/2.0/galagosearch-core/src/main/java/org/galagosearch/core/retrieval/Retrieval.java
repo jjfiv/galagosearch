@@ -66,7 +66,4 @@ public interface Retrieval extends Runnable {
     public void runAsynchronousQuery(Node root, Parameters parameters, List<ScoredDocument> queryResults) throws Exception;
 
     public void waitForAsynchronousQuery() throws InterruptedException;
-
-    // This function allows parameter sweep queries to be run
-    public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception;
 }

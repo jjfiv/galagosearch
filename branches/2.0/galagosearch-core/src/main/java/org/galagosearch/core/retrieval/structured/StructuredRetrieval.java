@@ -84,9 +84,9 @@ public class StructuredRetrieval implements Retrieval {
     Parameters p = new Parameters();
     p.add("collectionLength", Long.toString(index.getCollectionLength()));
     p.add("documentCount", Long.toString(index.getDocumentCount()));
-    
-    for (String part : index.getPartNames()){
-      p.copy(index.getPartStatistics(part) );
+
+    for (String part : index.getPartNames()) {
+      p.copy(index.getPartStatistics(part));
     }
 
     return p;
@@ -239,58 +239,6 @@ public class StructuredRetrieval implements Retrieval {
     }
   }
 
-  /**
-   * Evaluates a query using intID-at-a-time evaluation.
-   *  - allowing user to sweep across parameters specified within the query
-   *
-   * @param query A query tree that has been already transformed with StructuredRetrieval.transformRankedQuery.
-   * @param parameters - query parameters (indexId, # requested, query type, transform)
-   * @return
-   * @throws java.lang.Exception
-   */
-  public ScoredDocument[] runParameterSweep(Node queryTree, Parameters parameters) throws Exception {
-
-    // Give it a context
-    DocumentContext context = new DocumentContext();
-
-    // construct the query iterators
-    ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context);
-    int requested = (int) parameters.get("requested", 1000);
-
-    // now there should be an iterator at the root of this tree
-    HashMap<String, PriorityQueue<ScoredDocument>> queues = new HashMap();
-    DocumentLengthsReader.KeyIterator lengthsIterator = null;
-    lengthsIterator = index.getLengthsIterator();
-
-    while (!iterator.isDone()) {
-      int document = iterator.currentCandidate();
-      lengthsIterator.moveToKey(document);
-      int length = lengthsIterator.getCurrentDocument();
-
-      // This context is shared among all scorers
-      context.document = document;
-      context.length = length;
-      TObjectDoubleHashMap<String> scores = iterator.parameterSweepScore();
-
-      for (String params : scores.keys(new String[0])) {
-        if (!queues.containsKey(params)) {
-          queues.put(params, new PriorityQueue());
-        }
-        ScoredDocument scoredDocument = new ScoredDocument(document, scores.get(params));
-        PriorityQueue q = queues.get(params);
-        q.add(scoredDocument);
-        if (q.size() > requested) {
-          q.poll();
-        }
-      }
-
-      iterator.next();
-    }
-
-    String indexId = parameters.get("indexId", "0");
-    return getPSArrayResults(queues, indexId);
-  }
-
   /*
    * getArrayResults annotates a queue of scored documents
    * returns an array
@@ -317,30 +265,6 @@ public class StructuredRetrieval implements Retrieval {
     }
 
     return results;
-  }
-
-  /*
-   * getArrayResults annotates a queue of scored documents
-   * returns an array
-   *
-   */
-  protected ScoredDocument[] getPSArrayResults(Map<String, PriorityQueue<ScoredDocument>> scoreMap, String indexId) throws IOException {
-    ArrayList<ScoredDocument> results = new ArrayList();
-
-    for (String params : scoreMap.keySet()) {
-      PriorityQueue<ScoredDocument> queue = scoreMap.get(params);
-      ScoredDocument[] qresults = new ScoredDocument[queue.size()];
-      for (int i = queue.size() - 1; i >= 0; i--) {
-        qresults[i] = queue.poll();
-        qresults[i].rank = i + 1;
-        qresults[i].source = indexId;
-        qresults[i].documentName = getDocumentName(qresults[i].document);
-        qresults[i].params = params;
-      }
-      results.addAll(Arrays.asList(qresults));
-    }
-
-    return results.toArray(new ScoredDocument[0]);
   }
 
   protected String getDocumentName(int document) throws IOException {
