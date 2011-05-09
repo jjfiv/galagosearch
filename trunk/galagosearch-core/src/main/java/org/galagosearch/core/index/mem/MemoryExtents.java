@@ -44,9 +44,10 @@ public class MemoryExtents implements StructuredIndexPartReader{
 
     public Iterator( java.util.Iterator<byte[]> iterator  ) throws IOException{
       keyIterator = iterator;
-      key = keyIterator.next();
-
-      load();
+      if( keyIterator.hasNext() ){
+        key = keyIterator.next();
+        load();
+      }
     }
 
     // initialize for current key

@@ -45,34 +45,37 @@ public class ExtentIteratorMerger extends StandardStep<ExtentIndexIterator, KeyE
       ExtentIndexIteratorWrapper head = queue.poll();
       ExtentIndexIteratorWrapper next = queue.peek();
 
-      do{
+      do {
         for (Extent e : head.documentExtents.toArray()) {
           KeyExtent ke = new KeyExtent(head.key, head.document, e);
           processor.process(ke);
           counter++;
         }
         head.next();
-      } while((! head.isDone) && (head.compareTo(next) <= 0));
+      } while ((!head.isDone) && (head.compareTo(next) <= 0));
 
-      if( ! head.isDone) {
+      if (!head.isDone) {
         queue.offer(head);
       }
     }
 
-    // process everything from the final wrapper
-    ExtentIndexIteratorWrapper head = queue.poll();
-    do {
-      for (Extent e : head.documentExtents.toArray()) {
-        KeyExtent ke = new KeyExtent(head.key, head.document, e);
-        processor.process(ke);
-        counter++;
-      }
-    } while (head.next());
-
+    if (queue.size() == 1) {
+      // process everything from the final wrapper
+      ExtentIndexIteratorWrapper head = queue.poll();
+      do {
+        for (Extent e : head.documentExtents.toArray()) {
+          KeyExtent ke = new KeyExtent(head.key, head.document, e);
+          processor.process(ke);
+          counter++;
+        }
+      } while (head.next());
+    }
+    
     processor.close();
   }
 
   private class ExtentIndexIteratorWrapper implements Comparable<ExtentIndexIteratorWrapper> {
+
     boolean isDone;
     ExtentIndexIterator iterator;
     byte[] key;

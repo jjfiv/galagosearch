@@ -219,10 +219,10 @@ public class StructuredIndex {
 
   public ExtentIndexIterator getExtentIterator(String part) throws IOException {
     IndexIterator i = parts.get(part).getIterator();
-    if (i instanceof ExtentIndexIterator) {
+    if((i != null) && (i instanceof ExtentIndexIterator)) {
       return (ExtentIndexIterator) i;
     }
-    throw new RuntimeException("part " + part + " does not offer an Extent Index Iterator");
+    return null;
   }
 
   public Set<String> getPartNames() {

@@ -45,10 +45,12 @@ public class FlushToDisk {
       return;
     }
 
-    if(new File(outputFolder).isDirectory())
+    if (new File(outputFolder).isDirectory()) {
       Utility.deleteDirectory(new File(outputFolder));
-    if(new File(outputFolder).isFile())
+    }
+    if (new File(outputFolder).isFile()) {
       new File(outputFolder).delete();
+    }
 
     File parts = new File(outputFolder + File.separator + "parts");
     parts.mkdirs();
@@ -116,17 +118,19 @@ public class FlushToDisk {
 
     NumberedExtent.ExtentNameNumberBeginOrder.ShreddedProcessor writer = new ExtentIndexWriter(new FakeParameters(parameters));
     NumberedExtent.ExtentNameNumberBeginOrder.TupleShredder processor = new NumberedExtent.ExtentNameNumberBeginOrder.TupleShredder(writer);
-    do {
-      String extentName = iterator.getKey();
-      int document = iterator.document();
-      ExtentArray extents = iterator.extents();
+    if (!iterator.isDone()) {
+      do {
+        String extentName = iterator.getKey();
+        int document = iterator.document();
+        ExtentArray extents = iterator.extents();
 
-      for (Extent extent : extents.toArray()) {
-        NumberedExtent ne = new NumberedExtent(Utility.fromString(extentName), extent.document, extent.begin, extent.end);
-        processor.process(ne);
-      }
+        for (Extent extent : extents.toArray()) {
+          NumberedExtent ne = new NumberedExtent(Utility.fromString(extentName), extent.document, extent.begin, extent.end);
+          processor.process(ne);
+        }
 
-    } while (iterator.nextRecord());
+      } while (iterator.nextRecord());
+    }
     processor.close();
   }
 
@@ -168,12 +172,12 @@ public class FlushToDisk {
     }
   }
 
-  private void flushThreaded( String outputFolder ) throws IOException {
+  private void flushThreaded(String outputFolder) throws IOException {
     ArrayList<Thread> threads = getThreads(outputFolder);
-    for(Thread t : threads){
+    for (Thread t : threads) {
       t.start();
     }
-    for(Thread t : threads){
+    for (Thread t : threads) {
       try {
         t.join();
       } catch (InterruptedException ex) {
@@ -183,7 +187,7 @@ public class FlushToDisk {
 
   }
 
-  private ArrayList<Thread> getThreads(final String outputFolder){
+  private ArrayList<Thread> getThreads(final String outputFolder) {
     ArrayList<Thread> threads = new ArrayList();
 
     final FlushToDisk f = this;

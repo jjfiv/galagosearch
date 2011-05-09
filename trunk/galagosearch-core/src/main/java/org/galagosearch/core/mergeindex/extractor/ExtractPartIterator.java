@@ -32,11 +32,11 @@ public class ExtractPartIterator extends StandardStep<DocumentSplit, ExtentIndex
   public void process(DocumentSplit file) throws IOException {
     StructuredIndex i = new StructuredIndex(file.fileName);
     if(i.containsPart(part)){
-
       ExtentIndexIterator eii = i.getExtentIterator(part);
-      
-      eii.indexId = file.fileId;
-      processor.process(eii);
+      if(eii != null){
+        eii.indexId = file.fileId;
+        processor.process(eii);
+      }
     }
 
     s.add(i);
