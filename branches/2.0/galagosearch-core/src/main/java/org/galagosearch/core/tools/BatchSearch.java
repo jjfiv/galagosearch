@@ -56,6 +56,7 @@ public class BatchSearch {
       String queryText = query.get("text");
       Parameters p = new Parameters();
       p.add("requested", Integer.toString(requested));
+      p.add("mod", parameters.get("mod", "none"));
       String retrievalGroup = query.get("retrievalGroup", "all");
       p.add("retrievalGroup", retrievalGroup);
       Node root = StructuredQuery.parse(queryText);
