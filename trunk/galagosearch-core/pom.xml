@@ -4,13 +4,13 @@
   <parent>
     <groupId>org.galagosearch</groupId>
     <artifactId>galagosearch</artifactId>
-    <version>1.05-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.galagosearch</groupId>
   <artifactId>galagosearch-core</artifactId>
   <packaging>jar</packaging>
-  <version>1.05-SNAPSHOT</version>
+  <version>2.0-SNAPSHOT</version>
   <name>galagosearch-core</name>
   <url>http://www.galagosearch.org</url>
   <description>Galago is a toolkit for experimenting with search engines and text processing.</description>
