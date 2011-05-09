@@ -12,6 +12,7 @@ import org.galagosearch.core.index.TopDocsReader.TopDocument;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.CountValueIterator;
+import org.galagosearch.core.retrieval.structured.ContextualIterator;
 import org.galagosearch.core.retrieval.structured.DocumentContext;
 import org.galagosearch.core.retrieval.structured.ExtentValueIterator;
 import org.galagosearch.core.retrieval.structured.TopDocsContext;
@@ -340,8 +341,9 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
    *
    */
   public class TermCountIterator extends KeyListReader.ListIterator
-          implements AggregateIterator, CountValueIterator {
+      implements AggregateIterator, CountValueIterator, ContextualIterator {
 
+    DocumentContext context;
     int documentCount;
     int collectionCount;
     VByteInput documents;
@@ -570,6 +572,10 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return collectionCount;
     }
 
+    public DocumentContext getContext() {
+	return this.context;
+    }
+
     // This will pass up topdocs information if it's available
     public void setContext(DocumentContext context) {
       if (TopDocsContext.class.isAssignableFrom(context.getClass()) &&
@@ -578,6 +584,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
         // remove the pointer to the mod (don't need it anymore)
         this.modifiers.remove("topdocs");
       }
+      this.context = context;
     }
   }
 

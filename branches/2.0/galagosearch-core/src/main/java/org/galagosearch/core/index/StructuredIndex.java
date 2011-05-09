@@ -40,7 +40,7 @@ public class StructuredIndex {
     parts = new HashMap<String, StructuredIndexPartReader>();
     modifiers = new HashMap<String, HashMap<String, StructuredIndexPartModifier>>();
     for (File part : location.listFiles()) {
-      if (part.getName().equals("mods")) {
+      if (part.getName().equals("mod")) {
         initializeModifiers(part.getAbsoluteFile());
       } else {
         StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
@@ -71,8 +71,8 @@ public class StructuredIndex {
         continue;
       }
       String name = part.getName();
-      String[] nameParts = name.split(".");
-      if (modifiers.containsKey(nameParts[0])) {
+      String[] nameParts = name.split("\\.");
+      if (!modifiers.containsKey(nameParts[0])) {
         modifiers.put(nameParts[0], new HashMap<String, StructuredIndexPartModifier>());
       }
       modifiers.get(nameParts[0]).put(nameParts[1], modifier);
@@ -280,7 +280,10 @@ public class StructuredIndex {
         HashMap<String, StructuredIndexPartModifier> partModifiers = modifiers.get(p.get("part"));
         if (partModifiers.containsKey(p.get("mod", "none"))) {
           StructuredIndexPartModifier modder = partModifiers.get(p.get("mod"));
-          ((KeyListReader.ListIterator)iter).addModifier(p.get("mod"), modder.getModification(node));
+	  Object modification = modder.getModification(node);
+	  if (modification != null) {
+	      ((KeyListReader.ListIterator)iter).addModifier(p.get("mod"), modification);
+	  }
         }
       }
     }

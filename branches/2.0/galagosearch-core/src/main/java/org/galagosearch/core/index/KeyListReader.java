@@ -59,7 +59,7 @@ public abstract class KeyListReader extends KeyValueReader {
     }
 
     public boolean hasModifier(String key) {
-      return modifiers.containsKey(key);
+	return ((modifiers != null) && modifiers.containsKey(key));
     }
 
     public Object getModifier(String modKey) {

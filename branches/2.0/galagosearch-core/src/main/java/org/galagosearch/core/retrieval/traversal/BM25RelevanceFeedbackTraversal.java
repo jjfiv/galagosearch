@@ -30,7 +30,7 @@ import org.galagosearch.tupleflow.Utility;
  *
  * @author irmarc
  */
-@RequiredStatistics(statistics = {"retrievalGroup", "index", "documentCount"})
+@RequiredStatistics(statistics = {"retrievalGroup", "index", "documentCount", "corpus"})
 public class BM25RelevanceFeedbackTraversal implements Traversal {
 
     Retrieval retrieval;

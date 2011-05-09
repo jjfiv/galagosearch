@@ -1,6 +1,5 @@
 /*
  * BSD License (http://www.galagosearch.org/license)
-
  */
 
 package org.galagosearch.core.retrieval.structured;
@@ -18,7 +17,7 @@ public class ContextFactory {
   private ContextFactory() {}
 
   public static DocumentContext createContext(Parameters p) {
-    if (p.get("topdocs", false)) {
+      if (p.get("mod","none").equals("topdocs")) {
       return new TopDocsContext();
     } else {
       return new DocumentContext();

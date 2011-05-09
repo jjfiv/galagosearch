@@ -34,7 +34,7 @@ import gnu.trove.TDoubleArrayList;
  *
  * @author irmarc
  */
-@RequiredStatistics(statistics = {"retrievalGroup", "index","scorer"})
+@RequiredStatistics(statistics = {"retrievalGroup", "index","scorer","corpus"})
 public class RelevanceModelTraversal implements Traversal {
 
     Retrieval retrieval;

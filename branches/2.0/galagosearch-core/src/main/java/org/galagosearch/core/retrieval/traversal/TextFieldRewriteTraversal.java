@@ -17,12 +17,14 @@ import org.galagosearch.tupleflow.Parameters;
  * 
  * @author trevor
  */
-@RequiredStatistics(statistics = {"retrievalGroup"})
+@RequiredStatistics(statistics = {"retrievalGroup", "mod"})
 public class TextFieldRewriteTraversal implements Traversal {
 
   Parameters availableParts;
+  Parameters params;
 
   public TextFieldRewriteTraversal(Parameters parameters, Retrieval retrieval) throws IOException {
+    this.params = parameters;
     this.availableParts = retrieval.getAvailableParts(parameters.get("retrievalGroup"));
     // System.err.printf("Available parts for for RG %s are: %s\n", parameters.get("retrievalGroup"), this.availableParts);
   }
@@ -35,6 +37,9 @@ public class TextFieldRewriteTraversal implements Traversal {
     String operator = original.getOperator();
 
     if (operator.equals("text")) {
+      if (params.containsKey("mod")) {
+	  original.getParameters().add("mod", params.get("mod"));
+      }
       return TextPartAssigner.assignPart(original, availableParts);
     } else if (operator.equals("field") || operator.equals("any")) {
       if (availableParts.stringList("part").contains("extents")) { 

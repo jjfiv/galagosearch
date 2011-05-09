@@ -21,7 +21,6 @@ import org.galagosearch.tupleflow.VByteInput;
  */
 public class TopDocsReader extends AbstractModifier {
   private Logger LOG = Logger.getLogger(getClass().toString());
-  IndexReader reader;
 
   public class TopDocument implements Cloneable {
 
@@ -60,7 +59,7 @@ public class TopDocsReader extends AbstractModifier {
   }
 
   public void printContents(PrintStream out) throws IOException {
-    IndexReader.Iterator iterator = reader.getIterator();
+    GenericIndexReader.Iterator iterator = reader.getIterator();
     while (!iterator.isDone()) {
       out.printf("Key: %s\n", Utility.toString(iterator.getKey()));
       ArrayList<TopDocument> li = getTopDocs(iterator, -1);
@@ -75,9 +74,9 @@ public class TopDocsReader extends AbstractModifier {
     if (!isEligible(node)) return null;
 
     // Can make a modifier
-    String term = node.getDefaultParameter("term");
+    String term = node.getDefaultParameter();
     int limit = (int) node.getParameters().get("limit", 1000);
-    IndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
+    GenericIndexReader.Iterator iterator = reader.getIterator(Utility.fromString(term));
     if (iterator == null) return null;
 
     // Iterator is set - grab the value data and make the specific modifier
@@ -88,7 +87,7 @@ public class TopDocsReader extends AbstractModifier {
     reader.close();
   }
 
-  public ArrayList<TopDocument> getTopDocs(IndexReader.Iterator iterator, int limit) throws IOException {
+  public ArrayList<TopDocument> getTopDocs(GenericIndexReader.Iterator iterator, int limit) throws IOException {
     VByteInput input = new VByteInput(iterator.getValueStream());
     int numEntries = input.readInt();
     int lastDocument = 0;

@@ -60,7 +60,7 @@ import org.galagosearch.tupleflow.Parameters;
 @RequiredStatistics(statistics = {"index"})
 public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
-  public static class TopDocsIterator {
+  public static class TopDocsIterator implements Comparable<TopDocsIterator> {
     int index;
     ArrayList<TopDocument> docs;
 
@@ -74,17 +74,27 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     }
 
     public void movePast(int document) {
-      while (!isDone() && docs.get(index).document < document) {
+      while (!isDone() && docs.get(index).document <= document) {
         index++;
       }
     }
 
     public boolean hasMatch(int document) {
-      return (!isDone() & docs.get(index).document == document);
+      return (!isDone() && docs.get(index).document == document);
     }
 
     public TopDocument getCurrentTopDoc() {
+      if (isDone()) return null;
       return docs.get(index);
+    }
+
+    public int compareTo(TopDocsIterator tdi) {
+      TopDocument td1 = this.getCurrentTopDoc();
+      TopDocument td2 = this.getCurrentTopDoc();
+      if (td1 == null && td2 == null) return 0;
+      if (td1 == null) return 1;
+      if (td2 == null) return -1;
+      return td1.document - td2.document;
     }
   }
 
@@ -163,9 +173,9 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
           ScoreValueIterator[] childIterators) throws IOException {
     super(parameters, childIterators);
     requested = (int) parameters.get("requested", 100);
-    //R = new ArrayList<Placeholder>();
+    R = new ArrayList<Placeholder>();
     ids = new TIntHashSet();
-    //topdocsCandidates = new TIntArrayList();
+    topdocsCandidates = new TIntArrayList();
     scoreList = new ArrayList<ScoreValueIterator>(iterators.length);
     weightLookup = new TObjectDoubleHashMap();
     for (int i = 0; i < iterators.length; i++) {
@@ -259,7 +269,10 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
 
     // Now look among the quorum iterators
     for (int i = 0; i < quorumIndex; i++) {
-      candidate = Math.min(candidate, scoreList.get(i).currentCandidate());
+	if (!scoreList.get(i).isDone()) {
+	    int c = scoreList.get(i).currentCandidate();
+	    candidate = Math.min(candidate, c);
+	}
     }
     lastReportedCandidate = candidate;
     return candidate;
@@ -353,7 +366,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
    * a score of a single doc multiple times, it won't know any better.
    * @param newscore
    */
-  protected void adjustThreshold(int document, double newscore) {
+    protected void adjustThreshold(int document, double newscore) {
     if (ids.contains(document)) {
       for (Placeholder p : R) {
         if (p.document == document) {
@@ -439,7 +452,7 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     while (!toScore.peek().isDone()) {
       TopDocsIterator it = toScore.poll();
       TopDocument td = it.getCurrentTopDoc();
-
+      
       // Need the background score first
       score = 0;
       for (ScoreValueIterator si : iterators) {
@@ -485,27 +498,29 @@ public class MaxScoreCombinationIterator extends ScoreCombinationIterator {
     candidatesIndex = 0;
   }
 
-  public void setContext(DocumentContext context) {
+  public void setContext(DocumentContext c) {
 
     // look for topdocs - but only the first time we set the context
-    if (context == null) {
-      if (TopDocsContext.class.isAssignableFrom(context.getClass())) {
+    if (c != null) {
+      if (TopDocsContext.class.isAssignableFrom(c.getClass())) {
         try {
-          cacheScores(((TopDocsContext)context).topdocs);
+          cacheScores(((TopDocsContext)c).topdocs);
         } catch (IOException ioe) {
           // Do nothing?
+	    throw new RuntimeException(ioe);
         }
-        ((TopDocsContext)context).topdocs.clear(); // all done!
+        ((TopDocsContext)c).topdocs.clear(); // all done!
         for (int i = 0; i < iterators.length; i++) {
           ScoreValueIterator si = iterators[i];
           potential += weights[i] * si.maximumScore();
           minimum += weights[i] * si.minimumScore();
         }
-     }
+      }
+
       // This needs to be called regardless
       computeQuorum();
     }
-    this.context = context;
+    this.context = c;
   }
 
   public DocumentContext getContext() {
