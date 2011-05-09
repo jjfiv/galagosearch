@@ -4,14 +4,14 @@
   <parent>
     <groupId>org.galagosearch</groupId>
     <artifactId>galagosearch</artifactId>
-    <version>2.0-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.galagosearch</groupId>
   <artifactId>galagosearch-tupleflow-typebuilder</artifactId>
   <packaging>maven-plugin</packaging>
-  <version>2.0-SNAPSHOT</version>
-  <name>galagosearch-2.0-tupleflow-typebuilder</name>
+  <version>3.0-SNAPSHOT</version>
+  <name>galagosearch-3.0-tupleflow-typebuilder</name>
   <url>http://www.galagosearch.org</url>
   <description>TypeBuilder generates code for serializing, hashing and comparing tuple objects.</description>
   <licenses>

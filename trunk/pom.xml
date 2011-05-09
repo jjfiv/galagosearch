@@ -4,8 +4,8 @@
     <groupId>org.galagosearch</groupId>
     <artifactId>galagosearch</artifactId>
     <packaging>pom</packaging>
-    <version>2.0-SNAPSHOT</version>
-    <name>galagosearch-2.0</name>
+    <version>3.0-SNAPSHOT</version>
+    <name>galagosearch-3.0</name>
     <url>http://www.galagosearch.org</url>
     <description>
     Galago is a toolkit for experimenting with search engines and text processing.
