@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.galagosearch.core.index.DocumentLengthsReader;
-import org.galagosearch.core.index.corpus.DocumentReader;
+import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.parse.TagTokenizer;
@@ -78,7 +78,7 @@ public class RelevanceModel implements ExpansionModel {
       if (corpusLocation == null) { // keep trying
         corpusLocation = parameters.get("index") + File.separator + "corpus";
       }
-      cReader = DocumentReader.getInstance(corpusLocation);
+      cReader = CorpusReader.getInstance(corpusLocation);
     }
     // We also need the document lengths
     if (docLengths == null) {
