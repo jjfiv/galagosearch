@@ -1,0 +1,12 @@
+
+package org.galagosearch.core.types;
+
+type DocumentData {
+    String identifier;
+    String url;
+    int textLength;
+    
+    order: ;
+    order: +url;
+    order: +identifier;
+}
