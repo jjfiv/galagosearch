@@ -305,7 +305,12 @@ public class ExtentIndexReader implements StructuredIndexPartReader {
   }
 
   public Iterator getIterator() throws IOException {
-    return new Iterator(reader.getIterator());
+    GenericIndexReader.Iterator iterator = reader.getIterator();
+
+    if (iterator != null) {
+      return new Iterator(iterator);
+    }
+    return null;
   }
 
   public Iterator getExtents(String term) throws IOException {

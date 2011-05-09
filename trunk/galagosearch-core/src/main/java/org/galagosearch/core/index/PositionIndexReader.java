@@ -623,7 +623,12 @@ public class PositionIndexReader implements StructuredIndexPartReader, Aggregate
    * Returns an iterator pointing at the first term in the index.
    */
   public ExtentIndexIterator getIterator() throws IOException {
-    return new TermExtentIterator(reader.getIterator());
+    GenericIndexReader.Iterator iterator = reader.getIterator();
+
+    if (iterator != null) {
+      return new TermExtentIterator(iterator);
+    }
+    return null;
   }
 
   /**
