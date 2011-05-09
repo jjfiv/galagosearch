@@ -578,7 +578,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
 
     // This will pass up topdocs information if it's available
     public void setContext(DocumentContext context) {
-      if (TopDocsContext.class.isAssignableFrom(context.getClass()) &&
+	if ((context != null) && TopDocsContext.class.isAssignableFrom(context.getClass()) &&
               this.hasModifier("topdocs")) {
         ((TopDocsContext)context).hold = ((ArrayList<TopDocument>) getModifier("topdocs"));
         // remove the pointer to the mod (don't need it anymore)
