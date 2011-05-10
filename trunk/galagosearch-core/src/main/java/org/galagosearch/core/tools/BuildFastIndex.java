@@ -242,7 +242,7 @@ public class BuildFastIndex {
     this.buildParameters = p;
     this.stemming = p.get("stemming", true);
     this.useLinks = p.get("links", false);
-    this.indexPath = new File(p.get("indexPath")); // fail if no path.
+    this.indexPath = new File(p.get("indexPath")).getAbsoluteFile(); // fail if no path.
     this.makeCorpus = p.containsKey("corpusPath");
 
     ArrayList<String> inputPaths = new ArrayList();
