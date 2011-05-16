@@ -4,6 +4,7 @@ package org.galagosearch.core.retrieval.traversal;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.galagosearch.core.index.StructuredIndex;
@@ -72,7 +73,7 @@ public class BM25RelevanceFeedbackTraversal implements Traversal {
         TermSelectionValueModel tsvModel = new TermSelectionValueModel(tsvParameters);
         tsvModel.initialize();
         HashSet<String> stopwords = Utility.readStreamToStringSet(getClass().getResourceAsStream("/stopwords/inquery"));
-        Set<String> queryTerms = StructuredQuery.findQueryTerms(combineNode, "extents");
+        Set<String> queryTerms = StructuredQuery.findQueryTerms(combineNode, Collections.singleton("extents"));
         stopwords.addAll(queryTerms);
 
 	// Start constructing the final query

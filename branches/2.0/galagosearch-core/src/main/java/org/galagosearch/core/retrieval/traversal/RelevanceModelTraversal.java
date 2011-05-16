@@ -74,7 +74,7 @@ public class RelevanceModelTraversal implements Traversal {
         double fbOrigWt = parameters.get("fbOrigWt", 0.5);
         int fbTerms = (int) parameters.get("fbTerms", 10);
         HashSet<String> stopwords = Utility.readStreamToStringSet(getClass().getResourceAsStream("/stopwords/inquery"));
-        Set<String> queryTerms = StructuredQuery.findQueryTerms(combineNode, "extents");
+        Set<String> queryTerms = StructuredQuery.findQueryTerms(combineNode, Collections.singleton("extents"));
         stopwords.addAll(queryTerms);
         
         // Now we wait
