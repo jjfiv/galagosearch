@@ -84,6 +84,7 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         p.add("retrievalGroup", "all");
         p.set("index", indexFile.getAbsolutePath());
         p.set("corpus", corpusFile.getAbsolutePath());
+	p.set("stemming", "false");
         StructuredRetrieval retrieval = (StructuredRetrieval) RetrievalFactory.instance(p);
         RelevanceModelTraversal traversal = new RelevanceModelTraversal(p, retrieval);
 
@@ -97,6 +98,7 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         correct.append("#feature:dirichlet( #extents:program:part=postings() ) ");
         correct.append("#feature:dirichlet( #extents:shoe:part=postings() ) ");
         correct.append("#feature:dirichlet( #extents:ugly:part=postings() ) ) )");
+	System.out.printf("transformed node is: %s\n", transformed.toString());
         assertEquals(correct.toString(), transformed.toString());
         retrieval.close();
     }

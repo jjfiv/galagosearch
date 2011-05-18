@@ -5,7 +5,9 @@ package org.galagosearch.core.retrieval.structured;
 import java.io.IOException;
 import org.galagosearch.core.index.TopDocsReader.TopDocument;
 import org.galagosearch.core.scoring.JelinekMercerScorer;
+import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
+
 
 /**
  *
@@ -28,7 +30,7 @@ public class JelinekMercerScoringIterator extends ScoringFunctionIterator {
   public void setContext(DocumentContext context) {
     if (TopDocsContext.class.isAssignableFrom((context.getClass()))) {
       TopDocsContext tdc = (TopDocsContext) context;
-      if (tdc.hold != null) {
+      if (tdc.hold != null) {	  
         tdc.topdocs.put(this, tdc.hold);
         TopDocument worst = tdc.hold.get(tdc.hold.size()-1);
         loweredMaximum = this.function.score(worst.count, worst.length);

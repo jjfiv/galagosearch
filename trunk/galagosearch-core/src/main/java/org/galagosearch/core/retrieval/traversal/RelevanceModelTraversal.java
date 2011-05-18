@@ -20,6 +20,7 @@ import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 import gnu.trove.TDoubleArrayList;
 import java.util.Collections;
+import org.tartarus.snowball.ext.englishStemmer;
 
 /**
  * The Relevance Model implemented as a traversal. Query should look like:
@@ -32,9 +33,10 @@ import java.util.Collections;
  *
  * @author irmarc
  */
-@RequiredStatistics(statistics = {"retrievalGroup", "index", "scorer", "corpus"})
+@RequiredStatistics(statistics = {"retrievalGroup", "index", "scorer", "corpus", "mod"})
 public class RelevanceModelTraversal implements Traversal {
 
+  englishStemmer stemmer = null;
   Retrieval retrieval;
   Parameters queryParameters;
   Parameters availableParts;
@@ -43,6 +45,9 @@ public class RelevanceModelTraversal implements Traversal {
     this.retrieval = retrieval;
     this.queryParameters = parameters;
     this.availableParts = retrieval.getAvailableParts(parameters.get("retrievalGroup"));
+    if (parameters.get("stemming",true)) {
+	stemmer = new englishStemmer();
+    }
   }
 
   public Node afterNode(Node originalNode) throws Exception {
@@ -71,14 +76,13 @@ public class RelevanceModelTraversal implements Traversal {
     double fbOrigWt = parameters.get("fbOrigWt", 0.5);
     int fbTerms = (int) parameters.get("fbTerms", 10);
     HashSet<String> stopwords = Utility.readStreamToStringSet(getClass().getResourceAsStream("/stopwords/inquery"));
-    Set<String> queryTerms = StructuredQuery.findQueryTerms(combineNode, Collections.singleton("extents"));
+    Set<String> queryTerms = StructuredQuery.findQueryTerms(combineNode);
     stopwords.addAll(queryTerms);
 
     // Now we wait
     retrieval.waitForAsynchronousQuery();
     CallTable.turnOn();
 
-    //ArrayList<Gram> scored = rModel.generateGrams(initialResults);
     Node newRoot = null;
     Node expansionNode;
 
@@ -130,6 +134,7 @@ public class RelevanceModelTraversal implements Traversal {
           continue;
         }
         Node child = TextPartAssigner.assignPart(new Node("text", g.term), availableParts);
+	child.getParameters().set("mod", "topdocs");
         weightSum += g.score;
         weightList.add(g.score);
         newChildren.add(child);
@@ -137,13 +142,24 @@ public class RelevanceModelTraversal implements Traversal {
       }
       // now the weights
       weights = weightList.toNativeArray();
+      double factor = (1.0 - fbOrigWt) / weightSum;
       for (int i = 0; i < weights.length; i++) {
-        expParams.set(Integer.toString(i + position), Double.toString(((1.0 - fbOrigWt) * weights[i] / weightSum)));
+	  expParams.set(Integer.toString(i + position), Double.toString(factor * weights[i]));
       }
 
       // And wrap it up
       newRoot = new Node("maxscore", expParams, newChildren, originalNode.getPosition());
       newRoot = retrieval.transformRankedQuery(newRoot, "all");
+    } else if (usingMaxScore == 2) {
+      expansionNode = rModel.generateExpansionQuery(initialResults, fbTerms, stopwords);
+      Parameters expParams = new Parameters();
+      expParams.set("0", Double.toString(fbOrigWt));
+      expParams.set("1", Double.toString(1 - fbOrigWt));
+      ArrayList<Node> newChildren = new ArrayList<Node>();
+      Node replacement = new Node("combine", combineNode.getParameters(), combineNode.getInternalNodes(), 0);
+      newChildren.add(replacement);
+      newChildren.add(expansionNode);
+      newRoot = new Node("maxscore", expParams, newChildren, originalNode.getPosition());
     }
     rModel.cleanup();
     return newRoot;

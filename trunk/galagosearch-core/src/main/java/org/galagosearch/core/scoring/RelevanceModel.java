@@ -126,7 +126,6 @@ public class RelevanceModel implements ExpansionModel {
     int expanded = 0;
 
     // Time to construct the modified query - start with the expansion since we always have it
-    // make sure we filter stopwords
     for (int i = 0; i < scored.size() && expanded < fbTerms; i++) {
       Gram g = (Gram) scored.get(i);
       if (exclusionTerms.contains(g.term)) {

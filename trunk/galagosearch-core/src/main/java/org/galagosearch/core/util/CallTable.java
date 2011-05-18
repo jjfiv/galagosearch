@@ -10,9 +10,15 @@ import java.io.PrintStream;
  * @author irmarc
  */
 public class CallTable {
-    private static TObjectLongHashMap counts = new TObjectLongHashMap();
+    private static TObjectLongHashMap<String> counts = new TObjectLongHashMap<String>();
     private static boolean on = true;
     private CallTable() {}
+
+    public static void set(String counterName, long value) {
+	if (on) {
+	    counts.put(counterName, value);
+	}
+    }
 
     public static void increment(String counterName, long inc) {
         if (on) {
@@ -53,8 +59,7 @@ public class CallTable {
         }
 	
         public boolean execute(Object a, long b) {
-            out.printf("CALL_TABLE:%s\t%s\t%d\n", (prefix == null ? "" : "\t"+prefix), 
-		       ((String) a), b);
+            out.printf("CALL_TABLE:%s\t%s\t%d\n", (prefix == null ? "" : "\t"+prefix), a, b);
             return true;
         }
     }

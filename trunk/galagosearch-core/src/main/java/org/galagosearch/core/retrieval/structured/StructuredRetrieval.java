@@ -120,7 +120,6 @@ public class StructuredRetrieval implements Retrieval {
     DocumentContext context = new DocumentContext();
 
     // construct the query iterators
-    // System.err.printf("Running boolean query: %s\n", queryTree.toString());
     AbstractIndicator iterator = (AbstractIndicator) createIterator(queryTree, context);
     ArrayList<ScoredDocument> list = new ArrayList<ScoredDocument>();
     while (!iterator.isDone()) {
@@ -148,17 +147,15 @@ public class StructuredRetrieval implements Retrieval {
     DocumentContext context = ContextFactory.createContext(parameters);
 
     // construct the query iterators
-    //System.err.printf("Running ranked query: %s\n", queryTree.toString());
     ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context);
     int requested = (int) parameters.get("requested", 1000);
+    System.err.printf("Running ranked query %s\n", queryTree.toString());
 
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
     DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
-
-
     while (!iterator.isDone()) {
-      int document = iterator.currentCandidate();
+      int document = iterator.currentCandidate();      
       if (iterator.hasMatch(document)) {
         lengthsIterator.moveToKey(document);
         int length = lengthsIterator.getCurrentLength();
@@ -170,7 +167,6 @@ public class StructuredRetrieval implements Retrieval {
         if (queue.size() <= requested || queue.peek().score < score) {
           ScoredDocument scoredDocument = new ScoredDocument(document, score);
           queue.add(scoredDocument);
-
           if (queue.size() > requested) {
             queue.poll();
           }
@@ -310,13 +306,13 @@ public class StructuredRetrieval implements Retrieval {
     } catch (Exception e) {
       throw e;
     }
-    if (ContextualIterator.class.isInstance(iterator)) {
+    if (ContextualIterator.class.isInstance(iterator) && (context != null)) {
       ((ContextualIterator) iterator).setContext(context);
     }
 
     // we've created a new iterator - add to the cache for future nodes
     iteratorCache.put(node.toString(), iterator);
-
+    //System.err.printf("node %s = iterator %s\n", node.toString(), iterator.toString());
     return iterator;
   }
 

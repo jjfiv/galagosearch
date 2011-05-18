@@ -23,6 +23,7 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
   protected double weightSum;
   protected ScoreValueIterator[] iterators;
   protected boolean done;
+  protected boolean printing;
 
   public ScoreCombinationIterator(Parameters parameters,
           ScoreValueIterator[] childIterators) {
@@ -35,7 +36,7 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
       weights[i] = Double.parseDouble(weightString);
       weightSum += weights[i];
     }
-   
+    printing = parameters.get("print", false);
     this.iterators = childIterators;
   }
 
@@ -84,8 +85,10 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
 
     for (int i = 0; i < iterators.length; i++) {
       double score = iterators[i].score();
+      //if (printing) System.err.printf("it %s score= %f, weight = %f\n", iterators[i].toString(), score, weights[i]);
       total += weights[i] * score;
     }
+    //if (printing) System.err.printf("Normalized score = %f\n", total / weightSum);
     return total / weightSum;
   }
 
