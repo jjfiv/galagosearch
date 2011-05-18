@@ -154,6 +154,30 @@ public class BuildStageTemplates {
     return stage;
   }
 
+  public static Stage getSplitStage(ArrayList<String> inputPaths, Class<? extends ExNihiloSource> sourceClass, Order order)
+          throws IOException {
+    Stage stage = new Stage("inputSplit");
+    stage.add(new StageConnectionPoint(ConnectionPointType.Output, "splits", order));
+
+    Parameters p = new Parameters();
+    for (String input : inputPaths) {
+      File inputFile = new File(input);
+
+      if (inputFile.isFile()) {
+        p.add("filename", inputFile.getAbsolutePath());
+      } else if (inputFile.isDirectory()) {
+        p.add("directory", inputFile.getAbsolutePath());
+      } else {
+        throw new IOException("Couldn't find file/directory: " + input);
+      }
+    }
+
+    stage.add(new Step(sourceClass, p));
+    stage.add(Utility.getSorter(order));
+    stage.add(new OutputStep("splits"));
+    return stage;
+  }
+
   public static Stage getSplitStage(ArrayList<String> inputPaths, Class<? extends ExNihiloSource<DocumentSplit>> sourceClass) throws IOException {
     Stage stage = new Stage("inputSplit");
     stage.add(new StageConnectionPoint(ConnectionPointType.Output, "splits",
