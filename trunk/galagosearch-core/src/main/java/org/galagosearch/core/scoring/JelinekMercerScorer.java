@@ -20,7 +20,6 @@ public class JelinekMercerScorer implements ScoringFunction {
     public JelinekMercerScorer(Parameters parameters, CountValueIterator iterator) throws IOException {
 
         lambda = parameters.get("lambda", 0.5);
-        //System.err.println("lambda = " + lambda);
         if (parameters.containsKey("collectionProbability")) {
             background = parameters.get("collectionProbability", 0.0001);
         } else {

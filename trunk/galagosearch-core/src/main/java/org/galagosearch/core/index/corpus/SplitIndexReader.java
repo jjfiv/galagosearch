@@ -253,12 +253,15 @@ public class SplitIndexReader extends GenericIndexReader {
         }
         File index = new File(f.getAbsolutePath() + File.separator + "key.index");
         File data = new File(f.getAbsolutePath() + File.separator + "0");
+	long magic = 0;
         if (index.exists() &&
             data.exists() &&
             IndexReader.isIndexFile(index.getAbsolutePath())) {
             RandomAccessFile reader = StreamCreator.inputStream(data.getAbsolutePath());
             reader.seek( reader.length() - 8 );
-            if(reader.readLong() == VALUE_FILE_MAGIC_NUMBER){
+	    magic = reader.readLong();
+	    reader.close();
+            if(magic == VALUE_FILE_MAGIC_NUMBER){
                 return true;
             }
         }

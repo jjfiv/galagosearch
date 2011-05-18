@@ -151,7 +151,17 @@ public class DocumentNameReader extends NameReader {
 
     public String getEntry() throws IOException {
       KeyIterator ki = (KeyIterator) iterator;
-      return ki.getValueString();
+      StringBuilder sb = new StringBuilder();
+      if (ki.isForward()) {
+	  sb.append(ki.getCurrentIdentifier());
+	  sb.append(",");
+	  sb.append(ki.getCurrentName());
+      } else {
+	  sb.append(ki.getCurrentName());
+	  sb.append(",");
+	  sb.append(ki.getCurrentIdentifier());
+      }
+      return sb.toString();
     }
 
     public long totalEntries() {

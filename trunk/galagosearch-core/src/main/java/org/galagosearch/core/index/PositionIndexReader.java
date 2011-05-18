@@ -75,8 +75,9 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
   }
 
   public class TermExtentIterator extends KeyListReader.ListIterator
-          implements AggregateIterator, CountValueIterator, ExtentValueIterator {
+      implements AggregateIterator, CountValueIterator, ExtentValueIterator, ContextualIterator {
 
+    DocumentContext context;
     int documentCount;
     int totalPositionCount;
     VByteInput documents;
@@ -236,7 +237,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       initialize();
     }
 
-    public boolean next() throws IOException {
+    public boolean next() throws IOException {      
       documentIndex = Math.min(documentIndex + 1, documentCount);
       if (!isDone()) {
         loadExtents();
@@ -249,7 +250,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     @Override
     public boolean moveTo(int document) throws IOException {
       if (skips != null && document > nextSkipDocument) {
-
+	  
         // if we're here, we're skipping
         while (skipsRead < numSkips
                 && document > nextSkipDocument) {
@@ -332,6 +333,21 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
 
     public long totalPositions() {
       return totalPositionCount;
+    }
+
+    public DocumentContext getContext() {
+      return this.context;
+    }
+
+    // This will pass up topdocs information if it's available
+    public void setContext(DocumentContext context) {
+	if ((context != null) && TopDocsContext.class.isAssignableFrom(context.getClass()) &&
+              this.hasModifier("topdocs")) {
+        ((TopDocsContext)context).hold = ((ArrayList<TopDocument>) getModifier("topdocs"));
+        // remove the pointer to the mod (don't need it anymore)
+        this.modifiers.remove("topdocs");
+      }
+      this.context = context;
     }
   }
 

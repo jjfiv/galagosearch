@@ -18,8 +18,8 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
  *
  * @author irmarc
  */
-@InputClass(className = "org.galagosearch.core.types.TopDocsEntry", order = {"+word", "+document"})
-public class TopDocsWriter implements TopDocsEntry.WordDocumentOrder.ShreddedProcessor {
+@InputClass(className = "org.galagosearch.core.types.TopDocsEntry", order = {"+word", "-probability", "+document"})
+public class TopDocsWriter implements TopDocsEntry.WordDescProbabilityDocumentOrder.ShreddedProcessor {
   private Logger LOG = Logger.getLogger(getClass().toString());
 
   public class TopDocsList implements IndexElement {
@@ -43,8 +43,7 @@ public class TopDocsWriter implements TopDocsEntry.WordDocumentOrder.ShreddedPro
     }
 
     public void addDocument(int document) {
-      data.add(document - lastDoc);
-      lastDoc = document;
+      data.add(document);
     }
 
     // Write the score to the buffer, the # of docs,  then the doc ids
@@ -88,11 +87,15 @@ public class TopDocsWriter implements TopDocsEntry.WordDocumentOrder.ShreddedPro
     currentList = new TopDocsList(word);
   }
 
+  public void processProbability(double probability) throws IOException {
+      // do nothing - we're not storing the probs
+  }
+
   public void processDocument(int document) throws IOException {
     currentList.addDocument(document);
   }
 
-  public void processTuple(double probability, int count, int doclength) throws IOException {
+  public void processTuple(int count, int doclength) throws IOException {
     currentList.addExpandedScore(count, doclength);
   }
 

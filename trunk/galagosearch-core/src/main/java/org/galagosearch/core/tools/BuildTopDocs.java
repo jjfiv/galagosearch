@@ -52,7 +52,7 @@ public class BuildTopDocs {
         stage.add(new StageConnectionPoint(ConnectionPointType.Input, "terms",
                 new KeyValuePair.KeyOrder()));
         stage.add(new StageConnectionPoint(ConnectionPointType.Output, "topdocs",
-                new TopDocsEntry.WordDocumentOrder()));
+                new TopDocsEntry.WordDescProbabilityDocumentOrder()));
 
         Parameters p = new Parameters();
         p.set("directory", this.indexPath);
@@ -68,7 +68,7 @@ public class BuildTopDocs {
     public Stage getWriteTopDocsStage() {
         Stage stage = new Stage("writeTopDocs");
         stage.add(new StageConnectionPoint(ConnectionPointType.Input, "topdocs",
-                new TopDocsEntry.WordDocumentOrder()));
+                new TopDocsEntry.WordDescProbabilityDocumentOrder()));
         Parameters p = new Parameters();
         p.set("directory", this.indexPath);
         p.set("part", this.partName);

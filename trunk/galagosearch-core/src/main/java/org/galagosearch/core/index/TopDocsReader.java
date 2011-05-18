@@ -95,8 +95,7 @@ public class TopDocsReader extends AbstractModifier {
     int l = (limit == -1) ? numEntries : Math.min(numEntries, limit);
     for (int i = 0; i < l; i++) {
       TopDocument td = new TopDocument();
-      td.document = lastDocument + input.readInt();
-      lastDocument = td.document;
+      td.document = input.readInt();
       td.count = input.readInt();
       td.length = input.readInt();
       topdocs.add(td);

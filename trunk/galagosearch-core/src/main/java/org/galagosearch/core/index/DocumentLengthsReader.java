@@ -96,7 +96,10 @@ public class DocumentLengthsReader extends KeyValueReader {
     }
 
     public String getEntry() throws IOException {
-      return Integer.toString(((KeyIterator) iterator).getCurrentDocument());
+	KeyIterator ki = (KeyIterator) iterator;
+	String output = Integer.toString(ki.getCurrentDocument()) + "," +
+	    Integer.toString(ki.getCurrentLength());
+	return output;
     }
 
     public long totalEntries() {

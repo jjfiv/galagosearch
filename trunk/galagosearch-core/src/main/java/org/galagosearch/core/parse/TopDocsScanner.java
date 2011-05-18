@@ -32,7 +32,7 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
  * @author irmarc
  */
 @InputClass(className="org.galagosearch.core.types.KeyValuePair", order={"+key"})
-@OutputClass(className="org.galagosearch.core.types.TopDocsEntry", order={"+word", "+document"})
+@OutputClass(className="org.galagosearch.core.types.TopDocsEntry", order={"+word", "-probability", "+document"})
 public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
     private Logger LOG = Logger.getLogger(getClass().toString());
   
@@ -116,11 +116,13 @@ public class TopDocsScanner extends StandardStep<KeyValuePair, TopDocsEntry> {
 
         // Now emit based on our top docs (have to reverse first)
         ArrayList<TopDocsEntry> resort = new ArrayList<TopDocsEntry>(topdocs);
-        Collections.sort(resort, new Comparator<TopDocsEntry>() {
-           public int compare(TopDocsEntry a, TopDocsEntry b) {
-              return (a.document - b.document);
-          }
-        });
+	Collections.sort(resort, new Comparator<TopDocsEntry>() {
+		  public int compare(TopDocsEntry a, TopDocsEntry b) {
+		      //return (a.document - b.document);
+		      return (a.probability > b.probability ? -1 : (a.probability < b.probability ? 1 : 0));
+		  }
+	});
+	
 
         for (TopDocsEntry entry : resort) {
             entry.word = object.key;

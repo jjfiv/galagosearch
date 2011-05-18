@@ -17,6 +17,7 @@ import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.util.TextPartAssigner;
 import org.galagosearch.tupleflow.Parameters;
+import org.tartarus.snowball.ext.englishStemmer;
 
 /**
  * Implements the basic unigram Relevance Model.
@@ -61,6 +62,7 @@ public class RelevanceModel implements ExpansionModel {
   DocumentReader cReader = null;
   DocumentLengthsReader docLengths = null;
   TagTokenizer tokenizer = null;
+    englishStemmer stemmer = null;
 
   public RelevanceModel(Parameters parameters) {
     this.parameters = parameters;
@@ -72,6 +74,12 @@ public class RelevanceModel implements ExpansionModel {
    *
    */
   public void initialize() throws Exception {
+      // Stemming?
+    if (parameters.get("stemming", true) && stemmer == null) {
+      stemmer = new englishStemmer();
+    }
+
+
     if (cReader == null) {
       // Let's make a corpus reader
       String corpusLocation = parameters.get("corpus", null);
@@ -123,7 +131,7 @@ public class RelevanceModel implements ExpansionModel {
       Gram g = (Gram) scored.get(i);
       if (exclusionTerms.contains(g.term)) {
         continue;
-      }
+      }     
       Node inner = TextPartAssigner.assignPart(new Node("text", g.term), parameters);
       ArrayList<Node> innerChild = new ArrayList<Node>();
       innerChild.add(inner);
@@ -166,12 +174,20 @@ public class RelevanceModel implements ExpansionModel {
     HashMap<String, HashMap<Integer, Integer>> counts = new HashMap<String, HashMap<Integer, Integer>>();
     HashMap<Integer, Integer> termCounts;
     Document doc;
+    String term;
     assert (reader != null);
     for (ScoredDocument sd : results) {
       assert (sd.documentName != null);
       doc = reader.getDocument(sd.documentName);
       tokenizer.tokenize(doc);
-      for (String term : doc.terms) {
+      for (String s : doc.terms) {
+	  if (stemmer == null) {
+	      term = s;
+	  } else {
+	      stemmer.setCurrent(s);
+	      stemmer.stem();
+	      term = stemmer.getCurrent();
+	  }
         if (!counts.containsKey(term)) {
           counts.put(term, new HashMap<Integer, Integer>());
         }
