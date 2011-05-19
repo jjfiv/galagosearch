@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.galagosearch.core.parse.Document;
+import org.galagosearch.core.parse.Porter2Stemmer;
 import org.galagosearch.core.parse.TagTokenizer;
 
 /**
@@ -208,6 +209,13 @@ public class SnippetGenerator {
         }
     }
 
+    private Porter2Stemmer stemmer = new Porter2Stemmer();
+    private boolean stemming = true;
+    
+    public void setStemming(boolean stemming){
+      this.stemming = stemming;
+    }
+    
     private Document parseAsDocument(String text, ArrayList<TagTokenizer.Pair> positions) throws IOException {
         Document document = new Document();
         document.text = text;
@@ -219,6 +227,10 @@ public class SnippetGenerator {
         if (positions != null) {
             positions.addAll(tokenizer.getTokenPositions());
         }
+        if (stemming){
+          document = stemmer.stem(document);
+        }
+        
         return document;
     }
 

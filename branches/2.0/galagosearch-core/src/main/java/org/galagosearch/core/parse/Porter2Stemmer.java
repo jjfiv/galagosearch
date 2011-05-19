@@ -1,5 +1,4 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.parse;
 
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
@@ -24,11 +23,19 @@ import org.tartarus.snowball.ext.englishStemmer;
  */
 @Verified
 public class Porter2Stemmer implements Processor<Document>, Source<Document> {
-  englishStemmer stemmer = new englishStemmer();
   HashMap<String, String> cache = new HashMap();
+  englishStemmer stemmer = new englishStemmer();
   public Processor<Document> processor = new NullProcessor(Document.class);
 
   public void process(Document document) throws IOException {
+    if (document instanceof NumberedDocument) {
+      processor.process((NumberedDocument) stem(document));
+    } else {
+      processor.process(stem(document));
+    }
+  }
+
+  public Document stem(Document document) throws IOException {
     List<String> words = document.terms;
 
     for (int i = 0; i < words.size(); i++) {
@@ -53,25 +60,25 @@ public class Porter2Stemmer implements Processor<Document>, Source<Document> {
         }
       }
     }
-    if(document instanceof NumberedDocument){
-      processor.process( (NumberedDocument) document);
-    } else {
-      processor.process(document);
-    }
+    return document;
   }
 
   public void setProcessor(Step processor) throws IncompatibleProcessorException {
     Linkage.link(this, processor);
   }
-  public static String getInputClass(TupleFlowParameters params){
+
+  public static String getInputClass(TupleFlowParameters params) {
     return params.getXML().get("class", "org.galagosearch.core.parse.Document");
   }
-  public static String getOutputClass(TupleFlowParameters params){
+
+  public static String getOutputClass(TupleFlowParameters params) {
     return params.getXML().get("class", "org.galagosearch.core.parse.Document");
   }
+
   public static String[] getOutputOrder(TupleFlowParameters parameters) {
     return new String[0];
   }
+
   public void close() throws IOException {
     processor.close();
   }

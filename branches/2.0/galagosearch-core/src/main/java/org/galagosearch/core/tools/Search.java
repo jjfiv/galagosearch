@@ -28,7 +28,7 @@ import org.galagosearch.tupleflow.Parameters.Value;
  */
 public class Search {
 
-  protected SnippetGenerator generator;
+  public SnippetGenerator generator;
   protected DocumentStore store;
   protected Retrieval retrieval;
 

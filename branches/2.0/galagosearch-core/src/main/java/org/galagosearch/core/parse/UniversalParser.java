@@ -88,8 +88,6 @@ public class UniversalParser extends StandardStep<DocumentSplit, Document> {
     return stream;
   }
 
-  
-
   public void process(DocumentSplit split) throws IOException {
     DocumentStreamParser parser;
 
@@ -126,4 +124,11 @@ public class UniversalParser extends StandardStep<DocumentSplit, Document> {
         documentCounter.increment();
     }
   }
+  
+  @Override
+  public void close() throws IOException{
+    processor.close();
+    // System.out.println("docs\t" + count);
+  }
+  
 }
