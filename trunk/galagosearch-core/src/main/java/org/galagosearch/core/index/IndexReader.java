@@ -157,6 +157,9 @@ public class IndexReader extends GenericIndexReader {
 
       // check if the desired key is in the current block
       if (Utility.compare(key, lastKey) <= 0) {
+        if( Utility.compare(key, lastKey) < 0 ){
+          keyIndex = 0;
+        }
         while (keyIndex < block.keys.length) {
           byte[] blockKey = block.keys[keyIndex];
           if (Utility.compare(key, blockKey) <= 0) {

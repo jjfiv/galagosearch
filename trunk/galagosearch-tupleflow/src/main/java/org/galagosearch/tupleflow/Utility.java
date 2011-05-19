@@ -772,6 +772,29 @@ public class Utility {
     return writeBuffer;
   }
 
+  public static boolean toBoolean(byte[] key, boolean def){
+    if(key != null || key.length > 0){
+      return ( key[0] != 0 );
+    } else {
+      return def;
+    }
+  }
+  
+  public static boolean toBoolean(byte[] key){
+    assert key.length == 1;
+    return ( key[0] != 0 );
+  }
+  
+  public static byte[] fromBoolean(boolean key){
+    byte[] out = new byte[1];
+    if(key == true)
+      out[0] = 1;
+    else 
+      out[0] = 0;
+    return out;
+  }
+  
+  
   public static void compressInt(DataOutput output, int i) throws IOException {
     assert i >= 0;
 

@@ -718,6 +718,7 @@ public class App {
     output.println("   dump-lengths");
     output.println("   dump-modifier");
     output.println("   dump-names");
+    output.println("   indicator");
     output.println("   eval");
     output.println("   make-corpus");
     output.println("   merge-index");
@@ -738,6 +739,8 @@ public class App {
       commandHelpWindow();
     } else if (command.startsWith("merge-index")) {
       MergeIndexes.commandHelpMerge();
+    } else if (command.startsWith("indicator")) {
+      BuildIndicatorPart.commandHelpBuildIndicator();
     } else if (command.startsWith("pagerank")) {
       //PageRankApp.commandHelpPageRank();
     } else if (command.startsWith("build-topdocs")) {
@@ -880,15 +883,6 @@ public class App {
 
     String command = args[0];
 
-    if (command.equals("test")) {
-      // query testing
-      args = new String[2];
-      args[0] = "batch-search";
-      args[1] = "/usr/yea/scratch1/sjh/indexes/test.queries";
-      this.handleBatchSearch(args);
-      return;
-    }
-
     if (command.equals("help") && args.length > 1) {
       commandHelp(args[1]);
     } else if (command.equals("batch-search")) {
@@ -919,6 +913,8 @@ public class App {
       handleDumpLengths(args);
     } else if (command.equals("dump-names")) {
       handleDumpNames(args);
+    } else if (command.equals("indicator")) {
+      BuildIndicatorPart.main(args);
     } else if (command.equals("make-corpus")) {
       handleMakeCorpus(args);
     } else if (command.equals("merge-index")) {
