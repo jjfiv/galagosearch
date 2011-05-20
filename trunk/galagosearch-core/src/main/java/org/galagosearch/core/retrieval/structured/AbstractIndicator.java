@@ -20,7 +20,7 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * Use cases:
  *
- * #filreq ( AbstractIndicator ScoreIterator ) : Only scores documents that where the AbstractIndicator is on
+ * #filter ( AbstractIndicator ScoreIterator ) : Only scores documents that where the AbstractIndicator is on
  * #filrej ( AbstractIndicator ScoreIterator ) : Only scores documents that where the AbstractIndicator is off
  * Retrieval.runBooleanQuery - this operation returns a set of documents that meet the requirements. Top node has to
  * be some kind of AbstractIndicator.
@@ -28,7 +28,7 @@ import org.galagosearch.tupleflow.Parameters;
  * @author irmarc
  */
 public abstract class AbstractIndicator 
-        implements ContextualIterator, IndicatorIterator, ValueIterator {
+        implements IndicatorIterator {
 
   protected DocumentContext context;
   protected ValueIterator[] iterators;
@@ -36,7 +36,7 @@ public abstract class AbstractIndicator
   public AbstractIndicator(Parameters p, ValueIterator[] childIterators) {
     this.iterators = childIterators;
   }
-
+  
   public DocumentContext getContext() {
     return context;
   }

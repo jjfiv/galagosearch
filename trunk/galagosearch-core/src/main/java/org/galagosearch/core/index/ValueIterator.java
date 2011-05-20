@@ -5,7 +5,7 @@ import org.galagosearch.core.retrieval.structured.StructuredIterator;
 
 /**
  *
- * @author irmarc
+ * @author irmarc, sjh
  */
 public interface ValueIterator extends BoundedIterator, Comparable<ValueIterator> {
 

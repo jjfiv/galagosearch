@@ -54,7 +54,12 @@ public class ExistentialIndicatorIterator extends AbstractIndicator {
     return (context.document == this.document);
   }
 
-  public boolean moveTo(int identifier) throws IOException {
+  @Override
+  public boolean getStatus(int document) {
+    return (document == this.document);
+  }
+
+ public boolean moveTo(int identifier) throws IOException {
     boolean success = false;
     for (ValueIterator iterator : iterators) {
       success |= iterator.moveTo(identifier);

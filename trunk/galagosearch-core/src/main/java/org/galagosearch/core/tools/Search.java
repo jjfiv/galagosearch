@@ -26,7 +26,7 @@ import org.galagosearch.tupleflow.Parameters.Value;
  */
 public class Search {
 
-  protected SnippetGenerator generator;
+  public SnippetGenerator generator;
   protected DocumentStore store;
   protected Retrieval retrieval;
 
@@ -89,7 +89,7 @@ public class Search {
   public String getSummary(Document document, Set<String> query) throws IOException {
     if (document.metadata.containsKey("description")) {
       String description = document.metadata.get("description");
-
+      
       if (description.length() > 10) {
         return generator.highlight(description, query);
       }
@@ -136,6 +136,8 @@ public class Search {
     ScoredDocument[] results = retrieval.runRankedQuery(root, p);
     SearchResult result = new SearchResult();
     Set<String> queryTerms = StructuredQuery.findQueryTerms(root);
+    generator.setStemming( root.toString().contains("part=stemmedPostings") );
+
     result.transformedQuery = root;
     result.items = new ArrayList();
 

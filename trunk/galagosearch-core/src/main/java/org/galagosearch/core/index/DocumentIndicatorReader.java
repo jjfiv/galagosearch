@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.structured.DocumentContext;
 import org.galagosearch.core.retrieval.structured.IndicatorIterator;
 import org.galagosearch.tupleflow.Utility;
 
@@ -49,7 +50,7 @@ public class DocumentIndicatorReader extends KeyValueReader {
 
   public ValueIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("indicator")) {
-      return new ValueIterator(new KeyIterator(reader));
+      return new ValueIterator(new KeyIterator(reader)) {};
     } else {
       throw new UnsupportedOperationException(
         "Index doesn't support operator: " + node.getOperator());
@@ -94,8 +95,10 @@ public class DocumentIndicatorReader extends KeyValueReader {
     }
   }
 
+  // needs to be an AbstractIndicator
   public class ValueIterator extends KeyToListIterator implements IndicatorIterator {
-
+    DocumentContext context;
+    
     public ValueIterator(KeyIterator it) {
       super(it);
     }
@@ -113,12 +116,37 @@ public class DocumentIndicatorReader extends KeyValueReader {
     }
 
     public boolean getStatus() {
-      try {
-        return ((KeyIterator) iterator).getCurrentIndicator();
-      } catch (IOException ex) {
-        Logger.getLogger(DocumentIndicatorReader.class.getName()).log(Level.SEVERE, null, ex);
-        throw new RuntimeException("Failed to read indicator file.");
+      if(context.document == ((KeyIterator) iterator).getCurrentDocument()){
+        return def;
+      } else {
+        try {
+          return ((KeyIterator) iterator).getCurrentIndicator();
+        } catch (IOException ex) {
+          Logger.getLogger(DocumentIndicatorReader.class.getName()).log(Level.SEVERE, null, ex);
+          throw new RuntimeException("Failed to read indicator file.");
+        }
       }
+    }
+    
+    public boolean getStatus( int document ) {
+      if(document != ((KeyIterator) iterator).getCurrentDocument()){
+        return def;
+      } else {
+        try {
+          return ((KeyIterator) iterator).getCurrentIndicator();
+        } catch (IOException ex) {
+          Logger.getLogger(DocumentIndicatorReader.class.getName()).log(Level.SEVERE, null, ex);
+          throw new RuntimeException("Failed to read indicator file.");
+        }
+      }
+    }
+    
+    public DocumentContext getContext() {
+      return context;
+    }
+
+    public void setContext(DocumentContext context) {
+      this.context = context;
     }
   }
 }

@@ -45,6 +45,10 @@ public class UniversalIndicatorIterator extends AbstractIndicator {
   public boolean getStatus() {
     return (context.document == this.document);
   }
+  
+  public boolean getStatus(int document) {
+    return (document == this.document);
+  }
 
   public boolean isDone() {
     return done;

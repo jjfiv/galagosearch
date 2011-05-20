@@ -168,7 +168,7 @@ public class AppTest extends TestCase {
       // Now, verify that some stuff exists
       String output = byteArrayStream.toString();
 
-      System.err.println(output);
+      //System.err.println(output);
 
       String expectedScores =
               "9 Q0 59 1 -1.38562925 galago\n"
