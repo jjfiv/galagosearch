@@ -14,7 +14,6 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class CheckPointHandler {
   private String path;
-  private int id = 0;
   
   public void setDirectory(String dir){
     this.path = dir + File.separator + "checkpoint" ;
@@ -22,7 +21,6 @@ public class CheckPointHandler {
   
   public void saveCheckpoint(Parameters checkpoint) throws IOException {
     Utility.copyStringToFile( checkpoint.toString() , new File(path) );
-    id++;
   }
   
   public Parameters getRestore() throws IOException {
