@@ -18,6 +18,7 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.structured.*;
+import org.galagosearch.core.store.DocumentStore;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
@@ -36,6 +37,8 @@ public class MemoryRetrieval extends Retrieval {
   protected Node query;
   protected Parameters queryParams;
   protected List<ScoredDocument> queryResults;
+  
+  protected DocumentStore store;
 
   public MemoryRetrieval(MemoryIndex index, Parameters factoryParameters) throws IOException {
     this.index = index;

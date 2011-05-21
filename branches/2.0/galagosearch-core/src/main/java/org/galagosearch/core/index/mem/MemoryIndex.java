@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.Map;
 import org.galagosearch.core.index.StructuredIndexPartReader;
+import org.galagosearch.core.index.corpus.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 
 import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 import org.galagosearch.core.parse.NumberedDocument;
@@ -38,7 +40,7 @@ import org.galagosearch.tupleflow.execution.Verified;
 @InputClass(className = "org.galagosearch.core.parse.NumberedDocument")
 public class MemoryIndex implements Processor<NumberedDocument> {
 
-  private boolean stemming;
+  public boolean stemming, makecorpus;
   private int lastDocId;
   private MemoryManifest manifest;
   private MemoryDocumentLengths documentLengths;
@@ -48,12 +50,16 @@ public class MemoryIndex implements Processor<NumberedDocument> {
   private MemoryPostings stemmedPostings;
   private HashMap<String,StructuredIndexPartReader> parts;
 
+  private MemoryCorpus corpus;
+  
   public MemoryIndex(TupleFlowParameters parameters) {
     this(parameters.getXML());
   }
 
   public MemoryIndex(Parameters parameters) {
     stemming = (boolean) parameters.get("stemming", true);
+    makecorpus = (boolean) parameters.get("makecorpus", false);
+
     int documentNumberOffset = (int) parameters.get("firstDocumentId", 0);
     lastDocId = documentNumberOffset - 1;
 
@@ -71,7 +77,10 @@ public class MemoryIndex implements Processor<NumberedDocument> {
       stemmedPostings = new MemoryPostings();
       parts.put("stemmedPostings",stemmedPostings);
     }
-
+    
+    if(makecorpus){
+      corpus = new MemoryCorpus();
+    }
   }
 
   public void process(NumberedDocument doc) throws IOException {
@@ -103,7 +112,10 @@ public class MemoryIndex implements Processor<NumberedDocument> {
                     doc.number, i);
           }
         }
-
+      }
+      
+      if (makecorpus){
+        corpus.addDocument(doc);
       }
 
     } catch (IndexOutOfBoundsException e) {
@@ -134,6 +146,7 @@ public class MemoryIndex implements Processor<NumberedDocument> {
     postings = null;
     stemmedPostings = null;
     parts = null;
+    corpus = null;
   }
 
   /*
@@ -173,6 +186,13 @@ public class MemoryIndex implements Processor<NumberedDocument> {
     return documentLengths.getIterator();
   }
 
+  public DocumentIterator getDocumentIterator() throws IOException{
+    return corpus.getIterator();
+  }
+  public DocumentReader getDocumentReader() throws IOException{
+    return corpus;
+  }
+  
   private StructuredIndexPartReader getIndexPart(Node node) throws IOException {
     String operator = node.getOperator();
     StructuredIndexPartReader part = null;

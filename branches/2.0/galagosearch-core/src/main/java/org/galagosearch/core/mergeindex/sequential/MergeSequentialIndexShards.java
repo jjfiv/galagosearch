@@ -11,12 +11,15 @@ import org.galagosearch.core.index.ExtentIndexWriter;
 import org.galagosearch.core.index.ManifestWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
 import org.galagosearch.core.index.StructuredIndex;
+import org.galagosearch.core.index.corpus.DocumentIndexWriter;
 import org.galagosearch.core.mergeindex.AssertNumberWordPositionOrder;
 import org.galagosearch.core.mergeindex.AssertNumberedExtentOrder;
+import org.galagosearch.core.mergeindex.DocumentReaderMerger;
 import org.galagosearch.core.mergeindex.IndexPathNumberer;
 import org.galagosearch.core.mergeindex.KeyExtentToNumberWordPosition;
 import org.galagosearch.core.mergeindex.KeyExtentToNumberedExtent;
 import org.galagosearch.core.mergeindex.ManifestMerger;
+import org.galagosearch.core.mergeindex.extractor.ExtractDocumentReaders;
 import org.galagosearch.core.mergeindex.extractor.ExtractLengths;
 import org.galagosearch.core.mergeindex.extractor.ExtractManifest;
 import org.galagosearch.core.mergeindex.extractor.ExtractNames;
@@ -49,21 +52,29 @@ public class MergeSequentialIndexShards {
   Iterable<String> diskShardPaths;
   String outputIndexPath;
   //ArrayList<Index> inputIndexes = new ArrayList();
-  boolean stemming = false;
+  boolean stemming = true;
+  boolean mergecorpus = true;
 
   public MergeSequentialIndexShards(Iterable<String> diskShardPaths, String outputIndexPath) throws IOException {
 
     this.diskShardPaths = diskShardPaths;
     this.outputIndexPath = outputIndexPath;
 
+        stemming = true;
+        mergecorpus = true;
     for (String path : this.diskShardPaths) {
       // check for valid indexes
       StructuredIndex i = new StructuredIndex(path);
-      System.err.println("inputIndex = " + path);
-      if (i.containsPart("stemmedPostings")) {
-        stemming = true;
-      }
       i.close();
+
+      System.err.println("inputIndex = " + path);
+
+      if ( ! (new File(path + File.separator + "parts" + File.separator +"stemmedPostings")).isFile() ) {
+        stemming = false;
+      }
+      if ( ! (new File(path + File.separator + "corpus")).isFile() ) {
+        mergecorpus = false;
+      }
     }
 
     // ensure the output folders exist
@@ -83,6 +94,9 @@ public class MergeSequentialIndexShards {
     if (stemming) {
       job.add(getMergePartStage("stemmedPostings"));
     }
+    if (mergecorpus) {
+      job.add(getMergeCorpusStage());
+    }
 
     job.connect("input", "mergeManifest", ConnectionAssignmentType.Combined);
     job.connect("input", "mergeLengths", ConnectionAssignmentType.Combined);
@@ -91,6 +105,9 @@ public class MergeSequentialIndexShards {
     job.connect("input", "mergePart-postings", ConnectionAssignmentType.Combined);
     if (stemming) {
       job.connect("input", "mergePart-stemmedPostings", ConnectionAssignmentType.Combined);
+    }
+    if (mergecorpus) {
+      job.connect("input", "mergeCorpus", ConnectionAssignmentType.Combined);
     }
 
     return job;
@@ -197,6 +214,23 @@ public class MergeSequentialIndexShards {
     return stage;
   }
 
+  private Stage getMergeCorpusStage() {
+    Stage stage = new Stage("mergeCorpus");
+    stage.add(new StageConnectionPoint(ConnectionPointType.Input,
+            "indexes", new DocumentSplit.FileIdOrder()));
+
+    stage.add(new InputStep("indexes"));
+    stage.add(new Step(ExtractDocumentReaders.class));
+    stage.add(new Step(DocumentReaderMerger.class));
+
+    Parameters p = new Parameters();
+    p.add("filename", outputIndexPath + File.separator + "corpus");
+    stage.add(new Step(DocumentIndexWriter.class, p));
+
+    return stage;
+  }
+  
+  
   // testing function
   // takes a set of index paths and merges them into the output file path
   public static void main(String[] args) throws Exception {

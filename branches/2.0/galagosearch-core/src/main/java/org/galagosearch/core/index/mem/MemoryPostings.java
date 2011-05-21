@@ -18,6 +18,7 @@ import org.galagosearch.core.types.NumberWordPosition;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.core.util.IntArray;
 import org.galagosearch.tupleflow.Utility;
+import org.galagosearch.tupleflow.Utility.ByteArrComparator;
 
 
 /*
@@ -231,12 +232,6 @@ public class MemoryPostings implements StructuredIndexPartReader {
     }
   }
 
-  private class ByteArrComparator implements Comparator<byte[]> {
-
-    public int compare(byte[] a, byte[] b) {
-      return Utility.compare(a, b);
-    }
-  }
   // this could be a bit big -- but we need random access here
   // should use a trie (but java doesn't have one?)
   private TreeMap<byte[], PostingList> postings = new TreeMap(new ByteArrComparator());

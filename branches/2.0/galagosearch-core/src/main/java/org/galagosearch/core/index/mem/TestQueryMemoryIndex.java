@@ -72,6 +72,7 @@ public class TestQueryMemoryIndex {
 
     Parameters p = new Parameters();
     p.add("queryFile", queryFile);
+    p.add("makecorpus", "true");
     stage.add(new Step(TestMemoryIndexQuerier.class, p));
 
     return stage;

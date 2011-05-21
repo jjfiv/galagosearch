@@ -11,6 +11,8 @@ import org.galagosearch.core.index.DocumentNameWriter;
 import org.galagosearch.core.index.ExtentIndexWriter;
 import org.galagosearch.core.index.ManifestWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
+import org.galagosearch.core.index.corpus.DocumentIndexWriter;
+import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 import org.galagosearch.core.retrieval.structured.ExtentIndexIterator;
 import org.galagosearch.core.retrieval.structured.Extent;
 import org.galagosearch.core.retrieval.structured.NumberedDocumentDataIterator;
@@ -154,6 +156,17 @@ public class FlushToDisk {
     processor.close();
   }
 
+  private void flushCorpusData(DocumentIterator iterator, String corpusFile) throws IOException {
+    Parameters parameters = new Parameters();
+    parameters.add("filename", corpusFile);
+
+    DocumentIndexWriter writer = new DocumentIndexWriter(new FakeParameters(parameters));
+    do {
+      writer.process(iterator.getDocument());
+    } while (iterator.nextDocument());
+    writer.close();
+  }
+
   private void flushLocal(String outputFolder) throws IOException {
 
     // flush manifest
@@ -167,9 +180,16 @@ public class FlushToDisk {
     // flush postings
     flushPostings(index.getExtentIterator("postings"), outputFolder + File.separator + "parts" + File.separator + "postings");
     // flush stemmed
-    if (index.getPartNames().contains("stemmedPostings")) {
+    if (index.stemming) {
       flushPostings(index.getExtentIterator("stemmedPostings"), outputFolder + File.separator + "parts" + File.separator + "stemmedPostings");
     }
+    // flush corpus
+    if (index.makecorpus) {
+      System.err.println("<<<FLUSHING CORPUS DATA>>>");
+      flushCorpusData(index.getDocumentIterator(), outputFolder + File.separator + "corpus");
+    } else {
+       System.err.println(">>>> NOT FLUSHING CORPUS DATA <<<<");
+   }
   }
 
   private void flushThreaded(String outputFolder) throws IOException {
@@ -258,13 +278,27 @@ public class FlushToDisk {
     });
 
     // flush stemmed
-    if (index.getPartNames().contains("stemmedPostings")) {
+    if (index.stemming) {
       threads.add(new Thread() {
 
         @Override
         public void run() {
           try {
             f.flushPostings(index.getExtentIterator("stemmedPostings"), outputFolder + File.separator + "parts" + File.separator + "stemmedPostings");
+          } catch (IOException e) {
+            logger.severe(e.toString());
+          }
+        }
+      });
+    }
+
+    if (index.makecorpus) {
+      threads.add(new Thread() {
+
+        @Override
+        public void run() {
+          try {
+            f.flushCorpusData(index.getDocumentIterator(), outputFolder + File.separator + "corpus");
           } catch (IOException e) {
             logger.severe(e.toString());
           }

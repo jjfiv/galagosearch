@@ -19,6 +19,7 @@ import java.net.ServerSocket;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -341,6 +342,13 @@ public class Utility {
     }
 
     return one.length - two.length;
+  }
+
+  // comparator for byte arrays
+  public static class ByteArrComparator implements Comparator<byte[]> {
+    public int compare(byte[] a, byte[] b) {
+      return Utility.compare(a, b);
+    }
   }
 
   public static int hash(byte b) {
