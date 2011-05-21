@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.galagosearch.core.index.corpus.DocumentReader;
 
 import org.galagosearch.core.index.mem.FlushToDisk;
 import org.galagosearch.core.index.mem.MemoryIndex;
@@ -20,8 +21,12 @@ import org.galagosearch.core.retrieval.MultiRetrieval;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.structured.DocumentOrderedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.StructuredRetrieval;
+import org.galagosearch.core.store.DocumentIndexStore;
+import org.galagosearch.core.store.DocumentStore;
+import org.galagosearch.core.store.NullStore;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
 import org.galagosearch.tupleflow.Utility;
@@ -51,21 +56,33 @@ import org.galagosearch.tupleflow.execution.Verified;
 @InputClass(className = "org.galagosearch.core.parse.NumberedDocument")
 public class GeometricIndex extends MultiRetrieval implements Processor<NumberedDocument> {
 
+  public long globalDocumentCount;
   private Logger logger = Logger.getLogger(GeometricIndex.class.toString());
-  String shardDirectory;
-  long globalDocumentCount;
-  int indexBlockSize; // measured in documents
-  int indexBlockCount;
-  boolean stemming;
-  String mergeMode;
-  MemoryIndex currentMemoryIndex;
-  GeometricPartitions geometricParts;
-  Parameters retrievalParameters = new Parameters();
-  Parameters statistics;
+  private String shardDirectory;
+  private int indexBlockSize; // measured in documents
+  private int indexBlockCount;
+  private boolean stemming;
+  private boolean makecorpus;
+  private String mergeMode;
+  private MemoryIndex currentMemoryIndex;
+  private GeometricPartitions geometricParts;
+  private Parameters retrievalParameters = new Parameters();
+  private Parameters statistics;
   private MemoryRetrieval currentMemoryRetrieval;
+  // a geometric needs to maintain it's own document store
+  // as each flush or merge should alter the store.
+  private MergeingDocumentStore docStore = new MergeingDocumentStore();
+  // checkpoint data
+  private CheckPointHandler checkpointer;
+  private String lastAddedDocumentIdentifier = "";
+  private int lastAddedDocumentNumber = -1;
 
+  // need a constructor from a checkpoint object!
   public GeometricIndex(TupleFlowParameters parameters) throws Exception {
-
+    this(parameters, new CheckPointHandler());
+  }
+  
+  public GeometricIndex(TupleFlowParameters parameters, CheckPointHandler checkpointer) throws Exception {
 
     //note: need to find some way to pass in retrieval parameters
     //stopgap justfor testing
@@ -74,10 +91,12 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
 
     shardDirectory = parameters.getXML().get("shardDirectory");
     stemming = (boolean) parameters.getXML().get("stemming", true);
+    makecorpus = (boolean) parameters.getXML().get("makecorpus", false);
     mergeMode = parameters.getXML().get("mergeMode", "local");
 
     // 10,000 is a small testing value -- 50,000 is probably a better choice.
     indexBlockSize = (int) parameters.getXML().get("indexBlockSize", 10000);
+
     // radix is the number of indexes of each size to store before a merge op
     // keep in mind that the total number of indexes is difficult to control
     int radix = (int) parameters.getXML().get("radix", 3);
@@ -88,6 +107,12 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     indexBlockCount = 0;
     retrievalParameters.add("retrievalGroup", "all");
 
+    this.checkpointer = checkpointer;
+    this.checkpointer.setDirectory( shardDirectory );
+    if(parameters.getXML().get("resumable", false)){
+      restoreToCheckpoint( checkpointer.getRestore() );
+    }
+    
     resetCurrentMemoryIndex();
     updateRetrieval();
   }
@@ -96,6 +121,9 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     currentMemoryIndex.process(doc);
     globalDocumentCount++; // now one higher than the document just processed
     if (globalDocumentCount % indexBlockSize == 0) {
+      lastAddedDocumentIdentifier = doc.identifier;
+      lastAddedDocumentNumber = doc.number;
+
       flushCurrentIndexBlock();
       maintainMergeLocal();
     }
@@ -122,9 +150,6 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
 
     logger.info("Flushing current memory Index. id = " + indexBlockCount);
 
-    // may want to wait for the previous thread to complete
-    // but not entirely necessary
-
     final GeometricIndex g = this;
     final MemoryIndex flushingMemoryIndex = currentMemoryIndex;
     final File shardFolder = getNextIndexShardFolder(1);
@@ -135,13 +160,13 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     try {
       // first flush the index to disk
       (new FlushToDisk()).flushMemoryIndex(flushingMemoryIndex, shardFolder.getAbsolutePath(), false);
-      // indicate that the flushing part of this thread is done
 
+      // indicate that the flushing part of this thread is done
       synchronized (geometricParts) {
+        // add flushed index to the set of bins -- needs to be a synconeous action
         geometricParts.add(1, shardFolder.getAbsolutePath());
         updateRetrieval();
         flushingMemoryIndex.close();
-        // add flushed index to the set of bins -- needs to be a synconeous action
       }
 
     } catch (IOException e) {
@@ -226,24 +251,51 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
     Parameters parameters = new Parameters();
     parameters.set("firstDocumentId", Long.toString(globalDocumentCount));
     parameters.set("stemming", Boolean.toString(stemming));
+    parameters.set("makecorpus", Boolean.toString(makecorpus));
     currentMemoryIndex = new MemoryIndex(parameters);
   }
 
+  /* this function is called after each index flush
+   *  and after each index merge operation
+   */
   private void updateRetrieval() throws IOException {
+
+    // collect all relevent retrieval objects
     Collection<Retrieval> r = geometricParts.getAllShards().getAllRetrievals();
     currentMemoryRetrieval = new MemoryRetrieval(currentMemoryIndex, retrievalParameters);
     ArrayList<Retrieval> allRetrievals = new ArrayList<Retrieval>(r.size() + 1);
     allRetrievals.addAll(r);
+    allRetrievals.add(currentMemoryRetrieval);
+    retrievals.put("all", allRetrievals);
 
+
+    // collect all relevent statisitics (eg: doc counts, term counts)
     ArrayList<Parameters> staticParameters = new ArrayList<Parameters>();
     for (Retrieval ret : r) {
       staticParameters.add(ret.getRetrievalStatistics("all"));
     }
 
+    // merge the statistics together
     statistics = new MemoryParameters((MemoryRetrieval) currentMemoryRetrieval, mergeStats(staticParameters));
     statistics.add("retrievalGroup", "all");
-    allRetrievals.add(currentMemoryRetrieval);
-    retrievals.put("all", allRetrievals);
+
+    // maintain the document store (corpus) - if there is one
+    if (this.makecorpus) {
+      // get all corpora
+      // shove into document store
+      ArrayList<DocumentReader> readers = new ArrayList<DocumentReader>();
+      readers.add(currentMemoryIndex.getDocumentReader());
+      for (String path : geometricParts.getAllShards().getBinPaths()) {
+        String corpus = path + File.separator + "corpus";
+        readers.add(DocumentReader.getInstance(corpus));
+      }
+      this.docStore.setDocStore(new DocumentIndexStore(readers));
+    }
+
+    // write new checkpointing data (only for on disk indexes)
+    Parameters checkpoint = createCheckpoint();
+    this.checkpointer.saveCheckpoint(checkpoint);
+
     initRetrieval();
   }
 
@@ -264,6 +316,36 @@ public class GeometricIndex extends MultiRetrieval implements Processor<Numbered
 
     return statistics;
 
+  }
+
+  // should contain parameters that can be used to restart the geometric index
+  // should also contain the last document identifier that was written to disk
+  // (copied from the last flush)
+  private Parameters createCheckpoint() {
+    Parameters checkpoint = new Parameters();
+    checkpoint.add("lastDoc/identifier", this.lastAddedDocumentIdentifier);
+    checkpoint.add("lastDoc/number", Integer.toString(this.lastAddedDocumentNumber));
+    checkpoint.add("indexBlockCount",Integer.toString(this.indexBlockCount));
+    for (Bin b : this.geometricParts.radixBins.values()) {
+      for (String path : b.getBinPaths()) {
+        checkpoint.add("shards/bin-" + b.size, path);
+      }
+    }
+    return checkpoint;
+  }
+
+  // should only be called at startup
+  private void restoreToCheckpoint(Parameters checkpoint) {
+    this.lastAddedDocumentIdentifier = checkpoint.get("lastDoc/identifier");
+    this.lastAddedDocumentNumber = Integer.parseInt(checkpoint.get("lastDoc/number"));
+    this.indexBlockCount = Integer.parseInt(checkpoint.get("indexBlockCount"));
+    Value shards = checkpoint.list("shards").get(0);
+    for(String size : shards.listKeys()){
+      int s = Integer.parseInt(size.split("-")[1]);
+      for(String path : shards.stringList( size )){
+        this.geometricParts.add(s, path);
+      }
+    }
   }
 
   // Sub - Classes
