@@ -1,7 +1,6 @@
 /*
  *  BSD License (http://www.galagosearch.org/license)
  */
-
 package org.galagosearch.core.index.merge;
 
 import java.io.File;
@@ -128,6 +127,7 @@ public class MergeIndexes {
       job.connect("indexNumberer", part+"MergeStage", ConnectionAssignmentType.Combined);
       job.connect("documentMapper", part+"MergeStage", ConnectionAssignmentType.Combined);
     }
+    
     
     return job;
   }

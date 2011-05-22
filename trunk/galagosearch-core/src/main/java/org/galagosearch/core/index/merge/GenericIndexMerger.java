@@ -11,6 +11,7 @@ import org.galagosearch.core.index.KeyIterator;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  *
@@ -19,7 +20,7 @@ import org.galagosearch.tupleflow.TupleFlowParameters;
 public abstract class GenericIndexMerger<T> {
 
   // document mapping data
-  protected boolean mappingKeys;
+  protected boolean mappingKeys = false;
   protected DocumentMappingReader mappingReader = null;
   // input readers
   protected PriorityQueue<KeyIteratorWrapper> queue;
@@ -37,6 +38,7 @@ public abstract class GenericIndexMerger<T> {
   }
 
   public void setDocumentMapping(DocumentMappingReader mappingReader) {
+    this.mappingKeys = ( mappingReader != null );
     this.mappingReader = mappingReader;
   }
 
@@ -61,12 +63,13 @@ public abstract class GenericIndexMerger<T> {
               && (queue.peek().compareTo(head.get(0)) == 0)) {
         head.add(queue.poll());
       }
+
       byte[] key = head.get(0).getKeyBytes();
 
       performValueMerge(key, head);
 
       for (KeyIteratorWrapper i : head) {
-        if ( i.nextKey() ) {
+        if (i.nextKey()) {
           queue.offer(i);
         }
       }

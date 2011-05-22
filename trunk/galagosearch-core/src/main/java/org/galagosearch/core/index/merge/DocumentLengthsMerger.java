@@ -8,6 +8,7 @@ import org.galagosearch.core.index.DocumentLengthsWriter;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  *
@@ -29,6 +30,6 @@ public class DocumentLengthsMerger extends GenericIndexMerger<NumberedDocumentDa
   public void performValueMerge(byte[] key, List<KeyIteratorWrapper> keyIterators) throws IOException {
     assert( keyIterators.size() == 1 ) : "Found two identical keys when merging lengths. Length data should never be combined.";
     DocumentLengthsReader.KeyIterator i = (DocumentLengthsReader.KeyIterator) keyIterators.get(0).iterator;
-    this.writer.process( new NumberedDocumentData(null, null, i.getCurrentDocument(), i.getCurrentLength()) );
+    this.writer.process( new NumberedDocumentData(null, null, Utility.toInt(key), i.getCurrentLength()) );
   }
 }

@@ -609,7 +609,7 @@ public class App {
       if (h != null) {
         h.handle(target, request, response, dispatch);
       } else {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException( " '"+ path +"'  is not supported yet.");
       }
     }
   }

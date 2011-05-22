@@ -23,10 +23,14 @@ import org.galagosearch.tupleflow.Utility;
 public class KeyIteratorWrapper implements Comparable<KeyIteratorWrapper> {
   int id;
   KeyIterator iterator;
+  boolean mappingKeys;
   DocumentMappingReader mappingReader;
 
   public KeyIteratorWrapper(int indexId, KeyIterator iterator, boolean mappingKeys, DocumentMappingReader mappingReader){
     this.iterator = iterator;
+    this.id = indexId;
+    this.mappingKeys = mappingKeys;
+
     if(mappingKeys){
       this.mappingReader = mappingReader;
     } else {
@@ -37,16 +41,16 @@ public class KeyIteratorWrapper implements Comparable<KeyIteratorWrapper> {
   // Perform the mapping on the current key
 
   public byte[] getKeyBytes() throws IOException {
-    if(mappingReader != null){
+    if(mappingKeys){
       return mappingReader.map(id, this.iterator.getKeyBytes());
     } else {
       return this.iterator.getKeyBytes();
     }
   }
 
-  public int compareTo(KeyIteratorWrapper t) {
+  public int compareTo(KeyIteratorWrapper o) {
     try {
-      return Utility.compare(getKeyBytes(), t.getKeyBytes());
+      return Utility.compare(getKeyBytes(), o.getKeyBytes());
     } catch (IOException ex) {
       Logger.getLogger(KeyIteratorWrapper.class.getName()).log(Level.SEVERE, "There is a problem comparing mapped keys.", ex);
       throw new RuntimeException (ex);

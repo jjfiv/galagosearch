@@ -34,6 +34,7 @@ public class IndexNumberer implements ExNihiloSource<DocumentSplit> {
     int total = parameters.getXML().stringList("inputPath").size();
     for(String inputIndex : parameters.getXML().stringList("inputPath")){
       processor.process(new DocumentSplit(inputIndex,"",false,new byte[0],new byte[0],i,total));
+      i++;
     }
 
     processor.close();

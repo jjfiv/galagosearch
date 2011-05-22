@@ -9,6 +9,7 @@ import org.galagosearch.core.index.DocumentNameWriter;
 import org.galagosearch.core.types.NumberedDocumentData;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  *
@@ -30,6 +31,6 @@ public class DocumentNameMerger extends GenericIndexMerger<NumberedDocumentData>
   public void performValueMerge(byte[] key, List<KeyIteratorWrapper> keyIterators) throws IOException {
     assert (keyIterators.size() == 1) : "Found two identical keys when merging names. Name data should never be combined.";
     DocumentNameReader.KeyIterator i = (DocumentNameReader.KeyIterator) keyIterators.get(0).iterator;
-    this.writer.process(new NumberedDocumentData(i.getCurrentName(), null, i.getCurrentIdentifier(), 0));
+    this.writer.process(new NumberedDocumentData(i.getCurrentName(), null, Utility.toInt(key), 0));
   }
 }
