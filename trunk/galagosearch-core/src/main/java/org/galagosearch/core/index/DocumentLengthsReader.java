@@ -85,7 +85,7 @@ public class DocumentLengthsReader extends KeyValueReader {
     }
 
     public ValueIterator getValueIterator() throws IOException {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return new ValueIterator(this);
     }
   }
 
