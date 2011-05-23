@@ -17,6 +17,7 @@ public class CheckPointHandler {
   
   public void setDirectory(String dir){
     this.path = dir + File.separator + "checkpoint" ;
+    Utility.makeParentDirectories( path );
   }
   
   public void saveCheckpoint(Parameters checkpoint) throws IOException {
