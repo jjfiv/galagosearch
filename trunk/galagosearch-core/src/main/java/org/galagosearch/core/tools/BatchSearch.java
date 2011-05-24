@@ -2,7 +2,9 @@
 package org.galagosearch.core.tools;
 
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.ScoredDocument;
 import org.galagosearch.core.retrieval.query.Node;
@@ -51,6 +53,11 @@ public class BatchSearch {
 
     // for each query, run it, get the results, print in TREC format
     int index = 0;
+    if (parameters.containsKey("seed")) {
+	long seed = parameters.get("seed", 0L);
+	Random r = new Random(seed);
+	Collections.shuffle(queries, r);
+    }
     for (Parameters.Value query : queries) {
 
       String queryText = query.get("text");
