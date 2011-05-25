@@ -114,8 +114,7 @@ public class MultiRetrieval implements Retrieval {
     }
 
     // sort the results and invert (sort is inverted)
-    Collections.sort(queryResults);
-    Collections.reverse(queryResults);
+    Collections.sort(queryResults, Collections.reverseOrder());
 
     // get the best {requested} results
     int requested = (int) parameters.get("requested", 1000);

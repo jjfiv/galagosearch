@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 import org.galagosearch.core.index.DocumentIndicatorWriter;
-import org.galagosearch.core.parse.IndicatorFileLineParser;
+import org.galagosearch.core.index.DocumentPriorWriter;
+import org.galagosearch.core.parse.FileLineParser;
 import org.galagosearch.core.types.DocumentIndicator;
+import org.galagosearch.core.types.NumberWordProbability;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.Utility;
@@ -30,11 +32,11 @@ import org.galagosearch.tupleflow.execution.Step;
  * 
  * @author sjh
  */
-public class BuildIndicatorPart {
+public class BuildSpecialPart {
 
   static PrintStream output;
 
-  public Job getJob(Parameters p) throws IOException, ClassNotFoundException {
+  public Job getIndicatorJob(Parameters p) throws IOException, ClassNotFoundException {
     File indexPath = new File(p.get("indexPath")).getAbsoluteFile(); // fail if no path.
     assert (indexPath.isDirectory());
 
@@ -45,14 +47,14 @@ public class BuildIndicatorPart {
     }
 
     Parameters writerParams = new Parameters();
-    writerParams.add("filename", indexPath.getAbsolutePath() + File.separator + p.get("indicatorPart"));
+    writerParams.add("filename", indexPath.getAbsolutePath() + File.separator + p.get("partName"));
     // ensure we set a default value - default default value is 'false'
     writerParams.add("default", p.get("default", "false"));
 
-    Class indicatorExtractionStep = Class.forName(p.get("indicatorExtractor", "org.galagosearch.core.parse.IndicatorExtractor"));
+    Class indicatorExtractionStep = Class.forName(p.get("extractor", "org.galagosearch.core.parse.IndicatorExtractor"));
 
     Stage stage = new Stage("Indexer");
-    stage.add(new Step(IndicatorFileLineParser.class, parserParams));
+    stage.add(new Step(FileLineParser.class, parserParams));
     stage.add(new Step(indicatorExtractionStep, p));
     stage.add(Utility.getSorter(new DocumentIndicator.DocumentOrder()));
     stage.add(new Step(DocumentIndicatorWriter.class, writerParams));
@@ -63,39 +65,69 @@ public class BuildIndicatorPart {
     return job;
   }
 
-  public static void commandHelpBuildIndicator() {
-    output.println("galago indicator [flags] <index> (<input>)+");
+
+  private Job getPriorJob(Parameters p) throws ClassNotFoundException {
+   File indexPath = new File(p.get("indexPath")).getAbsoluteFile(); // fail if no path.
+    assert (indexPath.isDirectory());
+
+    Parameters parserParams = new Parameters();
+    List<Value> vs = p.list("inputPaths");
+    for (Value v : vs) {
+      parserParams.add("input", new File(v.toString()).getAbsolutePath());
+    }
+
+    Parameters writerParams = new Parameters();
+    writerParams.add("filename", indexPath.getAbsolutePath() + File.separator + p.get("partName"));
+    // ensure we set a default value - default default value is 'false'
+    writerParams.add("default", p.get("default", Double.toString(Double.NEGATIVE_INFINITY)));
+
+    Class priorExtractionStep = Class.forName(p.get("extractor", "org.galagosearch.core.parse.PriorExtractor"));
+
+    Stage stage = new Stage("Indexer");
+    stage.add(new Step(FileLineParser.class, parserParams));
+    stage.add(new Step(priorExtractionStep, p));
+    stage.add(Utility.getSorter(new NumberWordProbability.NumberOrder()));
+    stage.add(new Step(DocumentPriorWriter.class, writerParams));
+
+    Job job = new Job();
+    job.add(stage);
+
+    return job;
+  }
+  
+  
+  public static void commandHelpBuildSpecial() {
+    output.println("galago build-special [flags] <index> (<input>)+");
     output.println();
 
-    output.println("  Builds a Galago StructuredIndex with TupleFlow, using one thread ");
-    output.println("  for each CPU core on your computer.  While some debugging output ");
-    output.println("  will be displayed on the screen, most of the status information will");
-    output.println("  appear on a web page.  A URL should appear in the command output ");
-    output.println("  that will direct you to the status page.");
+    output.println("  Builds a Galago Structured Index Part file with TupleFlow, ");
+    output.println("  Can build either an indicator part or prior part.");
     output.println();
-
-    output.println("<input>:  Can be either a file or directory, and as many can be");
-    output.println("          specified as you like.  Galago can read html, xml, txt, ");
-    output.println("          arc (Heritrix), trectext, trecweb and corpus files.");
-    output.println("          Files may be gzip compressed (.gz).");
-    output.println("<index>:  The directory path of the index to produce.");
+    output.println("<indicator-input>:  One or more indicator files in format:");
+    output.println("           < document-identifier \t [true | false] >");
     output.println();
-
+    output.println("<prior-input>:  One or more indicator files in format:");
+    output.println("           < document-identifier \t [log-probability] >");
+    output.println();
+    output.println("<index>:  The directory path of the index to add to.");
+    output.println();
     output.println("Algorithm Flags:");
-    output.println("  --links={true|false}:    Selects whether to collect anchor text ");
-    output.println("                           [default=false]");
-    output.println("  --printJob={plan|dot|none}: Simply prints the execution plan of a Tupleflow-based job then exits.");
-    output.println("                              'dot' dumps a dot file that you can use to look at the execution graph.");
-    output.println("                           [default=none]");
-    output.println("  --stemming={true|false}: Selects whether to build stemmed inverted ");
-    output.println("                           lists in addition to non-stemmed ones.");
-    output.println("                           [default=true]");
-    output.println("  --corpusPath=/path/for/corpus: Selects the location to output a corpus folder.");
-    output.println("                           Note that this is optional, if no path is supplied,");
-    output.println("                           then no corpus will be created.");
-    output.println("                           [default=None]");
+    output.println("  --type={indicator|prior}: Sets the type of index part to build.");
+    output.println("                            [default=prior]");
     output.println();
-
+    output.println("  --partName={String}:      Sets the name of index part.");
+    output.println("                 indicator: [default=prior]");
+    output.println("                     prior: [default=indicator]");
+    output.println();
+    output.println("  --extractor={java class}: Sets the class that extracts boolean values for each input line.");
+    output.println("                 indicator: [default=org.galagosearch.core.parse.IndicatorExtractor]");
+    output.println("                     prior: [default=org.galagosearch.core.parse.PriorExtractor]");
+    output.println();
+    output.println("  --default={true|false|float}: Sets the default value for the index part.");
+    output.println("                 indicator: [default=false]");
+    output.println("                     prior: [default=-inf");
+    output.println();
+    output.println();
     output.println("Tupleflow Flags:");
     output.println("  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.");
     output.println("                           [default=false]");
@@ -117,7 +149,7 @@ public class BuildIndicatorPart {
   public static void main(String[] args) throws Exception {
     output = System.out;
     if (args.length < 3) { // build index input
-      commandHelpBuildIndicator();
+      commandHelpBuildSpecial();
       return;
     }
 
@@ -135,9 +167,14 @@ public class BuildIndicatorPart {
       p.add("inputPaths", doc);
     }
 
-    Job job;
-    BuildIndicatorPart build = new BuildIndicatorPart();
-    job = build.getJob(p);
+    Job job = null;
+    BuildSpecialPart build = new BuildSpecialPart();
+    String type = p.get("type", "prior");
+    if(type.equals("indicator")){
+      job = build.getIndicatorJob(p);
+    } else if(type.equals("prior")){
+      job = build.getPriorJob(p);
+    }
 
     String printJob = p.get("printJob", "none");
     if (printJob.equals("plan")) {

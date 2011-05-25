@@ -23,22 +23,26 @@ import org.galagosearch.tupleflow.execution.Verified;
  */
 @Verified
 @OutputClass(className = "java.lang.String")
-public class IndicatorFileLineParser implements ExNihiloSource<String> {
+public class FileLineParser implements ExNihiloSource<String> {
+
   public Processor<String> processor;
   Parameters p;
   Counter lines;
-  
-  public IndicatorFileLineParser(TupleFlowParameters parameters){
+
+  public FileLineParser(TupleFlowParameters parameters) {
     p = parameters.getXML();
     lines = parameters.getCounter("Indicator Lines Read");
   }
-  
+
   public void run() throws IOException {
     BufferedReader reader;
-    for(String f : p.stringList( "input" )){
-      reader = new BufferedReader( new FileReader( f ) );
+    for (String f : p.stringList("input")) {
+      reader = new BufferedReader(new FileReader(f));
       String line;
-      while(null != (line = reader.readLine())){
+      while (null != (line = reader.readLine())) {
+        if (line.startsWith("#")) {
+          continue;
+        }
         processor.process(line);
       }
       reader.close();
@@ -49,5 +53,4 @@ public class IndicatorFileLineParser implements ExNihiloSource<String> {
   public void setProcessor(Step processor) throws IncompatibleProcessorException {
     Linkage.link(this, processor);
   }
- 
 }

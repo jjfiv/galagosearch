@@ -708,6 +708,7 @@ public class App {
     output.println("   batch-search");
     output.println("   build");
     output.println("   build-fast");
+    output.println("   build-special");
     output.println("   build-topdocs");
     output.println("   doc");
     output.println("   dump-connection");
@@ -718,7 +719,6 @@ public class App {
     output.println("   dump-lengths");
     output.println("   dump-modifier");
     output.println("   dump-names");
-    output.println("   indicator");
     output.println("   eval");
     output.println("   make-corpus");
     output.println("   merge-index");
@@ -739,8 +739,8 @@ public class App {
       commandHelpWindow();
     } else if (command.startsWith("merge-index")) {
       MergeIndexes.commandHelpMerge();
-    } else if (command.startsWith("indicator")) {
-      BuildIndicatorPart.commandHelpBuildIndicator();
+    } else if (command.startsWith("build-special")) {
+      BuildSpecialPart.commandHelpBuildSpecial();
     } else if (command.startsWith("pagerank")) {
       //PageRankApp.commandHelpPageRank();
     } else if (command.startsWith("build-topdocs")) {
@@ -891,6 +891,8 @@ public class App {
       handleBuild(args);
     } else if (command.equals("build-fast")) {
       handleBuild(args);
+    } else if (command.equals("build-special")) {
+      BuildSpecialPart.main(args);
     } else if (command.equals("build-topdocs")) {
       handleBuildTopdocs(args);
     } else if (command.equals("doc")) {
@@ -913,8 +915,6 @@ public class App {
       handleDumpLengths(args);
     } else if (command.equals("dump-names")) {
       handleDumpNames(args);
-    } else if (command.equals("indicator")) {
-      BuildIndicatorPart.main(args);
     } else if (command.equals("make-corpus")) {
       handleMakeCorpus(args);
     } else if (command.equals("merge-index")) {

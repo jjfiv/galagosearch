@@ -32,7 +32,7 @@ import org.galagosearch.tupleflow.execution.Verification;
 public abstract class KeyValueWriter<T> implements Processor<T> {
     protected IndexWriter writer;
     protected Counter elementsWritten;
-    protected int count;
+    protected long count;
 
     public KeyValueWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
       this(parameters, "Documents written");
@@ -47,7 +47,8 @@ public abstract class KeyValueWriter<T> implements Processor<T> {
     protected abstract GenericElement prepare(T item) throws IOException;
 
     public void close() throws IOException {
-        writer.close();
+      writer.getManifest().set("keyCount", Long.toString(count));
+      writer.close();
     }
 
     public void process(T i) throws IOException {

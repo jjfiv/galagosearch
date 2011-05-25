@@ -11,6 +11,8 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.DocumentContext;
 import org.galagosearch.core.retrieval.structured.IndicatorIterator;
+import org.galagosearch.core.retrieval.structured.ScoreIterator;
+import org.galagosearch.core.retrieval.structured.ScoreValueIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 
@@ -18,27 +20,27 @@ import org.galagosearch.tupleflow.Utility;
  * 
  * @author sjh
  */
-public class DocumentIndicatorReader extends KeyValueReader {
+public class DocumentPriorReader extends KeyValueReader {
 
-  protected boolean def;
+  protected double def;
   protected Parameters manifest;
 
-  public DocumentIndicatorReader(String filename) throws FileNotFoundException, IOException {
+  public DocumentPriorReader(String filename) throws FileNotFoundException, IOException {
     super(filename);
-    this.manifest = this.reader.getManifest();
-    def = Boolean.parseBoolean(this.manifest.get("default")); // this must exist
+    def = Double.parseDouble(this.getManifest().get("default")); // this must exist
   }
 
-  public DocumentIndicatorReader(GenericIndexReader r) {
+  public DocumentPriorReader(GenericIndexReader r) {
     super(r);
+    this.manifest = this.reader.getManifest();
   }
 
-  public boolean getIndicator(int document) throws IOException {
+  public double getPrior(int document) throws IOException {
     byte[] valueBytes = reader.getValueBytes(Utility.fromInt(document));
     if ((valueBytes == null) || (valueBytes.length == 0)) {
       return def;
     } else {
-      return Utility.toBoolean(valueBytes);
+      return Utility.toDouble(valueBytes);
     }
   }
 
@@ -48,12 +50,12 @@ public class DocumentIndicatorReader extends KeyValueReader {
 
   public Map<String, NodeType> getNodeTypes() {
     HashMap<String, NodeType> types = new HashMap<String, NodeType>();
-    types.put("indicator", new NodeType(ValueIterator.class));
+    types.put("prior", new NodeType(ValueIterator.class));
     return types;
   }
 
   public ValueIterator getIterator(Node node) throws IOException {
-    if (node.getOperator().equals("indicator")) {
+    if (node.getOperator().equals("prior")) {
       return new ValueIterator(new KeyIterator(reader));
     } else {
       throw new UnsupportedOperationException(
@@ -86,12 +88,12 @@ public class DocumentIndicatorReader extends KeyValueReader {
       return Utility.toInt(iterator.getKey());
     }
 
-    public boolean getCurrentIndicator() throws IOException {
+    public double getCurrentScore() throws IOException {
       byte[] valueBytes = iterator.getValueBytes();
       if ((valueBytes == null) || (valueBytes.length == 0)) {
         return def;
       } else {
-        return Utility.toBoolean(valueBytes);
+        return Utility.toDouble(valueBytes);
       }
     }
 
@@ -105,7 +107,7 @@ public class DocumentIndicatorReader extends KeyValueReader {
   }
 
   // needs to be an AbstractIndicator
-  public class ValueIterator extends KeyToListIterator implements IndicatorIterator {
+  public class ValueIterator extends KeyToListIterator implements ScoreValueIterator {
 
     DocumentContext context;
 
@@ -117,46 +119,46 @@ public class DocumentIndicatorReader extends KeyValueReader {
       return Integer.toString(((KeyIterator) iterator).getCurrentDocument());
     }
 
-    public long totalEntries() {
-      return manifest.get("keyCount",-1);
-    }
-
-    public int getIndicatorStatus() {
-      return (getStatus() == true ? 1 : 0);
-    }
-
-    public boolean getStatus() {
-      if (context.document == ((KeyIterator) iterator).getCurrentDocument()) {
-        return def;
-      } else {
-        try {
-          return ((KeyIterator) iterator).getCurrentIndicator();
-        } catch (IOException ex) {
-          Logger.getLogger(DocumentIndicatorReader.class.getName()).log(Level.SEVERE, null, ex);
-          throw new RuntimeException("Failed to read indicator file.");
-        }
-      }
-    }
-
-    public boolean getStatus(int document) {
-      if (document != ((KeyIterator) iterator).getCurrentDocument()) {
-        return def;
-      } else {
-        try {
-          return ((KeyIterator) iterator).getCurrentIndicator();
-        } catch (IOException ex) {
-          Logger.getLogger(DocumentIndicatorReader.class.getName()).log(Level.SEVERE, null, ex);
-          throw new RuntimeException("Failed to read indicator file.");
-        }
-      }
-    }
-
     public DocumentContext getContext() {
       return context;
     }
 
     public void setContext(DocumentContext context) {
       this.context = context;
+    }
+
+    public long totalEntries() {
+      return manifest.get("keyCount", -1);
+    }
+
+    public double score() {
+      return this.score(this.context);
+    }
+
+    public double score(DocumentContext context) {
+      try {
+        if (this.currentCandidate() == context.document) {
+          byte[] valueBytes = iterator.getValueBytes();
+          if ((valueBytes == null) || (valueBytes.length == 0)) {
+            return def;
+          } else {
+            return Utility.toDouble(valueBytes);
+          }
+        } else {
+          return def;
+        }
+      } catch (IOException ex) {
+        Logger.getLogger(DocumentPriorReader.class.getName()).log(Level.SEVERE, null, ex);
+        throw new RuntimeException( ex );
+      }
+    }
+
+    public double maximumScore() {
+      return manifest.get("maxScore", Double.POSITIVE_INFINITY);
+    }
+
+    public double minimumScore() {
+      return manifest.get("minScore", Double.NEGATIVE_INFINITY);
     }
   }
 }

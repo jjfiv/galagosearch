@@ -772,14 +772,6 @@ public class Utility {
     return writeBuffer;
   }
 
-  public static boolean toBoolean(byte[] key, boolean def){
-    if(key != null || key.length > 0){
-      return ( key[0] != 0 );
-    } else {
-      return def;
-    }
-  }
-  
   public static boolean toBoolean(byte[] key){
     assert key.length == 1;
     return ( key[0] != 0 );
@@ -793,6 +785,21 @@ public class Utility {
       out[0] = 0;
     return out;
   }
+
+  /*
+   * NOTE: doubles should NOT be used as index keys
+   *  - rounding errors are likely to cause otherwise identical values not to match
+   */
+  public static double toDouble(byte[] value){    
+    long l = Utility.toLong(value);
+    return Double.longBitsToDouble(l);
+  }
+  
+  public static byte[] fromDouble(double value){
+    long l = Double.doubleToRawLongBits(value);
+    return Utility.fromLong(l);
+  }
+  
   
   
   public static void compressInt(DataOutput output, int i) throws IOException {
