@@ -295,11 +295,18 @@ public class App {
     }
 
     String indexPath = args[1];
-    String identifier = args[2];
+    String id = args[2];
 
     DocumentNameReader reader = new DocumentNameReader(indexPath);
-    int docNum = reader.getDocumentId(identifier);
-    output.println(docNum);
+
+    if(reader.isForward){
+      String docIdentifier = reader.get(Integer.parseInt(id));
+      output.println(docIdentifier);
+    } else {
+      int docNum = reader.getDocumentId(id);
+      output.println(docNum);
+    }
+    
   }
 
   protected void handleDumpKeyValue(String[] args) throws IOException {
@@ -486,56 +493,6 @@ public class App {
     }
   }
 
-  /*
-  protected void handleMergeIndexes(String[] args) throws Exception {
-  // Remove 'merge-index' from the command.
-  args = Utility.subarray(args, 1);
-  
-  if (args.length <= 0) {
-  commandHelp("merge-index");
-  return;
-  }
-  
-  // handle --links and --stemming flags
-  String[][] filtered = Utility.filterFlags(args);
-  
-  String[] flags = filtered[0];
-  String[] nonFlags = filtered[1];
-  String newIndex = nonFlags[0];
-  String[] oldIndexes = Utility.subarray(nonFlags, 1);
-  
-  Parameters p = new Parameters(flags);
-  p.set("command", Utility.join(args, " "));
-  p.set("outputIndex", newIndex);
-  for (String input : oldIndexes) {
-  p.add("inputIndexes", input);
-  }
-  
-  // ensure galagoTemp has been set
-  p.set("galagoTemp", Utility.createGalagoTempDir(p.get("galagoTemp", "")).getAbsolutePath());
-  
-  MergeParallelIndexShards merger = new MergeParallelIndexShards();
-  Job job = merger.getJob(p);
-  
-  boolean printJob = Boolean.parseBoolean(p.get("printJob", "false"));
-  if (printJob) {
-  System.out.println(job.toString());
-  return;
-  }
-  
-  int hash = (int) p.get("distrib", 0); // doesn't really matter in this case.
-  if (hash > 0) // all other numbers don't make any sense
-  {
-  job.properties.put("hashCount", Integer.toString(hash));
-  }
-  
-  ErrorStore store = new ErrorStore();
-  JobExecutor.runLocally(job, store, p);
-  if (store.hasStatements()) {
-  output.println(store.toString());
-  }
-  }
-   */
   protected void handleWindow(String[] args) throws Exception {
     if (args.length < 3) { // minimal usage: ngram index input
       commandHelpWindow();
@@ -711,6 +668,7 @@ public class App {
     output.println("   build-special");
     output.println("   build-topdocs");
     output.println("   doc");
+    output.println("   doc-id");
     output.println("   dump-connection");
     output.println("   dump-corpus");
     output.println("   dump-index");
@@ -755,9 +713,13 @@ public class App {
       output.println("  Prints the full text of the document named by <identifier>.");
       output.println("  The document is retrieved from a Corpus file named <corpus>.");
     } else if (command.equals("doc-id")) {
-      output.println("galago doc <documentNames.ReverseLookup> <identifier>");
+      output.println("Two possible use cases:");
       output.println();
-      output.println("  Prints the internal document id of the document named by <identifier>.");
+      output.println("galago doc-id <documentNames> <internal-number>");
+      output.println("  Prints the external document identifier of the document <internal-number>.");
+      output.println();
+      output.println("galago doc-id <documentNames.ReverseLookup> <identifier>");
+      output.println("  Prints the internal document number of the document named by <identifier>.");
     } else if (command.equals("dump-connection")) {
       output.println("galago dump-connection <connection-file>");
       output.println();

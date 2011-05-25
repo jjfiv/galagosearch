@@ -17,7 +17,7 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class DocumentNameReader extends NameReader {
 
-  boolean isForward;
+  public boolean isForward;
 
   /** Creates a new instance of DocumentNameReader */
   public DocumentNameReader(String fileName) throws IOException {
