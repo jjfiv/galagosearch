@@ -64,7 +64,7 @@ import org.znerd.xmlenc.XMLOutputter;
  */
 public class SearchWebHandler extends ContextHandler {
 
-  Search search;
+  protected Search search;
 
   public SearchWebHandler(Search search) {
     this.search = search;
@@ -127,14 +127,14 @@ public class SearchWebHandler extends ContextHandler {
     }
   }
 
-  private String scrub(String s) throws UnsupportedEncodingException {
+  protected String scrub(String s) throws UnsupportedEncodingException {
     if (s == null) {
       return s;
     }
     return s.replace("<", "&gt;").replace(">", "&lt;").replace("&", "&amp;");
   }
 
-  private String decode(String s) throws UnsupportedEncodingException {
+  protected String decode(String s) throws UnsupportedEncodingException {
     //System.err.println("Before decoding: " + s);
     String decoded = URLDecoder.decode(s, "UTF-8");
     //System.err.println("After  decoding: " + decoded);
@@ -508,7 +508,7 @@ public class SearchWebHandler extends ContextHandler {
     }
   }
 
-  private SearchResult performSearch(HttpServletRequest request, boolean snippits) throws Exception {
+  protected SearchResult performSearch(HttpServletRequest request, boolean snippits) throws Exception {
     String query = request.getParameter("q");
     String transformString = request.getParameter("transform");
     boolean doTransform = Boolean.parseBoolean(transformString == null ? "true" : transformString);
@@ -537,7 +537,7 @@ public class SearchWebHandler extends ContextHandler {
     return result;
   }
 
-  private static class CollectionGroupSorter implements Comparator<String> {
+  protected static class CollectionGroupSorter implements Comparator<String> {
 
     public int compare(String s1, String s2) {
       if (s1.toLowerCase().equals("all")) {
