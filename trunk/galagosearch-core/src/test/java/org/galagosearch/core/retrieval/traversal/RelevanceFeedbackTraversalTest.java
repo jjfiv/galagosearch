@@ -60,7 +60,7 @@ public class RelevanceFeedbackTraversalTest extends TestCase {
         corpusFile = File.createTempFile("galago", ".corpus");
         corpusFile.delete();
         App.main(new String[]{"make-corpus", corpusFile.getAbsolutePath(),
-                    trecCorpusFile.getAbsolutePath()});
+                    trecCorpusFile.getAbsolutePath(), "--distrib=2"});
 
 
         // make sure the corpus file exists

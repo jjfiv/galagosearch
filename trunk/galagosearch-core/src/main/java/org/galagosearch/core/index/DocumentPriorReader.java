@@ -22,7 +22,7 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class DocumentPriorReader extends KeyValueReader {
 
-  protected double def;
+  private double def;
   protected Parameters manifest;
 
   public DocumentPriorReader(String filename) throws FileNotFoundException, IOException {
@@ -55,8 +55,9 @@ public class DocumentPriorReader extends KeyValueReader {
   }
 
   public ValueIterator getIterator(Node node) throws IOException {
+    double definst = node.getParameters().get("default", def);
     if (node.getOperator().equals("prior")) {
-      return new ValueIterator(new KeyIterator(reader));
+      return new ValueIterator(new KeyIterator(reader), definst);
     } else {
       throw new UnsupportedOperationException(
               "Index doesn't support operator: " + node.getOperator());
@@ -110,9 +111,11 @@ public class DocumentPriorReader extends KeyValueReader {
   public class ValueIterator extends KeyToListIterator implements ScoreValueIterator {
 
     DocumentContext context;
-
-    public ValueIterator(KeyIterator it) {
+    double defInst;
+    
+    public ValueIterator(KeyIterator it, double defInst) {
       super(it);
+      this.defInst = defInst;
     }
 
     public String getEntry() throws IOException {
@@ -140,12 +143,12 @@ public class DocumentPriorReader extends KeyValueReader {
         if (this.currentCandidate() == context.document) {
           byte[] valueBytes = iterator.getValueBytes();
           if ((valueBytes == null) || (valueBytes.length == 0)) {
-            return def;
+            return defInst;
           } else {
             return Utility.toDouble(valueBytes);
           }
         } else {
-          return def;
+          return defInst;
         }
       } catch (IOException ex) {
         Logger.getLogger(DocumentPriorReader.class.getName()).log(Level.SEVERE, null, ex);

@@ -27,6 +27,7 @@ import org.galagosearch.tupleflow.Parameters;
 public class RankedFeatureFactory extends FeatureFactory {
 static String[][] sOperatorLookup = {
     {FilteredIterator.class.getName(), "filter"},
+    {ThresholdIterator.class.getName(), "threshold"},
     {UnfilteredCombinationIterator.class.getName(), "combine"},
     {SynonymIterator.class.getName(), "syn"},
     {SynonymIterator.class.getName(), "synonym"},
