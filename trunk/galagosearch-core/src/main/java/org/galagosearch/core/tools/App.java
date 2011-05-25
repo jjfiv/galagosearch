@@ -551,6 +551,7 @@ public class App {
   protected class MappingHandler extends AbstractHandler {
 
     HashMap<String, Handler> handlers;
+    Handler defaultHandler = null;
 
     public MappingHandler() {
       handlers = new HashMap<String, Handler>();
@@ -560,11 +561,17 @@ public class App {
       handlers.put(s, h);
     }
 
+    public void setDefault(Handler h) {
+       defaultHandler = h;
+    }
+
     public void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) throws IOException, ServletException {
       String path = request.getPathInfo();
       Handler h = handlers.get(path);
       if (h != null) {
         h.handle(target, request, response, dispatch);
+      } else if (defaultHandler != null) {
+        defaultHandler.handle(target, request, response, dispatch);
       } else {
         throw new UnsupportedOperationException( " '"+ path +"'  is not supported yet.");
       }
@@ -586,7 +593,7 @@ public class App {
     mh.setHandler("/stream", new StreamContextHandler(search));
     mh.setHandler("/xml", new XMLContextHandler(search));
     mh.setHandler("/json", new JSONContextHandler(search));
-    mh.setHandler("/web", new SearchWebHandler(search));
+    mh.setDefault(new SearchWebHandler(search));
     server.addHandler(mh);
     server.start();
     output.println("Server: http://localhost:" + port);
