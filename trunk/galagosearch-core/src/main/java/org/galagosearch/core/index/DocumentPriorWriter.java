@@ -22,15 +22,10 @@ import org.galagosearch.tupleflow.execution.Verification;
 @InputClass(className = "org.galagosearch.core.types.NumberWordProbability", order = {"+number"})
 public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
 
-  int document = 0;
-  int offset = 0;
-  ByteArrayOutputStream bstream;
-  DataOutputStream stream;
-  
+  int lastDocument = -1;
   double maxScore = Double.NEGATIVE_INFINITY;
   double minScore = Double.POSITIVE_INFINITY;
 
-  
   /** Creates a new instance of DocumentLengthsWriter */
   public DocumentPriorWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
     super(parameters, "Document indicators written");
@@ -40,27 +35,25 @@ public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
 
     // ensure we set a default value - default default value is 'false'
     p.set("default", parameters.getXML().get("default", "-inf"));
-    
-    bstream = new ByteArrayOutputStream();
-    stream = new DataOutputStream(bstream);
   }
 
   public GenericElement prepare(NumberWordProbability nwp) throws IOException {
     // word is ignored
+    assert ((lastDocument < 0) || (lastDocument < nwp.number)) : "DocumentPriorWriter keys must be unique and in sorted order.";
+    
     maxScore = Math.max(maxScore, nwp.probability);
     minScore = Math.min(minScore, nwp.probability);
     GenericElement element = new GenericElement(Utility.fromInt(nwp.number), Utility.fromDouble(nwp.probability));
     return element;
   }
 
-  public void close() throws IOException{
+  public void close() throws IOException {
     Parameters p = writer.getManifest();
     p.set("maxScore", Double.toString(this.maxScore));
     p.set("minScore", Double.toString(this.minScore));
     super.close();
   }
-  
-  
+
   public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
     if (!parameters.getXML().containsKey("filename")) {
       handler.addError("KeyValueWriters require a 'filename' parameter.");

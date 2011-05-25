@@ -23,10 +23,7 @@ import org.galagosearch.tupleflow.execution.Verification;
 @InputClass(className = "org.galagosearch.core.types.DocumentIndicator", order = {"+document"})
 public class DocumentIndicatorWriter extends KeyValueWriter<DocumentIndicator> {
 
-  int document = 0;
-  int offset = 0;
-  ByteArrayOutputStream bstream;
-  DataOutputStream stream;
+  int lastDocument = -1;
 
   /** Creates a new instance of DocumentLengthsWriter */
   public DocumentIndicatorWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
@@ -37,12 +34,10 @@ public class DocumentIndicatorWriter extends KeyValueWriter<DocumentIndicator> {
 
     // ensure we set a default value - default default value is 'false'
     p.set("default", parameters.getXML().get("default", "false"));
-    
-    bstream = new ByteArrayOutputStream();
-    stream = new DataOutputStream(bstream);
   }
 
   public GenericElement prepare(DocumentIndicator di) throws IOException {
+    assert ((lastDocument < 0) || (lastDocument < di.document)) : "DocumentIndicatorWriter keys must be unique and in sorted order.";
     GenericElement element = new GenericElement(Utility.fromInt(di.document), Utility.fromBoolean(di.indicator));
     return element;
   }
