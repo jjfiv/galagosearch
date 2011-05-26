@@ -6,21 +6,35 @@ import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
- * #filter ( AbstractIndicator ScoreIterator ) : Only scores documents that where the AbstractIndicator is on
+ * #threshold: raw=x.xx ( ScoreIterator ) 
  *
  * @author sjh
  */
-public class ThresholdIterator implements IndicatorIterator  {
+@RequiredStatistics(statistics = {"raw", "prob", "logprob"})
+public class ThresholdIterator implements IndicatorIterator {
 
   DocumentContext context;
   ScoreValueIterator iterator;
   int document;
   double threshold;
-  
+
   public ThresholdIterator(Parameters parameters, ScoreValueIterator scorer) {
     this.iterator = scorer;
     this.document = scorer.currentCandidate();
-    this.threshold = Double.parseDouble(parameters.get("default"));
+    if (parameters.containsKey("raw")) {
+      this.threshold = Double.parseDouble(parameters.get("raw"));
+    
+    } else if (parameters.containsKey("prob")) {
+      this.threshold = Math.log(Double.parseDouble(parameters.get("prob")));
+      assert this.threshold < 0;
+
+    } else if (parameters.containsKey("logprob")) {
+      this.threshold = Double.parseDouble(parameters.get("logprob"));
+      assert this.threshold < 0;
+    
+    } else {
+      throw new RuntimeException("#threshold operator requires a thresholding parameter: [raw|prob|logprob]");
+    }
   }
 
   public void setContext(DocumentContext context) {
@@ -46,24 +60,25 @@ public class ThresholdIterator implements IndicatorIterator  {
 
   public boolean hasMatch(int identifier) {
     // needs to check the score against a threshold.
-    return ((this.document == identifier) &&
-            (iterator.score() >= threshold));
+    return ((this.document == identifier)
+            && (iterator.score() >= threshold));
   }
-  
+
   /* 
    *  BE VERY CAREFUL NOT TO CALL next() INTERNALLY
    */
   public boolean next() throws IOException {
     movePast(document);
     // use a new doccontext to iterate until the indicator is true
-    while((! isDone()) && (! this.hasMatch( document ))){
+    while ((!isDone()) && (!this.hasMatch(document))) {
       movePast(document);
     }
-    return (! isDone() );
+    return (!isDone());
   }
 
   public boolean moveTo(int identifier) throws IOException {
     iterator.moveTo(identifier);
+    this.document = iterator.currentCandidate();
     return hasMatch(identifier);
   }
 
@@ -72,7 +87,7 @@ public class ThresholdIterator implements IndicatorIterator  {
   }
 
   public String getEntry() throws IOException {
-    throw new UnsupportedOperationException("Filter nodes don't have singular values");
+    throw new UnsupportedOperationException("Threshold nodes don't have singular values");
   }
 
   public long totalEntries() {
@@ -102,7 +117,7 @@ public class ThresholdIterator implements IndicatorIterator  {
   }
 
   public int getIndicatorStatus() {
-    if( hasMatch(this.document)){
+    if (hasMatch(this.document)) {
       return 1;
     }
     return 0;

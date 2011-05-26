@@ -25,12 +25,20 @@ public class FakeScoreIterator implements ScoreValueIterator {
   }
 
   public int currentCandidate() {
-    return docs[index];
+    if (index < docs.length) {
+      return docs[index];
+    } else {
+      return Integer.MAX_VALUE;
+    }
+
   }
 
   public boolean hasMatch(int document) {
-    if (isDone()) return false;
-    else return document == docs[index];
+    if (isDone()) {
+      return false;
+    } else {
+      return document == docs[index];
+    }
   }
 
   public boolean moveTo(int document) throws IOException {
