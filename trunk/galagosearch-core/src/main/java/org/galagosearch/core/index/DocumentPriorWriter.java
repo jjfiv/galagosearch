@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import org.galagosearch.core.types.DocumentIndicator;
 import org.galagosearch.core.types.NumberWordProbability;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.TupleFlowParameters;
@@ -26,6 +27,8 @@ public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
   double maxScore = Double.NEGATIVE_INFINITY;
   double minScore = Double.POSITIVE_INFINITY;
 
+  Counter written;
+
   /** Creates a new instance of DocumentLengthsWriter */
   public DocumentPriorWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
     super(parameters, "Document indicators written");
@@ -35,6 +38,8 @@ public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
 
     // ensure we set a default value - default default value is 'false'
     p.set("default", parameters.getXML().get("default", "-inf"));
+
+    written = parameters.getCounter("Priors Written");
   }
 
   public GenericElement prepare(NumberWordProbability nwp) throws IOException {
@@ -44,6 +49,8 @@ public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
     maxScore = Math.max(maxScore, nwp.probability);
     minScore = Math.min(minScore, nwp.probability);
     GenericElement element = new GenericElement(Utility.fromInt(nwp.number), Utility.fromDouble(nwp.probability));
+
+    if(written != null) written.increment();
     return element;
   }
 

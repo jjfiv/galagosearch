@@ -40,6 +40,8 @@ public class FileLineParser implements ExNihiloSource<String> {
       reader = new BufferedReader(new FileReader(f));
       String line;
       while (null != (line = reader.readLine())) {
+        if(lines != null) lines.increment();
+
         if (line.startsWith("#")) {
           continue;
         }

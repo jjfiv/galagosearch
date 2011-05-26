@@ -37,8 +37,9 @@ public class BuildSpecialPart {
   static PrintStream output;
 
   public Job getIndicatorJob(Parameters p) throws IOException, ClassNotFoundException {
-    File indexPath = new File(p.get("indexPath")).getAbsoluteFile(); // fail if no path.
-    assert (indexPath.isDirectory());
+    String indexPath = new File(p.get("indexPath")).getAbsolutePath(); // fail if no path.
+    p.set("indexPath", indexPath);
+    assert (new File(indexPath).isDirectory());
 
     Parameters parserParams = new Parameters();
     List<Value> vs = p.list("inputPaths");
@@ -47,7 +48,7 @@ public class BuildSpecialPart {
     }
 
     Parameters writerParams = new Parameters();
-    writerParams.add("filename", indexPath.getAbsolutePath() + File.separator + p.get("partName"));
+    writerParams.add("filename", indexPath + File.separator + p.get("partName"));
     // ensure we set a default value - default default value is 'false'
     writerParams.add("default", p.get("default", "false"));
 
@@ -67,8 +68,9 @@ public class BuildSpecialPart {
 
 
   private Job getPriorJob(Parameters p) throws ClassNotFoundException {
-   File indexPath = new File(p.get("indexPath")).getAbsoluteFile(); // fail if no path.
-    assert (indexPath.isDirectory());
+    String indexPath = new File(p.get("indexPath")).getAbsolutePath(); // fail if no path.
+    p.set("indexPath", indexPath);
+    assert (new File(indexPath).isDirectory());
 
     Parameters parserParams = new Parameters();
     List<Value> vs = p.list("inputPaths");
@@ -77,7 +79,7 @@ public class BuildSpecialPart {
     }
 
     Parameters writerParams = new Parameters();
-    writerParams.add("filename", indexPath.getAbsolutePath() + File.separator + p.get("partName"));
+    writerParams.add("filename", indexPath + File.separator + p.get("partName"));
     // ensure we set a default value - default default value is 'false'
     writerParams.add("default", p.get("default", Double.toString(Double.NEGATIVE_INFINITY)));
 
@@ -126,6 +128,9 @@ public class BuildSpecialPart {
     output.println("  --default={true|false|float}: Sets the default value for the index part.");
     output.println("                 indicator: [default=false]");
     output.println("                     prior: [default=-inf");
+    output.println();
+    output.println("  --priorType={raw|prob|logprob}: Sets the type of prior to read. (Only for prior parts)");
+    output.println("                            [default=raw]");
     output.println();
     output.println();
     output.println("Tupleflow Flags:");

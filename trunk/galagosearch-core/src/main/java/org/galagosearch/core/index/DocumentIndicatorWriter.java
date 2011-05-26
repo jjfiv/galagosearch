@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.galagosearch.core.index.merge.DocumentLengthsMerger;
 import org.galagosearch.core.types.DocumentIndicator;
 import org.galagosearch.core.types.NumberedDocumentData;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.TupleFlowParameters;
@@ -24,6 +25,7 @@ import org.galagosearch.tupleflow.execution.Verification;
 public class DocumentIndicatorWriter extends KeyValueWriter<DocumentIndicator> {
 
   int lastDocument = -1;
+  Counter written;
 
   /** Creates a new instance of DocumentLengthsWriter */
   public DocumentIndicatorWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
@@ -34,11 +36,17 @@ public class DocumentIndicatorWriter extends KeyValueWriter<DocumentIndicator> {
 
     // ensure we set a default value - default default value is 'false'
     p.set("default", parameters.getXML().get("default", "false"));
+
+    written = parameters.getCounter("Priors Written");
   }
 
   public GenericElement prepare(DocumentIndicator di) throws IOException {
     assert ((lastDocument < 0) || (lastDocument < di.document)) : "DocumentIndicatorWriter keys must be unique and in sorted order.";
     GenericElement element = new GenericElement(Utility.fromInt(di.document), Utility.fromBoolean(di.indicator));
+
+    if (written != null) {
+      written.increment();
+    }
     return element;
   }
 

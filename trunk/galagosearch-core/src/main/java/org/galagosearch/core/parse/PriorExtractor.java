@@ -29,10 +29,21 @@ import org.galagosearch.tupleflow.execution.Verified;
 public class PriorExtractor extends StandardStep<String, NumberWordProbability> {
 
   private final DocumentNameReader.KeyIterator namesIterator;
+  private boolean applylog;
 
   public PriorExtractor(TupleFlowParameters parameters) throws IOException {
     String namesPath = parameters.getXML().get("indexPath") + File.separator + "names.reverse";
     namesIterator = ((DocumentNameReader) StructuredIndex.openIndexPart(namesPath)).getIterator();
+
+    // type of scores being read in:
+    String priorType = parameters.getXML().get("priorType", "r");
+    if( priorType.startsWith("r")){
+      applylog = false;
+    } else if(priorType.startsWith("p")) {
+      applylog = true;
+    } else if(priorType.startsWith("l")) {
+      applylog = false;
+    }
   }
 
   private int getInternalDocId(String docName) throws IOException {
@@ -57,6 +68,10 @@ public class PriorExtractor extends StandardStep<String, NumberWordProbability> 
       DocumentProbability dp = new DocumentProbability();
       dp.document = split[0];
       dp.probability = Double.parseDouble( split[1] );
+
+      if(applylog){
+        dp.probability = Math.log(dp.probability);
+      }
       return dp;
     }
     return null;
