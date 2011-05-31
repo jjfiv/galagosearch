@@ -10,6 +10,7 @@ import java.io.IOException;
 import org.galagosearch.core.index.GenericElement;
 import org.galagosearch.core.index.IndexWriter;
 import org.galagosearch.core.types.KeyValuePair;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Processor;
 import org.galagosearch.tupleflow.TupleFlowParameters;
@@ -38,15 +39,18 @@ import org.galagosearch.tupleflow.execution.Verification;
 public class SplitIndexKeyWriter implements Processor<KeyValuePair> {
 
     IndexWriter writer;
+    private Counter keyCounter;
 
     public SplitIndexKeyWriter(TupleFlowParameters parameters) throws IOException{
         String file = parameters.getXML().get("filename") + File.separator + "key.index";
         Utility.makeParentDirectories(file);
         writer = new IndexWriter( file , parameters.getXML() );
+	keyCounter = parameters.getCounter("Document Keys Written");
     }
 
     public void process(KeyValuePair object) throws IOException {
         writer.add( new GenericElement( object.key, object.value ) );
+	if (keyCounter != null) keyCounter.increment();
     }
 
     public void close() throws IOException {

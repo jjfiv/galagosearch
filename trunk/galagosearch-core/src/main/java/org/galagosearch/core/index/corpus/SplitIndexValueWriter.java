@@ -12,6 +12,7 @@ import java.io.RandomAccessFile;
 import org.galagosearch.core.index.GenericIndexWriter;
 import org.galagosearch.core.index.IndexElement;
 import org.galagosearch.core.types.KeyValuePair;
+import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
 import org.galagosearch.tupleflow.InputClass;
 import org.galagosearch.tupleflow.Linkage;
@@ -60,11 +61,12 @@ public class SplitIndexValueWriter extends GenericIndexWriter
     private long valueOffset;
     private long valueLength;
     private short valueBlockSize;
-
+    private Counter docCounter;
+    
     public SplitIndexValueWriter(TupleFlowParameters parameters) throws IOException {
         String valueOutputPath = parameters.getXML().get("filename") + File.separator + parameters.getInstanceId();
         Utility.makeParentDirectories(valueOutputPath);
-
+	docCounter = parameters.getCounter("Document Values Stored");
         manifest = parameters.getXML();
 
         valueOutputId = parameters.getInstanceId();
@@ -101,6 +103,7 @@ public class SplitIndexValueWriter extends GenericIndexWriter
             keyStream.writeLong(valueLength); // value length
             keyStream.close();
             processor.process(new KeyValuePair(lastKey, keyArray.toByteArray()));
+	    if (docCounter != null) docCounter.increment();
         }
 
         lastKey = key;
