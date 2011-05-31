@@ -93,7 +93,7 @@ public class FilteredIterator implements ScoreValueIterator {
     }
 
     if (!indicator.isDone()) {
-      indicator.moveTo(identifier);
+      indicator.moveTo(document);
       // indicator may or may not point to the same document.
       // if not: it should have a default status to return.
     }
