@@ -53,13 +53,16 @@ public class BatchSearch {
 
     // for each query, run it, get the results, print in TREC format
     int index = 0;
-    if (parameters.containsKey("seed")) {
-	long seed = parameters.get("seed", 0L);
-	Random r = new Random(seed);
-	Collections.shuffle(queries, r);
-    }
-    for (Parameters.Value query : queries) {
+    long starttime = System.currentTimeMillis();
+    long sumtime = 0;
 
+    if (parameters.containsKey("seed")) {
+      long seed = parameters.get("seed", 0L);
+      Random r = new Random(seed);
+      Collections.shuffle(queries, r);
+    }
+
+    for (Parameters.Value query : queries) {
       String queryText = query.get("text");
       Parameters p = new Parameters();
       p.add("requested", Integer.toString(requested));
@@ -75,13 +78,17 @@ public class BatchSearch {
         System.err.println("Transformed Node:" + transformed.toString());
       }
 
+      long querystarttime = System.currentTimeMillis();
       ScoredDocument[] results = retrieval.runRankedQuery(transformed, p);
+      long queryendtime = System.currentTimeMillis();
+      sumtime += queryendtime - querystarttime;
+
       for (int i = 0; i < results.length; i++) {
         double score = results[i].score;
         int rank = i + 1;
 
         out.format("%s Q0 %s %d %s galago\n", query.get("number"), results[i].documentName, rank,
-		   formatScore(score));
+                formatScore(score));
       }
       index++;
       if (parameters.get("print_calls", "false").equals("true")) {
@@ -90,6 +97,10 @@ public class BatchSearch {
       CallTable.reset();
     }
 
+    long endtime = System.currentTimeMillis();
+    System.err.println("TotalTime: " + (endtime - starttime));
+    System.err.println("AvgTime: " + ((endtime - starttime) / queries.size()));
+    System.err.println("AvgQueryTime: " + (sumtime / queries.size()));
   }
 
   public static void xCount(String[] args, PrintStream out) throws Exception {
