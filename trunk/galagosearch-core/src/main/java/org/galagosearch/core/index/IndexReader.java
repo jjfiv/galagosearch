@@ -205,16 +205,19 @@ public class IndexReader extends GenericIndexReader {
 
     public void skipTo(byte[] key) throws IOException {
       byte[] currentKey = this.key;
-      byte[] blockFirstKey = block.keys[0];
       byte[] blockLastKey = block.keys[block.keys.length - 1];
-      
-      // check if the desired key is in the current block
-      if ( (Utility.compare(key, blockFirstKey) >= 0)
-         && (Utility.compare(key, blockLastKey) <= 0)) {
 
-        if( Utility.compare(key, currentKey) < 0 ){
-          keyIndex = 0;
-        }
+      if(done || (Utility.compare( key, currentKey) < 0)){
+        if(done)
+          System.err.println( "DONE!" );
+        else
+          System.err.println( "key preceeds current key: " + print_bytes(key) + " --- " + print_bytes(currentKey) );
+        // this means that the required key does not exist in the index.
+        return;
+      }
+            
+      // check if the desired key is in the current block
+      if (Utility.compare(key, blockLastKey) <= 0) {
 
         while (keyIndex < block.keys.length) {
           byte[] blockKey = block.keys[keyIndex];
@@ -227,6 +230,7 @@ public class IndexReader extends GenericIndexReader {
 
         // otherwise we have to get a new block
       } else {
+
         TermSlot slot = vocabulary.get(key);
         if (slot == null) {
           done = true;
@@ -373,6 +377,14 @@ public class IndexReader extends GenericIndexReader {
         }
         totalRead += bytesRead;
       }
+    }
+
+    private String print_bytes(byte[] key) {
+      StringBuilder sb = new StringBuilder();
+      for(byte b : key){
+        sb.append(b).append(",");
+      }
+      return sb.toString();
     }
   }
 
