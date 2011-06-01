@@ -157,7 +157,7 @@ public class StructuredRetrieval implements Retrieval {
     while (!iterator.isDone()) {
       int document = iterator.currentCandidate();      
       if (iterator.hasMatch(document)) {
-        lengthsIterator.moveToKey(document);
+        lengthsIterator.skipToKey(document);
         int length = lengthsIterator.getCurrentLength();
         // This context is shared among all scorers
         context.document = document;
@@ -255,7 +255,7 @@ public class StructuredRetrieval implements Retrieval {
 
     NameReader.Iterator iterator = index.getNamesIterator();
     for (int document : docIds.keySet()) {
-      iterator.moveToKey(Utility.fromInt(document));
+      iterator.findKey(Utility.fromInt(document));
       String name = iterator.getValueString();
       results[docIds.get(document)].documentName = name;
     }

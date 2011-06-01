@@ -78,8 +78,8 @@ public class DocumentIndicatorReader extends KeyValueReader {
       }
     }
 
-    public boolean moveToKey(int key) throws IOException {
-      return moveToKey(Utility.fromInt(key));
+    public boolean skipToKey(int key) throws IOException {
+      return skipToKey(Utility.fromInt(key));
     }
 
     public int getCurrentDocument() {

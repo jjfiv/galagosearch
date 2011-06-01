@@ -27,7 +27,7 @@ public abstract class KeyToListIterator implements ValueIterator {
   }
 
   public boolean moveTo(int identifier) throws IOException {
-    return iterator.moveToKey(Utility.fromInt(identifier));
+    return iterator.skipToKey(Utility.fromInt(identifier));
   }
 
   public void movePast(int identifier) throws IOException {

@@ -50,12 +50,11 @@ public class BatchSearch {
 
     // record results requested
     int requested = (int) parameters.get("count", 1000);
-
-    // for each query, run it, get the results, print in TREC format
     int index = 0;
     long starttime = System.currentTimeMillis();
     long sumtime = 0;
 
+    // for each query, run it, get the results, print in TREC format
     if (parameters.containsKey("seed")) {
       long seed = parameters.get("seed", 0L);
       Random r = new Random(seed);
@@ -98,9 +97,12 @@ public class BatchSearch {
     }
 
     long endtime = System.currentTimeMillis();
-    System.err.println("TotalTime: " + (endtime - starttime));
-    System.err.println("AvgTime: " + ((endtime - starttime) / queries.size()));
-    System.err.println("AvgQueryTime: " + (sumtime / queries.size()));
+
+    if(parameters.get("time", false)){
+      System.err.println("TotalTime: " + (endtime - starttime));
+      System.err.println("AvgTime: " + ((endtime - starttime) / queries.size()));
+      System.err.println("AvgQueryTime: " + (sumtime / queries.size()));
+    }
   }
 
   public static void xCount(String[] args, PrintStream out) throws Exception {

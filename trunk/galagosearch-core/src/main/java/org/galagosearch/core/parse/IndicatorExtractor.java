@@ -38,7 +38,7 @@ public class IndicatorExtractor extends StandardStep<String, DocumentIndicator> 
   }
 
   private int getInternalDocId(String docName) throws IOException {
-    if(namesIterator.moveToKey(docName)){
+    if(namesIterator.findKey(docName)){
       return namesIterator.getCurrentIdentifier();
     } else {
       return -1;

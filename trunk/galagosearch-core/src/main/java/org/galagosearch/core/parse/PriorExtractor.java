@@ -47,7 +47,7 @@ public class PriorExtractor extends StandardStep<String, NumberWordProbability> 
   }
 
   private int getInternalDocId(String docName) throws IOException {
-    if(namesIterator.moveToKey(docName)){
+    if(namesIterator.findKey(docName)){
       return namesIterator.getCurrentIdentifier();
     } else {
       return -1;

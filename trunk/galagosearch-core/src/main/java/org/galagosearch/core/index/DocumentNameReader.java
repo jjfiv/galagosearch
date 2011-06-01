@@ -89,19 +89,19 @@ public class DocumentNameReader extends NameReader {
       return forwardLookup;
     }
 
-    public boolean moveToKey(int identifier) throws IOException {
+    public boolean skipToKey(int identifier) throws IOException {
       if (forwardLookup) {
-        return moveToKey(Utility.fromInt(identifier));
+        return skipToKey(Utility.fromInt(identifier));
       } else {
         throw new UnsupportedOperationException("Direction is wrong.");
       }
     }
 
-    public boolean moveToKey(String name) throws IOException {
+    public boolean findKey(String name) throws IOException {
       if (forwardLookup) {
         throw new UnsupportedOperationException("Direction is wrong.");
       } else {
-        return moveToKey(Utility.fromString(name));
+        return findKey(Utility.fromString(name));
       }
     }
 
@@ -141,6 +141,7 @@ public class DocumentNameReader extends NameReader {
     public ValueIterator getValueIterator() throws IOException {
       return new ValueIterator(this);
     }
+
   }
 
   public class ValueIterator extends KeyToListIterator implements DataIterator<String> {

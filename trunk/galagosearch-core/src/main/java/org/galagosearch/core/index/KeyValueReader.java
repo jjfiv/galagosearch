@@ -63,8 +63,16 @@ public abstract class KeyValueReader implements StructuredIndexPartReader {
       return iterator.isDone();
     }
 
-    public boolean moveToKey(byte[] key) throws IOException {
+    public boolean skipToKey(byte[] key) throws IOException {
       iterator.skipTo(key);
+      if (Utility.compare(key, iterator.getKey()) == 0) {
+        return true;
+      }
+      return false;
+    }
+
+    public boolean findKey(byte[] key) throws IOException {
+      iterator.find(key);
       if (Utility.compare(key, iterator.getKey()) == 0) {
         return true;
       }

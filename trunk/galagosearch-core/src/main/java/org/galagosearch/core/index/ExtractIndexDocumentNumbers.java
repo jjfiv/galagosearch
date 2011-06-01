@@ -42,7 +42,7 @@ public class ExtractIndexDocumentNumbers extends StandardStep<Document, Numbered
         numdoc = new NumberedDocument(doc);
       }
       try{
-        namesIterator.moveToKey( numdoc.identifier );
+        namesIterator.findKey( numdoc.identifier );
         numdoc.number = namesIterator.getCurrentIdentifier();
       } catch (Exception e){
         throw new IOException("Can not find document number for document: " + doc.identifier);

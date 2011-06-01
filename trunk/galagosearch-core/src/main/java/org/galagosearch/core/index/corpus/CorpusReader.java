@@ -42,7 +42,7 @@ public class CorpusReader extends DocumentReader {
   public Document getDocument(String key) throws IOException {
     Iterator i = new Iterator(reader);
     byte[] k = Utility.fromString(key);
-    i.moveToKey(k);
+    i.findKey(k);
     assert(Utility.compare(i.getKeyBytes(), k) == 0);
     return i.getDocument();
   }
