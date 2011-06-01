@@ -50,7 +50,13 @@ public abstract class GenericIndexReader {
         public abstract byte[] getKey();
 
         /*
+         * find the provided key + move iterator to it
+         */
+        public abstract void find(byte[] key) throws IOException;
+
+        /*
          * Skip iterator to the provided key
+         *  - key must be greater than or equal to the current key.
          */
         public abstract void skipTo(byte[] key) throws IOException;
 

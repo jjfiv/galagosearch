@@ -152,14 +152,70 @@ public class IndexReader extends GenericIndexReader {
       return key;
     }
 
-    public void skipTo(byte[] key) throws IOException {
-      byte[] lastKey = block.keys[block.keys.length - 1];
-
+    public void find(byte[] key) throws IOException {
+      byte[] currentKey = this.key;
+      byte[] blockFirstKey = block.keys[0];
+      byte[] blockLastKey = block.keys[block.keys.length - 1];
+      
       // check if the desired key is in the current block
-      if (Utility.compare(key, lastKey) <= 0) {
-        if( Utility.compare(key, lastKey) < 0 ){
+      if ( (Utility.compare(key, blockFirstKey) >= 0)
+         && (Utility.compare(key, blockLastKey) <= 0)) {
+
+        if( Utility.compare(key, currentKey) < 0 ){
           keyIndex = 0;
         }
+
+        while (keyIndex < block.keys.length) {
+          byte[] blockKey = block.keys[keyIndex];
+          if (Utility.compare(key, blockKey) <= 0) {
+            loadIndex();
+            return;
+          }
+          keyIndex++;
+        }
+
+        
+        // otherwise we have to get a new block
+      } else {
+        TermSlot slot = vocabulary.get(key);
+        if (slot == null) {
+          done = true;
+          return;
+        } else {
+          invalidateBlock();
+          block = readVocabularyBlock(slot.begin);
+          keyIndex = 0;
+          while (keyIndex < block.keys.length) {
+            byte[] blockKey = block.keys[keyIndex];
+            if (Utility.compare(key, blockKey) <= 0) {
+              loadIndex();
+              return;
+            }
+            keyIndex++;
+          }
+        }
+      }
+
+      // we could not find the desired key -- key index = final + 1
+      // now try the next best thing - final key
+      keyIndex--;
+      loadIndex();
+      nextKey();
+    }
+
+    public void skipTo(byte[] key) throws IOException {
+      byte[] currentKey = this.key;
+      byte[] blockFirstKey = block.keys[0];
+      byte[] blockLastKey = block.keys[block.keys.length - 1];
+      
+      // check if the desired key is in the current block
+      if ( (Utility.compare(key, blockFirstKey) >= 0)
+         && (Utility.compare(key, blockLastKey) <= 0)) {
+
+        if( Utility.compare(key, currentKey) < 0 ){
+          keyIndex = 0;
+        }
+
         while (keyIndex < block.keys.length) {
           byte[] blockKey = block.keys[keyIndex];
           if (Utility.compare(key, blockKey) <= 0) {

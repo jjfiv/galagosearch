@@ -74,6 +74,14 @@ public class SplitIndexReader extends GenericIndexReader {
         /*
          * Skip iterator to the provided key
          */
+        public void find(byte[] key) throws IOException {
+            vocabIterator.find(key);
+            valueLoaded = false;
+        }
+
+        /*
+         * Skip iterator to the provided key
+         */
         public void skipTo(byte[] key) throws IOException {
             vocabIterator.skipTo(key);
             valueLoaded = false;
