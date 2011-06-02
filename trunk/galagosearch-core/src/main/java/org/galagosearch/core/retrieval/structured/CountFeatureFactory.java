@@ -13,7 +13,7 @@ import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
 import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
-import org.galagosearch.core.retrieval.traversal.WeightConversionTraversal;
+import org.galagosearch.core.retrieval.traversal.IndriWeightConversionTraversal;
 import org.galagosearch.tupleflow.Parameters;
 
 /**

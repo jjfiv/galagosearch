@@ -26,7 +26,7 @@ public class WeightConversionTraversalTest extends TestCase {
         internalNodes.add(new Node("littlenode", "null"));
         Node root = new Node("bignode", internalNodes);
         
-        WeightConversionTraversal traversal = new WeightConversionTraversal(null, null);
+        IndriWeightConversionTraversal traversal = new IndriWeightConversionTraversal(null, null);
         Node result = traversal.afterNode(root);
         assertEquals(root, result);
     }
@@ -43,7 +43,7 @@ public class WeightConversionTraversalTest extends TestCase {
         expectedParameters.add("0", "1.0");
         Node expected = new Node("combine", expectedParameters, expectedInternal, 0);
         
-        WeightConversionTraversal traversal = new WeightConversionTraversal(null, null);
+        IndriWeightConversionTraversal traversal = new IndriWeightConversionTraversal(null, null);
         Node result = traversal.afterNode(root);
         assertEquals(expected, result);
     }
@@ -52,7 +52,7 @@ public class WeightConversionTraversalTest extends TestCase {
         Node root = StructuredQuery.parse("#weight(1.5 dog 2.0 cat)");
         assertEquals("#weight( #inside( #text:1() #field:5() ) #text:dog() #inside( #text:2() #field:0() ) #text:cat() )", root.toString());
 
-        WeightConversionTraversal traversal = new WeightConversionTraversal(null, null);
+        IndriWeightConversionTraversal traversal = new IndriWeightConversionTraversal(null, null);
         Node result = StructuredQuery.copy(traversal, root);
         assertEquals("#combine:1=@/2.0/:0=@/1.5/( #text:dog() #text:cat() )", result.toString());
     }
@@ -61,7 +61,7 @@ public class WeightConversionTraversalTest extends TestCase {
         Node root = StructuredQuery.parse("#weight(1 dog 2 cat)");
         assertEquals("#weight( #text:1() #text:dog() #text:2() #text:cat() )", root.toString());
 
-        WeightConversionTraversal traversal = new WeightConversionTraversal(null, null);
+        IndriWeightConversionTraversal traversal = new IndriWeightConversionTraversal(null, null);
         Node result = StructuredQuery.copy(traversal, root);
         assertEquals("#combine:1=2:0=1( #text:dog() #text:cat() )", result.toString());
     }

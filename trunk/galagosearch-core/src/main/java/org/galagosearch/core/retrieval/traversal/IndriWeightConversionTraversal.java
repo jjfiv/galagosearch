@@ -13,8 +13,8 @@ import org.galagosearch.tupleflow.Parameters;
  *
  * @author trevor
  */
-public class WeightConversionTraversal implements Traversal {
-    public WeightConversionTraversal(Parameters parameters, Retrieval retrieval) {
+public class IndriWeightConversionTraversal implements Traversal {
+    public IndriWeightConversionTraversal(Parameters parameters, Retrieval retrieval) {
     }
 
     public void beforeNode(Node object) throws Exception {

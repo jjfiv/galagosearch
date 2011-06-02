@@ -4,6 +4,7 @@ package org.galagosearch.core.tools;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import javax.servlet.ServletException;
@@ -597,6 +598,11 @@ public class App {
     server.addHandler(mh);
     server.start();
     output.println("Server: http://localhost:" + port);
+
+    // Ensure we print out the ip addr url as well
+    InetAddress address = InetAddress.getLocalHost();
+    String masterURL = String.format("http://%s:%d", address.getHostAddress(), port);
+    output.println("ServerIP: " + masterURL);
   }
 
   protected void handleSearch(String[] args) throws Exception {

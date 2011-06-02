@@ -40,7 +40,7 @@ public class UniversalParser extends StandardStep<DocumentSplit, Document> {
     this.parameters = parameters.getXML();
   }
 
-  private void bzipHeaderCheck(BufferedInputStream stream) throws IOException {
+  static private void bzipHeaderCheck(BufferedInputStream stream) throws IOException {
     char[] header = new char[2];
     stream.mark(4);
     header[0] = (char) stream.read();
@@ -50,7 +50,7 @@ public class UniversalParser extends StandardStep<DocumentSplit, Document> {
       stream.reset();
   }
 
-  public BufferedReader getBufferedReader(DocumentSplit split) throws IOException {
+  static public BufferedReader getBufferedReader(DocumentSplit split) throws IOException {
     FileInputStream stream = StreamCreator.realInputStream(split.fileName);
     BufferedReader reader;
 

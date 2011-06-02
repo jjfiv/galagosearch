@@ -6,6 +6,7 @@ package org.galagosearch.core.parse;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import org.galagosearch.core.types.DocumentSplit;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.ExNihiloSource;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
@@ -37,7 +38,10 @@ public class FileLineParser implements ExNihiloSource<String> {
   public void run() throws IOException {
     BufferedReader reader;
     for (String f : p.stringList("input")) {
-      reader = new BufferedReader(new FileReader(f));
+      DocumentSplit split = new DocumentSplit();
+      split.fileName = f;
+      split.isCompressed = ( f.endsWith(".gz") || f.endsWith(".bz") );
+      reader = UniversalParser.getBufferedReader( split );
       String line;
       while (null != (line = reader.readLine())) {
         if(lines != null) lines.increment();

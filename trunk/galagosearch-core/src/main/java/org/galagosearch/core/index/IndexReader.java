@@ -208,10 +208,6 @@ public class IndexReader extends GenericIndexReader {
       byte[] blockLastKey = block.keys[block.keys.length - 1];
 
       if(done || (Utility.compare( key, currentKey) < 0)){
-        if(done)
-          System.err.println( "DONE!" );
-        else
-          System.err.println( "key preceeds current key: " + print_bytes(key) + " --- " + print_bytes(currentKey) );
         // this means that the required key does not exist in the index.
         return;
       }
