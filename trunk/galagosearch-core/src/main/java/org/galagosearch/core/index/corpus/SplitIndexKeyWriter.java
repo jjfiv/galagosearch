@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.galagosearch.core.index.corpus;
 
 import java.io.File;
@@ -38,24 +37,26 @@ import org.galagosearch.tupleflow.execution.Verification;
 @InputClass(className = "org.galagosearch.core.types.KeyValuePair")
 public class SplitIndexKeyWriter implements Processor<KeyValuePair> {
 
-    IndexWriter writer;
-    private Counter keyCounter;
+  IndexWriter writer;
+  private Counter keyCounter;
 
-    public SplitIndexKeyWriter(TupleFlowParameters parameters) throws IOException{
-        String file = parameters.getXML().get("filename") + File.separator + "key.index";
-        Utility.makeParentDirectories(file);
-        writer = new IndexWriter( file , parameters.getXML() );
-	keyCounter = parameters.getCounter("Document Keys Written");
-    }
+  public SplitIndexKeyWriter(TupleFlowParameters parameters) throws IOException {
+    String file = parameters.getXML().get("filename") + File.separator + "key.index";
+    Utility.makeParentDirectories(file);
+    writer = new IndexWriter(file, parameters.getXML());
+    keyCounter = parameters.getCounter("Document Keys Written");
+  }
 
-    public void process(KeyValuePair object) throws IOException {
-        writer.add( new GenericElement( object.key, object.value ) );
-	if (keyCounter != null) keyCounter.increment();
+  public void process(KeyValuePair object) throws IOException {
+    writer.add(new GenericElement(object.key, object.value));
+    if (keyCounter != null) {
+      keyCounter.increment();
     }
+  }
 
-    public void close() throws IOException {
-        writer.close();
-    }
+  public void close() throws IOException {
+    writer.close();
+  }
 
   public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
     if (!parameters.getXML().containsKey("filename")) {

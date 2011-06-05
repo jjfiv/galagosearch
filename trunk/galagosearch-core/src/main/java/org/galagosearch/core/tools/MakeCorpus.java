@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.parse.DocumentSource;
 import org.galagosearch.core.parse.UniversalParser;
 import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
@@ -170,6 +171,8 @@ public class MakeCorpus {
         this.corpusParameters = new Parameters();
         this.corpusParameters.add("parallel", "true");
         this.corpusParameters.add("compressed", p.get("compressed", "true"));
+        this.corpusParameters.add("readerClass", CorpusReader.class.getName());
+        this.corpusParameters.add("writerClass", CorpusWriter.class.getName());
         this.corpusParameters.add("filename", corpus.getAbsolutePath());
 
         Job job = new Job();

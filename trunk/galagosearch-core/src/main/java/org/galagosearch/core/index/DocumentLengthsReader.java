@@ -57,12 +57,14 @@ public class DocumentLengthsReader extends KeyValueReader {
       super(reader);
     }
 
+    @Override
+    public String getKey() {
+      return Integer.toString(Utility.toInt(getKeyBytes()));
+    }
+
     public String getValueString() {
       try {
-        StringBuilder sb = new StringBuilder();
-        sb.append(Utility.toInt(iterator.getKey())).append(",");
-        sb.append(Utility.uncompressInt(iterator.getValueBytes(), 0));
-        return sb.toString();
+        return Integer.toString(Utility.uncompressInt(iterator.getValueBytes(), 0));
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);
       }
@@ -96,10 +98,10 @@ public class DocumentLengthsReader extends KeyValueReader {
     }
 
     public String getEntry() throws IOException {
-	KeyIterator ki = (KeyIterator) iterator;
-	String output = Integer.toString(ki.getCurrentDocument()) + "," +
-	    Integer.toString(ki.getCurrentLength());
-	return output;
+      KeyIterator ki = (KeyIterator) iterator;
+      String output = Integer.toString(ki.getCurrentDocument()) + ","
+              + Integer.toString(ki.getCurrentLength());
+      return output;
     }
 
     public long totalEntries() {

@@ -40,8 +40,6 @@ public class CorpusWriter implements Processor<Document>, Source<KeyValuePair> {
         compressed = parameters.getXML().get("compressed", true);
 
         // create a writer;
-        parameters.getXML().add("readerClass", CorpusReader.class.getName());
-        parameters.getXML().add("writerClass", CorpusWriter.class.getName());
         writer = new SplitIndexValueWriter( parameters );
         // note that the setProcessor function needs to be modified!
     }

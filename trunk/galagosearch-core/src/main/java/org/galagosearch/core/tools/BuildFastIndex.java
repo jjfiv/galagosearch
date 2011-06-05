@@ -9,6 +9,7 @@ import java.util.List;
 import org.galagosearch.core.index.corpus.SplitIndexKeyWriter;
 import org.galagosearch.core.index.PositionIndexWriter;
 import org.galagosearch.core.index.PositionFieldIndexWriter;
+import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.parse.AdditionalTextCombiner;
 import org.galagosearch.core.parse.AnchorTextCreator;
 import org.galagosearch.core.index.corpus.CorpusWriter;
@@ -266,6 +267,8 @@ public class BuildFastIndex {
       this.corpusParameters.add("parallel", "true");
       this.corpusParameters.add("compressed", p.get("compressed", "true"));
       this.corpusParameters.add("filename", new File(p.get("corpusPath")).getAbsolutePath());
+      this.corpusParameters.add("readerClass", CorpusReader.class.getName());
+      this.corpusParameters.add("writerClass", CorpusWriter.class.getName());
     }
 
 //    ArrayList<String> fieldNames = new ArrayList();

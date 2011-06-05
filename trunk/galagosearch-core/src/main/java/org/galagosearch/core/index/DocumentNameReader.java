@@ -123,9 +123,12 @@ public class DocumentNameReader extends NameReader {
 
     public String getValueString() {
       try {
-        byte[] value = getValueBytes();
-        return Utility.toString(value);
-      } catch (IOException ioe) {
+        if (forwardLookup) {
+          return Utility.toString(getValueBytes());
+        } else {
+          return Integer.toString(Utility.toInt(getValueBytes()));
+        }
+      } catch (IOException e) {
         return "Unknown";
       }
     }
@@ -141,7 +144,6 @@ public class DocumentNameReader extends NameReader {
     public ValueIterator getValueIterator() throws IOException {
       return new ValueIterator(this);
     }
-
   }
 
   public class ValueIterator extends KeyToListIterator implements DataIterator<String> {
@@ -154,13 +156,13 @@ public class DocumentNameReader extends NameReader {
       KeyIterator ki = (KeyIterator) iterator;
       StringBuilder sb = new StringBuilder();
       if (ki.isForward()) {
-	  sb.append(ki.getCurrentIdentifier());
-	  sb.append(",");
-	  sb.append(ki.getCurrentName());
+        sb.append(ki.getCurrentIdentifier());
+        sb.append(",");
+        sb.append(ki.getCurrentName());
       } else {
-	  sb.append(ki.getCurrentName());
-	  sb.append(",");
-	  sb.append(ki.getCurrentIdentifier());
+        sb.append(ki.getCurrentName());
+        sb.append(",");
+        sb.append(ki.getCurrentIdentifier());
       }
       return sb.toString();
     }

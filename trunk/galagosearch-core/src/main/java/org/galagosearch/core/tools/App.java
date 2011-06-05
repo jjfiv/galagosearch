@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.galagosearch.core.index.AggregateReader;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.DocumentNameReader;
 import org.galagosearch.core.index.GenericIndexReader;
@@ -20,6 +21,9 @@ import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
+import org.galagosearch.core.index.KeyListReader;
+import org.galagosearch.core.index.KeyValueReader;
+import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.index.StructuredIndexPartModifier;
 import org.galagosearch.core.index.merge.MergeIndexes;
 import org.galagosearch.tupleflow.Parameters;
@@ -275,6 +279,7 @@ public class App {
     }
   }
 
+  // dump a particular document from corpus
   protected void handleDoc(String[] args) throws IOException {
     if (args.length <= 2) {
       commandHelp(args[0]);
@@ -289,6 +294,7 @@ public class App {
     output.println(document.text);
   }
 
+  // translator between doc names and doc ids
   protected void handleDocId(String[] args) throws IOException {
     if (args.length <= 2) {
       commandHelp(args[0]);
@@ -300,14 +306,14 @@ public class App {
 
     DocumentNameReader reader = new DocumentNameReader(indexPath);
 
-    if(reader.isForward){
+    if (reader.isForward) {
       String docIdentifier = reader.get(Integer.parseInt(id));
       output.println(docIdentifier);
     } else {
       int docNum = reader.getDocumentId(id);
       output.println(docNum);
     }
-    
+
   }
 
   protected void handleDumpKeyValue(String[] args) throws IOException {
@@ -328,7 +334,7 @@ public class App {
     }
   }
 
-  protected void handleDumpIndex(String[] args) throws IOException {
+  protected void handleDumpIndex(String[] args) throws IOException, ClassNotFoundException {
     if (args.length <= 1) {
       commandHelp(args[0]);
       return;
@@ -336,14 +342,29 @@ public class App {
 
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
     KeyIterator iterator = reader.getIterator();
-    while (!iterator.isDone()) {
-      ValueIterator vIter = iterator.getValueIterator();
-      while (!vIter.isDone()) {
-        output.println(vIter.getEntry());
-        vIter.next();
+    
+    // if we have a key-list index
+    if (KeyListReader.class.isAssignableFrom( reader.getClass() )) {
+      while (!iterator.isDone()) {
+        ValueIterator vIter = iterator.getValueIterator();
+        while (!vIter.isDone()) {
+          output.println(vIter.getEntry());
+          vIter.next();
+        }
+        iterator.nextKey();
       }
-      iterator.nextKey();
+
+    // otherwise we could have a key-value index
+    } else if (KeyValueReader.class.isAssignableFrom( reader.getClass() )) {
+      while (!iterator.isDone()) {
+        output.println(iterator.getKey() + "\t" + iterator.getValueString());
+        iterator.nextKey();
+      }
+    } else {
+      output.println("Unable to read index as a key-list or a key-value reader.");
     }
+
+    reader.close();
   }
 
   protected void handleDumpModifier(String[] args) throws IOException {
@@ -397,30 +418,16 @@ public class App {
       return;
     }
 
-    String keyType = "string";
-    if (args.length > 2) {
-      keyType = args[2];
-    }
-    String key = "";
-    GenericIndexReader reader = GenericIndexReader.getIndexReader(args[1]);
-    GenericIndexReader.Iterator iterator = reader.getIterator();
+    StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
+    KeyIterator iterator = reader.getIterator();
     while (!iterator.isDone()) {
-      if (keyType.equals("string")) {
-        key = Utility.toString(iterator.getKey());
-      } else if (keyType.equals("int")) {
-        key = Integer.toString(Utility.toInt(iterator.getKey()));
-      } else if (keyType.equals("long")) {
-        key = Long.toString(Utility.toLong(iterator.getKey()));
-      } else if (keyType.equals("short")) {
-        key = Short.toString(Utility.toShort(iterator.getKey()));
-      } else {
-        throw new IOException("Key type '" + keyType + "' unsupported.");
-      }
-      output.println(key);
+      output.println(iterator.getKey());
       iterator.nextKey();
     }
+    reader.close();
   }
 
+  // [sjh]: deprecated
   protected void handleDumpLengths(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
@@ -430,10 +437,11 @@ public class App {
     DocumentLengthsReader reader = new DocumentLengthsReader(args[1]);
     DocumentLengthsReader.KeyIterator iterator = reader.getIterator();
     do {
-      output.println(iterator.getValueString());
+      output.println(iterator.getKey() + "," + iterator.getValueString());
     } while (iterator.nextKey());
   }
 
+  // [sjh]: deprecated
   protected void handleDumpNames(String[] args) throws IOException {
     if (args.length <= 1) {
       commandHelp(args[0]);
@@ -495,7 +503,7 @@ public class App {
   }
 
   protected void handleWindow(String[] args) throws Exception {
-    if (args.length < 3) { // minimal usage: ngram index input
+    if (args.length < 3) { // minimal usage: build-window index input
       commandHelpWindow();
       return;
     }
@@ -563,7 +571,7 @@ public class App {
     }
 
     public void setDefault(Handler h) {
-       defaultHandler = h;
+      defaultHandler = h;
     }
 
     public void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) throws IOException, ServletException {
@@ -574,7 +582,7 @@ public class App {
       } else if (defaultHandler != null) {
         defaultHandler.handle(target, request, response, dispatch);
       } else {
-        throw new UnsupportedOperationException( " '"+ path +"'  is not supported yet.");
+        throw new UnsupportedOperationException(" '" + path + "'  is not supported yet.");
       }
     }
   }
@@ -680,6 +688,8 @@ public class App {
     output.println("   build-fast");
     output.println("   build-special");
     output.println("   build-topdocs");
+    output.println("   build-window");
+    output.println("   build-window-se");
     output.println("   doc");
     output.println("   doc-id");
     output.println("   dump-connection");
@@ -687,14 +697,12 @@ public class App {
     output.println("   dump-index");
     output.println("   dump-keys");
     output.println("   dump-keyvalue");
-    output.println("   dump-lengths");
+    //output.println("   dump-lengths");
     output.println("   dump-modifier");
-    output.println("   dump-names");
+    //output.println("   dump-names");
     output.println("   eval");
     output.println("   make-corpus");
     output.println("   merge-index");
-    output.println("   window");
-    output.println("   window-se");
     //output.println("   pagerank");
     output.println("   search");
     output.println("   xcount");
@@ -704,10 +712,10 @@ public class App {
   public void commandHelp(String command) throws IOException {
     if (command.equals("batch-search")) {
       commandHelpBatchSearch();
+    } else if (command.startsWith("build-window")) {
+      commandHelpWindow();
     } else if (command.equals("build") || command.equals("build-fast") || command.equals("build-parallel")) {
       commandHelpBuild();
-    } else if (command.startsWith("window")) {
-      commandHelpWindow();
     } else if (command.startsWith("merge-index")) {
       MergeIndexes.commandHelpMerge();
     } else if (command.startsWith("build-special")) {
@@ -870,6 +878,8 @@ public class App {
       BuildSpecialPart.main(args);
     } else if (command.equals("build-topdocs")) {
       handleBuildTopdocs(args);
+    } else if (command.startsWith("build-window")) {
+      handleWindow(args);
     } else if (command.equals("doc")) {
       handleDoc(args);
     } else if (command.equals("doc-id")) {
@@ -894,10 +904,6 @@ public class App {
       handleMakeCorpus(args);
     } else if (command.equals("merge-index")) {
       MergeIndexes.main(args);
-    } else if (command.equals("window")) {
-      handleWindow(args);
-    } else if (command.equals("window-se")) {
-      handleWindow(args);
     } else if (command.equals("pagerank")) {
       throw new UnsupportedOperationException("Need to re-implement");
       //PageRankApp.main(args);

@@ -55,9 +55,8 @@ public class DocumentPriorReader extends KeyValueReader {
   }
 
   public ValueIterator getIterator(Node node) throws IOException {
-    double definst = node.getParameters().get("default", def);
     if (node.getOperator().equals("prior")) {
-      return new ValueIterator(new KeyIterator(reader), definst);
+      return new ValueIterator(new KeyIterator(reader), node);
     } else {
       throw new UnsupportedOperationException(
               "Index doesn't support operator: " + node.getOperator());
@@ -98,10 +97,6 @@ public class DocumentPriorReader extends KeyValueReader {
       }
     }
 
-    public boolean isDone() {
-      return iterator.isDone();
-    }
-
     public ValueIterator getValueIterator() throws IOException {
       throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -112,10 +107,18 @@ public class DocumentPriorReader extends KeyValueReader {
 
     DocumentContext context;
     double defInst;
+    double minScore;
     
-    public ValueIterator(KeyIterator it, double defInst) {
+    public ValueIterator(KeyIterator it, Node node) {
       super(it);
-      this.defInst = defInst;
+      this.defInst = node.getParameters().get("default", def);
+      this.minScore = node.getParameters().get("minScore", Math.log(0.0000000001)); // same as indri
+    }
+
+    public ValueIterator(KeyIterator it) {
+      super(it);
+      this.defInst = def;
+      this.minScore = Math.log(0.0000000001); // same as indri
     }
 
     public String getEntry() throws IOException {
@@ -156,6 +159,13 @@ public class DocumentPriorReader extends KeyValueReader {
       }
     }
 
+    @Override
+    public boolean hasMatch(int identifier){
+      return (! this.isDone() 
+              && identifier == this.currentCandidate() 
+              && this.score() > this.minScore);
+    }
+    
     public double maximumScore() {
       return manifest.get("maxScore", Double.POSITIVE_INFINITY);
     }
