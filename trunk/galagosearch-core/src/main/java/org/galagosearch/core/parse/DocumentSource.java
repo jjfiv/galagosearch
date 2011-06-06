@@ -137,7 +137,14 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
   }
 
   private void processFile(String fileName) throws IOException {
-    // First, try to detect what kind of file this is:
+    
+    // First, make sure this file exists. If not, bitch about it and move on
+    File actual = new File(fileName);
+    if (!actual.exists()) {
+      throw new IOException(String.format("File %s was not found. Exiting.\n", fileName));
+    }
+    
+    // Now try to detect what kind of file this is:
     boolean isCompressed = (fileName.endsWith(".gz") || fileName.endsWith(".bz2"));
     String fileType = null;
 
