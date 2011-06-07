@@ -69,12 +69,14 @@ public class DocumentPriorReader extends KeyValueReader {
       super(reader);
     }
 
+    @Override
+    public String getKey(){
+      return Integer.toString(getCurrentDocument());
+    }
+    
     public String getValueString() {
       try {
-        StringBuilder sb = new StringBuilder();
-        sb.append(Utility.toInt(iterator.getKey())).append(",");
-        sb.append(Utility.uncompressInt(iterator.getValueBytes(), 0));
-        return sb.toString();
+        return Double.toString(getCurrentScore());
       } catch (IOException ioe) {
         throw new RuntimeException(ioe);
       }
