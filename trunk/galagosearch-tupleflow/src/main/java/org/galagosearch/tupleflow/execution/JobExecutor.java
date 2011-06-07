@@ -1257,6 +1257,11 @@ public class JobExecutor {
     server.removeHandler(handler);
   }
 
+  public void runWithoutServer(StageExecutor executor) throws ExecutionException, InterruptedException {
+    JobExecutionStatus status = new JobExecutionStatus(stages, temporaryStorage, executor, null, null);
+    status.run();
+  }
+
   public static boolean runLocally(Job job, ErrorStore store, Parameters p) throws IOException,
           InterruptedException, ExecutionException, Exception {
     // Extraction from parameters can go here now
@@ -1292,15 +1297,23 @@ public class JobExecutor {
       return false;
     }
 
-    Server server = new Server(port);
-    server.start();
-    System.out.println("Status: http://localhost:" + port);
-
-    try {
-      jobExecutor.runWithServer(executor, server, command);
-    } finally {
-      server.stop();
-      executor.shutdown();
+    if (p.get("server", true)) {
+      Server server = new Server(port);
+      server.start();
+      System.out.println("Status: http://localhost:" + port);
+      try {
+        jobExecutor.runWithServer(executor, server, command);
+      } finally {
+        server.stop();
+        executor.shutdown();
+      }
+    } else {
+      System.err.println("running without server!");
+      try {
+        jobExecutor.runWithoutServer(executor);
+      } finally {
+        executor.shutdown();
+      }
     }
 
     if (deleteOutput == 1) {
