@@ -166,22 +166,7 @@ public class App2 {
               + "                           Note that this is optional, if no path is supplied,\n"
               + "                           then no corpus will be created.\n"
               + "                           [default=None]\n\n"
-              + "Tupleflow Flags:\n"
-              + "  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.\n"
-              + "                           [default=false]\n"
-              + "  --mode={local|threaded|drmaa}: Selects which executor to use \n"
-              + "                           [default=local]\n"
-              + "  --port={int<65000} :     port number for web based progress monitoring. \n"
-              + "                           [default=randomly selected free port]\n"
-              + "  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir \n"
-              + "                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]\n"
-              + "  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete\n"
-              + "                           0 --> keep all data\n"
-              + "                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)\n"
-              + "                           2 --> delete entire temp directory\n"
-              + "                           [default=2]\n"
-              + "  --distrib={int > 1}:     Selects the number of simultaneous jobs to create\n"
-              + "                           [default = 10]\n";
+              + getTupleFlowParameterString();
     }
 
     public void run(String[] args, PrintStream output) throws Exception {
@@ -234,22 +219,7 @@ public class App2 {
               + "                     prior: [default=-inf\n\n"
               + "  --priorType={raw|prob|logprob}: Sets the type of prior to read. (Only for prior parts)\n"
               + "                            [default=raw]\n\n"
-              + "Tupleflow Flags:\n"
-              + "  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.\n"
-              + "                           [default=false]\n"
-              + "  --mode={local|threaded|drmaa}: Selects which executor to use \n"
-              + "                           [default=local]\n"
-              + "  --port={int<65000} :     port number for web based progress monitoring. \n"
-              + "                           [default=randomly selected free port]\n"
-              + "  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir \n"
-              + "                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]\n"
-              + "  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete\n"
-              + "                           0 --> keep all data\n"
-              + "                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)\n"
-              + "                           2 --> delete entire temp directory\n"
-              + "                           [default=2]\n"
-              + "  --distrib={int > 1}:     Selects the number of simultaneous jobs to create\n"
-              + "                           [default = 10]\n";
+              + getTupleFlowParameterString();
     }
 
     public void run(String[] args, PrintStream output) throws Exception {
@@ -350,22 +320,7 @@ public class App2 {
               + "  --spaceEfficient={true|false}: Selects whether to use a space efficient algorithm.\n"
               + "                           (The cost is an extra pass over the input data).\n"
               + "                           [default=false]\n\n"
-              + "Tupleflow Flags:\n"
-              + "  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.\n"
-              + "                           [default=false]\n"
-              + "  --mode={local|threaded|drmaa}: Selects which executor to use \n"
-              + "                           [default=local]\n"
-              + "  --port={int<65000} :     port number for web based progress monitoring. \n"
-              + "                           [default=randomly selected free port]\n"
-              + "  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir \n"
-              + "                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]\n"
-              + "  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete\n"
-              + "                           0 --> keep all data\n"
-              + "                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)\n"
-              + "                           2 --> delete entire temp directory\n"
-              + "                           [default=2]\n"
-              + "  --distrib={int > 1}:     Selects the number of simultaneous jobs to create\n"
-              + "                           [default = 10]\n";
+              + getTupleFlowParameterString();
     }
 
     public void run(String[] args, PrintStream output) throws Exception {
@@ -720,22 +675,7 @@ public class App2 {
               + "                           File is a single file corpus. Folder is a folder of data files with an index.\n"
               + "                           The folder structure can be produce in a parallel manner.\n"
               + "                           [default=folder]\n\n"
-              + "Tupleflow Flags:\n"
-              + "  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.\n"
-              + "                           [default=false]\n"
-              + "  --mode={local|threaded|drmaa}: Selects which executor to use \n"
-              + "                           [default=local]\n"
-              + "  --port={int<65000} :     port number for web based progress monitoring. \n"
-              + "                           [default=randomly selected free port]\n"
-              + "  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir \n"
-              + "                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]\n"
-              + "  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete\n"
-              + "                           0 --> keep all data\n"
-              + "                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)\n"
-              + "                           2 --> delete entire temp directory\n"
-              + "                           [default=2]\n"
-              + "  --distrib={int > 1}:     Selects the number of simultaneous jobs to create\n"
-              + "                           [default = 10]\n";
+              + getTupleFlowParameterString();
     }
 
     public void run(String[] args, PrintStream output) throws Exception {
@@ -765,22 +705,7 @@ public class App2 {
               + "<output>:  Directory to be created that contains the merged index\n\n"
               + "<input>:  Directory containing an index to be merged \n\n"
               + "Algorithm Flags:\n\n"
-              + "Tupleflow Flags:\n"
-              + "  --printJob={none|plan|dot}: Simply prints the execution plan of a Tupleflow-based job then exits.\n"
-              + "                           [default=none]\n"
-              + "  --mode={local|threaded|drmaa}: Selects which executor to use \n"
-              + "                           [default=local]\n"
-              + "  --port={int<65000} :     port number for web based progress monitoring. \n"
-              + "                           [default=randomly selected free port]\n"
-              + "  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir \n"
-              + "                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]\n"
-              + "  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete\n"
-              + "                           0 --> keep all data\n"
-              + "                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)\n"
-              + "                           2 --> delete entire temp directory\n"
-              + "                           [default=0]\n"
-              + "  --distrib={int > 1}:     Selects the number of simultaneous jobs to create\n"
-              + "                           [default = 10]\n";
+              + getTupleFlowParameterString();
     }
 
     public void run(String[] args, PrintStream output) throws Exception {
@@ -902,6 +827,27 @@ public class App2 {
 
       BatchSearch.docCount(args, output);
     }
+  }
+
+  public static String getTupleFlowParameterString() {
+    return "Tupleflow Flags:\n"
+            + "  --printJob={true|false}: Simply prints the execution plan of a Tupleflow-based job then exits.\n"
+            + "                           [default=false]\n"
+            + "  --mode={local|threaded|drmaa}: Selects which executor to use \n"
+            + "                           [default=local]\n"
+            + "  --port={int<65000} :     port number for web based progress monitoring. \n"
+            + "                           [default=randomly selected free port]\n"
+            + "  --galagoTemp=/path/to/temp/dir/: Sets the galago temp dir \n"
+            + "                           [default = uses folders specified in ~/.galagotmp or java.io.tmpdir]\n"
+            + "  --deleteOutput={0|1|2}:    Selects how much of the galago temp dir to delete\n"
+            + "                           0 --> keep all data\n"
+            + "                           1 --> delete all data + keep jobs directory (only useful for drmaa mode)\n"
+            + "                           2 --> delete entire temp directory\n"
+            + "                           [default=2]\n"
+            + "  --distrib={int > 1}:     Selects the number of simultaneous jobs to create\n"
+            + "                           [default = 10]\n"
+            + "  --server={true|false}:   Selects to use a server to show the progress of a tupleflow execution.\n"
+            + "                           [default = true]\n";
   }
 
   // Static helper functions
