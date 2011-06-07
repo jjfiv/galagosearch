@@ -67,7 +67,7 @@ public class BuildSpecialPart {
   }
 
 
-  private Job getPriorJob(Parameters p) throws ClassNotFoundException {
+  public Job getPriorJob(Parameters p) throws ClassNotFoundException {
     String indexPath = new File(p.get("indexPath")).getAbsolutePath(); // fail if no path.
     p.set("indexPath", indexPath);
     assert (new File(indexPath).isDirectory());

@@ -557,36 +557,6 @@ public class App {
     BatchSearch.run(Utility.subarray(args, 1), output);
   }
 
-  protected class MappingHandler extends AbstractHandler {
-
-    HashMap<String, Handler> handlers;
-    Handler defaultHandler = null;
-
-    public MappingHandler() {
-      handlers = new HashMap<String, Handler>();
-    }
-
-    public void setHandler(String s, Handler h) {
-      handlers.put(s, h);
-    }
-
-    public void setDefault(Handler h) {
-      defaultHandler = h;
-    }
-
-    public void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) throws IOException, ServletException {
-      String path = request.getPathInfo();
-      Handler h = handlers.get(path);
-      if (h != null) {
-        h.handle(target, request, response, dispatch);
-      } else if (defaultHandler != null) {
-        defaultHandler.handle(target, request, response, dispatch);
-      } else {
-        throw new UnsupportedOperationException(" '" + path + "'  is not supported yet.");
-      }
-    }
-  }
-
   protected void handleSearch(Parameters p) throws Exception {
     Search search = new Search(p);
     int port = (int) p.get("port", 0);
@@ -598,7 +568,7 @@ public class App {
       }
     }
     Server server = new Server(port);
-    MappingHandler mh = new MappingHandler();
+    URLMappingHandler mh = new URLMappingHandler();
     mh.setHandler("/stream", new StreamContextHandler(search));
     mh.setHandler("/xml", new XMLContextHandler(search));
     mh.setHandler("/json", new JSONContextHandler(search));
