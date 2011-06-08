@@ -80,9 +80,6 @@ public class BuildSpecialPart {
 
     Parameters writerParams = new Parameters();
     writerParams.add("filename", indexPath + File.separator + p.get("partName"));
-    // ensure we set a default value - default default value is 'false'
-    writerParams.add("default", p.get("default", Double.toString(Double.NEGATIVE_INFINITY)));
-
     Class priorExtractionStep = Class.forName(p.get("extractor", "org.galagosearch.core.parse.PriorExtractor"));
 
     Stage stage = new Stage("Indexer");

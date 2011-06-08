@@ -52,7 +52,7 @@ public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
     minObservedScore = Math.min(minObservedScore, nwp.probability);
     GenericElement element = new GenericElement(Utility.fromInt(nwp.number), Utility.fromDouble(nwp.probability));
 
-    if( nwp.probability > minObservedScore ){
+    if( nwp.probability > minWrittenScore ){
       if(written != null) written.increment();
       return element;
     } else {
