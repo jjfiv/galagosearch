@@ -194,6 +194,8 @@ public class StructuredRetrieval implements Retrieval {
     this.queryResults = queryResults;
     this.errors = errors;
     
+    System.err.println();
+    
     runner = new Thread(this);
     runner.start();
   }

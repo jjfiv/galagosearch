@@ -102,7 +102,7 @@ public class MultiRetrieval implements Retrieval {
 
     int retries = 0;
     boolean retry = true;
-    while (retry && retries < 10) {
+    while (retry && retries < 5) {
       queryResultCollector.clear();
       errorCollector.clear();
       
@@ -113,7 +113,7 @@ public class MultiRetrieval implements Retrieval {
         Parameters shardParams = shardTemplate.clone();
         shardParams.set("indexId", indexId + "." + Integer.toString(i));
         Retrieval r = subset.get(i);
-        r.runAsynchronousQuery(this.root, shardParams, queryResults, errors);
+        r.runAsynchronousQuery(this.root, shardParams, queryResultCollector, errorCollector);
       }
 
       // Wait for a finished list
@@ -129,6 +129,10 @@ public class MultiRetrieval implements Retrieval {
       }
     }
 
+    if(retry){
+      throw new RuntimeException("Failed to run query:" + root);
+    }
+    
     // sort the results and invert (sort is inverted)
     Collections.sort(queryResultCollector, Collections.reverseOrder());
 
