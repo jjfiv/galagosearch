@@ -159,7 +159,7 @@ public class MultiRetrieval implements Retrieval {
       }
     } catch (Exception e) {
       // TODO: use logger here
-      System.err.println("ERROR RETRIEVING: " + e.getMessage());
+      System.err.println("MultiRetrieval ERROR RETRIEVING: " + e);
     }
   }
 
