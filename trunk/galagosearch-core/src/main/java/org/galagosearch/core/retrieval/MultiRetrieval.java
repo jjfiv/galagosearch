@@ -97,11 +97,14 @@ public class MultiRetrieval implements Retrieval {
     ArrayList<Retrieval> subset = retrievals.get(retrievalGroup);
     Parameters shardTemplate = parameters.clone();
 
+    List<ScoredDocument> queryResultCollector = new ArrayList<ScoredDocument>();
+    List<String> errorCollector = new ArrayList();
+
     int retries = 0;
     boolean retry = true;
     while (retry && retries < 10) {
-      List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
-      List<String> errors = new ArrayList();
+      queryResultCollector.clear();
+      errorCollector.clear();
       
       // Asynchronous retrieval
       String indexId = parameters.get("indexId", "0");
@@ -119,7 +122,7 @@ public class MultiRetrieval implements Retrieval {
       }
         
       retry = false;
-      if(errors.size() > 0){
+      if(errorCollector.size() > 0){
         retry = true;
         retries++;
         System.err.println("At least one shard errored - Retrying: " + retries);
@@ -127,12 +130,12 @@ public class MultiRetrieval implements Retrieval {
     }
 
     // sort the results and invert (sort is inverted)
-    Collections.sort(queryResults, Collections.reverseOrder());
+    Collections.sort(queryResultCollector, Collections.reverseOrder());
 
     // get the best {requested} results
     int requested = (int) parameters.get("requested", 1000);
 
-    return queryResults.subList(0, Math.min(queryResults.size(), requested)).toArray(new ScoredDocument[0]);
+    return queryResultCollector.subList(0, Math.min(queryResultCollector.size(), requested)).toArray(new ScoredDocument[0]);
   }
 
   public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults, List<String> errors) throws Exception {

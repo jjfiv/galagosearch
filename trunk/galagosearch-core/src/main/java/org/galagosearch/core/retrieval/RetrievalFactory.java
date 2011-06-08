@@ -98,7 +98,7 @@ public class RetrievalFactory {
               }
             }
             
-            System.out.println("MultiRetrieval opened index: " + path);
+            System.err.println("MultiRetrieval opened index: " + path);
             
           } catch (Exception e) {
             System.err.println("Unable to load index (" + shardParameters.toString() + ") at path " + path + ": " + e.getMessage());
