@@ -63,7 +63,7 @@ public interface Retrieval extends Runnable {
     public Node transformRankedQuery(Node root, String retrievalGroup) throws Exception;
 
     // These are to allow for asynchronous execution
-    public void runAsynchronousQuery(Node root, Parameters parameters, List<ScoredDocument> queryResults) throws Exception;
+    public void runAsynchronousQuery(Node root, Parameters parameters, List<ScoredDocument> queryResults, List<String> errors) throws Exception;
 
     public void waitForAsynchronousQuery() throws InterruptedException;
 }

@@ -44,6 +44,7 @@ public class StructuredRetrieval implements Retrieval {
   protected Node query;
   protected Parameters queryParams;
   protected List<ScoredDocument> queryResults;
+  protected List<String> errors;
 
   public StructuredRetrieval(StructuredIndex index, Parameters factoryParameters) throws IOException {
     this.index = index;
@@ -187,11 +188,12 @@ public class StructuredRetrieval implements Retrieval {
    * @param queryResults - object that will contain the results
    * @throws Exception
    */
-  public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+  public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults, List<String> errors) throws Exception {
     this.query = query;
     this.queryParams = parameters;
     this.queryResults = queryResults;
-
+    this.errors = errors;
+    
     runner = new Thread(this);
     runner.start();
   }
@@ -233,6 +235,9 @@ public class StructuredRetrieval implements Retrieval {
       // TODO: use logger here
       System.err.println("StructuredRetrieval ERROR RETRIEVING: " + e);
       e.printStackTrace(System.err);
+      synchronized (errors) {
+        errors.add(e.toString());
+      }
     }
   }
 

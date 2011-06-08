@@ -38,6 +38,7 @@ public class MultiRetrieval implements Retrieval {
   Node root = null;
   Parameters queryParams;
   List<ScoredDocument> queryResults;
+  List<String> errors;
 
   public MultiRetrieval(HashMap<String, ArrayList<Retrieval>> indexes, Parameters p) throws Exception {
 
@@ -94,23 +95,34 @@ public class MultiRetrieval implements Retrieval {
       throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + root.toString() + "'");
     }
     ArrayList<Retrieval> subset = retrievals.get(retrievalGroup);
-    List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
-
     Parameters shardTemplate = parameters.clone();
 
-    // Asynchronous retrieval
-    String indexId = parameters.get("indexId", "0");
-    System.err.printf("Distributing query: %s\n", this.root.toString());
-    for (int i = 0; i < subset.size(); i++) {
-      Parameters shardParams = shardTemplate.clone();
-      shardParams.set("indexId", indexId + "." + Integer.toString(i));
-      Retrieval r = subset.get(i);
-      r.runAsynchronousQuery(this.root, shardParams, queryResults);
-    }
+    int retries = 10;
+    boolean retry = true;
+    while (retry && retries > 0) {
+      List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
+      List<String> errors = new ArrayList();
+      
+      // Asynchronous retrieval
+      String indexId = parameters.get("indexId", "0");
+      System.err.printf("Distributing query: %s\n", this.root.toString());
+      for (int i = 0; i < subset.size(); i++) {
+        Parameters shardParams = shardTemplate.clone();
+        shardParams.set("indexId", indexId + "." + Integer.toString(i));
+        Retrieval r = subset.get(i);
+        r.runAsynchronousQuery(this.root, shardParams, queryResults, errors);
+      }
 
-    // Wait for a finished list
-    for (Retrieval r : subset) {
-      r.waitForAsynchronousQuery();
+      // Wait for a finished list
+      for (Retrieval r : subset) {
+        r.waitForAsynchronousQuery();
+      }
+        
+      retry = false;
+      if(errors.size() > 0){
+        retry = true;
+        retries --;
+      }
     }
 
     // sort the results and invert (sort is inverted)
@@ -122,11 +134,12 @@ public class MultiRetrieval implements Retrieval {
     return queryResults.subList(0, Math.min(queryResults.size(), requested)).toArray(new ScoredDocument[0]);
   }
 
-  public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+  public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults, List<String> errors) throws Exception {
     this.root = query;
     this.queryParams = parameters;
     this.queryResults = queryResults;
-
+    this.errors = errors;
+    
     runner = new Thread(this);
     runner.start();
   }
@@ -160,6 +173,10 @@ public class MultiRetrieval implements Retrieval {
     } catch (Exception e) {
       // TODO: use logger here
       System.err.println("MultiRetrieval ERROR RETRIEVING: " + e);
+      e.printStackTrace(System.err);
+      synchronized (errors) {
+        errors.add(e.toString());
+      }
     }
   }
 
@@ -210,7 +227,7 @@ public class MultiRetrieval implements Retrieval {
       retrievalStatistics.put(retGroup, statsSet);
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
       retrievalStatistics.get(retGroup).add("traversals/traversal/class", "org.galagosearch.core.retrieval.traversal.DetermineCollectionProbabilities");
-      
+
       featureFactories.put(retGroup, new RankedFeatureFactory(retrievalStatistics.get(retGroup)));
     }
   }
@@ -228,7 +245,7 @@ public class MultiRetrieval implements Retrieval {
     out.set("collectionLength", Long.toString(cl));
     out.set("documentCount", Long.toString(dc));
 
-    for(String part : parts.stringList("part")){
+    for (String part : parts.stringList("part")) {
       long pcl = 0;
       long pdc = 0;
       for (Parameters p : ps) {
@@ -237,7 +254,7 @@ public class MultiRetrieval implements Retrieval {
       }
       out.set(part + "/collectionLength", Long.toString(pcl));
       out.set(part + "/documentCount", Long.toString(pdc));
-   }
+    }
 
     System.err.printf("After merging, stats are: %s\n", out);
     return out;

@@ -186,7 +186,7 @@ public class RetiredProxy implements Retrieval {
     return (root);
   }
 
-  public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
+  public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults, List<String> errors) throws Exception {
     this.query = query;
     this.queryParams = parameters;
     this.queryResults = queryResults;

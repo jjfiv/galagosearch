@@ -55,7 +55,7 @@ public class BM25RelevanceFeedbackTraversal implements Traversal {
     Parameters localParameters = queryParameters.clone();
     localParameters.set("requested", Integer.toString(fbDocs));
 
-    retrieval.runAsynchronousQuery(combineNode, localParameters, initialResults);
+    retrieval.runAsynchronousQuery(combineNode, localParameters, initialResults, new ArrayList());
 
     // while that's running, extract the feedback parameters
     int fbTerms = (int) parameters.get("fbTerms", 10);

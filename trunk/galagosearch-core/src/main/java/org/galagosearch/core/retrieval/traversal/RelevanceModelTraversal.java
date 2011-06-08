@@ -69,7 +69,7 @@ public class RelevanceModelTraversal implements Traversal {
 
     // This pass doesn't count
     CallTable.turnOff();
-    retrieval.runAsynchronousQuery(combineNode, localParameters, initialResults);
+    retrieval.runAsynchronousQuery(combineNode, localParameters, initialResults, new ArrayList());
     queryParameters.add("part", this.availableParts.list("part"));
     RelevanceModel rModel = new RelevanceModel(queryParameters);
     rModel.initialize();
