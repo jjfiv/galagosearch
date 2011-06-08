@@ -155,7 +155,7 @@ public class StructuredRetrieval implements Retrieval {
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
     DocumentLengthsReader.KeyIterator lengthsIterator = index.getLengthsIterator();
     while (!iterator.isDone()) {
-      int document = iterator.currentCandidate();      
+      int document = iterator.currentCandidate();
       if (iterator.hasMatch(document)) {
         lengthsIterator.skipToKey(document);
         int length = lengthsIterator.getCurrentLength();
@@ -232,6 +232,7 @@ public class StructuredRetrieval implements Retrieval {
     } catch (Exception e) {
       // TODO: use logger here
       System.err.println("StructuredRetrieval ERROR RETRIEVING: " + e);
+      e.printStackTrace(System.err);
     }
   }
 

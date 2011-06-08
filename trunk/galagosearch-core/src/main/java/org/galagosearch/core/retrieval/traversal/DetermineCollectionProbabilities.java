@@ -67,6 +67,11 @@ public class DetermineCollectionProbabilities implements Traversal {
 
     NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
     if ((nodeType != null) && (isScoringFnNode(node))) {
+      
+      if( node.getParameters().containsKey("collectionProbability") ){
+        return node;
+      }
+      
       Node child = node.getInternalNodes().get(0);
 
       if (isCountNode(child)) {

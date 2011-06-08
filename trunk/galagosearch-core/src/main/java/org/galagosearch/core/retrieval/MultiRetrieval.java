@@ -303,41 +303,6 @@ public class MultiRetrieval implements Retrieval {
     return intersection;
   }
 
-  private class PathComp implements Comparator<ArrayList<String>> {
-
-    public int compare(ArrayList<String> a1, ArrayList<String> a2) {
-      int result = (a1.size() - a2.size());
-      if (result != 0) {
-        return result;
-      }
-
-      for (int i = 0; i < a1.size(); i++) {
-        if (!a1.get(i).equals(a2.get(i))) {
-          return -1;
-        }
-      }
-      return 0;
-    }
-  }
-
-  private Parameters mergeParts2(List<Parameters> ps) {
-    Parameters intersection = ps.get(0).clone();
-    for (String partName : intersection.stringList("part")) {
-      for (Parameters p : ps) {
-        System.err.printf("Parts: %s\n", p.toString());
-        // if some index does not contain the correct part - delete it and all node Classes
-        if (!p.stringList("part").contains(partName)) {
-          for (Value v : intersection.list("part")) {
-            if (v.toString().equals(partName)) {
-              intersection.list("part").remove(v);
-            }
-          }
-        }
-      }
-    }
-    return intersection;
-  }
-
   /**
    * Currently does this synchronously to make sure it works.
    * We can multi-thread it when we have time.
