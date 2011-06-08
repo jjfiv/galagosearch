@@ -29,7 +29,6 @@ public class StructuredRetrievalProxy implements InvocationHandler, Runnable {
 
   String indexUrl;
   HashSet<String> unImplemented;
-
   // For async execution
   Thread queryRunner = null;
   Object[] argHolder;
@@ -121,14 +120,19 @@ public class StructuredRetrievalProxy implements InvocationHandler, Runnable {
 
     // Typecast the results properly
     List<ScoredDocument> aggregatedResults = (List<ScoredDocument>) argHolder[2];
+    List<String> errors = (List<String>) argHolder[3];
     ScoredDocument[] results = new ScoredDocument[0];
     try {
       results = (ScoredDocument[]) invoke("runRankedQuery", newArgs);
+      synchronized (aggregatedResults) {
+        aggregatedResults.addAll(Arrays.asList(results));
+      }
     } catch (Throwable t) {
-      throw new RuntimeException(t);
-    }
-    synchronized(aggregatedResults) {
-      aggregatedResults.addAll(Arrays.asList(results));
+      System.err.println("StructuredRetrievalProxy  ERROR RETRIEVING: " + t.toString());
+      t.printStackTrace(System.err);
+      synchronized (errors) {
+        errors.add(t.toString());
+      }
     }
   }
 }

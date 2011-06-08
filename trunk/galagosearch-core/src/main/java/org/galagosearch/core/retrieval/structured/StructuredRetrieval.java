@@ -228,7 +228,7 @@ public class StructuredRetrieval implements Retrieval {
       } else {
         results = runRankedQuery(query, queryParams);
       }
-
+      
       // Now add it to the output structure, but synchronously
       synchronized (queryResults) {
         queryResults.addAll(Arrays.asList(results));
@@ -284,7 +284,8 @@ public class StructuredRetrieval implements Retrieval {
 
     return StructuredQuery.parse(query);
   }
-  static HashMap<String, StructuredIterator> iteratorCache = new HashMap();
+  
+  HashMap<String, StructuredIterator> iteratorCache = new HashMap();
 
   public StructuredIterator createIterator(Node node, DocumentContext context) throws Exception {
     iteratorCache.clear();

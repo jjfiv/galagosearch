@@ -117,9 +117,9 @@ public class MultiRetrieval implements Retrieval {
       }
 
       // Wait for a finished list
-      for (Retrieval r : subset) {
-        r.waitForAsynchronousQuery();
-      }
+       for (Retrieval r : subset) {
+         r.waitForAsynchronousQuery();
+       }
         
       retry = false;
       if(errorCollector.size() > 0){
