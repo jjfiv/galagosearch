@@ -100,38 +100,27 @@ public class MultiRetrieval implements Retrieval {
     List<ScoredDocument> queryResultCollector = new ArrayList<ScoredDocument>();
     List<String> errorCollector = new ArrayList();
 
-    int retries = 0;
-    boolean retry = true;
-    while (retry && retries < 5) {
-      queryResultCollector.clear();
-      errorCollector.clear();
-      
-      // Asynchronous retrieval
-      String indexId = parameters.get("indexId", "0");
-      System.err.printf("Distributing query: %s\n", this.root.toString());
-      for (int i = 0; i < subset.size(); i++) {
-        Parameters shardParams = shardTemplate.clone();
-        shardParams.set("indexId", indexId + "." + Integer.toString(i));
-        Retrieval r = subset.get(i);
-        r.runAsynchronousQuery(this.root, shardParams, queryResultCollector, errorCollector);
-      }
-
-      // Wait for a finished list
-       for (Retrieval r : subset) {
-         r.waitForAsynchronousQuery();
-       }
-        
-      retry = false;
-      if(errorCollector.size() > 0){
-        retry = true;
-        retries++;
-        System.err.println("At least one shard errored - Retrying: " + retries);
-      }
+    // Asynchronous retrieval
+    String indexId = parameters.get("indexId", "0");
+    System.err.printf("Distributing query: %s\n", this.root.toString());
+    for (int i = 0; i < subset.size(); i++) {
+      Parameters shardParams = shardTemplate.clone();
+      shardParams.set("indexId", indexId + "." + Integer.toString(i));
+      Retrieval r = subset.get(i);
+      r.runAsynchronousQuery(this.root, shardParams, queryResultCollector, errorCollector);
     }
 
-    if(retry){
-      throw new RuntimeException("Failed to run query:" + root);
+    // Wait for a finished list
+    for (Retrieval r : subset) {
+      r.waitForAsynchronousQuery();
     }
+
+    if (errorCollector.size() > 0) {
+      System.err.println( "Failed to run: " + root.toString() );
+      // we do not want to return partial or erroneous results.
+      return new ScoredDocument[0];
+    }
+
     
     // sort the results and invert (sort is inverted)
     Collections.sort(queryResultCollector, Collections.reverseOrder());
@@ -147,7 +136,7 @@ public class MultiRetrieval implements Retrieval {
     this.queryParams = parameters;
     this.queryResults = queryResults;
     this.errors = errors;
-    
+
     runner = new Thread(this);
     runner.start();
   }
