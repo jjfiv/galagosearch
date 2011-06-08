@@ -97,9 +97,9 @@ public class MultiRetrieval implements Retrieval {
     ArrayList<Retrieval> subset = retrievals.get(retrievalGroup);
     Parameters shardTemplate = parameters.clone();
 
-    int retries = 10;
+    int retries = 0;
     boolean retry = true;
-    while (retry && retries > 0) {
+    while (retry && retries < 10) {
       List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
       List<String> errors = new ArrayList();
       
@@ -121,7 +121,8 @@ public class MultiRetrieval implements Retrieval {
       retry = false;
       if(errors.size() > 0){
         retry = true;
-        retries --;
+        retries++;
+        System.err.println("At least one shard errored - Retrying: " + retries);
       }
     }
 
