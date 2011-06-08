@@ -27,7 +27,7 @@ public class DocumentPriorReader extends KeyValueReader {
 
   public DocumentPriorReader(String filename) throws FileNotFoundException, IOException {
     super(filename);
-    def = Double.parseDouble(this.getManifest().get("default")); // this must exist
+    def = Double.parseDouble(this.getManifest().get("minScore")); // this must exist
   }
 
   public DocumentPriorReader(GenericIndexReader r) {
@@ -108,18 +108,15 @@ public class DocumentPriorReader extends KeyValueReader {
   public class ValueIterator extends KeyToListIterator implements ScoreValueIterator {
 
     DocumentContext context;
-    double defInst;
     double minScore;
     
     public ValueIterator(KeyIterator it, Node node) {
       super(it);
-      this.defInst = node.getParameters().get("default", def);
       this.minScore = node.getParameters().get("minScore", Math.log(0.0000000001)); // same as indri
     }
 
     public ValueIterator(KeyIterator it) {
       super(it);
-      this.defInst = def;
       this.minScore = Math.log(0.0000000001); // same as indri
     }
 
@@ -148,12 +145,12 @@ public class DocumentPriorReader extends KeyValueReader {
         if (this.currentCandidate() == context.document) {
           byte[] valueBytes = iterator.getValueBytes();
           if ((valueBytes == null) || (valueBytes.length == 0)) {
-            return defInst;
+            return minScore;
           } else {
             return Utility.toDouble(valueBytes);
           }
         } else {
-          return defInst;
+          return minScore;
         }
       } catch (IOException ex) {
         Logger.getLogger(DocumentPriorReader.class.getName()).log(Level.SEVERE, null, ex);
@@ -165,7 +162,7 @@ public class DocumentPriorReader extends KeyValueReader {
     public boolean hasMatch(int identifier){
       return (! this.isDone() 
               && identifier == this.currentCandidate() 
-              && this.score() > this.minScore);
+              && this.score() >= this.minScore);
     }
     
     public double maximumScore() {

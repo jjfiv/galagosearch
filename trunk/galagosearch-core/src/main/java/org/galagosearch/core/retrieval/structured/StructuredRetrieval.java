@@ -285,14 +285,13 @@ public class StructuredRetrieval implements Retrieval {
     return StructuredQuery.parse(query);
   }
   
-  HashMap<String, StructuredIterator> iteratorCache = new HashMap();
-
   public StructuredIterator createIterator(Node node, DocumentContext context) throws Exception {
-    iteratorCache.clear();
-    return createNodeMergedIterator(node, context);
+    HashMap<String, StructuredIterator> iteratorCache = new HashMap();
+    return createNodeMergedIterator(node, context, iteratorCache);
   }
 
-  public StructuredIterator createNodeMergedIterator(Node node, DocumentContext context)
+  public StructuredIterator createNodeMergedIterator(Node node, DocumentContext context, 
+          HashMap<String, StructuredIterator> iteratorCache)
           throws Exception {
     ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
     StructuredIterator iterator;
@@ -304,7 +303,7 @@ public class StructuredRetrieval implements Retrieval {
 
     try {
       for (Node internalNode : node.getInternalNodes()) {
-        StructuredIterator internalIterator = createNodeMergedIterator(internalNode, context);
+        StructuredIterator internalIterator = createNodeMergedIterator(internalNode, context, iteratorCache);
         internalIterators.add(internalIterator);
       }
 

@@ -137,10 +137,10 @@ public class BuildSpecialTest extends TestCase {
       trecCorpusFile = Utility.createTemporary();
       Utility.copyStringToFile(trecCorpus, trecCorpusFile);
 
-      String priors = "d10\t-100.0\n"
-              + "d11\t-90.0\n"
-              + "d59\t-70.0\n"
-              + "d73\t-60.0\n";
+      String priors = "d10\t-23.0259\n"
+              + "d11\t-1e-10\n"
+              + "d59\t-7.0\n"
+              + "d73\t-6.0\n";
 
       priorFile = Utility.createTemporary();
       Utility.copyStringToFile(priors, priorFile);
@@ -159,10 +159,9 @@ public class BuildSpecialTest extends TestCase {
       DocumentPriorReader reader = new DocumentPriorReader(indexFile.getAbsolutePath() + File.separator + "testingPriors");
 
       HashMap<Integer, Double> priorData = new HashMap();
-      priorData.put(0, -100.0);
-      priorData.put(1, -90.0);
-      priorData.put(3, -70.0);
-      priorData.put(4, -60.0);
+      priorData.put(1, -1e-10);
+      priorData.put(3, -7.0);
+      priorData.put(4, -6.0);
 
       DocumentPriorReader.KeyIterator iterator = reader.getIterator();
       do {
@@ -196,11 +195,15 @@ public class BuildSpecialTest extends TestCase {
               + "1 Q0 d59 3 -1.22350933 galago\n"
               + "1 Q0 d73 4 -1.22350933 galago\n"
               + "1 Q0 d55 5 -1.22483912 galago\n"
-              + "2 Q0 d55 1 -0.61241956 galago\n"
-              + "2 Q0 d73 2 -30.61175467 galago\n"
-              + "2 Q0 d59 3 -35.61175467 galago\n"
-              + "2 Q0 d11 4 -45.61175467 galago\n"
-              + "2 Q0 d10 5 -50.61175467 galago\n";
+              + "2 Q0 d11 1 -0.61175467 galago\n"
+              + "2 Q0 d73 2 -3.61175467 galago\n"
+              + "2 Q0 d59 3 -4.11175467 galago\n"
+              + "2 Q0 d10 4 -12.12468013 galago\n"
+              + "2 Q0 d55 5 -12.12534503 galago\n";
+
+
+      System.err.println(expected);
+      System.err.println(out);
 
       assertEquals(expected, out);
 

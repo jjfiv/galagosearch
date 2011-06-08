@@ -24,9 +24,11 @@ import org.galagosearch.tupleflow.execution.Verification;
 public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
 
   int lastDocument = -1;
-  double maxScore = Double.NEGATIVE_INFINITY;
-  double minScore = Double.POSITIVE_INFINITY;
+  double maxObservedScore = Double.NEGATIVE_INFINITY;
+  double minObservedScore = Double.POSITIVE_INFINITY;
 
+  double minWrittenScore = Math.log(0.0000000001);
+  
   Counter written;
 
   /** Creates a new instance of DocumentLengthsWriter */
@@ -37,7 +39,7 @@ public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
     p.set("readerClass", DocumentPriorReader.class.getName());
 
     // ensure we set a default value - default default value is 'false'
-    p.set("default", parameters.getXML().get("default", "-inf"));
+    minWrittenScore = parameters.getXML().get("default", minWrittenScore);
 
     written = parameters.getCounter("Priors Written");
   }
@@ -46,18 +48,22 @@ public class DocumentPriorWriter extends KeyValueWriter<NumberWordProbability> {
     // word is ignored
     assert ((lastDocument < 0) || (lastDocument < nwp.number)) : "DocumentPriorWriter keys must be unique and in sorted order.";
     
-    maxScore = Math.max(maxScore, nwp.probability);
-    minScore = Math.min(minScore, nwp.probability);
+    maxObservedScore = Math.max(maxObservedScore, nwp.probability);
+    minObservedScore = Math.min(minObservedScore, nwp.probability);
     GenericElement element = new GenericElement(Utility.fromInt(nwp.number), Utility.fromDouble(nwp.probability));
 
-    if(written != null) written.increment();
-    return element;
+    if( nwp.probability > minObservedScore ){
+      if(written != null) written.increment();
+      return element;
+    } else {
+      return null;
+    }
   }
 
   public void close() throws IOException {
     Parameters p = writer.getManifest();
-    p.set("maxScore", Double.toString(this.maxScore));
-    p.set("minScore", Double.toString(this.minScore));
+    p.set("maxScore", Double.toString(this.maxObservedScore));
+    p.set("minScore", Double.toString(this.minObservedScore));
     super.close();
   }
 

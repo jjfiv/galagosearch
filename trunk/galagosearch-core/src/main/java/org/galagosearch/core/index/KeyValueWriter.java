@@ -1,5 +1,4 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.index;
 
 import org.galagosearch.core.index.corpus.*;
@@ -30,32 +29,36 @@ import org.galagosearch.tupleflow.execution.Verification;
  * @author irmarc
  */
 public abstract class KeyValueWriter<T> implements Processor<T> {
-    protected IndexWriter writer;
-    protected Counter elementsWritten;
-    protected long count;
 
-    public KeyValueWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
-      this(parameters, "Documents written");
+  protected IndexWriter writer;
+  protected Counter elementsWritten;
+  protected long count;
+
+  public KeyValueWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
+    this(parameters, "Documents written");
+  }
+
+  public KeyValueWriter(TupleFlowParameters parameters, String text) throws FileNotFoundException, IOException {
+    writer = new IndexWriter(parameters.getXML().get("filename"));
+    elementsWritten = parameters.getCounter(text);
+    count = 0;
+  }
+
+  protected abstract GenericElement prepare(T item) throws IOException;
+
+  public void close() throws IOException {
+    writer.getManifest().set("keyCount", Long.toString(count));
+    writer.close();
+  }
+
+  public void process(T i) throws IOException {
+    GenericElement e = prepare(i);
+    if (e != null) {
+      writer.add(e);
+      count++;
+      if (elementsWritten != null) {
+        elementsWritten.increment();
+      }
     }
-
-    public KeyValueWriter(TupleFlowParameters parameters, String text) throws FileNotFoundException, IOException {
-        writer = new IndexWriter(parameters.getXML().get("filename"));
-        elementsWritten = parameters.getCounter(text);
-        count = 0;
-    }
-
-    protected abstract GenericElement prepare(T item) throws IOException;
-
-    public void close() throws IOException {
-      writer.getManifest().set("keyCount", Long.toString(count));
-      writer.close();
-    }
-
-    public void process(T i) throws IOException {
-        GenericElement e = prepare(i);
-        writer.add(e);
-        count++;
-        if (elementsWritten != null)
-            elementsWritten.increment();
-    }
+  }
 }
