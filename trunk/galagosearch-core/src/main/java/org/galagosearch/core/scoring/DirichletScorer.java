@@ -21,7 +21,7 @@ public class DirichletScorer implements ScoringFunction {
 
         mu = parameters.get("mu", 1500);
         if (parameters.containsKey("collectionProbability")) {
-            background = parameters.get("collectionProbability", 0.0001);
+          background = parameters.get("collectionProbability", 0.0001);
         } else {
             long collectionLength = parameters.get("collectionLength", (long) 0);
             long count = 0;

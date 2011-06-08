@@ -206,8 +206,10 @@ public class MultiRetrieval implements Retrieval {
       statsSet.add("traversals", externalParameters.list("traversals"));
       statsSet.add("operators", externalParameters.list("operators"));
       System.err.printf("After adding external parameters: %s\n", statsSet.toString());
+
       retrievalStatistics.put(retGroup, statsSet);
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
+      retrievalStatistics.get(retGroup).add("traversals/traversal/class", "org.galagosearch.core.retrieval.traversal.DetermineCollectionProbabilities");
       
       featureFactories.put(retGroup, new RankedFeatureFactory(retrievalStatistics.get(retGroup)));
     }

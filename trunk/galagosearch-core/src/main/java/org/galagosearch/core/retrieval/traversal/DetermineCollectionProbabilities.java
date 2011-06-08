@@ -50,10 +50,10 @@ public class DetermineCollectionProbabilities implements Traversal {
   }
 
   private double getCollectionProbability(long collectionCount) {
-    long collectionLength = stats.get("collectionLength", (long) 0);
+    double collectionLength = stats.get("collectionLength", (double) 0.0);
 
     if (collectionCount > 0) {
-      return ((double) collectionCount / (double) collectionLength);
+      return ((double) collectionCount / collectionLength);
     } else {
       return (0.5 / (double) collectionLength);
     }
@@ -73,10 +73,10 @@ public class DetermineCollectionProbabilities implements Traversal {
         // Use xcount to count the background probabilities
         // TODO: make retrievalGroup a parameters for xcount
         node.getParameters().add("retrievalGroup", retrievalGroup);
-        double collectionProb = getCollectionProbability(retrieval.xCount(node.toString()));
+        double collectionProb = getCollectionProbability(retrieval.xCount(child.toString()));
 
         // add the collection probability to the scoring function node
-        newParameters.add("collectionCount", Double.toString(collectionProb));
+        newParameters.add("collectionProbability", Double.toString(collectionProb));
         return new Node(node.getOperator(), newParameters, node.getInternalNodes(), node.getPosition());
 
       } else {
