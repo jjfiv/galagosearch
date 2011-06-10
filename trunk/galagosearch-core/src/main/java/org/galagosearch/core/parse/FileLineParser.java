@@ -32,7 +32,7 @@ public class FileLineParser implements ExNihiloSource<String> {
 
   public FileLineParser(TupleFlowParameters parameters) {
     p = parameters.getXML();
-    lines = parameters.getCounter("Indicator Lines Read");
+    lines = parameters.getCounter("File Lines Read");
   }
 
   public void run() throws IOException {
