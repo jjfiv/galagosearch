@@ -338,12 +338,12 @@ public class Verification {
                                    output.getId() + "', but it isn't listed in the connections section of the stage.");
                 } else {
                     if (state.isDefined() && !state.getClassName().equals(point.getClassName())) {
-                        store.addError(step.getLocation(), "Previous step makes '" +
+                        store.addError(step.getLocation(), "Previous ("+ step.getClassName() +") step makes '" +
                                        state.getClassName() + "' objects, but this output connection wants '" +
                                        point.getClassName() + "' objects.");
                     } else if (state.isDefined() && !compatibleOrders(state.getOrder(), point.
                                                                       getOrder())) {
-                        store.addError(step.getLocation(), "Previous step outputs objects in '" +
+                        store.addError(step.getLocation(), "Previous step ("+ step.getClassName() +") outputs objects in '" +
                                        Arrays.toString(state.getOrder()) + "' order, but incompatible order '" +
                                        Arrays.toString(point.getOrder()) + "' is required.");
                     }
