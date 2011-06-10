@@ -155,9 +155,9 @@ public class BuildStageTemplates {
   }
 
   public static Stage getSplitStage(ArrayList<String> inputPaths, Class<? extends ExNihiloSource> sourceClass, Order order)
-          throws IOException {
+      throws IOException {
     Stage stage = new Stage("inputSplit");
-    stage.add(new StageConnectionPoint(ConnectionPointType.Output, "splits", order));
+    stage.addOutput("splits", order);
 
     Parameters p = new Parameters();
     for (String input : inputPaths) {
@@ -172,8 +172,7 @@ public class BuildStageTemplates {
       }
     }
 
-    stage.add(new Step(sourceClass, p));
-    stage.add(Utility.getSorter(order));
+    stage.add(new Step(sourceClass, p));    
     stage.add(new OutputStep("splits"));
     return stage;
   }

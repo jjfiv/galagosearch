@@ -138,7 +138,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
 
   private void processFile(String fileName) throws IOException {
     
-    // First, make sure this file exists. If not, bitch about it and move on
+    // First, make sure this file exists. If not, whine about it and move on
     File actual = new File(fileName);
     if (!actual.exists()) {
       throw new IOException(String.format("File %s was not found. Exiting.\n", fileName));

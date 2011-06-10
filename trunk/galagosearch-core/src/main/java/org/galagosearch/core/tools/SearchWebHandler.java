@@ -508,7 +508,7 @@ public class SearchWebHandler extends ContextHandler {
     }
   }
 
-  protected SearchResult performSearch(HttpServletRequest request, boolean snippits) throws Exception {
+  protected SearchResult performSearch(HttpServletRequest request, boolean snippets) throws Exception {
     String query = request.getParameter("q");
     String transformString = request.getParameter("transform");
     boolean doTransform = Boolean.parseBoolean(transformString == null ? "true" : transformString);
@@ -530,9 +530,9 @@ public class SearchWebHandler extends ContextHandler {
 
     SearchResult result;
     if (doTransform) {
-      result = search.runQuery(query, p, snippits);
+      result = search.runQuery(query, p, snippets);
     } else {
-      result = search.runTransformedQuery(StructuredQuery.parse(query), p, snippits);
+      result = search.runTransformedQuery(StructuredQuery.parse(query), p, snippets);
     }
     return result;
   }

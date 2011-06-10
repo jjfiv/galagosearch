@@ -100,7 +100,7 @@ public class DocumentPriorReader extends KeyValueReader {
     }
 
     public ValueIterator getValueIterator() throws IOException {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return new ValueIterator(new KeyIterator(reader));
     }
   }
 

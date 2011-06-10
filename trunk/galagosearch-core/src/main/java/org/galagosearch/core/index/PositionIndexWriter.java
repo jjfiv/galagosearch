@@ -6,7 +6,6 @@ import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
-import org.galagosearch.core.index.corpus.SplitIndexValueWriter;
 import org.galagosearch.core.index.merge.PositionIndexMerger;
 import org.galagosearch.core.types.KeyValuePair;
 import org.galagosearch.core.types.NumberWordPosition;

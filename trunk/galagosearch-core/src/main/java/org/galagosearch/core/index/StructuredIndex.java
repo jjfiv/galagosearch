@@ -43,9 +43,12 @@ public class StructuredIndex {
       if (part.getName().equals("mod")) {
         initializeModifiers(part.getAbsoluteFile());
       } else {
+        if (part.isDirectory()) {
+          continue; // don't process directories since it didn't match mod
+        }
         StructuredIndexPartReader reader = openIndexPart(part.getAbsolutePath());
         if (reader == null) {
-          continue;
+          continue; // Don't add missing/empty parts
         }
         parts.put(part.getName(), reader);
       }
