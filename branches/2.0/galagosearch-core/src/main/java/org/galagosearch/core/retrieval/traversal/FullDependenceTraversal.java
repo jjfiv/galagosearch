@@ -27,14 +27,11 @@ import org.galagosearch.tupleflow.Parameters;
 public class FullDependenceTraversal implements Traversal {
 
   private int defaultWindowLimit;
-
-  private int levels;
   private String unigramDefault;
   private String orderedDefault;
   private String unorderedDefault;
 
   public FullDependenceTraversal(Parameters parameters, Retrieval retrieval) {
-    levels = 0;
     unigramDefault = parameters.get("uniw", "0.8");
     orderedDefault = parameters.get("odw", "0.15");
     unorderedDefault = parameters.get("uww", "0.05");
@@ -43,16 +40,12 @@ public class FullDependenceTraversal implements Traversal {
   }
 
   public void beforeNode(Node original) throws Exception {
-    levels++;
   }
 
   public Node afterNode(Node original) throws Exception {
-    levels--;
-    if (levels > 0) {
-      return original;
-    } else if (original.getOperator().equals("fulldep")) {
-    
-      int windowLimit = (int) original.getParameters().get( "windowLimit", defaultWindowLimit );
+    if (original.getOperator().equals("fulldep")) {
+
+      int windowLimit = (int) original.getParameters().get("windowLimit", defaultWindowLimit);
 
       // First check format - should only contain text node children
       ArrayList<Node> children = original.getInternalNodes();
@@ -77,8 +70,8 @@ public class FullDependenceTraversal implements Traversal {
 
       ArrayList<ArrayList<Node>> nodePowerSet = powerSet(new ArrayList(children));
       for (ArrayList<Node> set : nodePowerSet) {
-        if((windowLimit < 2) || (windowLimit >= set.size())) {
-          if(set.size() >= 2) {
+        if ((windowLimit < 2) || (windowLimit >= set.size())) {
+          if (set.size() >= 2) {
             int uwSize = 4 * set.size();
             ordered.add(new Node("ordered", "1", set));
             unordered.add(new Node("unordered", Integer.toString(uwSize), set));
