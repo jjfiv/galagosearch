@@ -338,6 +338,9 @@ public class MultiRetrieval implements Retrieval {
       // Print a fail, then return null
       throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + nodeString + "'");
     }
+
+    System.err.printf("Distributing xcount: %s\n", this.root.toString());
+    
     ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
     long count = 0;
     for (Retrieval r : selected) {

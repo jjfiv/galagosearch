@@ -358,6 +358,9 @@ public class StructuredRetrieval implements Retrieval {
   }
 
   public long xCount(Node root) throws Exception {
+
+    System.err.printf("Running xcount: %s\n", root.toString());
+    
     NodeCountAggregator agg = new NodeCountAggregator(root);
     return agg.termCount();
   }
