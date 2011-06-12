@@ -7,6 +7,7 @@ package org.galagosearch.core.retrieval.structured;
 
 import org.galagosearch.core.retrieval.traversal.TransformRootTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
+import org.galagosearch.core.retrieval.traversal.FlatteningTraversal;
 import org.galagosearch.core.retrieval.traversal.FullDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
@@ -62,6 +63,7 @@ static String[][] sOperatorLookup = {
     IndriWindowCompatibilityTraversal.class.getName(),
     TextFieldRewriteTraversal.class.getName(),
     ImplicitFeatureCastTraversal.class.getName(),
+    FlatteningTraversal.class.getName(),
     RelevanceModelTraversal.class.getName(),
     BM25RelevanceFeedbackTraversal.class.getName()
   };
