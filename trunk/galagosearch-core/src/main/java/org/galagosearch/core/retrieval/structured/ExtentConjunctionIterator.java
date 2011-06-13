@@ -25,11 +25,10 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
 
     document = MoveIterators.findMaximumDocument(iterators);
 
-    if(document == Integer.MAX_VALUE){
+    if (document == Integer.MAX_VALUE) {
       done = true;
     }
   }
-
 
   public int currentCandidate() {
     return document;
@@ -47,14 +46,14 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
 
     for (ValueIterator iterator : iterators) {
       iterator.moveTo(identifier);
-      if(iterator.isDone()){
+      if (iterator.isDone()) {
         done = true;
       }
     }
 
     document = MoveIterators.findMaximumDocument(iterators);
 
-    if( (!done) && (MoveIterators.allSameDocument(iterators)) ){
+    if ((!done) && (MoveIterators.allSameDocument(iterators))) {
       // try to load some extents (subclass does this)
       extents.reset();
       loadExtents();
@@ -80,7 +79,6 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
     return min;
   }
 
-
   /**
    * Moves the child iterators on until they find a common document
    *  *** BE VERY CAREFUL IN CALLING THIS FUNCTION ***
@@ -88,7 +86,7 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
   public boolean next() throws IOException {
     iterators[0].movePast(document);
     findDocument();
-    return (! done);
+    return (!done);
   }
 
   private void findDocument() throws IOException {

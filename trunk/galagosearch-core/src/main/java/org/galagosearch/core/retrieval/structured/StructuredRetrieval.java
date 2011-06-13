@@ -1,7 +1,6 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.structured;
 
-import gnu.trove.TObjectDoubleHashMap;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,12 +10,10 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
-import org.galagosearch.core.index.AggregateReader;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.NameReader;
 import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
@@ -54,6 +51,8 @@ public class StructuredRetrieval implements Retrieval {
     featureParameters.add("collectionLength", indexStats.get("collectionLength"));
     featureParameters.add("documentCount", indexStats.get("documentCount"));
     featureParameters.add("retrievalGroup", "all"); // the value wont matter here
+
+
     if (factoryParameters.get("queryType", "ranked").equals("count")) {
       featureFactory = new CountFeatureFactory(featureParameters);
     } else {
@@ -193,9 +192,9 @@ public class StructuredRetrieval implements Retrieval {
     this.queryParams = parameters;
     this.queryResults = queryResults;
     this.errors = errors;
-    
+
     System.err.println();
-    
+
     runner = new Thread(this);
     runner.start();
   }
@@ -228,7 +227,7 @@ public class StructuredRetrieval implements Retrieval {
       } else {
         results = runRankedQuery(query, queryParams);
       }
-      
+
       // Now add it to the output structure, but synchronously
       synchronized (queryResults) {
         queryResults.addAll(Arrays.asList(results));
@@ -284,13 +283,13 @@ public class StructuredRetrieval implements Retrieval {
 
     return StructuredQuery.parse(query);
   }
-  
+
   public StructuredIterator createIterator(Node node, DocumentContext context) throws Exception {
     HashMap<String, StructuredIterator> iteratorCache = new HashMap();
     return createNodeMergedIterator(node, context, iteratorCache);
   }
 
-  public StructuredIterator createNodeMergedIterator(Node node, DocumentContext context, 
+  public StructuredIterator createNodeMergedIterator(Node node, DocumentContext context,
           HashMap<String, StructuredIterator> iteratorCache)
           throws Exception {
     ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
@@ -360,7 +359,7 @@ public class StructuredRetrieval implements Retrieval {
   public long xCount(Node root) throws Exception {
 
     System.err.printf("Running xcount: %s\n", root.toString());
-    
+
     NodeCountAggregator agg = new NodeCountAggregator(root);
     return agg.termCount();
   }
@@ -412,8 +411,10 @@ public class StructuredRetrieval implements Retrieval {
       } else if (structIterator instanceof CountIterator) {
         CountValueIterator iterator = (CountValueIterator) structIterator;
         while (!iterator.isDone()) {
-          termCount += iterator.count();
-          docCount++;
+          if (iterator.hasMatch(iterator.currentCandidate())) {
+            termCount += iterator.count();
+            docCount++;
+          }
           iterator.next();
         }
       } else {

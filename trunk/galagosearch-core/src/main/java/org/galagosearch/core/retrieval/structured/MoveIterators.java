@@ -37,7 +37,7 @@ public class MoveIterators {
 
       for (ValueIterator iterator : iterators) {
 
-        if( ! iterator.moveTo(currentTarget) ){
+        if (!iterator.moveTo(currentTarget)) {
           allMatch = false;
           // we could have failed to move to taget because the iterator isDone.
           if (iterator.isDone()) {
@@ -48,7 +48,12 @@ public class MoveIterators {
             // so the target currentIdentifier is not a match.
             // we break and try again because we don't want to
             // touch the longest iterators if we can help it.
-            currentTarget = iterator.currentCandidate();
+            if(currentTarget == iterator.currentCandidate()){
+              // if the next target is identical to the current -> then add one.
+              currentTarget++;
+            } else {
+              currentTarget = iterator.currentCandidate();
+            }
             break;
           }
         }
@@ -65,7 +70,7 @@ public class MoveIterators {
     int document = iterators[0].currentCandidate();
 
     for (ValueIterator iterator : iterators) {
-      if(! iterator.isDone()){
+      if (!iterator.isDone()) {
         if (document != iterator.currentCandidate()) {
           return false;
         }
@@ -92,7 +97,7 @@ public class MoveIterators {
     int minimumDocument = Integer.MAX_VALUE;
 
     for (ValueIterator iterator : iterators) {
-      if(! iterator.isDone()){
+      if (!iterator.isDone()) {
         minimumDocument = Math.min(minimumDocument, iterator.currentCandidate());
       }
     }

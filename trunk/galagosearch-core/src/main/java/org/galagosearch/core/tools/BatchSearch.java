@@ -107,27 +107,31 @@ public class BatchSearch {
 
   public static void xCount(String[] args, PrintStream out) throws Exception {
     Parameters p = new Parameters(Utility.subarray(args, 1));
+    p.set("queryType", "count");
     Retrieval r = RetrievalFactory.instance(p);
-
-    String defPart = "";
-    Parameters availableParts = r.getAvailableParts("all");
-    List<String> available = availableParts.stringList("part");
-    if (available.contains("stemmedPostings")) {
-      defPart = "stemmedPostings";
-    } else if (available.contains("postings")) {
-      defPart = "postings";
-    }
+    
+    //String defPart = "";
+    //Parameters availableParts = r.getAvailableParts("all");
+    //List<String> available = availableParts.stringList("part");
+    //if (available.contains("stemmedPostings")) {
+    //  defPart = "stemmedPostings";
+    //} else if (available.contains("postings")) {
+    //  defPart = "postings";
+    //}
 
     long count;
     for (Parameters.Value v : p.list("x")) {
       String q = v.toString();
-      System.err.println(q);
-      if (q.contains("#")) {
-        count = r.xCount(q);
-      } else {
-        String termOp = "#counts:" + q + ":part=" + defPart + "()";
-        count = r.xCount(termOp);
+      Node parsed = StructuredQuery.parse(q);
+      Node transformed = r.transformBooleanQuery(parsed, "all");
+
+      if(p.get("printTransformation", false)){
+        System.err.println(q);
+        System.err.println(parsed);
+        System.err.println(transformed);
       }
+      
+      count = r.xCount( transformed );
       out.println(count + "\t" + q);
     }
     r.close();
@@ -135,26 +139,31 @@ public class BatchSearch {
 
   public static void docCount(String[] args, PrintStream out) throws Exception {
     Parameters p = new Parameters(Utility.subarray(args, 1));
+    p.set("queryType", "count");
     Retrieval r = RetrievalFactory.instance(p);
-
-    String defPart = "";
-    Parameters availableParts = r.getAvailableParts("all");
-    List<String> available = availableParts.stringList("part");
-    if (available.contains("stemmedPostings")) {
-      defPart = "stemmedPostings";
-    } else if (available.contains("postings")) {
-      defPart = "postings";
-    }
+    
+    //String defPart = "";
+    //Parameters availableParts = r.getAvailableParts("all");
+    //List<String> available = availableParts.stringList("part");
+    //if (available.contains("stemmedPostings")) {
+    //  defPart = "stemmedPostings";
+    //} else if (available.contains("postings")) {
+    //  defPart = "postings";
+    //}
 
     long count;
     for (Parameters.Value v : p.list("x")) {
       String q = v.toString();
-      if (q.contains("#")) {
-        count = r.docCount(q);
-      } else {
-        String termOp = "#counts:" + q + ":part=" + defPart + "()";
-        count = r.docCount(termOp);
+      Node parsed = StructuredQuery.parse(q);
+      Node transformed = r.transformBooleanQuery(parsed, "all");
+
+      if(p.get("printTransformation", false)){
+        System.err.println(q);
+        System.err.println(parsed);
+        System.err.println(transformed);
       }
+      
+      count = r.docCount( transformed );
       out.println(count + "\t" + q);
     }
     r.close();

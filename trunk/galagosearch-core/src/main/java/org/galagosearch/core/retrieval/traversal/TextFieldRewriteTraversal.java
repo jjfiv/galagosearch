@@ -37,11 +37,11 @@ public class TextFieldRewriteTraversal implements Traversal {
 
     if (operator.equals("text")) {
       if (params.containsKey("mod")) {
-	  original.getParameters().add("mod", params.get("mod"));
+        original.getParameters().add("mod", params.get("mod"));
       }
       return TextPartAssigner.assignPart(original, availableParts);
     } else if (operator.equals("field") || operator.equals("any")) {
-      if (availableParts.stringList("part").contains("extents")) { 
+      if (availableParts.stringList("part").contains("extents")) {
         return TextPartAssigner.transformedNode(original, "extents", "extents");
       } else {
         return original;
