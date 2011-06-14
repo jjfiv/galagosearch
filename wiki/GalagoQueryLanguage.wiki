@@ -21,24 +21,36 @@ All components of the Galago query language are operators, as such they all conf
 
 = Query Parsing =
 
-However entering in queries in this form would be tiresome. To make life a little easier, we provide two shortcuts. First a plain text term is parsed using an implicit 'text' operator.
+However, translating all queries into this form manually or via a script would be tiresome. So, we provide two shortcuts. First a plain text term is parsed using an implicit 'text' operator.
 
 {{{
  a --> #text : a ()
 }}}
 
-Second periods are used as a shortcut for the inside operator. Note that when a period is used in a key-value parameter pair the shortcut does not apply.
+Second periods are used as a shortcut for the inside operator. Note that when a period is used in a key-value parameter pair the shortcut does not apply. This shortcut matches field operators in Indri.
 
 {{{
- #op : key = a.b ( c.d )--> #op: key = a.b ( #inside( #text:c() #text:d() )
+ c.d  --> #inside( #text:c() #text:d() )
+ #op : key = a.b ( c.d ) --> #op: key = a.b ( #inside( #text:c() #text:d() ) )
 }}}
 
 
-= Operators =
+= Disk-based Operators =
 
 === #extents ===
 
+|| Implemented by ||  Position Index ||
+|| Implemented by ||  Extent Index ||
+
 === #counts ===
+
+|| Implemented by ||  Position Index ||
+
+=== #prior ===
+
+=== #indicator ===
+
+= Operators =
 
 === #feature ===
 
@@ -48,7 +60,25 @@ Second periods are used as a shortcut for the inside operator. Note that when a 
 
 === #threshold === 
 
-=== #syn | #synonym ===
+=== #synonym ===
+
+|| Alias || #syn ||
+
+=== #ordered ===
+
+|| Alias || #od ||
+
+=== #unordered ===
+
+|| Alias || #uw ||
+
+=== #scale ===
+
+=== #maxscore ===
+
+=== #all ===
+
+=== #any ===
 
 
 = Traversal Pseudo-Operators =
