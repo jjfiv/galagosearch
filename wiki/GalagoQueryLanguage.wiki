@@ -1,4 +1,4 @@
-#Galago Query Language
+#summary Galago Query Language
 
 = Introduction =
 
@@ -176,4 +176,3 @@ Relevence modelling
 === #bm25rf ===
 
 Similar but for bm25 relevence feedback
-
