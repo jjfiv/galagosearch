@@ -16,6 +16,7 @@ import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.structured.CountFeatureFactory;
 import org.galagosearch.core.retrieval.structured.FeatureFactory;
+import org.galagosearch.core.retrieval.structured.RankedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
@@ -239,8 +240,8 @@ public class MultiRetrieval implements Retrieval {
       countFeatureFactories.put(retGroup, new CountFeatureFactory(cfp));
 
       Parameters rfp = retrievalStatistics.get(retGroup);
-      rfp.set("queryType", "count");
-      rankedFeatureFactories.put(retGroup, new CountFeatureFactory(rfp));
+      rfp.set("queryType", "ranked");
+      rankedFeatureFactories.put(retGroup, new RankedFeatureFactory(rfp));
     }
   }
 
