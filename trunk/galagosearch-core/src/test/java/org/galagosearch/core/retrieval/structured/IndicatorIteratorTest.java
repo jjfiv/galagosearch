@@ -96,7 +96,8 @@ public class IndicatorIteratorTest extends TestCase {
 
         Node parsedTree = StructuredQuery.parse("#any( #counts:cat:part=postings() #counts:program:part=postings() )");
         DocumentContext context = new DocumentContext();
-        ExistentialIndicatorIterator eii = (ExistentialIndicatorIterator) retrieval.createIterator(parsedTree, context);
+
+        ExistentialIndicatorIterator eii = (ExistentialIndicatorIterator) retrieval.createIterator(parsedTree, context, retrieval.rankedFeatureFactory);
 
         // initial state
         assertEquals(2, eii.currentCandidate());
@@ -126,7 +127,7 @@ public class IndicatorIteratorTest extends TestCase {
 
         Node parsedTree = StructuredQuery.parse("#all( #counts:document:part=postings() #counts:sample:part=postings() )");
         DocumentContext context = new DocumentContext();
-        UniversalIndicatorIterator uii = (UniversalIndicatorIterator) retrieval.createIterator(parsedTree, context);
+        UniversalIndicatorIterator uii = (UniversalIndicatorIterator) retrieval.createIterator(parsedTree, context, retrieval.rankedFeatureFactory);
 
         // initial state
         assertEquals(0, uii.currentCandidate());

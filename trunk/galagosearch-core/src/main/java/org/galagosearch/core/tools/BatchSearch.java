@@ -107,23 +107,13 @@ public class BatchSearch {
 
   public static void xCount(String[] args, PrintStream out) throws Exception {
     Parameters p = new Parameters(Utility.subarray(args, 1));
-    p.set("queryType", "count");
     Retrieval r = RetrievalFactory.instance(p);
     
-    //String defPart = "";
-    //Parameters availableParts = r.getAvailableParts("all");
-    //List<String> available = availableParts.stringList("part");
-    //if (available.contains("stemmedPostings")) {
-    //  defPart = "stemmedPostings";
-    //} else if (available.contains("postings")) {
-    //  defPart = "postings";
-    //}
-
     long count;
     for (Parameters.Value v : p.list("x")) {
       String q = v.toString();
       Node parsed = StructuredQuery.parse(q);
-      Node transformed = r.transformBooleanQuery(parsed, "all");
+      Node transformed = r.transformCountQuery(parsed, "all");
 
       if(p.get("printTransformation", false)){
         System.err.println(q);
@@ -139,7 +129,6 @@ public class BatchSearch {
 
   public static void docCount(String[] args, PrintStream out) throws Exception {
     Parameters p = new Parameters(Utility.subarray(args, 1));
-    p.set("queryType", "count");
     Retrieval r = RetrievalFactory.instance(p);
     
     //String defPart = "";
@@ -154,8 +143,11 @@ public class BatchSearch {
     long count;
     for (Parameters.Value v : p.list("x")) {
       String q = v.toString();
+        System.err.println(q);
       Node parsed = StructuredQuery.parse(q);
-      Node transformed = r.transformBooleanQuery(parsed, "all");
+        System.err.println(parsed);
+      Node transformed = r.transformCountQuery(parsed, "all");
+        System.err.println(transformed);
 
       if(p.get("printTransformation", false)){
         System.err.println(q);

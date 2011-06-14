@@ -40,6 +40,7 @@ static String[][] sOperatorLookup = {
   static String[][] sFeatureLookup = {};
 
   static String[] sTraversalList = {
+    TransformRootTraversal.class.getName(),
     InsideToFieldPartTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
     IndriWindowCompatibilityTraversal.class.getName(),

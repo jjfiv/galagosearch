@@ -38,14 +38,12 @@ public interface Retrieval extends Runnable {
 
     public NodeType getNodeType(Node node, String retrievalGroup) throws Exception;
 
-    /**
-     * Returns the count of the expression provided to the method. Therefore the
-     * string passed should represent a node type that will produce a CountIterator.
-     *
-     * @param nodeString
-     * @return The count of the provided expression
-     * @throws Exception
-     */
+    public Node transformBooleanQuery(Node root, String retrievalGroup) throws Exception;
+
+    public Node transformCountQuery(Node root, String retrievalGroup) throws Exception;
+
+    public Node transformRankedQuery(Node root, String retrievalGroup) throws Exception;
+
     public long xCount(String nodeString) throws Exception;
 
     public long xCount(Node root) throws Exception;
@@ -56,11 +54,7 @@ public interface Retrieval extends Runnable {
 
     public ScoredDocument[] runBooleanQuery(Node root, Parameters parameters) throws Exception;
 
-    public Node transformBooleanQuery(Node root, String retrievalGroup) throws Exception;
-
     public ScoredDocument[] runRankedQuery(Node root, Parameters parameters) throws Exception;
-
-    public Node transformRankedQuery(Node root, String retrievalGroup) throws Exception;
 
     // These are to allow for asynchronous execution
     public void runAsynchronousQuery(Node root, Parameters parameters, List<ScoredDocument> queryResults, List<String> errors) throws Exception;

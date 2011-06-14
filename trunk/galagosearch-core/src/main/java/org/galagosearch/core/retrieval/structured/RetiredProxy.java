@@ -292,6 +292,10 @@ public class RetiredProxy implements Retrieval {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
+  public Node transformCountQuery(Node root, String retrievalGroup) throws Exception {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
   // private classes
   private static class StatisticsResultHandler extends DefaultHandler {
 

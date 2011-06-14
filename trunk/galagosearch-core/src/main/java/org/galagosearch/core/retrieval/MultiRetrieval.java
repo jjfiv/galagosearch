@@ -5,20 +5,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
-import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
+import org.galagosearch.core.retrieval.structured.CountFeatureFactory;
 import org.galagosearch.core.retrieval.structured.FeatureFactory;
-import org.galagosearch.core.retrieval.structured.RankedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
-import org.galagosearch.tupleflow.Parameters.Value;
 import org.galagosearch.tupleflow.Utility;
 
 /**
@@ -32,7 +31,9 @@ public class MultiRetrieval implements Retrieval {
   HashMap<String, ArrayList<Retrieval>> retrievals;
   HashMap<String, Parameters> retrievalStatistics;
   HashMap<String, Parameters> retrievalParts;
-  HashMap<String, FeatureFactory> featureFactories;
+  HashMap<String, FeatureFactory> booleanFeatureFactories;
+  HashMap<String, FeatureFactory> countFeatureFactories;
+  HashMap<String, FeatureFactory> rankedFeatureFactories;
   // for asynchronous retrieval
   Thread runner;
   Node root = null;
@@ -116,12 +117,12 @@ public class MultiRetrieval implements Retrieval {
     }
 
     if (errorCollector.size() > 0) {
-      System.err.println( "Failed to run: " + root.toString() );
+      System.err.println("Failed to run: " + root.toString());
       // we do not want to return partial or erroneous results.
       return new ScoredDocument[0];
     }
 
-    
+
     // sort the results and invert (sort is inverted)
     Collections.sort(queryResultCollector, Collections.reverseOrder());
 
@@ -177,20 +178,23 @@ public class MultiRetrieval implements Retrieval {
     }
   }
 
-  // private functions
-  private Node parseQuery(String query, Parameters parameters) {
-    String queryType = parameters.get("queryType", "complex");
+  public Node transformBooleanQuery(Node queryTree, String retrievalGroup) throws Exception {
+    FeatureFactory ff = booleanFeatureFactories.get(retrievalGroup);
+    return transformQuery(ff.getTraversals(this), queryTree, retrievalGroup);
+  }
 
-    if (queryType.equals("simple")) {
-      return SimpleQuery.parseTree(query);
-    }
-
-    return StructuredQuery.parse(query);
+  public Node transformCountQuery(Node queryTree, String retrievalGroup) throws Exception {
+    FeatureFactory ff = countFeatureFactories.get(retrievalGroup);
+    return transformQuery(ff.getTraversals(this), queryTree, retrievalGroup);
   }
 
   public Node transformRankedQuery(Node queryTree, String retrievalGroup) throws Exception {
-    FeatureFactory ff = featureFactories.get(retrievalGroup);
-    List<Traversal> traversals = ff.getTraversals(this);
+    FeatureFactory ff = rankedFeatureFactories.get(retrievalGroup);
+    return transformQuery(ff.getTraversals(this), queryTree, retrievalGroup);
+  }
+
+  // private functions
+  private Node transformQuery(List<Traversal> traversals, Node queryTree, String retrievalGroup) throws Exception {
     for (Traversal traversal : traversals) {
       queryTree = StructuredQuery.copy(traversal, queryTree);
     }
@@ -200,7 +204,11 @@ public class MultiRetrieval implements Retrieval {
   private void initRetrieval(Parameters externalParameters) throws IOException {
     retrievalStatistics = new HashMap();
     retrievalParts = new HashMap();
-    featureFactories = new HashMap();
+
+    booleanFeatureFactories = null;
+    countFeatureFactories = new HashMap();
+    rankedFeatureFactories = new HashMap();
+
     Parameters partSet;
     Parameters statsSet;
     for (String retGroup : retrievals.keySet()) {
@@ -217,15 +225,22 @@ public class MultiRetrieval implements Retrieval {
       retrievalParts.put(retGroup, partSet);
 
       statsSet = mergeStats(stats, partSet);
-      statsSet.add("traversals", externalParameters.list("traversals"));
-      statsSet.add("operators", externalParameters.list("operators"));
+      statsSet.copy(externalParameters);
+      // statsSet.add("traversals", externalParameters.list("traversals"));
+      // statsSet.add("operators", externalParameters.list("operators"));
       System.err.printf("After adding external parameters: %s\n", statsSet.toString());
 
       retrievalStatistics.put(retGroup, statsSet);
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
       retrievalStatistics.get(retGroup).add("traversals/traversal/class", "org.galagosearch.core.retrieval.traversal.DetermineCollectionProbabilities");
 
-      featureFactories.put(retGroup, new RankedFeatureFactory(retrievalStatistics.get(retGroup)));
+      Parameters cfp = retrievalStatistics.get(retGroup);
+      cfp.set("queryType", "count");
+      countFeatureFactories.put(retGroup, new CountFeatureFactory(cfp));
+
+      Parameters rfp = retrievalStatistics.get(retGroup);
+      rfp.set("queryType", "count");
+      rankedFeatureFactories.put(retGroup, new CountFeatureFactory(rfp));
     }
   }
 
@@ -331,7 +346,7 @@ public class MultiRetrieval implements Retrieval {
 
   public long xCount(Node countNode) throws Exception {
     Parameters parameters = countNode.getParameters();
-    String nodeString = countNode.toString();
+    final String nodeString = countNode.toString();
     String retrievalGroup = parameters.get("retrievalGroup", "all");
     if (!retrievals.containsKey(retrievalGroup)) {
       // this should fail nicely
@@ -339,12 +354,41 @@ public class MultiRetrieval implements Retrieval {
       throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + nodeString + "'");
     }
 
-    System.err.printf("Distributing xcount: %s\n", countNode.toString());
-    
+    System.err.printf("Distributing xcount: %s\n", nodeString);
+
     ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
+    final ArrayList<Long> counts = new ArrayList();
+    ArrayList<Thread> threads = new ArrayList();
+
+    for (int i = 0; i < selected.size(); i++) {
+      final Retrieval r = selected.get(i);
+      Thread t = new Thread() {
+
+        @Override
+        public void run() {
+          try {
+            long c = r.xCount(nodeString);
+            synchronized (counts) {
+              counts.add(c);
+            }
+          } catch (Exception ex) {
+            Logger.getLogger(MultiRetrieval.class.getName()).log(Level.SEVERE, null, ex);
+          }
+        }
+      };
+      threads.add(t);
+      t.start();
+    }
+
+    for (Thread t : threads) {
+      t.join();
+    }
+
+    assert (counts.size() == selected.size());
+
     long count = 0;
-    for (Retrieval r : selected) {
-      count += r.xCount(nodeString);
+    for (long c : counts) {
+      count += c;
     }
     return count;
   }
@@ -361,17 +405,49 @@ public class MultiRetrieval implements Retrieval {
    */
   public long docCount(Node countNode) throws Exception {
     Parameters parameters = countNode.getParameters();
-    String nodeString = countNode.toString();
+    final String nodeString = countNode.toString();
     String retrievalGroup = parameters.get("retrievalGroup", "all");
     if (!retrievals.containsKey(retrievalGroup)) {
       // this should fail nicely
       // Print a fail, then return null
       throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + nodeString + "'");
     }
+
+    System.err.printf("Distributing xcount: %s\n", nodeString);
+
     ArrayList<Retrieval> selected = retrievals.get(retrievalGroup);
+    final ArrayList<Long> counts = new ArrayList();
+    ArrayList<Thread> threads = new ArrayList();
+
+    for (int i = 0; i < selected.size(); i++) {
+      final Retrieval r = selected.get(i);
+      Thread t = new Thread() {
+
+        @Override
+        public void run() {
+          try {
+            long c = r.docCount(nodeString);
+            synchronized (counts) {
+              counts.add(c);
+            }
+          } catch (Exception ex) {
+            Logger.getLogger(MultiRetrieval.class.getName()).log(Level.SEVERE, null, ex);
+          }
+        }
+      };
+      threads.add(t);
+      t.start();
+    }
+
+    for (Thread t : threads) {
+      t.join();
+    }
+
+    assert (counts.size() == selected.size());
+
     long count = 0;
-    for (Retrieval r : selected) {
-      count += r.docCount(nodeString);
+    for (long c : counts) {
+      count += c;
     }
     return count;
   }
@@ -379,7 +455,7 @@ public class MultiRetrieval implements Retrieval {
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
     NodeType nodeType = getIndexNodeType(node, retrievalGroup);
     if (nodeType == null) {
-      nodeType = featureFactories.get(retrievalGroup).getNodeType(node);
+      nodeType = rankedFeatureFactories.get(retrievalGroup).getNodeType(node);
     }
     return nodeType;
   }
@@ -406,11 +482,6 @@ public class MultiRetrieval implements Retrieval {
 
   @Override
   public ScoredDocument[] runBooleanQuery(Node root, Parameters parameters) throws Exception {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  @Override
-  public Node transformBooleanQuery(Node root, String retrievalGroup) throws Exception {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 }

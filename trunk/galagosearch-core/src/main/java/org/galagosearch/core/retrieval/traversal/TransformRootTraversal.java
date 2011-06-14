@@ -99,7 +99,12 @@ public class TransformRootTraversal implements Traversal {
   }
 
   public boolean isCountNode(Node node) throws Exception {
-    NodeType nodeType = retrieval.getNodeType(node, retrievalGroup);
+    NodeType nodeType;
+    try {
+      nodeType = retrieval.getNodeType(node, retrievalGroup);
+    } catch (Exception e) {
+      return false;
+    }
     if (nodeType == null) {
       return false;
     }

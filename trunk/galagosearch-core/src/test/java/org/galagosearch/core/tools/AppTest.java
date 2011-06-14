@@ -245,14 +245,13 @@ public class AppTest extends TestCase {
       // now check xcount and doccount
       new App(printStream).run(new String[]{"xcount",
                 "--index=" + indexFile.getAbsolutePath(),
-                queryFile.getAbsolutePath()});
+                queryFile.getAbsolutePath(), "--printTransformation=true"});
       output = byteArrayStream.toString();
       String expected = "2\tdocument\n"
               +"1\t#counts:a:part=postings()\n"
               +"1\t#counts:a:part=stemmedPostings()\n";
 
       assertEquals(expected, output);
-
 
     } finally {
       if (relsFile != null) {

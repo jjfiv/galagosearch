@@ -35,7 +35,10 @@ public class StructuredRetrieval implements Retrieval {
 
   protected String indexId;
   protected StructuredIndex index;
-  protected FeatureFactory featureFactory;
+  // feature factories for each type of query
+  protected FeatureFactory booleanFeatureFactory;
+  protected FeatureFactory countFeatureFactory;
+  protected FeatureFactory rankedFeatureFactory;
   // these allow asynchronous evaluation
   protected Thread runner;
   protected Node query;
@@ -53,11 +56,20 @@ public class StructuredRetrieval implements Retrieval {
     featureParameters.add("retrievalGroup", "all"); // the value wont matter here
 
 
-    if (factoryParameters.get("queryType", "ranked").equals("count")) {
-      featureFactory = new CountFeatureFactory(featureParameters);
-    } else {
-      featureFactory = new RankedFeatureFactory(featureParameters);
-    }
+    // need to make a BooleanFeatureFactory class
+    // Parameters bfp = featureParameters.clone();
+    // bfp.set("queryType", "boolean");
+    // booleanFeatureFactory = new BooleanFeatureFactory(bfp);
+    booleanFeatureFactory = null;
+    
+    Parameters cfp = featureParameters.clone();
+    cfp.set("queryType", "count");
+    countFeatureFactory = new CountFeatureFactory(cfp);
+
+    Parameters rfp = featureParameters.clone();
+    rfp.set("queryType", "ranked");
+    rankedFeatureFactory = new RankedFeatureFactory(rfp);
+    
     runner = null;
   }
 
@@ -120,7 +132,7 @@ public class StructuredRetrieval implements Retrieval {
     DocumentContext context = new DocumentContext();
 
     // construct the query iterators
-    AbstractIndicator iterator = (AbstractIndicator) createIterator(queryTree, context);
+    AbstractIndicator iterator = (AbstractIndicator) createIterator(queryTree, context, booleanFeatureFactory);
     ArrayList<ScoredDocument> list = new ArrayList<ScoredDocument>();
     while (!iterator.isDone()) {
       if (iterator.getStatus()) {
@@ -147,7 +159,7 @@ public class StructuredRetrieval implements Retrieval {
     DocumentContext context = ContextFactory.createContext(parameters);
 
     // construct the query iterators
-    ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context);
+    ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context, rankedFeatureFactory);
     int requested = (int) parameters.get("requested", 1000);
     System.err.printf("Running ranked query %s\n", queryTree.toString());
 
@@ -284,13 +296,13 @@ public class StructuredRetrieval implements Retrieval {
     return StructuredQuery.parse(query);
   }
 
-  public StructuredIterator createIterator(Node node, DocumentContext context) throws Exception {
+  protected StructuredIterator createIterator(Node node, DocumentContext context, FeatureFactory ff) throws Exception {
     HashMap<String, StructuredIterator> iteratorCache = new HashMap();
-    return createNodeMergedIterator(node, context, iteratorCache);
+    return createNodeMergedIterator(node, context, iteratorCache, ff);
   }
 
-  public StructuredIterator createNodeMergedIterator(Node node, DocumentContext context,
-          HashMap<String, StructuredIterator> iteratorCache)
+  protected StructuredIterator createNodeMergedIterator(Node node, DocumentContext context,
+          HashMap<String, StructuredIterator> iteratorCache, FeatureFactory ff)
           throws Exception {
     ArrayList<StructuredIterator> internalIterators = new ArrayList<StructuredIterator>();
     StructuredIterator iterator;
@@ -302,13 +314,13 @@ public class StructuredRetrieval implements Retrieval {
 
     try {
       for (Node internalNode : node.getInternalNodes()) {
-        StructuredIterator internalIterator = createNodeMergedIterator(internalNode, context, iteratorCache);
+        StructuredIterator internalIterator = createNodeMergedIterator(internalNode, context, iteratorCache, ff);
         internalIterators.add(internalIterator);
       }
 
       iterator = index.getIterator(node);
       if (iterator == null) {
-        iterator = featureFactory.getIterator(node, internalIterators);
+        iterator = ff.getIterator(node, internalIterators);
       }
     } catch (Exception e) {
       throw e;
@@ -324,21 +336,24 @@ public class StructuredRetrieval implements Retrieval {
   }
 
   public Node transformBooleanQuery(Node queryTree, String retrievalGroup) throws Exception {
-    List<Traversal> traversals = featureFactory.getTraversals(this);
-    for (Traversal traversal : traversals) {
-      queryTree = StructuredQuery.copy(traversal, queryTree);
-    }
-    return queryTree;
+    return transformQuery(booleanFeatureFactory.getTraversals(this), queryTree, retrievalGroup);
+  }
+
+  public Node transformCountQuery(Node queryTree, String retrievalGroup) throws Exception {
+    return transformQuery(countFeatureFactory.getTraversals(this), queryTree, retrievalGroup);
   }
 
   public Node transformRankedQuery(Node queryTree, String retrievalGroup) throws Exception {
-    List<Traversal> traversals = featureFactory.getTraversals(this);
+    return transformQuery(rankedFeatureFactory.getTraversals(this), queryTree, retrievalGroup);
+  }
+
+  private Node transformQuery( List<Traversal> traversals, Node queryTree, String retrievalGroup ) throws Exception {
     for (Traversal traversal : traversals) {
       queryTree = StructuredQuery.copy(traversal, queryTree);
     }
     return queryTree;
   }
-
+  
   /**
    * Returns the number of occurrences of the provided
    * expression. If the expression does not produce a CountIterator
@@ -372,6 +387,9 @@ public class StructuredRetrieval implements Retrieval {
   }
 
   public long docCount(Node root) throws Exception {
+
+    System.err.printf("Running doccount: %s\n", root.toString());
+
     NodeCountAggregator agg = new NodeCountAggregator(root);
     return agg.documentCount();
   }
@@ -379,7 +397,7 @@ public class StructuredRetrieval implements Retrieval {
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
     NodeType nodeType = index.getNodeType(node);
     if (nodeType == null) {
-      nodeType = featureFactory.getNodeType(node);
+      nodeType = rankedFeatureFactory.getNodeType(node);
     }
     return nodeType;
   }
@@ -404,7 +422,7 @@ public class StructuredRetrieval implements Retrieval {
       docCount = 0;
       termCount = 0;
 
-      StructuredIterator structIterator = createIterator(root, null);
+      StructuredIterator structIterator = createIterator(root, null, countFeatureFactory);
       if (PositionIndexReader.AggregateIterator.class.isInstance(structIterator)) {
         docCount = ((PositionIndexReader.AggregateIterator) structIterator).totalEntries();
         termCount = ((PositionIndexReader.AggregateIterator) structIterator).totalPositions();

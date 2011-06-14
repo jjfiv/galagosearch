@@ -56,7 +56,6 @@ static String[][] sOperatorLookup = {
     SequentialDependenceTraversal.class.getName(),
     FullDependenceTraversal.class.getName(),
     TransformRootTraversal.class.getName(),
-    PRMSTraversal.class.getName(),
     InsideToFieldPartTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
     IndriWeightConversionTraversal.class.getName(),
