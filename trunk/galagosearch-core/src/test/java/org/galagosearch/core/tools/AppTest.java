@@ -245,7 +245,7 @@ public class AppTest extends TestCase {
       // now check xcount and doccount
       new App(printStream).run(new String[]{"xcount",
                 "--index=" + indexFile.getAbsolutePath(),
-                queryFile.getAbsolutePath(), "--printTransformation=true"});
+                queryFile.getAbsolutePath()});
       output = byteArrayStream.toString();
       String expected = "2\tdocument\n"
               +"1\t#counts:a:part=postings()\n"

@@ -181,21 +181,24 @@ public class MultiRetrieval implements Retrieval {
 
   public Node transformBooleanQuery(Node queryTree, String retrievalGroup) throws Exception {
     FeatureFactory ff = booleanFeatureFactories.get(retrievalGroup);
-    return transformQuery(ff.getTraversals(this), queryTree, retrievalGroup);
+    return transformQuery(ff.getTraversals(this), queryTree);
   }
 
   public Node transformCountQuery(Node queryTree, String retrievalGroup) throws Exception {
     FeatureFactory ff = countFeatureFactories.get(retrievalGroup);
-    return transformQuery(ff.getTraversals(this), queryTree, retrievalGroup);
+    for(Traversal t : ff.getTraversals(this)){
+      System.err.println( "TRAVERSAL:" + t.getClass().getName() );
+    }
+    return transformQuery(ff.getTraversals(this), queryTree);
   }
 
   public Node transformRankedQuery(Node queryTree, String retrievalGroup) throws Exception {
     FeatureFactory ff = rankedFeatureFactories.get(retrievalGroup);
-    return transformQuery(ff.getTraversals(this), queryTree, retrievalGroup);
+    return transformQuery(ff.getTraversals(this), queryTree);
   }
 
   // private functions
-  private Node transformQuery(List<Traversal> traversals, Node queryTree, String retrievalGroup) throws Exception {
+  private Node transformQuery(List<Traversal> traversals, Node queryTree) throws Exception {
     for (Traversal traversal : traversals) {
       queryTree = StructuredQuery.copy(traversal, queryTree);
     }
@@ -235,11 +238,11 @@ public class MultiRetrieval implements Retrieval {
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
       retrievalStatistics.get(retGroup).add("traversals/traversal/class", "org.galagosearch.core.retrieval.traversal.DetermineCollectionProbabilities");
 
-      Parameters cfp = retrievalStatistics.get(retGroup);
+      Parameters cfp = retrievalStatistics.get(retGroup).clone();
       cfp.set("queryType", "count");
       countFeatureFactories.put(retGroup, new CountFeatureFactory(cfp));
 
-      Parameters rfp = retrievalStatistics.get(retGroup);
+      Parameters rfp = retrievalStatistics.get(retGroup).clone();
       rfp.set("queryType", "ranked");
       rankedFeatureFactories.put(retGroup, new RankedFeatureFactory(rfp));
     }
