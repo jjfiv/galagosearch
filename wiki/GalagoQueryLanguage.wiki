@@ -19,6 +19,14 @@ All components of the Galago query language are operators, as such they all conf
  value := [^ '=' '(' ')' ] +
 }}}
 
+The 'key-value' pairs are commonly referred to in this document as 'parameters'. Note that if a key is not provided, galago assumes the key is "default". 
+
+{{{
+#extents:term:part=postings()
+}}}
+
+There are two parameters in this example: 'default'='term', and 'part'='postings'. The operator 'extents' has no child nodes.
+
 = Query Parsing =
 
 However, translating all queries into this form manually or via a script would be tiresome. So, we provide two shortcuts. First a plain text term is parsed using an implicit 'text' operator.
@@ -30,8 +38,13 @@ However, translating all queries into this form manually or via a script would b
 Second periods are used as a shortcut for the inside operator. Note that when a period is used in a key-value parameter pair the shortcut does not apply. This shortcut matches field operators in Indri.
 
 {{{
- c.d  --> #inside( #text:c() #text:d() )
- #op : key = a.b ( c.d ) --> #op: key = a.b ( #inside( #text:c() #text:d() ) )
+ c.d  --> #inside( #text:c() #field() )
+}}}
+
+Note that this transformation does not apply to parameters:
+
+{{{
+ #op : key = a.b ( c.d ) --> #op: key = a.b ( #inside( #text:c() #field:d() ) )
 }}}
 
 
@@ -39,20 +52,88 @@ Second periods are used as a shortcut for the inside operator. Note that when a 
 
 === #extents ===
 
-|| Implemented by ||  Position Index ||
-|| Implemented by ||  Extent Index ||
+|| Implemented by ||  Position Index Reader ||
+|| Implemented by ||  Extent Index Reader ||
+
+Parameters:
+|| 'default' || 'term' || required || 
+|| 'part' || <Index part file name> || required || 
+
+This operator provides access to the extents contained within a posting list for a particular 'term'. 
+
+
 
 === #counts ===
 
-|| Implemented by ||  Position Index ||
+|| Implemented by ||  Position Index Reader ||
+
+Parameters:
+|| 'default' || 'term' || required || 
+|| 'part' || <Index part file name> || required || 
+
+This operator provides access to the document counts for a posting list for a particular 'term'. 
 
 === #prior ===
 
+|| Implemented by ||  Document Prior Reader ||
+
+Parameters:
+|| 'part' || <Index part file name> || required || 
+|| 'minScore' || <double> || default = ln( 0.0000000001 ) ||
+
+This operator provides access to document priors. If there is no stored value, or if the stored value is less than the minScore, then minScore is returned. 
+
+
 === #indicator ===
+
+|| Implemented by ||  Document Indicator Reader ||
+
+Parameters:
+|| 'part' || <Index part file name> || required || 
+|| 'default' || <boolean> || default = false ||
+
+This operator provides access to document priors. If there is no stored value, then default is returned.
+
+
+=== #lengths ===
+
+|| Implemented by ||  Document Lengths Reader ||
+
+Parameters:
+|| 'part' || <Index part file name> || required || 
+
+This operator provides access to document lengths. If there is no stored value, then 0 is returned.
+
+=== #names ===
+
+|| Implemented by ||  Document Names Reader ||
+
+Parameters:
+|| 'part' || <Index part file name> || required || 
+
+This operator provides access to document names.
 
 = Operators =
 
 === #feature ===
+
+|| Implemented by || 
+
+Parameters:
+
+|| 'default' || <Feature function name> || required ||
+
+This operator requires one child of type CountValueIterator, as is provided by the #extents, #counts and window operators.
+
+This function computes the smoothed log probability of a particular document, given the count information.
+
+Implemented smoothing functions:
+|| dirichlet || ||
+|| linear || ||
+|| jm || ||
+|| bm25 || ||
+|| bm25rf || ||
+|| boost || || 
 
 === #combine ===
 
