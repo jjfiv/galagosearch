@@ -1,10 +1,25 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * BSD License (http://www.galagosearch.org/license)
  */
 
-package org.galagosearch.core.retrieval.structured;
+package org.galagosearch.core.retrieval.featurefactory;
 
+import org.galagosearch.core.retrieval.structured.BM25RFScoringIterator;
+import org.galagosearch.core.retrieval.structured.BM25ScoringIterator;
+import org.galagosearch.core.retrieval.structured.BoostingIterator;
+import org.galagosearch.core.retrieval.structured.DirichletScoringIterator;
+import org.galagosearch.core.retrieval.structured.ExistentialIndicatorIterator;
+import org.galagosearch.core.retrieval.structured.ExtentInsideIterator;
+import org.galagosearch.core.retrieval.structured.FilteredIterator;
+import org.galagosearch.core.retrieval.structured.JelinekMercerScoringIterator;
+import org.galagosearch.core.retrieval.structured.MaxScoreCombinationIterator;
+import org.galagosearch.core.retrieval.structured.OrderedWindowIterator;
+import org.galagosearch.core.retrieval.structured.ScaleIterator;
+import org.galagosearch.core.retrieval.structured.SynonymIterator;
+import org.galagosearch.core.retrieval.structured.ThresholdIterator;
+import org.galagosearch.core.retrieval.structured.UnfilteredCombinationIterator;
+import org.galagosearch.core.retrieval.structured.UniversalIndicatorIterator;
+import org.galagosearch.core.retrieval.structured.UnorderedWindowIterator;
 import org.galagosearch.core.retrieval.traversal.TransformRootTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
 import org.galagosearch.core.retrieval.traversal.FlatteningTraversal;

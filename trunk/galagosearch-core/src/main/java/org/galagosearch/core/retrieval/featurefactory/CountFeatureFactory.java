@@ -3,8 +3,15 @@
  * and open the template in the editor.
  */
 
-package org.galagosearch.core.retrieval.structured;
+package org.galagosearch.core.retrieval.featurefactory;
 
+import org.galagosearch.core.retrieval.structured.BinaryCountIterator;
+import org.galagosearch.core.retrieval.structured.ExistentialIndicatorIterator;
+import org.galagosearch.core.retrieval.structured.ExtentInsideIterator;
+import org.galagosearch.core.retrieval.structured.OrderedWindowIterator;
+import org.galagosearch.core.retrieval.structured.SynonymIterator;
+import org.galagosearch.core.retrieval.structured.UniversalIndicatorIterator;
+import org.galagosearch.core.retrieval.structured.UnorderedWindowIterator;
 import org.galagosearch.core.retrieval.traversal.TransformRootTraversal;
 import org.galagosearch.core.retrieval.traversal.BM25RelevanceFeedbackTraversal;
 import org.galagosearch.core.retrieval.traversal.FlatteningTraversal;

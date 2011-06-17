@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.galagosearch.core.retrieval.structured;
+package org.galagosearch.core.retrieval.featurefactory;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -14,6 +14,8 @@ import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.Traversal;
+import org.galagosearch.core.retrieval.structured.RequiredStatistics;
+import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Parameters.Value;
 

@@ -1,6 +1,10 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.structured;
 
+import org.galagosearch.core.retrieval.featurefactory.CountFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.BooleanFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.RankedFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.FeatureFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,11 +60,9 @@ public class StructuredRetrieval implements Retrieval {
     featureParameters.add("retrievalGroup", "all"); // the value wont matter here
 
 
-    // need to make a BooleanFeatureFactory class
-    // Parameters bfp = featureParameters.clone();
-    // bfp.set("queryType", "boolean");
-    // booleanFeatureFactory = new BooleanFeatureFactory(bfp);
-    booleanFeatureFactory = null;
+    Parameters bfp = featureParameters.clone();
+    bfp.set("queryType", "boolean");
+    booleanFeatureFactory = new BooleanFeatureFactory(bfp);
     
     Parameters cfp = featureParameters.clone();
     cfp.set("queryType", "count");

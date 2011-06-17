@@ -70,10 +70,10 @@ public class DocumentPriorReader extends KeyValueReader {
     }
 
     @Override
-    public String getKey(){
+    public String getKey() {
       return Integer.toString(getCurrentDocument());
     }
-    
+
     public String getValueString() {
       try {
         return Double.toString(getCurrentScore());
@@ -109,10 +109,12 @@ public class DocumentPriorReader extends KeyValueReader {
 
     DocumentContext context;
     double minScore;
-    
+    boolean nonmatching;
+
     public ValueIterator(KeyIterator it, Node node) {
       super(it);
       this.minScore = node.getParameters().get("minScore", Math.log(0.0000000001)); // same as indri
+      this.nonmatching = node.getParameters().get("nonmatching", true); // note that this will fail for conjunctions
     }
 
     public ValueIterator(KeyIterator it) {
@@ -154,17 +156,20 @@ public class DocumentPriorReader extends KeyValueReader {
         }
       } catch (IOException ex) {
         Logger.getLogger(DocumentPriorReader.class.getName()).log(Level.SEVERE, null, ex);
-        throw new RuntimeException( ex );
+        throw new RuntimeException(ex);
       }
     }
 
     @Override
-    public boolean hasMatch(int identifier){
-      return (! this.isDone() 
-              && identifier == this.currentCandidate() 
+    public boolean hasMatch(int identifier) {
+      if (nonmatching) { 
+        return false;
+      }
+      return (!this.isDone()
+              && identifier == this.currentCandidate()
               && this.score() >= this.minScore);
     }
-    
+
     public double maximumScore() {
       return manifest.get("maxScore", Double.POSITIVE_INFINITY);
     }

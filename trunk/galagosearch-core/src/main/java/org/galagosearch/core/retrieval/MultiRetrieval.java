@@ -14,9 +14,9 @@ import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
-import org.galagosearch.core.retrieval.structured.CountFeatureFactory;
-import org.galagosearch.core.retrieval.structured.FeatureFactory;
-import org.galagosearch.core.retrieval.structured.RankedFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.CountFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.FeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.RankedFeatureFactory;
 import org.galagosearch.core.retrieval.structured.StructuredIterator;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
@@ -209,6 +209,7 @@ public class MultiRetrieval implements Retrieval {
     retrievalStatistics = new HashMap();
     retrievalParts = new HashMap();
 
+    //booleanFeatureFactories = new HashMap();
     booleanFeatureFactories = null;
     countFeatureFactories = new HashMap();
     rankedFeatureFactories = new HashMap();
@@ -237,6 +238,11 @@ public class MultiRetrieval implements Retrieval {
       retrievalStatistics.put(retGroup, statsSet);
       retrievalStatistics.get(retGroup).add("retrievalGroup", retGroup);
       retrievalStatistics.get(retGroup).add("traversals/traversal/class", "org.galagosearch.core.retrieval.traversal.DetermineCollectionProbabilities");
+
+      // currently boolean query is unsupported
+      // Parameters bfp = retrievalStatistics.get(retGroup).clone();
+      // bfp.set("queryType", "boolean");
+      // booleanFeatureFactories.put(retGroup, new CountFeatureFactory(bfp));
 
       Parameters cfp = retrievalStatistics.get(retGroup).clone();
       cfp.set("queryType", "count");
@@ -388,7 +394,7 @@ public class MultiRetrieval implements Retrieval {
       t.join();
     }
 
-    assert (counts.size() == selected.size());
+    assert (counts.size() == selected.size()): "One or more xcount operations failed: aborting query.";
 
     long count = 0;
     for (long c : counts) {
@@ -487,5 +493,6 @@ public class MultiRetrieval implements Retrieval {
   @Override
   public ScoredDocument[] runBooleanQuery(Node root, Parameters parameters) throws Exception {
     throw new UnsupportedOperationException("Not supported yet.");
+    // 
   }
 }

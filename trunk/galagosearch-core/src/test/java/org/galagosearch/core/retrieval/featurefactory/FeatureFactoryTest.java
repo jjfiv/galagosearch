@@ -1,10 +1,19 @@
-package org.galagosearch.core.retrieval.structured;
+package org.galagosearch.core.retrieval.featurefactory;
 
+import org.galagosearch.core.retrieval.featurefactory.RankedFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.FeatureFactory;
 import java.util.ArrayList;
 import java.util.List;
 import junit.framework.TestCase;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.core.retrieval.structured.DirichletScoringIterator;
+import org.galagosearch.core.retrieval.structured.ExtentIterator;
+import org.galagosearch.core.retrieval.structured.NullExtentIterator;
+import org.galagosearch.core.retrieval.structured.OrderedWindowIterator;
+import org.galagosearch.core.retrieval.structured.StructuredIterator;
+import org.galagosearch.core.retrieval.structured.SynonymIterator;
+import org.galagosearch.core.retrieval.structured.UnfilteredCombinationIterator;
 import org.galagosearch.tupleflow.Parameters;
 
 /**

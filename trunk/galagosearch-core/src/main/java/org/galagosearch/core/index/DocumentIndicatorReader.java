@@ -54,7 +54,7 @@ public class DocumentIndicatorReader extends KeyValueReader {
 
   public ValueIterator getIterator(Node node) throws IOException {
     if (node.getOperator().equals("indicator")) {
-      return new ValueIterator(new KeyIterator(reader), node.getParameters().get("default", def));
+      return new ValueIterator(new KeyIterator(reader), node);
     } else {
       throw new UnsupportedOperationException(
               "Index doesn't support operator: " + node.getOperator());
@@ -112,9 +112,14 @@ public class DocumentIndicatorReader extends KeyValueReader {
     DocumentContext context;
     boolean defInst;
     
-    public ValueIterator(KeyIterator it, boolean defInst) {
+    public ValueIterator(KeyIterator it, Node node) {
       super(it);
-      this.defInst = defInst;
+      this.defInst = node.getParameters().get("default", def); // same as indri
+    }
+
+    public ValueIterator(KeyIterator it) {
+      super(it);
+      this.defInst = def; // same as indri
     }
 
     public String getEntry() throws IOException {
