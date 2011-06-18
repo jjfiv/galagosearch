@@ -27,6 +27,21 @@ The 'key-value' pairs are commonly referred to in this document as 'parameters'.
 
 There are two parameters in this example: 'default'='term', and 'part'='postings'. The operator 'extents' has no child nodes.
 
+= Example Queries =
+
+In this section we give some example queries and explain the general ideas behind the query language. Throughout this section we will use the query 'white house'.
+
+To start with lets consider the query likelihood model. The following queries are equivalent. Indeed each of these queries is generated as traversals are applied to the query. Only the final query in this list is directly executable on an index
+{{{
+ white house 
+ #combine( white house ) 
+ #combine( #text:white() #text:house() )
+ #combine( #extents:part=postings:white() #extents:part=postings:house() )
+ #combine( #counts:part=postings:white() #counts:part=postings:house() )
+ #combine( #feature:dirichlet( #counts:part=postings:white() ) #feature:dirichlet( #counts:part=postings:house() ) )
+}}}
+
+
 = Query Parsing =
 
 However, translating all queries into this form manually or via a script would be tiresome. So, we provide two shortcuts. First a plain text term is parsed using an implicit 'text' operator.
