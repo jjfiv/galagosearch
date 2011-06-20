@@ -27,6 +27,7 @@ public class RemoveStopwordsTraversal implements Traversal {
     int level = 0;
     Stack<Integer> removableOperators = new Stack<Integer>();
     HashSet<String> words;
+    HashSet<String> combiners;
 
     public RemoveStopwordsTraversal(Parameters parameters, Retrieval retrieval) {
         // Look for a file first
@@ -42,12 +43,15 @@ public class RemoveStopwordsTraversal implements Traversal {
           List<String> wordsList = parameters.stringList("stopwords/word");
           words = new HashSet<String>(wordsList);
         }
+        combiners = new HashSet<String>();
+        combiners.add("combine");
+        combiners.add("root");
     }
 
     public Node afterNode(Node node) throws Exception {
         ArrayList<Node> children = new ArrayList<Node>();
 
-        if (node.getOperator().equals("combine")) {
+        if (combiners.contains(node.getOperator())) {
             ArrayList<Node> oldChildren = node.getInternalNodes();
             for (int i = 0; i < oldChildren.size(); i++) {
                 Node child = oldChildren.get(i);
