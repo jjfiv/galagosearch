@@ -2,6 +2,9 @@
 
 package org.galagosearch.core.retrieval.traversal;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.String;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,7 +12,9 @@ import java.util.Stack;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.Retrieval;
+import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  * Finds stopwords in a query and removes them.  This does not
@@ -17,14 +22,26 @@ import org.galagosearch.tupleflow.Parameters;
  * 
  * @author trevor
  */
+@RequiredStatistics(statistics = {"stopwords"})
 public class RemoveStopwordsTraversal implements Traversal {
     int level = 0;
     Stack<Integer> removableOperators = new Stack<Integer>();
     HashSet<String> words;
 
     public RemoveStopwordsTraversal(Parameters parameters, Retrieval retrieval) {
-        List<String> wordsList = parameters.stringList("word");
-        words = new HashSet<String>(wordsList);
+        // Look for a file first
+        String value = parameters.get("stopwords", "null");
+        File f = new File(value);
+        if (f.exists()) {
+          try {
+            words = Utility.readFileToStringSet(f);
+          } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+          }
+        } else {
+          List<String> wordsList = parameters.stringList("stopwords/word");
+          words = new HashSet<String>(wordsList);
+        }
     }
 
     public Node afterNode(Node node) throws Exception {

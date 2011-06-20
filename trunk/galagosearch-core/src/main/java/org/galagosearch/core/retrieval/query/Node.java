@@ -30,6 +30,9 @@ public class Node implements Serializable {
 
     /// Additional parameters for this operator; usually these are term statistics and smoothing parameters.
     private Parameters parameters;
+    
+    // Cache the target to keep from re-traversing the tree
+    private String index_target = null;
 
     public Node() {
         internalNodes = new ArrayList<Node>();
@@ -74,7 +77,7 @@ public class Node implements Serializable {
         this.position = position;
         this.parameters = parameters;
     }
-
+    
     public String getOperator() {
         return operator;
     }
@@ -89,6 +92,34 @@ public class Node implements Serializable {
 
     public ArrayList<Node> getInternalNodes() {
         return internalNodes;
+    }
+    
+    /**
+     * Gets the index target for this query node. If this is a leaf node, 
+     * then it should directly specify it or use the default. If this is an 
+     * operator that changes the index, then it will also specify a new target 
+     * index. Otherwise, it will query its child node's for what index they use, 
+     * and return that.
+     */
+    public String getIndexTarget(String def) {
+        if (this.index_target != null)
+            return this.index_target;
+        
+        String target = parameters.get("target", null);
+        if(target == null) 
+        {
+            if(internalNodes.size() > 0)
+            {
+                this.index_target = internalNodes.get(0).getIndexTarget(def);
+            }
+            else {
+                this.index_target = def;
+            }
+        }
+        else {
+            this.index_target = target;
+        }
+        return this.index_target;
     }
 
     public int getPosition() {
