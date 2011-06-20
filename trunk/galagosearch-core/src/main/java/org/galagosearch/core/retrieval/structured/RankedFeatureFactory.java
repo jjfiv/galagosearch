@@ -53,6 +53,7 @@ public class RankedFeatureFactory extends FeatureFactory {
     {BoostingIterator.class.getName(), "boost"}
   };
   static String[] sTraversalList = {
+    RemoveStopwordsTraversal.class.getName(),
     SequentialDependenceTraversal.class.getName(),
     FullDependenceTraversal.class.getName(),
     TransformRootTraversal.class.getName(),
@@ -65,8 +66,7 @@ public class RankedFeatureFactory extends FeatureFactory {
     ImplicitFeatureCastTraversal.class.getName(),
     FlatteningTraversal.class.getName(),
     RelevanceModelTraversal.class.getName(),
-    BM25RelevanceFeedbackTraversal.class.getName(),
-    RemoveStopwordsTraversal.class.getName()
+    BM25RelevanceFeedbackTraversal.class.getName()
   };
 
   public RankedFeatureFactory(Parameters parameters) {
