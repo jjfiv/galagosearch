@@ -1,10 +1,6 @@
 // BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.structured;
 
-import org.galagosearch.core.retrieval.featurefactory.CountFeatureFactory;
-import org.galagosearch.core.retrieval.featurefactory.BooleanFeatureFactory;
-import org.galagosearch.core.retrieval.featurefactory.RankedFeatureFactory;
-import org.galagosearch.core.retrieval.featurefactory.FeatureFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,13 +14,17 @@ import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.NameReader;
 import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.retrieval.query.Node;
-import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.ScoredDocument;
+import org.galagosearch.core.retrieval.featurefactory.CountFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.BooleanFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.RankedFeatureFactory;
+import org.galagosearch.core.retrieval.featurefactory.FeatureFactory;
 import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.query.SimpleQuery;
 import org.galagosearch.core.retrieval.query.Traversal;
+import org.galagosearch.core.retrieval.query.Node;
+import org.galagosearch.core.retrieval.query.StructuredQuery;
 import org.galagosearch.core.util.CallTable;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
@@ -63,7 +63,7 @@ public class StructuredRetrieval implements Retrieval {
     Parameters bfp = featureParameters.clone();
     bfp.set("queryType", "boolean");
     booleanFeatureFactory = new BooleanFeatureFactory(bfp);
-    
+
     Parameters cfp = featureParameters.clone();
     cfp.set("queryType", "count");
     countFeatureFactory = new CountFeatureFactory(cfp);
@@ -71,7 +71,7 @@ public class StructuredRetrieval implements Retrieval {
     Parameters rfp = featureParameters.clone();
     rfp.set("queryType", "ranked");
     rankedFeatureFactory = new RankedFeatureFactory(rfp);
-    
+
     runner = null;
   }
 
@@ -349,13 +349,13 @@ public class StructuredRetrieval implements Retrieval {
     return transformQuery(rankedFeatureFactory.getTraversals(this), queryTree, retrievalGroup);
   }
 
-  private Node transformQuery( List<Traversal> traversals, Node queryTree, String retrievalGroup ) throws Exception {
+  private Node transformQuery(List<Traversal> traversals, Node queryTree, String retrievalGroup) throws Exception {
     for (Traversal traversal : traversals) {
       queryTree = StructuredQuery.copy(traversal, queryTree);
     }
     return queryTree;
   }
-  
+
   /**
    * Returns the number of occurrences of the provided
    * expression. If the expression does not produce a CountIterator

@@ -33,6 +33,7 @@ import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWeightConversionTraversal;
 import org.galagosearch.core.retrieval.traversal.PRMSTraversal;
+import org.galagosearch.core.retrieval.traversal.RemoveStopwordsTraversal;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -40,7 +41,7 @@ import org.galagosearch.tupleflow.Parameters;
  * @author marc
  */
 public class RankedFeatureFactory extends FeatureFactory {
-static String[][] sOperatorLookup = {
+  static String[][] sOperatorLookup = {
     {FilteredIterator.class.getName(), "filter"},
     {ThresholdIterator.class.getName(), "threshold"},
     {UnfilteredCombinationIterator.class.getName(), "combine"},
@@ -67,10 +68,11 @@ static String[][] sOperatorLookup = {
     {BoostingIterator.class.getName(), "boost"}
   };
   static String[] sTraversalList = {
-    PRMSTraversal.class.getName(),
+    RemoveStopwordsTraversal.class.getName(),
     SequentialDependenceTraversal.class.getName(),
     FullDependenceTraversal.class.getName(),
     TransformRootTraversal.class.getName(),
+    PRMSTraversal.class.getName(),
     InsideToFieldPartTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
     IndriWeightConversionTraversal.class.getName(),

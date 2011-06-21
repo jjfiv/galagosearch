@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+// BSD License (http://www.galagosearch.org/license)
 package org.galagosearch.core.retrieval.featurefactory;
 
 import java.lang.reflect.Array;
@@ -296,6 +293,23 @@ public class FeatureFactory {
    * ArrayList of DocumentDataIterators as parameters.
    */
   public StructuredIterator getIterator(Node node, ArrayList<StructuredIterator> childIterators) throws Exception {
+    return getIterator(node, childIterators, null);
+  }
+
+  /**
+   * We need the retrieval object in order to send back new queries to do mappings.
+   * This also includes some special code, triggered by an operator/feature 
+   * requiring the statistic 'retrieval' which sends the retrieval object to the 
+   * constructor.
+   * 
+   * The only other change is a generalization of the original. Instead of only 
+   * passing in singleton parameters, this now checks if it is a list and sends 
+   * it as such if so, if not it will revert to sending it as a singleton. Again, this 
+   * maintains backwards compatability. 
+   * 
+   * @author amarack
+   */
+  public StructuredIterator getIterator(Node node, ArrayList<StructuredIterator> childIterators, Retrieval retrieval) throws Exception {
     NodeType type = getNodeType(node);
 
     Constructor constructor = type.getConstructor();
@@ -314,7 +328,62 @@ public class FeatureFactory {
             type.getIteratorClass().getAnnotation(RequiredStatistics.class);
     if (required != null) {
       for (String statistic : required.statistics()) {
-        parametersCopy.add(statistic, parameters.get(statistic, null));
+        // About to get funky.
+        if (statistic.equals("retrieval")) {
+          if (retrieval == null) {
+            parametersCopy.add(statistic, parameters.get(statistic, null));
+          } else {
+            // Indicate that we are passing the constructor a valid retrieval
+            parametersCopy.add(statistic, parameters.get(statistic, "true"));
+
+            // Reformat the arguments to make this happen
+            Object[] new_args = new Object[args.length + 1];
+            for (int i = 0; i < args.length; i++) {
+              new_args[i] = args[i];
+            }
+            new_args[new_args.length - 1] = retrieval;
+            args = new_args;
+            // Find the correct constructor (slightly modified version of what 
+            // is done above normally)
+            for (Constructor cons : getClass(node).getConstructors()) {
+              Class[] ctypes = cons.getParameterTypes();
+
+              // The constructor needs at least one parameter.
+              if (ctypes.length != args.length) {
+                continue;
+              }
+              // The first class needs to be a Parameters object.
+              if (!Parameters.class.isAssignableFrom(ctypes[0])) {
+                continue;
+              }
+              // Check arguments for valid argument types.
+              boolean validTypes = true;
+              for (int i = 1; i < ctypes.length; ++i) {
+                if (!type.isStructuredIteratorOrArray(ctypes[i]) && !Retrieval.class.isAssignableFrom(ctypes[i])
+                        && !ctypes[i].isAssignableFrom(args[i].getClass())) {
+
+                  validTypes = false;
+                  break;
+                }
+              }
+              // If everything looks good, return this constructor.
+              if (validTypes) {
+                constructor = cons;
+                break;
+              } else {
+                System.err.println("Error on convert operator arguments!!");
+              }
+            }
+          }
+
+        } else {
+          // Allow both singleton and list parameters to get sent to features
+          if (parameters.containsKey(statistic)) {
+            parametersCopy.add(statistic, parameters.list(statistic));
+          } else {
+            parametersCopy.add(statistic, parameters.get(statistic, null));
+          }
+        }
       }
     }
     return (StructuredIterator) constructor.newInstance(args);
