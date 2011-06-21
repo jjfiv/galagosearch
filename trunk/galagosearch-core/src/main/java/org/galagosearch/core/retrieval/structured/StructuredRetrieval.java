@@ -431,6 +431,10 @@ public class StructuredRetrieval implements Retrieval {
     return StructuredQuery.parse(query);
   }
 
+  public StructuredIterator createIterator(Node node, DocumentContext context) throws Exception {
+    return createIterator(node, context, this.rankedFeatureFactory.get(node.getIndexTarget(default_index)));
+  }
+
   protected StructuredIterator createIterator(Node node, DocumentContext context, Map<String, FeatureFactory> ff) throws Exception {
     return createIterator(node, context, ff.get(node.getIndexTarget(default_index)));
   }
@@ -464,7 +468,7 @@ public class StructuredRetrieval implements Retrieval {
     
       iterator = index.get(index_key).getIterator(node);
       if (iterator == null) {
-        iterator = ff.getIterator(node, internalIterators);
+        iterator = ff.getIterator(node, internalIterators, this);
       }
     } catch (Exception e) {
       throw e;
