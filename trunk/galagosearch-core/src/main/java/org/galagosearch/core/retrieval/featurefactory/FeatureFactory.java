@@ -29,6 +29,8 @@ public class FeatureFactory {
     featureLookup = new HashMap<String, OperatorSpec>();
     this.parameters = parameters;
 
+    System.err.println(parameters);
+    
     for (String[] item : sFeatureLookup) {
       OperatorSpec operator = new OperatorSpec();
       operator.className = item[0];
@@ -397,7 +399,6 @@ public class FeatureFactory {
     return result;
   }
 
-  // TODO: change traversals to use a Retrieval object not a StructuredRetrieval
   public List<Traversal> getTraversals(Retrieval retrieval)
           throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
           IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -413,7 +414,12 @@ public class FeatureFactory {
               traversalClass.getAnnotation(RequiredStatistics.class);
       if (required != null) {
         for (String statistic : required.statistics()) {
-          parametersCopy.add(statistic, parameters.get(statistic, null));
+          // Allow both singleton and list parameters to get sent to features
+          if (parameters.containsKey(statistic)) {
+            parametersCopy.add(statistic, parameters.list(statistic));
+          } else {
+            parametersCopy.add(statistic, parameters.get(statistic, null));
+          }
         }
       }
 

@@ -33,6 +33,7 @@ import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWeightConversionTraversal;
 import org.galagosearch.core.retrieval.traversal.InsideToFieldPartTraversal;
 import org.galagosearch.core.retrieval.traversal.PRMSTraversal;
+import org.galagosearch.core.retrieval.traversal.RemoveStopwordsTraversal;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
@@ -70,9 +71,11 @@ static String[][] sOperatorLookup = {
     {BoostingIterator.class.getName(), "boost"}
   };
   static String[] sTraversalList = {
+    RemoveStopwordsTraversal.class.getName(),
     SequentialDependenceTraversal.class.getName(),
     FullDependenceTraversal.class.getName(),
     TransformRootTraversal.class.getName(),
+    PRMSTraversal.class.getName(),
     InsideToFieldPartTraversal.class.getName(),
     NgramRewriteTraversal.class.getName(),
     IndriWeightConversionTraversal.class.getName(),

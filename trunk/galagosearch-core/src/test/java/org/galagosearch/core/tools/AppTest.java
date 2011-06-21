@@ -153,6 +153,8 @@ public class AppTest extends TestCase {
               + "<query><number>10</number><text>nothing sample</text></query>\n"
               + "<query><number>14</number><text>#combine(#1(this is) sample)</text></query>\n"
               + "<query><number>23</number><text>#combine( sample sample document document )</text></query>\n"
+              + "<query><number>24</number><text>#combine( #combine(sample) two #combine(document document) )</text></query>\n"
+              + "<query><number>25</number><text>#combine( sample two document )</text></query>\n"
               + "</parameters>\n";
       queryFile = Utility.createTemporary();
       Utility.copyStringToFile(queries, queryFile);
@@ -178,7 +180,11 @@ public class AppTest extends TestCase {
               + "14 Q0 55 1 -1.73220460 galago\n"
               + "14 Q0 59 2 -1.73353440 galago\n"
               + "23 Q0 59 1 -1.38562925 galago\n"
-              + "23 Q0 55 2 -1.38695903 galago\n";
+              + "23 Q0 55 2 -1.38695903 galago\n"
+              + "24 Q0 59 1 -1.61579296 galago\n"
+              + "24 Q0 55 2 -1.61889580 galago\n"
+              + "25 Q0 59 1 -1.61579296 galago\n"
+              + "25 Q0 55 2 -1.61889580 galago\n";
 
       assertEquals(expectedScores, output);
 
@@ -248,8 +254,8 @@ public class AppTest extends TestCase {
                 queryFile.getAbsolutePath()});
       output = byteArrayStream.toString();
       String expected = "2\tdocument\n"
-              +"1\t#counts:a:part=postings()\n"
-              +"1\t#counts:a:part=stemmedPostings()\n";
+              + "1\t#counts:a:part=postings()\n"
+              + "1\t#counts:a:part=stemmedPostings()\n";
 
       assertEquals(expected, output);
 
@@ -337,5 +343,4 @@ public class AppTest extends TestCase {
       }
     }
   }
-
 }

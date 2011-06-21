@@ -25,4 +25,12 @@ public class FlatteningTraversalTest extends TestCase {
         Node transformed = StructuredQuery.copy(new FlatteningTraversal(null, null), result);
         assertEquals("#od:1( #text:a() #text:b() )", transformed.toString());
     }
+
+
+    public void testNestedCombineMerger() throws Exception {
+        String query = "#combine(#combine:0=0.1:1=0.4(#text:a() #text:b()) #combine:0=150:1=350(#text:c() #text:d()))";
+        Node result = StructuredQuery.parse(query);
+        Node transformed = StructuredQuery.copy(new FlatteningTraversal(null, null), result);
+        assertEquals("#combine:3=@/0.7/:2=@/0.3/:1=@/0.8/:0=@/0.2/( #text:a() #text:b() #text:c() #text:d() )", transformed.toString());
+    }
 }
