@@ -47,11 +47,8 @@ public class RemoveStopwordsTraversal implements Traversal {
         combiners = new HashSet<String>();
         combiners.add("combine");
         combiners.add("root");
-        
-        System.err.println("STOPWORDS:");
-        for(String w : words){
-          System.err.println("  "+ w);
-        }
+        combiners.add("seqdep");
+        combiners.add("rm");
     }
 
     public Node afterNode(Node node) throws Exception {
