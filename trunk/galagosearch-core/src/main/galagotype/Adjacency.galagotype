@@ -9,4 +9,5 @@ type Adjacency {
     order: +source;
     order: +source +destination;
     order: +source +weight;
+    order: +source -weight;
 };

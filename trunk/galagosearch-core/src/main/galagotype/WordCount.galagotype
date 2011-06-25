@@ -7,4 +7,5 @@ type WordCount {
     
     order: +word;
     order: +count;
+    order: -count;
 }
