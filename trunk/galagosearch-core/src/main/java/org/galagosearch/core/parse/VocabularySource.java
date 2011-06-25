@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.galagosearch.core.parse;
 
 import java.io.FileNotFoundException;
@@ -28,90 +27,98 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
  *
  * @author marc
  */
-@OutputClass(className="org.galagosearch.core.types.KeyValuePair", order={"+key"})
+@OutputClass(className = "org.galagosearch.core.types.KeyValuePair", order = {"+key"})
 public class VocabularySource implements ExNihiloSource<KeyValuePair> {
-    Counter vocabCounter;
-    Counter skipCounter;
 
-    public Processor<KeyValuePair> processor;
-    TupleFlowParameters parameters;
-    GenericIndexReader reader;
-    GenericIndexReader.Iterator iterator;
-    HashSet<String> inclusions = null;    
-    HashSet<String> exclusions = null;
+  Counter vocabCounter;
+  Counter skipCounter;
+  public Processor<KeyValuePair> processor;
+  TupleFlowParameters parameters;
+  GenericIndexReader reader;
+  GenericIndexReader.Iterator iterator;
+  HashSet<String> inclusions = null;
+  HashSet<String> exclusions = null;
 
-    public VocabularySource(TupleFlowParameters parameters) throws Exception {
-        String partPath = parameters.getXML().get("filename");
-        reader = GenericIndexReader.getIndexReader(partPath);
-	vocabCounter = parameters.getCounter("terms read");
-	skipCounter = parameters.getCounter("terms skipped");
-	iterator = reader.getIterator();
-	
-	// Look for queries to base the extraction
-        Parameters p = parameters.getXML();
-	if (p.containsKey("include")) {
-	    List<String> inc = p.stringList("include");
-	    inclusions = new HashSet<String>();
-	    for (String s : inc) {
-		inclusions.add(s);
-	    }
-	}
+  public VocabularySource(TupleFlowParameters parameters) throws Exception {
+    String partPath = parameters.getXML().get("filename");
+    reader = GenericIndexReader.getIndexReader(partPath);
+    vocabCounter = parameters.getCounter("terms read");
+    skipCounter = parameters.getCounter("terms skipped");
+    iterator = reader.getIterator();
 
-	if (p.containsKey("exclude")) {
-	    List<String> inc = p.stringList("exclude");
-	    exclusions = new HashSet<String>();
-	    for (String s : inc) {
-		exclusions.add(s);
-	    }
-	}	
+    // Look for queries to base the extraction
+    Parameters p = parameters.getXML();
+    if (p.containsKey("include")) {
+      List<String> inc = p.stringList("include");
+      inclusions = new HashSet<String>();
+      for (String s : inc) {
+        inclusions.add(s);
+      }
     }
 
-    public void run() throws IOException {
-        KeyValuePair kvp;
-	while (!iterator.isDone()) {
-	    
-	    // Filter if we need to
-	    if (inclusions != null || exclusions != null) {
-		String s = Utility.toString(iterator.getKey());
-		if (inclusions != null && inclusions.contains(s) == false) {
-		    iterator.nextKey();
-		    if (skipCounter != null) skipCounter.increment();
-		    continue;
-		}
-	    
-		if (exclusions != null && exclusions.contains(s) == true) {
-		    iterator.nextKey();
-		    if (skipCounter != null) skipCounter.increment();
-		    continue;
-		}
-	    }
+    if (p.containsKey("exclude")) {
+      List<String> inc = p.stringList("exclude");
+      exclusions = new HashSet<String>();
+      for (String s : inc) {
+        exclusions.add(s);
+      }
+    }
+  }
 
-            kvp = new KeyValuePair();
-            kvp.key = iterator.getKey();
-            kvp.value = new byte[0];
-            processor.process(kvp);
-            if (vocabCounter != null) vocabCounter.increment();
-    	    iterator.nextKey();
+  public void run() throws IOException {
+    KeyValuePair kvp;
+    int number = 0;
+    while (!iterator.isDone()) {
+
+      // Filter if we need to
+      if (inclusions != null || exclusions != null) {
+        String s = Utility.toString(iterator.getKey());
+        if (inclusions != null && inclusions.contains(s) == false) {
+          iterator.nextKey();
+          if (skipCounter != null) {
+            skipCounter.increment();
+          }
+          continue;
         }
-        processor.close();
-	reader.close();
-    }
 
-    public void setProcessor(Step processor) throws IncompatibleProcessorException {
-        Linkage.link(this, processor);
-    }
-
-    public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
-        FileSource.verify(parameters, handler);
-        String partPath = parameters.getXML().get("filename");
-        try {
-            if (!GenericIndexReader.isIndex(partPath)){
-              handler.addError(partPath + " is not an index file.");
-            }
-        } catch (FileNotFoundException fnfe) {
-            handler.addError(partPath + " could not be found.");
-        } catch (IOException ioe) {
-            handler.addError("Generic IO error: " + ioe.getMessage());
+        if (exclusions != null && exclusions.contains(s) == true) {
+          iterator.nextKey();
+          if (skipCounter != null) {
+            skipCounter.increment();
+          }
+          continue;
         }
+      }
+
+      kvp = new KeyValuePair();
+      kvp.key = iterator.getKey();
+      kvp.value = Utility.fromInt(number);
+      processor.process(kvp);
+      if (vocabCounter != null) {
+        vocabCounter.increment();
+      }
+      number++;
+      iterator.nextKey();
     }
+    processor.close();
+    reader.close();
+  }
+
+  public void setProcessor(Step processor) throws IncompatibleProcessorException {
+    Linkage.link(this, processor);
+  }
+
+  public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
+    FileSource.verify(parameters, handler);
+    String partPath = parameters.getXML().get("filename");
+    try {
+      if (!GenericIndexReader.isIndex(partPath)) {
+        handler.addError(partPath + " is not an index file.");
+      }
+    } catch (FileNotFoundException fnfe) {
+      handler.addError(partPath + " could not be found.");
+    } catch (IOException ioe) {
+      handler.addError("Generic IO error: " + ioe.getMessage());
+    }
+  }
 }

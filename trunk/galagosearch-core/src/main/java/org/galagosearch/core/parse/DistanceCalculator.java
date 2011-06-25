@@ -55,14 +55,17 @@ public class DistanceCalculator extends StandardStep<KeyValuePair, Adjacency> {
     String source = Utility.toString(object.key);
     // Now move to the key indicated by the input
     if (iterator.skipToKey(object.key)) {
+      int start = Utility.toInt(object.value);
+      int index = start;
       while (iterator.nextKey()) {
+        index++;
         String target = Utility.toString(iterator.getKeyBytes());
         try {
           Double result = (Double) m.invoke(this, source, target);
           if (result <= maxdistance) {
             a = new Adjacency();
             a.source = object.key;
-            a.destination = iterator.getKeyBytes();
+            a.destination = Utility.fromInt(index);
             a.weight = result;
             processor.process(a);
             if (counter != null) {
@@ -77,7 +80,7 @@ public class DistanceCalculator extends StandardStep<KeyValuePair, Adjacency> {
           if (result <= maxdistance) {
             a = new Adjacency();
             a.source = iterator.getKeyBytes();
-            a.destination = object.key;
+            a.destination = object.value;
             a.weight = result;
             processor.process(a);
             if (counter != null) {

@@ -7,6 +7,7 @@ package org.galagosearch.core.tools;
 
 import java.io.IOException;
 import org.galagosearch.core.index.AbstractModifier;
+import org.galagosearch.core.index.AdjacencyNameWriter;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.TopDocsWriter;
 import org.galagosearch.core.parse.DistanceCalculator;
@@ -72,6 +73,16 @@ public class BuildEditDistances {
         return stage;
     }
 
+    public Stage getWriteTermMappingStage() {
+        Stage stage = new Stage("writeTermMapping");
+        stage.addInput("terms", new KeyValuePair.KeyOrder());
+        Parameters p = new Parameters();
+        p.set("filename", AbstractModifier.getModifierName(this.indexPath, this.partName, "edits"));
+        stage.add(new InputStep("terms"));
+        stage.add(new Step(AdjacencyNameWriter.class, p));
+        return stage;
+    }
+
     public Job getIndexJob(Parameters p) throws IOException {
         Job job = new Job();
         this.indexPath = p.get("index");
@@ -84,9 +95,12 @@ public class BuildEditDistances {
         job.add(getReadIndexStage());
         job.add(getGenerateDistancesStage());
         job.add(getWriteDistancesStage());
+        job.add(getWriteTermMappingStage());
 
+        job.connect("readIndex", "writeTermMapping", ConnectionAssignmentType.Combined);
         job.connect("readIndex", "generateEditDistances", ConnectionAssignmentType.Each);
         job.connect("generateEditDistances", "writeDistances", ConnectionAssignmentType.Combined);
+
 
         return job;
     }
