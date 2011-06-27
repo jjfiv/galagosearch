@@ -111,7 +111,7 @@ public class StructuredRetrieval implements Retrieval {
       };
       File[] files = dir.listFiles(fileFilter);
             
-      if(files.length == 0) {
+      if(files.length < 2) {
           default_index = addIndex(new StructuredIndex(filename), parameters);
       }
       else {
@@ -277,7 +277,7 @@ public class StructuredRetrieval implements Retrieval {
     String index_key = queryTree.getIndexTarget(default_index);
     ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context, rankedFeatureFactory.get(index_key));
     int requested = (int) parameters.get("requested", 1000);
-    System.err.printf("Running ranked query %s\n", queryTree.toString());
+    //System.err.printf("Running ranked query (%d) %s\n", requested, queryTree.toString());
     
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
@@ -305,10 +305,10 @@ public class StructuredRetrieval implements Retrieval {
         context.length = length;
         double score = iterator.score();
         CallTable.increment("scored");
-        if (queue.size() <= requested || queue.peek().score < score) {
+        if (requested < 0 || queue.size() <= requested || queue.peek().score < score) {
           ScoredDocument scoredDocument = new ScoredDocument(document, score);
           queue.add(scoredDocument);
-          if (queue.size() > requested) {
+          if (requested > 0 && queue.size() > requested) {
             queue.poll();
           }
         }
