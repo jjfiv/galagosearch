@@ -18,6 +18,6 @@ public interface StageExecutionStatus {
     public boolean isDone();
     public List<Exception> getExceptions();
 
-    // Added by marc (9/16/2010)
+    // Added by irmarc (9/16/2010)
     public List<Double> getRunTimes();
 }

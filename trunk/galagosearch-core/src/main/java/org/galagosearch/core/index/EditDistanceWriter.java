@@ -16,9 +16,8 @@ import org.galagosearch.tupleflow.execution.Verification;
  *
  * @author irmarc
  */
-@InputClass(className = "org.galagosearch.core.types.Adjacency", order={"+source", "+destination"})
-public class AdjacencyListWriter implements Adjacency.SourceDestinationOrder.ShreddedProcessor, Processor<Adjacency> {
-
+@InputClass(className = "org.galagosearch.core.types.Adjacency", order={"+source", "+weight"})
+public class EditDistanceWriter implements Adjacency.SourceWeightOrder.ShreddedProcessor {
 
   public class InvertedList implements IndexElement {
 
@@ -26,14 +25,11 @@ public class AdjacencyListWriter implements Adjacency.SourceDestinationOrder.Shr
     CompressedByteBuffer header = new CompressedByteBuffer();
     int numNeighbors;
     int lastID;
-    DoubleCodec codec;
     byte[] word;
 
     public InvertedList(byte[] word) {
       this.word = word;
       this.numNeighbors = 0;
-      this.lastID = 0;
-      codec = null;
     }
 
     public void write(final OutputStream stream) throws IOException {
@@ -43,15 +39,14 @@ public class AdjacencyListWriter implements Adjacency.SourceDestinationOrder.Shr
       data.clear();
     }
 
-    public void addDestination(byte[] destination) throws IOException {
-      int converted = Utility.toInt(destination);
-      data.add(converted - lastID);
-      lastID = converted;
-      numNeighbors++;
+    public void addWeight(double weight) throws IOException {
+      int i = (int) Math.round(weight);
+      data.add(i);
     }
 
-    public void addWeight(double weight) throws IOException {
-      data.addDouble(weight);
+    public void addDestination(byte[] bytes) throws IOException {
+      data.add(bytes);
+      numNeighbors++;
     }
 
     public byte[] key() {
@@ -64,21 +59,18 @@ public class AdjacencyListWriter implements Adjacency.SourceDestinationOrder.Shr
 
     public void close() {
       header.add(numNeighbors);
-      // For now the codec is never there - we need to implement compressed double writing
-      header.addRaw((codec == null ? 0 : 1));
-      if (codec != null) {
-        header.add(Double.doubleToLongBits(codec.getSeed()));
-      }
     }
   }
   IndexWriter writer;
   InvertedList list = null;
 
   /** Creates a new instance of AdjacencyListWriter */
-  public AdjacencyListWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
+  public EditDistanceWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
     writer = new IndexWriter(parameters);
-    writer.getManifest().add("readerClass", AdjacencyListReader.class.getName());
+    writer.getManifest().add("readerClass", EditDistanceReader.class.getName());
     writer.getManifest().add("writerClass", getClass().getName());
+    writer.getManifest().add("part", parameters.getXML().get("part"));
+    writer.getManifest().add("name", parameters.getXML().get("name"));
   }
 
   public void processSource(byte[] source) throws IOException {
@@ -90,16 +82,6 @@ public class AdjacencyListWriter implements Adjacency.SourceDestinationOrder.Shr
     list = new InvertedList(source);
   }
 
-  // SourceDestinationOrder.ShreddedProcessor
-
-  public void processDestination(byte[] destination) throws IOException {
-    list.addDestination(destination);
-  }
-
-  public void processTuple(double weight) throws IOException {
-    list.addWeight(weight);
-  }
-
   // SourceWeightOrder.ShreddedProcessor
   public void processWeight(double weight) throws IOException {
     list.addWeight(weight);
@@ -107,24 +89,6 @@ public class AdjacencyListWriter implements Adjacency.SourceDestinationOrder.Shr
 
   public void processTuple(byte[] destination) throws IOException {
     list.addDestination(destination);
-  }
-
-  // Generic Processor
-  // just for this method
-  byte[] lastSource = null;
-  public void process(Adjacency object) throws IOException {
-    if (lastSource == null ||
-            Utility.compare(lastSource, object.source) != 0) {
-      if (list != null) {
-        list.close();
-        writer.add(list);
-      }
-      
-      list = new InvertedList(object.source);
-      lastSource = object.source;
-    }
-    list.addDestination(object.destination);
-    list.addWeight(object.weight);
   }
 
   public void close() throws IOException {

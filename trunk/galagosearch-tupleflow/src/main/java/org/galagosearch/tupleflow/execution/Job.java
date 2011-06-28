@@ -4,6 +4,7 @@ package org.galagosearch.tupleflow.execution;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,6 +90,77 @@ public class Job implements Serializable {
 
         return result;
     }
+
+      /**
+   * Add a merge stage to this job that merges the output of
+   * stageName called pointName.
+   *
+   * @param stageName  The stage that contains the output that needs merging.
+   * @param pointName  The output point that needs merging in the stage stageName.
+   * @param factor     What the reduction factor is for each merger.
+   */
+  public void addMergeStage(String stageName, String pointName, int factor) {
+    // find the stage and the point, initialize class/order information
+    Stage inputStage = this.stages.get(stageName);
+    StageConnectionPoint inputPoint = inputStage.getConnection(pointName);
+
+    String className = inputPoint.getClassName();
+    String[] typeOrder = inputPoint.getOrder();
+    String mergedStageName = stageName + "-" + pointName + "-mergeStage";
+    String mergedPointName = pointName + "-merged";
+
+    // if this merge stage has already been added, don't add it again
+    if (this.stages.containsKey(mergedStageName)) {
+      return;        // create the stage itself
+    }
+    Stage s = new Stage(mergedStageName);
+    s.add(new StageConnectionPoint(ConnectionPointType.Input,
+            pointName,
+            className,
+            typeOrder,
+            null));
+    s.add(new StageConnectionPoint(ConnectionPointType.Output,
+            pointName + "-merged",
+            className,
+            typeOrder,
+            null));
+
+    s.add(new InputStep(pointName));
+    s.add(new OutputStep(mergedPointName));
+    this.add(s);
+
+    String[] hash = null;
+    int hashCount = factor;
+
+    // run through the connections list, find all inputs for the previous data
+    for (Connection connection : this.connections) {
+      for (ConnectionEndPoint input : connection.inputs) {
+        if (input.getStageName().equals(stageName)
+                && input.getPointName().equals(pointName)) {
+          if (hash != null && connection.hash != null
+                  && !Arrays.equals(hash, connection.hash)) {
+            continue;
+          }
+          if (connection.hash != null) {
+            hash = connection.hash;
+            connection.hash = null;
+          }
+
+          input.setStageName(mergedStageName);
+          input.setPointName(mergedPointName);
+        }
+      }
+    }
+
+    // now, add a connection between the producing stage and the merge stage
+    this.connect(new StagePoint(stageName, pointName),
+            new StagePoint(mergedStageName, pointName),
+            ConnectionAssignmentType.Each,
+            hash,
+            hashCount);
+  }
+
+
 
     public static class StagePoint implements Comparable<StagePoint> {
         String stageName;

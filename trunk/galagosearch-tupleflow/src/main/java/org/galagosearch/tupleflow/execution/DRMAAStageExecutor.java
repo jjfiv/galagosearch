@@ -380,7 +380,7 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
             template.setNativeSpecification(nativeSpecification_combined);
           }
         } else {
-          // otherwise use the shortt queue
+          // otherwise use the short queue
           if (nativeSpecification_each.length() > 0) {
             template.setNativeSpecification(nativeSpecification_each);
           }

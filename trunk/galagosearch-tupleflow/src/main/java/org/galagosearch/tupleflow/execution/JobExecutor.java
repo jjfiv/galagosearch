@@ -442,7 +442,7 @@ public class JobExecutor {
             continue;
           }
           if (inputStageDesc.instanceCount > 1) {
-            addMergeStage(job, inputStageName, inputPointName);
+            job.addMergeStage(inputStageName, inputPointName, defaultHashCount);
           }
         }
       }

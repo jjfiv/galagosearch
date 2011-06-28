@@ -25,7 +25,7 @@ import org.galagosearch.tupleflow.execution.ErrorHandler;
 
 /**
  *
- * @author marc
+ * @author irmarc
  */
 @OutputClass(className = "org.galagosearch.core.types.KeyValuePair", order = {"+key"})
 public class VocabularySource implements ExNihiloSource<KeyValuePair> {

@@ -161,7 +161,7 @@ public class StructuredIndex {
     return partReader;
   }
 
-    public static StructuredIndexPartModifier openIndexModifier(String path) throws IOException {
+  public static StructuredIndexPartModifier openIndexModifier(String path) throws IOException {
     GenericIndexReader reader = GenericIndexReader.getIndexReader(path);
     if (reader == null) {
       return null;

@@ -8,8 +8,8 @@ package org.galagosearch.core.tools;
 import java.io.IOException;
 import org.galagosearch.core.index.AbstractModifier;
 import org.galagosearch.core.index.AdjacencyNameWriter;
+import org.galagosearch.core.index.EditDistanceWriter;
 import org.galagosearch.core.index.StructuredIndex;
-import org.galagosearch.core.index.AdjacencyListWriter;
 import org.galagosearch.core.parse.DistanceCalculator;
 import org.galagosearch.core.parse.VocabularySource;
 import org.galagosearch.core.types.Adjacency;
@@ -47,7 +47,7 @@ public class BuildEditDistances {
     public Stage getGenerateDistancesStage() {
         Stage stage = new Stage("generateEditDistances");
         stage.addInput("terms", new KeyValuePair.KeyOrder());
-        stage.addOutput("edits", new Adjacency.SourceDestinationOrder());
+        stage.addOutput("edits", new Adjacency.SourceWeightOrder());
 
         Parameters p = new Parameters();
         p.set("directory", this.indexPath);
@@ -56,21 +56,21 @@ public class BuildEditDistances {
         p.set("method", this.method);
         stage.add(new InputStep("terms"));
         stage.add(new Step(DistanceCalculator.class, p));
-        stage.add(Utility.getSorter(new Adjacency.SourceDestinationOrder()));
+        stage.add(Utility.getSorter(new Adjacency.SourceWeightOrder()));
         stage.add(new OutputStep("edits"));
         return stage;
     }
 
     public Stage getWriteDistancesStage() {
         Stage stage = new Stage("writeDistances");
-        stage.addInput("edits", new Adjacency.SourceDestinationOrder());
+        stage.addInput("edits", new Adjacency.SourceWeightOrder());
         Parameters p = new Parameters();
         p.set("directory", this.indexPath);
         p.set("part", this.partName);
         p.set("name", "edits");
     	p.set("filename", AbstractModifier.getModifierName(this.indexPath, this.partName, "edits"));
         stage.add(new InputStep("edits"));
-        stage.add(new Step(AdjacencyListWriter.class, p));
+        stage.add(new Step(EditDistanceWriter.class, p));
         return stage;
     }
 
@@ -88,7 +88,7 @@ public class BuildEditDistances {
         Job job = new Job();
         this.indexPath = p.get("index");
         this.partName = p.get("part");
-        this.distance = (int) p.get("distance", Integer.MAX_VALUE);
+        this.distance = (int) p.get("distance", 2L);
 	this.method = p.get("method", "levenshtein");
 
         System.out.printf("Creating edit distances for part %s. Maximum allowable distance: %d\n",
