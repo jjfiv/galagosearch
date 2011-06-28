@@ -230,7 +230,8 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
     // Set the defaults for each job.
     setMemoryUsage(MEMORY_X, MEMORY_S);
     nodeTempDir = NODE_TEMP_DIR;
-    verbose = false;
+    //verbose = false;
+    verbose = true;
     nativeSpecification_each = "-w n";
     nativeSpecification_combined = "-w n";
     // CIIR specific parameters
@@ -394,6 +395,7 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
             System.err.print(" " + arguments[index]);
           }
           System.err.println("");
+	  System.err.printf("Template dump: %s\n", template.toString());
         }
 
 

@@ -21,7 +21,7 @@ import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.Verified;
 
 /**
- * Not the most efficient ever - will zip to
+ * Not the most efficient ever 
  * @author irmarc
  */
 @Verified
@@ -37,7 +37,7 @@ public class DistanceCalculator extends StandardStep<KeyValuePair, Adjacency> {
   Adjacency a;
 
   public DistanceCalculator(TupleFlowParameters parameters) throws Exception {
-    maxdistance = (double) parameters.getXML().get("distance", 0.0F);
+    maxdistance = (double) parameters.getXML().get("distance", 1.0F);
     String indexLocation = parameters.getXML().get("directory");
     String partName = parameters.getXML().get("part");
     isSymmetric = parameters.getXML().get("symmetric", true);

@@ -30,7 +30,7 @@ public class StructuredIndex {
   HashSet<String> knownIndexOperators = new HashSet<String>();
 
   public StructuredIndex(String indexPath) throws IOException {
-    // Make sure it's a valid location
+    // Make sure it's a valid location    
     location = new File(indexPath);
     if (!location.isDirectory()) {
       throw new IOException(String.format("%s is not a directory.", indexPath));
@@ -39,6 +39,7 @@ public class StructuredIndex {
     // Load all parts
     parts = new HashMap<String, StructuredIndexPartReader>();
     modifiers = new HashMap<String, HashMap<String, StructuredIndexPartModifier>>();
+    System.err.printf("Listing directory contents of: %s\n", location.getCanonicalPath());
     for (File part : location.listFiles()) {
       if (part.getName().equals("mod")) {
         initializeModifiers(part.getAbsoluteFile());
@@ -111,6 +112,7 @@ public class StructuredIndex {
   }
 
   public static StructuredIndexPartReader openIndexPart(String path) throws IOException {
+      System.err.printf("Opening %s\n", path);  
     GenericIndexReader reader = GenericIndexReader.getIndexReader(path);
     if (reader == null) {
       return null;

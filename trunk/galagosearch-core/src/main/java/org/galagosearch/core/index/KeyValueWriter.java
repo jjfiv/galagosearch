@@ -44,6 +44,16 @@ public abstract class KeyValueWriter<T> implements Processor<T> {
     count = 0;
   }
 
+  public static void verify(TupleFlowParameters parameters, ErrorHandler handler) {
+    if (!parameters.getXML().containsKey("filename")) {
+      handler.addError("KeyValueWriter requires a 'filename' parameter.");
+      return;
+    }
+
+    String index = parameters.getXML().get("filename");
+    Verification.requireWriteableFile(index, handler);
+  }
+
   protected abstract GenericElement prepare(T item) throws IOException;
 
   public void close() throws IOException {

@@ -123,7 +123,7 @@ public class DocumentPriorReader extends KeyValueReader {
     }
 
     public String getEntry() throws IOException {
-      return Integer.toString(((KeyIterator) iterator).getCurrentDocument());
+	return ((KeyIterator) iterator).getValueString();
     }
 
     public DocumentContext getContext() {
