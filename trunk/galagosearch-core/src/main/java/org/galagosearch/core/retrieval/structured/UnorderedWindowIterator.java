@@ -2,9 +2,7 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import org.galagosearch.tupleflow.Parameters;
-import org.galagosearch.tupleflow.Utility;
 
 /**
  *
@@ -21,7 +19,7 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
     this.width = (int) parameters.getAsDefault("width", -1);
     this.overlap = parameters.get("overlap", false);
 
-    if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+    if ((!isDone()) && MoveIterators.allHasMatch(iterators, document)) {
       loadExtents();
     }
   }
@@ -29,7 +27,7 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
   public void reset() throws IOException {
     super.reset();
 
-    if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+    if ((!isDone()) && MoveIterators.allHasMatch(iterators, document)) {
       loadExtents();
     }
   }
@@ -46,6 +44,7 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
 
     for (int i = 0; i < iterators.length; i ++) {
       arrayIterators[i] = new ExtentArrayIterator(iterators[i].extents());
+      assert !arrayIterators[i].isDone();
       minimumPosition = Math.min(arrayIterators[i].current().begin, minimumPosition);
       maximumPosition = Math.max(arrayIterators[i].current().end, maximumPosition);
     }

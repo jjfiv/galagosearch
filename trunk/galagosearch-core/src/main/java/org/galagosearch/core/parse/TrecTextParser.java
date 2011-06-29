@@ -31,6 +31,9 @@ public class TrecTextParser implements DocumentStreamParser {
 
     public String parseDocNumber() throws IOException {
         String allText = waitFor("<DOCNO>");
+        if(allText == null){
+          return null;
+        }
 
         while (allText.contains("</DOCNO>") == false) {
             String line = reader.readLine();
@@ -53,7 +56,11 @@ public class TrecTextParser implements DocumentStreamParser {
             return null;
         }
         String identifier = parseDocNumber();
-        StringBuffer buffer = new StringBuffer();
+        if(identifier == null){
+          return null;
+        }
+        
+        StringBuilder buffer = new StringBuilder();
 
         String[] startTags = {"<TEXT>", "<HEADLINE>", "<TITLE>", "<HL>", "<HEAD>",
             "<TTL>", "<DD>", "<DATE>", "<LP>", "<LEADPARA>"

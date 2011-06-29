@@ -2,9 +2,7 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import org.galagosearch.tupleflow.Parameters;
-import org.galagosearch.tupleflow.Utility;
 
 /**
  *
@@ -19,15 +17,16 @@ public class OrderedWindowIterator extends ExtentConjunctionIterator {
     super(iterators);
     this.width = (int) parameters.getAsDefault("width", -1);
 
-    if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+    if ((!isDone()) && MoveIterators.allHasMatch(iterators, document)) {
       loadExtents();
     }
   }
 
+  @Override
   public void reset() throws IOException {
     super.reset();
 
-    if((!isDone()) && (MoveIterators.allSameDocument(iterators))){
+    if ((!isDone()) && MoveIterators.allHasMatch(iterators, document)) {
       loadExtents();
     }
   }
@@ -38,6 +37,7 @@ public class OrderedWindowIterator extends ExtentConjunctionIterator {
     arrayIterators = new ExtentArrayIterator[iterators.length];
     for (int i = 0; i < iterators.length; i++) {
       arrayIterators[i] = new ExtentArrayIterator(iterators[i].extents());
+      assert !arrayIterators[i].isDone();
     }
     boolean notDone = true;
     while (notDone) {
@@ -50,8 +50,8 @@ public class OrderedWindowIterator extends ExtentConjunctionIterator {
         int end = arrayIterators[i - 1].current().end;
 
         // try to move this iterator so that it's past the end of the previous word
-        assert(arrayIterators[i] != null);
-        assert(arrayIterators[i].current() != null);
+        assert (arrayIterators[i] != null);
+        assert (arrayIterators[i].current() != null);
         while (end > arrayIterators[i].current().begin) {
           notDone = arrayIterators[i].next();
 

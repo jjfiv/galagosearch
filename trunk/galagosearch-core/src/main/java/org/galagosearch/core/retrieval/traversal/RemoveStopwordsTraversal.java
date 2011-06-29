@@ -30,7 +30,6 @@ public class RemoveStopwordsTraversal implements Traversal {
     HashSet<String> combiners;
 
     public RemoveStopwordsTraversal(Parameters parameters, Retrieval retrieval) {
-        System.err.println( parameters );
         // Look for a file first
         String value = parameters.get("stopwords", "null");
         File f = new File(value);

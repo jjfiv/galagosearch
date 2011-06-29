@@ -48,7 +48,7 @@ public class MoveIterators {
             // so the target currentIdentifier is not a match.
             // we break and try again because we don't want to
             // touch the longest iterators if we can help it.
-            if(currentTarget == iterator.currentCandidate()){
+            if (currentTarget == iterator.currentCandidate()) {
               // if the next target is identical to the current -> then add one.
               currentTarget++;
             } else {
@@ -61,6 +61,22 @@ public class MoveIterators {
     }
 
     return currentTarget;
+  }
+
+  public static boolean allHasMatch(ValueIterator[] iterators, int document) {
+    if (iterators.length == 0) {
+      return true;
+    }
+
+    for (ValueIterator iterator : iterators) {
+      if (!iterator.isDone()) {
+        if (!iterator.hasMatch(document)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   public static boolean allSameDocument(ValueIterator[] iterators) {

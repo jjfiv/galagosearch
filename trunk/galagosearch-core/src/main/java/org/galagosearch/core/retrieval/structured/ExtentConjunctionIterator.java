@@ -53,7 +53,7 @@ public abstract class ExtentConjunctionIterator extends ExtentCombinationIterato
 
     document = MoveIterators.findMaximumDocument(iterators);
 
-    if ((!done) && (MoveIterators.allSameDocument(iterators))) {
+    if ((!isDone()) && MoveIterators.allHasMatch(iterators, document)) {
       // try to load some extents (subclass does this)
       extents.reset();
       loadExtents();
