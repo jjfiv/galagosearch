@@ -112,7 +112,6 @@ public class StructuredIndex {
   }
 
   public static StructuredIndexPartReader openIndexPart(String path) throws IOException {
-      System.err.printf("Opening %s\n", path);  
     GenericIndexReader reader = GenericIndexReader.getIndexReader(path);
     if (reader == null) {
       return null;

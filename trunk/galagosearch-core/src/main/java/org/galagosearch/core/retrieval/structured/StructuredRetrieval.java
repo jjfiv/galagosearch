@@ -110,8 +110,10 @@ public class StructuredRetrieval implements Retrieval {
             }
       };
       File[] files = dir.listFiles(fileFilter);
-            
-      if(files.length < 2) {
+
+      // This doesn't work for the way we normally strcuture indexes.
+      //if(files.length < 2) {
+      if (true) {
           default_index = addIndex(new StructuredIndex(filename), parameters);
       }
       else {
