@@ -37,7 +37,6 @@ public class DocumentNameWriter implements Processor<NumberedDocumentData> {
   Counter documentNamesWritten = null;
 
   public DocumentNameWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
-    //writer = new BulkTreeWriter(parameters);
     documentNamesWritten = parameters.getCounter("Document Names Written");
     // make a folder
     String fileName = parameters.getXML().get("filename");

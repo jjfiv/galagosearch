@@ -247,7 +247,7 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
     Parameters defaults = Utility.getDrmaaOptions();
     if (defaults.containsKey("mem")) {
       String mem = defaults.get("mem");
-      assert (! mem.startsWith("-X")): "Error: mem parameter in .galagopref file should not start with '-Xmx' or '-Xms'.";
+      assert (! mem.startsWith("-X")): "Error: mem parameter in .galago.conf file should not start with '-Xmx' or '-Xms'.";
       setMemoryUsage("-Xmx" + defaults.get("mem"), "-Xms" + defaults.get("mem"));
     }
     if (defaults.containsKey("nativeSpec")) {
@@ -394,8 +394,6 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
           for (int index = 0; index < arguments.length; index++) {
             System.err.print(" " + arguments[index]);
           }
-          System.err.println("");
-	  System.err.printf("Template dump: %s\n", template.toString());
         }
 
 

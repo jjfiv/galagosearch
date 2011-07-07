@@ -324,19 +324,22 @@ public class JobConstructor extends DefaultHandler implements ErrorHandler {
                 addHandler(new MultiHandler(), uri, localName, qName, attributes);
             } else if (qName.equals("output")) {
                 if (attributes.getValue("id") == null) {
-                    addError(
-                            "'output' requires an 'id' attribute.");
+                    addError("'output' requires an 'id' attribute.");
                 }
                 steps.add(new OutputStep(location(), attributes.getValue("id")));
             } else if (qName.equals("input")) {
                 if (attributes.getValue("id") == null) {
-                    addError(
-                            "'input' requires an 'id' attribute.");
+                    addError("'input' requires an 'id' attribute.");
                 }
                 steps.add(new InputStep(location(), attributes.getValue("id")));
+            } else if (qName.equals("multiinput")) {
+                if (attributes.getValue("ids") == null) {
+                    addError("'input' requires an 'id' attribute.");
+                }
+                steps.add(new MultiInputStep(location(), attributes.getValue("ids").split(",")));
             } else {
                 addError(
-                        "Found '" + qName + "', but was expecting 'step', 'multi', 'input' or 'output'.");
+                        "Found '" + qName + "', but was expecting 'step', 'multi', 'input','multiinput', or 'output'.");
             }
         }
     }

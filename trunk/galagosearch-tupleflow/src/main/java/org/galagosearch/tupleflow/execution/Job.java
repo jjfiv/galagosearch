@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
+import org.galagosearch.tupleflow.Utility;
 
 /**
  * A Job object specifies a TupleFlow execution: the objects used, their parameters,
@@ -102,6 +103,7 @@ public class Job implements Serializable {
   public void addMergeStage(String stageName, String pointName, int factor) {
     // find the stage and the point, initialize class/order information
     Stage inputStage = this.stages.get(stageName);
+
     StageConnectionPoint inputPoint = inputStage.getConnection(pointName);
 
     String className = inputPoint.getClassName();
@@ -124,7 +126,7 @@ public class Job implements Serializable {
             className,
             typeOrder,
             null));
-
+    
     s.add(new InputStep(pointName));
     s.add(new OutputStep(mergedPointName));
     this.add(s);
@@ -331,7 +333,7 @@ public class Job implements Serializable {
             }
         }
 
-        // coudln't find a connection that has this input, so we'll make one
+        // couldn't find a connection that has this input, so we'll make one
         if (connection == null) {
             connection = new Connection(null, source.getPoint().getClassName(), source.getPoint().
                                         getOrder(),
@@ -379,33 +381,7 @@ public class Job implements Serializable {
         builder.append("}\n");
         return builder.toString();
     }
-    
-    /*
-     * TODO: print graphs of the steps in each stage
-     * 
-    private void printSubgraphs(final StringBuilder builder, ArrayList<Step> steps) {
-        for (int i = 0; i < steps.size(); i++) {
-            Step step = steps.get(i);
-            if (step instanceof MultiStep) {
-
-            } else if (step instanceof InputStep) {
-
-            } else if (step instanceof OutputStep) {
-
-            } else {
-                String name = step.getClassName();
-                name = name.substring(name.lastIndexOf(".")+1);
-                builder.append(name);
-                if (i < (steps.size()-2)) builder.append(" -> ");
-                else builder.append(";");
-            }
-        }
-    }
-
-     * 
-     * 
-     */
-
+  
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -505,6 +481,10 @@ public class Job implements Serializable {
                 InputStep input = (InputStep) step;
                 String line = String.format("                <input id=\"%s\" />\n", input.getId());
                 builder.append(line);
+            } else if (step instanceof MultiInputStep) {
+              MultiInputStep input = (MultiInputStep) step;
+              String line = String.format("                <multiinput ids=\"%s\" />\n", Utility.join(input.getIds(), ","));
+              builder.append(line);
             } else if (step instanceof OutputStep) {
                 OutputStep output = (OutputStep) step;
                 String line = String.format("                <output id=\"%s\" />\n", output.getId());

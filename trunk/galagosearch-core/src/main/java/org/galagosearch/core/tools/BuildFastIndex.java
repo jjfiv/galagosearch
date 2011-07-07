@@ -224,8 +224,6 @@ public class BuildFastIndex {
     return stage;
   }
 
-
-
   public Stage getParallelIndexKeyWriterStage(String name, String input, Parameters indexParameters) {
     Stage stage = new Stage(name);
 

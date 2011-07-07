@@ -105,6 +105,8 @@ public class StageInstanceFactory {
         current = instantiateMulti(instance, step);
       } else if (step instanceof InputStep) {
         current = instantiateInput(instance, (InputStep) step);
+      } else if (step instanceof MultiInputStep) {
+        current = instantiateInput(instance, (MultiInputStep) step);
       } else if (step instanceof OutputStep) {
         current = instantiateOutput(instance, (OutputStep) step);
       } else {
@@ -169,6 +171,17 @@ public class StageInstanceFactory {
     return getTypeReaderSource(pipeOutput);
   }
 
+  public org.galagosearch.tupleflow.Step instantiateInput(
+          StageInstanceDescription instance,
+          MultiInputStep step) throws IOException {
+    String[] ids = step.getIds();
+    PipeOutput[] pipes = new PipeOutput[ids.length];
+    for (int i = 0 ; i < ids.length; i++) {
+      pipes[i] = instance.getReaders().get(ids[i]);
+    }
+    return getTypeReaderSource(pipes);
+  }
+
   public org.galagosearch.tupleflow.Step instantiateOutput(
           StageInstanceDescription instance,
           final OutputStep step) throws IOException {
@@ -207,6 +220,30 @@ public class StageInstanceFactory {
     }
 
     return order;
+  }
+
+  // Returns a ReaderSource that reads from multiple named pipes
+  public ReaderSource getTypeReaderSource(PipeOutput[] pipes) throws IOException {
+    ReaderSource reader;
+
+    if (pipes.length == 0) {
+      return null;
+    }
+
+    // Creare our order and accumulate file names
+    Order order = createOrder(pipes[0].getPipe());
+    ArrayList<String> fileNames = new ArrayList<String>();
+    for (PipeOutput po : pipes) {
+      fileNames.addAll(Arrays.asList(po.getFileNames()));
+    }
+
+    if (fileNames.size() > 1) {
+      reader = OrderedCombiner.combineFromFiles(fileNames, order);
+    } else {
+      reader = new FileOrderedReader(fileNames.get(0), order);
+    }
+    return reader;
+
   }
 
   public ReaderSource getTypeReaderSource(PipeOutput pipeOutput) throws IOException {
