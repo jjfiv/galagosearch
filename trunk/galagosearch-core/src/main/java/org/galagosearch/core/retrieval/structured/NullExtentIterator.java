@@ -4,6 +4,7 @@ package org.galagosearch.core.retrieval.structured;
 import java.io.IOException;
 import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.util.ExtentArray;
+import org.galagosearch.tupleflow.Parameters;
 
 /**
  *
@@ -14,6 +15,14 @@ public class NullExtentIterator implements ExtentValueIterator, CountValueIterat
 
   ExtentArray array = new ExtentArray();
 
+  public NullExtentIterator(){
+    
+  }
+  
+  public NullExtentIterator(Parameters p){
+    // nothing
+  }
+  
   public boolean next() {
     // do nothing
     return false;

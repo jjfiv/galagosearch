@@ -37,16 +37,18 @@ public class RemoveStopwordsTraversalTest extends TestCase {
     Node root = StructuredQuery.parse("#combine(a c b d e)");
     Node removed = StructuredQuery.copy(traversal, root);
 
-    assertEquals("c", removed.getInternalNodes().get(0).getDefaultParameter());
-    assertEquals("d", removed.getInternalNodes().get(1).getDefaultParameter());
-    assertEquals("e", removed.getInternalNodes().get(2).getDefaultParameter());
-
-    root = StructuredQuery.parse("#ow:5(a c b)");
-    removed = StructuredQuery.copy(traversal, root);
-    assertEquals("a", removed.getInternalNodes().get(0).getDefaultParameter());
+    assertEquals(5, removed.getInternalNodes().size());
+    assertEquals(null, removed.getInternalNodes().get(0).getDefaultParameter());
     assertEquals("c", removed.getInternalNodes().get(1).getDefaultParameter());
-    assertEquals("b", removed.getInternalNodes().get(2).getDefaultParameter());
+    assertEquals(null, removed.getInternalNodes().get(2).getDefaultParameter());
+    assertEquals("d", removed.getInternalNodes().get(3).getDefaultParameter());
+    assertEquals("e", removed.getInternalNodes().get(4).getDefaultParameter());
 
+    root = StructuredQuery.parse("#od:5(a c b)");
+    removed = StructuredQuery.copy(traversal, root);
+    assertEquals(1, removed.getInternalNodes().size());
+    assertEquals("c", removed.getInternalNodes().get(0).getDefaultParameter());
+    
     temp.delete();
   }
 
@@ -66,14 +68,17 @@ public class RemoveStopwordsTraversalTest extends TestCase {
     Node root = StructuredQuery.parse("#combine(a c b d e)");
     Node removed = StructuredQuery.copy(traversal, root);
 
-    assertEquals("c", removed.getInternalNodes().get(0).getDefaultParameter());
-    assertEquals("d", removed.getInternalNodes().get(1).getDefaultParameter());
-    assertEquals("e", removed.getInternalNodes().get(2).getDefaultParameter());
-
-    root = StructuredQuery.parse("#ow:5(a c b)");
-    removed = StructuredQuery.copy(traversal, root);
-    assertEquals("a", removed.getInternalNodes().get(0).getDefaultParameter());
+    assertEquals(5, removed.getInternalNodes().size());
+    assertEquals(null, removed.getInternalNodes().get(0).getDefaultParameter());
     assertEquals("c", removed.getInternalNodes().get(1).getDefaultParameter());
-    assertEquals("b", removed.getInternalNodes().get(2).getDefaultParameter());
+    assertEquals(null, removed.getInternalNodes().get(2).getDefaultParameter());
+    assertEquals("d", removed.getInternalNodes().get(3).getDefaultParameter());
+    assertEquals("e", removed.getInternalNodes().get(4).getDefaultParameter());
+
+    root = StructuredQuery.parse("#od:5(a c b)");
+    removed = StructuredQuery.copy(traversal, root);
+    assertEquals(1, removed.getInternalNodes().size());
+    assertEquals("c", removed.getInternalNodes().get(0).getDefaultParameter());
+
   }
 }

@@ -64,28 +64,27 @@ public class StructuredRetrieval implements Retrieval {
     this.booleanFeatureFactory = new HashMap<String, FeatureFactory>();
     this.countFeatureFactory = new HashMap<String, FeatureFactory>();
     this.rankedFeatureFactory = new HashMap<String, FeatureFactory>();
-    
+
     default_index = addIndex(index, factoryParameters);
 
-   
     runner = null;
   }
 
   public StructuredRetrieval(StructuredIndex[] indexes, Parameters factoryParameters) throws IOException {
-        this.index = new HashMap<String, StructuredIndex>();
-        this.booleanFeatureFactory = new HashMap<String, FeatureFactory>();
-        this.countFeatureFactory = new HashMap<String, FeatureFactory>();
-        this.rankedFeatureFactory = new HashMap<String, FeatureFactory>();
+    this.index = new HashMap<String, StructuredIndex>();
+    this.booleanFeatureFactory = new HashMap<String, FeatureFactory>();
+    this.countFeatureFactory = new HashMap<String, FeatureFactory>();
+    this.rankedFeatureFactory = new HashMap<String, FeatureFactory>();
 
-        for(StructuredIndex indx : indexes)
-        {
-            String key = addIndex(indx, factoryParameters);
-            if(default_index == null)
-                default_index = key;
-        }
-        runner = null;
+    for (StructuredIndex indx : indexes) {
+      String key = addIndex(indx, factoryParameters);
+      if (default_index == null) {
+        default_index = key;
+      }
+    }
+    runner = null;
   }
-    
+
   /** 
    * For this constructor, being sent a filename path to the indicies, 
    * we first list out all the directories in the path. If there are none, then 
@@ -95,79 +94,88 @@ public class StructuredRetrieval implements Retrieval {
    */
   public StructuredRetrieval(String filename, Parameters parameters)
           throws FileNotFoundException, IOException {
-      
-      this.index = new HashMap<String, StructuredIndex>();
-      this.booleanFeatureFactory = new HashMap<String, FeatureFactory>();
-      this.countFeatureFactory = new HashMap<String, FeatureFactory>();
-      this.rankedFeatureFactory = new HashMap<String, FeatureFactory>();
 
-      
-      File dir = new File(filename);
-      // This filter only returns directories
-      FileFilter fileFilter = new FileFilter() {
-        public boolean accept(File file) {
-            return file.isDirectory();
-            }
-      };
-      File[] files = dir.listFiles(fileFilter);
+    this.index = new HashMap<String, StructuredIndex>();
+    this.booleanFeatureFactory = new HashMap<String, FeatureFactory>();
+    this.countFeatureFactory = new HashMap<String, FeatureFactory>();
+    this.rankedFeatureFactory = new HashMap<String, FeatureFactory>();
 
-      // This doesn't work for the way we normally strcuture indexes.
-      //if(files.length < 2) {
-      if (true) {
-          default_index = addIndex(new StructuredIndex(filename), parameters);
-      }
-      else {
-          for(File file : files)
-          {
-              String key = addIndex(new StructuredIndex(file.toString()), parameters);
-              if(default_index == null)
-                  default_index = key;
-          }
-      }
+    default_index = addIndex(new StructuredIndex(filename), parameters);
+
     runner = null;
+
+    /*  [sjh] -- this code isn't doing anything 
+     *        -- i'd prefer a different system of identifying a set of indexes.
+     * 
+    File dir = new File(filename);
+    // This filter only returns directories
+    FileFilter fileFilter = new FileFilter() {
+    public boolean accept(File file) {
+    return file.isDirectory();
+    }
+    };
+    File[] files = dir.listFiles(fileFilter);
+    
+    // This doesn't work for the way we normally strcuture indexes.
+    if(files.length < 2) {
+    if (true) {
+    default_index = addIndex(new StructuredIndex(filename), parameters);
+    }
+    
+    else {
+        for(File file : files)
+        {
+            String key = addIndex(new StructuredIndex(file.toString()), parameters);
+            if(default_index == null)
+                default_index = key;
+        }
+    }
+     * 
+     */
   }
-  
+
   /**
    * Here we do the work of processing each separate logical index. 
    */
   private String addIndex(StructuredIndex indx, Parameters parameters) throws IOException {
-      // Get the path to the index, and extract its 'name' which is its key
-      String[] indexPath = indx.getIndexLocation().toString().split("/");
-      String index_key = indexPath[indexPath.length-1];
-      System.out.println("Logical Index: " + index_key);
-      
-      // Insert it into the hash map
-      this.index.put(index_key,indx);
-      
-      // Handle parameters for this index (since some of these can be different)
-      Parameters featureParameters = parameters.clone();
-      Parameters indexStats = getRetrievalStatistics("all", index_key);
-      
-      featureParameters.add("collectionLength", indexStats.get("collectionLength"));
-      featureParameters.add("documentCount", indexStats.get("documentCount"));
-      featureParameters.add("retrievalGroup", "all"); // the value wont matter here
+    // Get the path to the index, and extract its 'name' which is its key
+    String[] indexPath = indx.getIndexLocation().toString().split("/");
+    String index_key = indexPath[indexPath.length - 1];
+    System.out.println("Logical Index: " + index_key);
 
-      Parameters bfp = featureParameters.clone();
-      bfp.set("queryType", "boolean");
-      booleanFeatureFactory.put(index_key, new BooleanFeatureFactory(bfp));
+    // Insert it into the hash map
+    this.index.put(index_key, indx);
 
-      Parameters cfp = featureParameters.clone();
-      cfp.set("queryType", "count");
-      countFeatureFactory.put(index_key, new CountFeatureFactory(cfp));
+    // Handle parameters for this index (since some of these can be different)
+    Parameters featureParameters = parameters.clone();
+    Parameters indexStats = getRetrievalStatistics("all", index_key);
 
-      Parameters rfp = featureParameters.clone();
-      rfp.set("queryType", "ranked");
-      rankedFeatureFactory.put(index_key, new RankedFeatureFactory(rfp));
+    featureParameters.add("collectionLength", indexStats.get("collectionLength"));
+    featureParameters.add("documentCount", indexStats.get("documentCount"));
+    featureParameters.add("retrievalGroup", "all"); // the value wont matter here
 
-      return index_key;
+    Parameters bfp = featureParameters.clone();
+    bfp.set("queryType", "boolean");
+    booleanFeatureFactory.put(index_key, new BooleanFeatureFactory(bfp));
+
+    Parameters cfp = featureParameters.clone();
+    cfp.set("queryType", "count");
+    countFeatureFactory.put(index_key, new CountFeatureFactory(cfp));
+
+    Parameters rfp = featureParameters.clone();
+    rfp.set("queryType", "ranked");
+    rankedFeatureFactory.put(index_key, new RankedFeatureFactory(rfp));
+
+    return index_key;
   }
 
   // This method and others have been adapted to multiple logical indicies
   public void close() throws IOException {
-      for(StructuredIndex indx : this.index.values())
-        indx.close();
+    for (StructuredIndex indx : this.index.values()) {
+      indx.close();
+    }
   }
-  
+
   /*
    * <parameters>
    *  <collectionLength>cl<collectionLength>
@@ -177,25 +185,26 @@ public class StructuredRetrieval implements Retrieval {
   public Parameters getRetrievalStatistics() throws IOException {
     return getRetrievalStatisticsForIndex(default_index);
   }
-  
+
   /**
    * When no index key is given we revert to the default, which is the first index 
    * specified in the list. Thus this is backwards compatible if only one 
    * index is given.
    */
-    public Parameters getRetrievalStatistics(String _retGroup) throws IOException {
+  public Parameters getRetrievalStatistics(String _retGroup) throws IOException {
     return getRetrievalStatistics();
   }
-  
+
   public Parameters getRetrievalStatistics(String _retGroup, String index_key) throws IOException {
     return getRetrievalStatisticsForIndex(index_key);
   }
 
   public Parameters getRetrievalStatisticsForIndex(String index_key) throws IOException {
     Parameters p = new Parameters();
-    if(!index.containsKey(index_key))
-        throw new IOException("Index requested was not found to be loaded!!");
-    
+    if (!index.containsKey(index_key)) {
+      throw new IOException("Index requested was not found to be loaded!!");
+    }
+
     p.add("collectionLength", Long.toString(index.get(index_key).getCollectionLength()));
     p.add("documentCount", Long.toString(index.get(index_key).getDocumentCount()));
 
@@ -205,7 +214,7 @@ public class StructuredRetrieval implements Retrieval {
 
     return p;
   }
-  
+
   /*
    * <parameters>
    *  <part>
@@ -217,14 +226,15 @@ public class StructuredRetrieval implements Retrieval {
    * </parameters>
    */
   public Parameters getAvailableParts(String _retGroup) throws IOException {
-      return getAvailableParts(_retGroup, default_index);
+    return getAvailableParts(_retGroup, default_index);
   }
-  
+
   public Parameters getAvailableParts(String _retGroup, String index_key) throws IOException {
     Parameters p = new Parameters();
-    if(!index.containsKey(index_key))
-        throw new IOException("Index requested was not found to be loaded!!");
-    
+    if (!index.containsKey(index_key)) {
+      throw new IOException("Index requested was not found to be loaded!!");
+    }
+
     for (String partName : index.get(index_key).getPartNames()) {
       p.add("part", partName);
 
@@ -252,12 +262,13 @@ public class StructuredRetrieval implements Retrieval {
     }
     return list.toArray(new ScoredDocument[0]);
   }
-  
+
   public DocumentLengthsReader.KeyIterator getLengthsIterator(String index_key) throws IOException {
-      if(!index.containsKey(index_key))
-        throw new IOException("Index requested was not found to be loaded!!");
-    
-      return index.get(index_key).getLengthsIterator();
+    if (!index.containsKey(index_key)) {
+      throw new IOException("Index requested was not found to be loaded!!");
+    }
+
+    return index.get(index_key).getLengthsIterator();
   }
 
   /**
@@ -280,10 +291,10 @@ public class StructuredRetrieval implements Retrieval {
     ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context, rankedFeatureFactory.get(index_key));
     int requested = (int) parameters.get("requested", 1000);
     //System.err.printf("Running ranked query (%d) %s\n", requested, queryTree.toString());
-    
+
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
-    
+
     /* Another change to use multiple logical indices: 
      * We look at the queryTree (node) for what index it targets (uses). 
      * This is required, but again we default appropriately if nothing is specified.
@@ -292,11 +303,12 @@ public class StructuredRetrieval implements Retrieval {
      * convert operators (which need to know what to conver to) need to specify this. 
      * The rest figure it out automatically by looking at their child nodes.
      */
-    if(!index.containsKey(index_key))
-        throw new IOException("Index requested (in runRankedQuery) was not found to be loaded!!");
-    
+    if (!index.containsKey(index_key)) {
+      throw new IOException("Index requested (in runRankedQuery) was not found to be loaded!!");
+    }
+
     DocumentLengthsReader.KeyIterator lengthsIterator = index.get(index_key).getLengthsIterator();
-    
+
     while (!iterator.isDone()) {
       int document = iterator.currentCandidate();
       if (iterator.hasMatch(document)) {
@@ -403,9 +415,10 @@ public class StructuredRetrieval implements Retrieval {
       docIds.put(results[i].document, i);
     }
 
-    if(!index.containsKey(index_key))
-        throw new IOException("Index requested (in getArrayResults) was not found to be loaded!!");
-    
+    if (!index.containsKey(index_key)) {
+      throw new IOException("Index requested (in getArrayResults) was not found to be loaded!!");
+    }
+
     NameReader.Iterator iterator = index.get(index_key).getNamesIterator();
     for (int document : docIds.keySet()) {
       iterator.findKey(Utility.fromInt(document));
@@ -417,9 +430,10 @@ public class StructuredRetrieval implements Retrieval {
   }
 
   protected String getDocumentName(int document, String index_key) throws IOException {
-      if(!index.containsKey(index_key))
-        throw new IOException("Index requested was not found to be loaded!!");
-    
+    if (!index.containsKey(index_key)) {
+      throw new IOException("Index requested was not found to be loaded!!");
+    }
+
     return index.get(index_key).getName(document);
   }
 
@@ -440,7 +454,7 @@ public class StructuredRetrieval implements Retrieval {
   protected StructuredIterator createIterator(Node node, DocumentContext context, Map<String, FeatureFactory> ff) throws Exception {
     return createIterator(node, context, ff.get(node.getIndexTarget(default_index)));
   }
-  
+
   protected StructuredIterator createIterator(Node node, DocumentContext context, FeatureFactory ff) throws Exception {
     HashMap<String, StructuredIterator> iteratorCache = new HashMap();
     return createNodeMergedIterator(node, context, iteratorCache, ff);
@@ -464,10 +478,11 @@ public class StructuredRetrieval implements Retrieval {
       }
       /* Again we look at the node (query) for what index is being used. */
       String index_key = node.getIndexTarget(default_index);
-      
-      if(!index.containsKey(index_key))
+
+      if (!index.containsKey(index_key)) {
         throw new IOException("Index requested (in createNodeMergedIterator) was not found to be loaded!!");
-    
+      }
+
       iterator = index.get(index_key).getIterator(node);
       if (iterator == null) {
         iterator = ff.getIterator(node, internalIterators, this);
@@ -548,10 +563,11 @@ public class StructuredRetrieval implements Retrieval {
   }
 
   public NodeType getNodeType(Node node, String retrievalGroup) throws Exception {
-      String index_key = node.getIndexTarget(default_index);
-      if(!index.containsKey(index_key))
-        throw new IOException("Index requested was not found to be loaded!!");
-    
+    String index_key = node.getIndexTarget(default_index);
+    if (!index.containsKey(index_key)) {
+      throw new IOException("Index requested was not found to be loaded!!");
+    }
+
     NodeType nodeType = index.get(index_key).getNodeType(node);
     if (nodeType == null) {
       nodeType = rankedFeatureFactory.get(index_key).getNodeType(node);

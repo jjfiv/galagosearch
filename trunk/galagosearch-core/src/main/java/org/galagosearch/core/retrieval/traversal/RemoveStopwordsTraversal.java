@@ -1,5 +1,4 @@
 // BSD License (http://www.galagosearch.org/license)
-
 package org.galagosearch.core.retrieval.traversal;
 
 import java.io.File;
@@ -24,56 +23,74 @@ import org.galagosearch.tupleflow.Utility;
  */
 @RequiredStatistics(statistics = {"stopwords"})
 public class RemoveStopwordsTraversal implements Traversal {
-    int level = 0;
-    Stack<Integer> removableOperators = new Stack<Integer>();
-    HashSet<String> words;
-    HashSet<String> combiners;
 
-    public RemoveStopwordsTraversal(Parameters parameters, Retrieval retrieval) {
-        // Look for a file first
-        String value = parameters.get("stopwords", "null");
-        File f = new File(value);
-        if (f.exists()) {
-          try {
-            words = Utility.readFileToStringSet(f);
-          } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
-          }
-        } else {
-          List<String> wordsList = parameters.stringList("stopwords/word");
-          words = new HashSet<String>(wordsList);
-        }
-        combiners = new HashSet<String>();
-        combiners.add("combine");
-        combiners.add("root");
-        combiners.add("seqdep");
-        combiners.add("rm");
+  Stack<Integer> removableOperators = new Stack<Integer>();
+  HashSet<String> words;
+  HashSet<String> conjops;
+
+  public RemoveStopwordsTraversal(Parameters parameters, Retrieval retrieval) {
+    // Look for a file first
+    String value = parameters.get("stopwords", "null");
+    File f = new File(value);
+    if (f.exists()) {
+      try {
+        words = Utility.readFileToStringSet(f);
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
+    } else {
+      List<String> wordsList = parameters.stringList("stopwords/word");
+      words = new HashSet<String>(wordsList);
     }
 
-    public Node afterNode(Node node) throws Exception {
-        ArrayList<Node> children = new ArrayList<Node>();
+    conjops = new HashSet();
+    conjops.add("inside");
+    conjops.add("ordered");
+    conjops.add("od");
+    conjops.add("unordered");
+    conjops.add("uw");
+    conjops.add("all");
+  }
 
-        if (combiners.contains(node.getOperator())) {
-            ArrayList<Node> oldChildren = node.getInternalNodes();
-            for (int i = 0; i < oldChildren.size(); i++) {
-                Node child = oldChildren.get(i);
-                boolean isStopword = child.getOperator().equals("text") &&
-                                     words.contains(child.getDefaultParameter());
-                if (!isStopword) {
-                    children.add(child);
-                }
-            }
+  public Node afterNode(Node node) throws Exception {
 
-            return new Node(node.getOperator(), children);
-        }
-        
-        return node;
+    // if the node is a stopword - replace with 'null' operator
+    if ((node.getOperator().equals("counts")
+            || node.getOperator().equals("extents"))
+            && words.contains(node.getDefaultParameter())) {
+      return new Node("null", new ArrayList());
     }
 
-    public void beforeNode(Node node) throws Exception {
-        level++;
-        if (node.getOperator().equals("combine")) {
-            removableOperators.add(level);
-        }
+    // now if we have a conjunction node, we need to remove any null op children.
+    ArrayList<Node> children = node.getInternalNodes();
+    ArrayList<Node> newChildren = new ArrayList();
+    for (Node child : children) {
+      if (!child.getOperator().equals("null")) {
+        newChildren.add(child);
+      }
     }
+
+    boolean hasNull = children.size() > newChildren.size();
+
+    if (hasNull && conjops.contains(node.getOperator())) {
+      // special case: inside 
+      if (node.getOperator().equals("inside")) {
+        return new Node("null", new ArrayList());
+      }
+
+      // all other cases - create a new list of non-null children
+      if (newChildren.size() == 0) {
+        return new Node("null", new ArrayList());
+      } else {
+        return new Node(node.getOperator(), node.getParameters(), newChildren, node.getPosition());
+      }
+    }
+
+    // otherwise return the original
+    return node;
+  }
+
+  public void beforeNode(Node node) throws Exception {
+    // nothing
+  }
 }

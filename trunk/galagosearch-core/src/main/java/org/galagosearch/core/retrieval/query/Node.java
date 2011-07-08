@@ -19,229 +19,216 @@ import org.galagosearch.tupleflow.Parameters;
  * @author trevor
  */
 public class Node implements Serializable {
-    /// The query operator represented by this node, like "combine", "weight", "syn", etc.
-    private String operator;
+  /// The query operator represented by this node, like "combine", "weight", "syn", etc.
 
-    /// Child nodes of the operator, e.g. in #combine(a b), 'a' and 'b' are internal nodes of #combine.
-    private ArrayList<Node> internalNodes;
+  private String operator;
+  /// Child nodes of the operator, e.g. in #combine(a b), 'a' and 'b' are internal nodes of #combine.
+  private ArrayList<Node> internalNodes;
+  /// The position in the text string where this operator starts.  Useful for parse error messages.
+  private int position;
+  /// Additional parameters for this operator; usually these are term statistics and smoothing parameters.
+  private Parameters parameters;
 
-    /// The position in the text string where this operator starts.  Useful for parse error messages.
-    private int position;
+  public Node() {
+    internalNodes = new ArrayList<Node>();
+    parameters = new Parameters();
+  }
 
-    /// Additional parameters for this operator; usually these are term statistics and smoothing parameters.
-    private Parameters parameters;
-    
-    // Cache the target to keep from re-traversing the tree
-    private String index_target = null;
+  public Node(String operator, ArrayList<Node> internalNodes) {
+    this(operator, (String) null, internalNodes, 0);
+  }
 
-    public Node() {
-        internalNodes = new ArrayList<Node>();
-        parameters = new Parameters();
+  public Node(String operator, ArrayList<Node> internalNodes, int position) {
+    this(operator, (String) null, internalNodes, position);
+  }
+
+  public Node(String operator, String argument) {
+    this(operator, argument, 0);
+  }
+
+  public Node(String operator, String argument, int position) {
+    this(operator, argument, new ArrayList<Node>(), position);
+  }
+
+  public Node(String operator, String argument, ArrayList<Node> internalNodes) {
+    this(operator, argument, internalNodes, 0);
+  }
+
+  public Node(String operator, String argument, ArrayList<Node> internalNodes, int position) {
+    Parameters p = new Parameters();
+
+    if (argument != null) {
+      p.add("default", argument);
+    }
+    this.operator = operator;
+    this.internalNodes = internalNodes;
+    this.position = position;
+    this.parameters = p;
+  }
+
+  public Node(String operator, Parameters parameters, ArrayList<Node> internalNodes, int position) {
+    this.operator = operator;
+    this.internalNodes = internalNodes;
+    this.position = position;
+    this.parameters = parameters;
+  }
+
+  public String getOperator() {
+    return operator;
+  }
+
+  public String getDefaultParameter() {
+    return parameters.get("default", (String) null);
+  }
+
+  public String getDefaultParameter(String key) {
+    return parameters.get(key, getDefaultParameter());
+  }
+
+  public ArrayList<Node> getInternalNodes() {
+    return internalNodes;
+  }
+
+  /**
+   * Gets the index target for this query node. If this is a leaf node, 
+   * then it should directly specify it or use the default. If this is an 
+   * operator that changes the index, then it will also specify a new target 
+   * index. Otherwise, it will query its child node's for what index they use, 
+   * and return that.
+   */
+  public String getIndexTarget(String def) {
+    String target = parameters.get("target", null);
+    if (target == null) {
+      if (internalNodes.size() > 0) {
+        target = internalNodes.get(0).getIndexTarget(def);
+      } else {
+        target = def;
+      }
     }
 
-    public Node(String operator, ArrayList<Node> internalNodes) {
-        this(operator, (String) null, internalNodes, 0);
-    }
+    return target;
+  }
 
-    public Node(String operator, ArrayList<Node> internalNodes, int position) {
-        this(operator, (String) null, internalNodes, position);
-    }
+  public int getPosition() {
+    return position;
+  }
 
-    public Node(String operator, String argument) {
-        this(operator, argument, 0);
-    }
+  public Parameters getParameters() {
+    return parameters;
+  }
 
-    public Node(String operator, String argument, int position) {
-        this(operator, argument, new ArrayList<Node>(), position);
-    }
+  public boolean needsToBeEscaped(String text) {
+    return text.contains("@") || text.contains(",")
+            || text.contains(".") || text.contains(" ")
+            || text.contains("\t") || text.contains("\r")
+            || text.contains("\n");
+  }
 
-    public Node(String operator, String argument, ArrayList<Node> internalNodes) {
-        this(operator, argument, internalNodes, 0);
-    }
+  public String escapeAsNecessary(String text) {
+    if (!needsToBeEscaped(text)) {
+      return text;
+    } else {
+      String[] preferredDelimiters = {"/", "|", "#", "!", "%"};
 
-    public Node(String operator, String argument, ArrayList<Node> internalNodes, int position) {
-        Parameters p = new Parameters();
-
-        if (argument != null) {
-            p.add("default", argument);
+      for (String delimiter : preferredDelimiters) {
+        if (!text.contains(delimiter)) {
+          return "@" + delimiter + text + delimiter;
         }
-        this.operator = operator;
-        this.internalNodes = internalNodes;
-        this.position = position;
-        this.parameters = p;
+      }
+
+      // give up
+      return text;
+    }
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+
+    builder.append('#');
+    builder.append(operator);
+
+    if (parameters.containsKey("default")) {
+      String value = parameters.get("default");
+      builder.append(':');
+      builder.append(escapeAsNecessary(value));
     }
 
-    public Node(String operator, Parameters parameters, ArrayList<Node> internalNodes, int position) {
-        this.operator = operator;
-        this.internalNodes = internalNodes;
-        this.position = position;
-        this.parameters = parameters;
-    }
-    
-    public String getOperator() {
-        return operator;
-    }
-    
-    public String getDefaultParameter() {
-        return parameters.get("default", (String)null);
-    }
-    
-    public String getDefaultParameter(String key) {
-        return parameters.get(key, getDefaultParameter());
+    Map<String, List<Value>> parameterMap = parameters.value().map();
+
+    if (parameterMap != null) {
+      for (String key : parameterMap.keySet()) {
+        if (key.equals("default")) {
+          continue;
+        }
+        String value = parameterMap.get(key).get(0).toString();
+
+        builder.append(':');
+        builder.append(escapeAsNecessary(key));
+        builder.append('=');
+        builder.append(escapeAsNecessary(value));
+      }
     }
 
-    public ArrayList<Node> getInternalNodes() {
-        return internalNodes;
-    }
-    
-    /**
-     * Gets the index target for this query node. If this is a leaf node, 
-     * then it should directly specify it or use the default. If this is an 
-     * operator that changes the index, then it will also specify a new target 
-     * index. Otherwise, it will query its child node's for what index they use, 
-     * and return that.
-     */
-    public String getIndexTarget(String def) {
-        if (this.index_target != null)
-            return this.index_target;
-        
-        String target = parameters.get("target", null);
-        if(target == null) 
-        {
-            if(internalNodes.size() > 0)
-            {
-                this.index_target = internalNodes.get(0).getIndexTarget(def);
-            }
-            else {
-                this.index_target = def;
-            }
-        }
-        else {
-            this.index_target = target;
-        }
-        return this.index_target;
+    if (internalNodes.size() == 0) {
+      builder.append("()");
+    } else {
+      builder.append("( ");
+      for (Node child : internalNodes) {
+        builder.append(child.toString());
+        builder.append(' ');
+      }
+      builder.append(")");
     }
 
-    public int getPosition() {
-        return position;
+    return builder.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof Node)) {
+      return false;
+    }
+    if (o == this) {
+      return true;
+    }
+    Node other = (Node) o;
+
+    if ((operator == null) != (other.getOperator() == null)) {
+      return false;
+    }
+    if (operator != null && !other.getOperator().equals(operator)) {
+      return false;
     }
 
-    public Parameters getParameters() {
-        return parameters;
+    String thisDefault = this.getDefaultParameter();
+    String thatDefault = other.getDefaultParameter();
+
+    if ((thisDefault == null && thatDefault != null)
+            || (thisDefault != null && thatDefault == null)) {
+      return false;
     }
-    
-    public boolean needsToBeEscaped(String text) {
-        return text.contains("@") || text.contains(",") ||
-               text.contains(".") || text.contains(" ") ||
-               text.contains("\t") || text.contains("\r") ||
-               text.contains("\n");
-    }
-    
-    public String escapeAsNecessary(String text) {
-        if (!needsToBeEscaped(text)) {
-            return text; 
-        } else {
-            String[] preferredDelimiters = { "/", "|", "#", "!", "%" };
-            
-            for (String delimiter : preferredDelimiters) {
-                if (!text.contains(delimiter)) {
-                    return "@" + delimiter + text + delimiter;
-                }
-            }
-            
-            // give up
-            return text;
-        }
+    if (thisDefault != null && !thisDefault.equals(thatDefault)) {
+      return false;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-
-        builder.append('#');
-        builder.append(operator);
-
-        if (parameters.containsKey("default")) {
-            String value = parameters.get("default");
-            builder.append(':');
-            builder.append(escapeAsNecessary(value));
-        }
-
-        Map<String, List<Value>> parameterMap = parameters.value().map();
-
-        if (parameterMap != null) {
-            for (String key : parameterMap.keySet()) {
-                if (key.equals("default")) {
-                    continue;
-                }
-                String value = parameterMap.get(key).get(0).toString();
-                
-                builder.append(':');
-                builder.append(escapeAsNecessary(key));
-                builder.append('=');
-                builder.append(escapeAsNecessary(value));
-            }
-        }
-
-        if (internalNodes.size() == 0) {
-            builder.append("()");
-        } else {
-            builder.append("( ");
-            for (Node child : internalNodes) {
-                builder.append(child.toString());
-                builder.append(' ');
-            }
-            builder.append(")");
-        }
-        
-        return builder.toString();
+    if (internalNodes.size() != other.getInternalNodes().size()) {
+      return false;
+    }
+    for (int i = 0; i < internalNodes.size(); i++) {
+      if (!internalNodes.get(i).equals(other.getInternalNodes().get(i))) {
+        return false;
+      }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Node)) {
-            return false;
-        }
-        if (o == this) {
-            return true;
-        }
-        Node other = (Node) o;
+    return true;
+  }
 
-        if ((operator == null) != (other.getOperator() == null)) {
-            return false;
-        }
-        if (operator != null && !other.getOperator().equals(operator)) {
-            return false;
-        }
-        
-        String thisDefault = this.getDefaultParameter();
-        String thatDefault = other.getDefaultParameter();
-
-        if ((thisDefault == null && thatDefault != null) ||
-                (thisDefault != null && thatDefault == null)) {
-          return false;
-        }
-        if (thisDefault != null && !thisDefault.equals(thatDefault)) {
-          return false;
-        }
-
-        if (internalNodes.size() != other.getInternalNodes().size()) {
-            return false;
-        }
-        for (int i = 0; i < internalNodes.size(); i++) {
-            if (!internalNodes.get(i).equals(other.getInternalNodes().get(i))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 67 * hash + (this.operator != null ? this.operator.hashCode() : 0);
-        hash = 67 * hash + (this.internalNodes != null ? this.internalNodes.hashCode() : 0);
-        return hash;
-    }
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    hash = 67 * hash + (this.operator != null ? this.operator.hashCode() : 0);
+    hash = 67 * hash + (this.internalNodes != null ? this.internalNodes.hashCode() : 0);
+    return hash;
+  }
 }

@@ -13,6 +13,7 @@ import org.galagosearch.core.retrieval.structured.ExtentInsideIterator;
 import org.galagosearch.core.retrieval.structured.FilteredIterator;
 import org.galagosearch.core.retrieval.structured.JelinekMercerScoringIterator;
 import org.galagosearch.core.retrieval.structured.MaxScoreCombinationIterator;
+import org.galagosearch.core.retrieval.structured.NullExtentIterator;
 import org.galagosearch.core.retrieval.structured.OrderedWindowIterator;
 import org.galagosearch.core.retrieval.structured.ScaleIterator;
 import org.galagosearch.core.retrieval.structured.SynonymIterator;
@@ -59,7 +60,8 @@ static String[][] sOperatorLookup = {
     {UnfilteredCombinationIterator.class.getName(), "bm25rf"},
     {MaxScoreCombinationIterator.class.getName(), "maxscore"},
     {UniversalIndicatorIterator.class.getName(), "all"},
-    {ExistentialIndicatorIterator.class.getName(), "any"}
+    {ExistentialIndicatorIterator.class.getName(), "any"},
+    {NullExtentIterator.class.getName(), "null"}
   };
 
   static String[][] sFeatureLookup = {
@@ -82,6 +84,7 @@ static String[][] sOperatorLookup = {
     IndriWindowCompatibilityTraversal.class.getName(),
     TextFieldRewriteTraversal.class.getName(),
     ImplicitFeatureCastTraversal.class.getName(),
+    RemoveStopwordsTraversal.class.getName(),
     FlatteningTraversal.class.getName(),
     RelevanceModelTraversal.class.getName(),
     BM25RelevanceFeedbackTraversal.class.getName()

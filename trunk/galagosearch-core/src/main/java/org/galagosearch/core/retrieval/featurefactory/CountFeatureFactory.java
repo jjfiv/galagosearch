@@ -8,6 +8,7 @@ package org.galagosearch.core.retrieval.featurefactory;
 import org.galagosearch.core.retrieval.structured.BinaryCountIterator;
 import org.galagosearch.core.retrieval.structured.ExistentialIndicatorIterator;
 import org.galagosearch.core.retrieval.structured.ExtentInsideIterator;
+import org.galagosearch.core.retrieval.structured.NullExtentIterator;
 import org.galagosearch.core.retrieval.structured.OrderedWindowIterator;
 import org.galagosearch.core.retrieval.structured.SynonymIterator;
 import org.galagosearch.core.retrieval.structured.UniversalIndicatorIterator;
@@ -40,7 +41,8 @@ static String[][] sOperatorLookup = {
     {UnorderedWindowIterator.class.getName(), "uw"},
     {UniversalIndicatorIterator.class.getName(), "all"},
     {ExistentialIndicatorIterator.class.getName(), "any"},
-    {BinaryCountIterator.class.getName(), "bcount"}
+    {BinaryCountIterator.class.getName(), "bcount"},
+    {NullExtentIterator.class.getName(), "null"}
   };
 
   // No features here that we know of - cannot produce scores.
