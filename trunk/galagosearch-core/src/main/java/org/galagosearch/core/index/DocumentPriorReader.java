@@ -123,7 +123,7 @@ public class DocumentPriorReader extends KeyValueReader {
     }
 
     public String getEntry() throws IOException {
-	return ((KeyIterator) iterator).getValueString();
+      return ((KeyIterator) iterator).getValueString();
     }
 
     public DocumentContext getContext() {
@@ -162,7 +162,7 @@ public class DocumentPriorReader extends KeyValueReader {
 
     @Override
     public boolean hasMatch(int identifier) {
-      if (nonmatching) { 
+      if (nonmatching) {
         return false;
       }
       return (!this.isDone()

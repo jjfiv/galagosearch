@@ -2,11 +2,14 @@
 package org.galagosearch.core.retrieval.structured;
 
 import java.io.IOException;
+import org.galagosearch.core.index.DocumentPriorReader;
 import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.tupleflow.Parameters;
 
 /**
- * #threshold: raw=x.xx ( ScoreIterator ) 
+ * #threshold: raw=x.xx ( PriorReader ScoreIterator ) 
+ * #threshold: prob=0.xx ( PriorReader ScoreIterator ) 
+ * #threshold: logprob=-x.xx ( PriorReader ScoreIterator ) 
  *
  * @author sjh
  */
@@ -14,6 +17,7 @@ import org.galagosearch.tupleflow.Parameters;
 public class ThresholdIterator implements IndicatorIterator {
 
   DocumentContext context;
+  DocumentContext hasMatchContext;
   ScoreValueIterator iterator;
   int document;
   double threshold;
@@ -35,6 +39,8 @@ public class ThresholdIterator implements IndicatorIterator {
     } else {
       throw new RuntimeException("#threshold operator requires a thresholding parameter: [raw|prob|logprob]");
     }
+    
+    this.hasMatchContext = new DocumentContext();
   }
 
   public void setContext(DocumentContext context) {
@@ -60,8 +66,9 @@ public class ThresholdIterator implements IndicatorIterator {
 
   public boolean hasMatch(int identifier) {
     // needs to check the score against a threshold.
+    hasMatchContext.document = document;
     return ((this.document == identifier)
-            && (iterator.score() >= threshold));
+            && (iterator.score(hasMatchContext) >= threshold));
   }
 
   /* 

@@ -121,7 +121,9 @@ public class Node implements Serializable {
     return text.contains("@") || text.contains(",")
             || text.contains(".") || text.contains(" ")
             || text.contains("\t") || text.contains("\r")
-            || text.contains("\n");
+            || text.contains("\n") || text.contains(":")
+            || text.contains("=") || text.contains("(")
+            || text.contains(")");
   }
 
   public String escapeAsNecessary(String text) {

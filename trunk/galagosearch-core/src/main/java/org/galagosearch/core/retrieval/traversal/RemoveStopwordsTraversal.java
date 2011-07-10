@@ -50,10 +50,16 @@ public class RemoveStopwordsTraversal implements Traversal {
     conjops.add("unordered");
     conjops.add("uw");
     conjops.add("all");
+
+    for(String w : words){
+      System.err.println( w );
+    }
   }
 
   public Node afterNode(Node node) throws Exception {
-
+ 
+    System.err.println( node );
+    
     // if the node is a stopword - replace with 'null' operator
     if ((node.getOperator().equals("counts")
             || node.getOperator().equals("extents"))

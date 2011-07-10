@@ -34,7 +34,7 @@ public class RemoveStopwordsTraversalTest extends TestCase {
     Parameters p = new Parameters();
     p.set("stopwords", temp.getCanonicalPath());
     RemoveStopwordsTraversal traversal = new RemoveStopwordsTraversal(p, null);
-    Node root = StructuredQuery.parse("#combine(a c b d e)");
+    Node root = StructuredQuery.parse("#combine(#counts:a() #counts:c() #counts:b() #counts:d() #counts:e())");
     Node removed = StructuredQuery.copy(traversal, root);
 
     assertEquals(5, removed.getInternalNodes().size());
@@ -44,7 +44,7 @@ public class RemoveStopwordsTraversalTest extends TestCase {
     assertEquals("d", removed.getInternalNodes().get(3).getDefaultParameter());
     assertEquals("e", removed.getInternalNodes().get(4).getDefaultParameter());
 
-    root = StructuredQuery.parse("#od:5(a c b)");
+    root = StructuredQuery.parse("#od:5(#extents:a() #extents:c() #extents: b())");
     removed = StructuredQuery.copy(traversal, root);
     assertEquals(1, removed.getInternalNodes().size());
     assertEquals("c", removed.getInternalNodes().get(0).getDefaultParameter());
@@ -65,7 +65,7 @@ public class RemoveStopwordsTraversalTest extends TestCase {
     p.add("stopwords/word", values);
 
     RemoveStopwordsTraversal traversal = new RemoveStopwordsTraversal(p, null);
-    Node root = StructuredQuery.parse("#combine(a c b d e)");
+    Node root = StructuredQuery.parse("#combine(#counts:a() #counts:c() #counts:b() #counts:d() #counts:e())");
     Node removed = StructuredQuery.copy(traversal, root);
 
     assertEquals(5, removed.getInternalNodes().size());
@@ -75,7 +75,7 @@ public class RemoveStopwordsTraversalTest extends TestCase {
     assertEquals("d", removed.getInternalNodes().get(3).getDefaultParameter());
     assertEquals("e", removed.getInternalNodes().get(4).getDefaultParameter());
 
-    root = StructuredQuery.parse("#od:5(a c b)");
+    root = StructuredQuery.parse("#od:5(#extents:a() #extents:c() #extents: b())");
     removed = StructuredQuery.copy(traversal, root);
     assertEquals(1, removed.getInternalNodes().size());
     assertEquals("c", removed.getInternalNodes().get(0).getDefaultParameter());
