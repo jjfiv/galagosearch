@@ -291,7 +291,9 @@ public class App {
     DocumentReader reader = DocumentReader.getInstance(indexPath);
 
     Document document = reader.getDocument(identifier);
-    output.println(document.text);
+    if (document != null) {
+      output.println(document.text);
+    }
   }
 
   // translator between doc names and doc ids
