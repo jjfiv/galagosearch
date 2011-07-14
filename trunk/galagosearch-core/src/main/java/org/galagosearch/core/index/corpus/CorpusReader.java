@@ -48,9 +48,11 @@ public class CorpusReader extends DocumentReader {
   public Document getDocument(String key) throws IOException {
     Iterator i = new Iterator(reader);
     byte[] k = Utility.fromString(key);
-    i.findKey(k);
-    assert(Utility.compare(i.getKeyBytes(), k) == 0);
-    return i.getDocument();
+    if (i.findKey(k)) {
+      return i.getDocument();
+    } else {
+      return null;
+    }
   }
 
   public Map<String, NodeType> getNodeTypes() {
