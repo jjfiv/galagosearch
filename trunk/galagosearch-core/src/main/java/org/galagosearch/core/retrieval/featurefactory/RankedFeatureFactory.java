@@ -53,6 +53,7 @@ public class RankedFeatureFactory extends FeatureFactory {
     {OrderedWindowIterator.class.getName(), "od"},
     {UnorderedWindowIterator.class.getName(), "unordered"},
     {UnorderedWindowIterator.class.getName(), "uw"},
+    {UnorderedWindowIterator.class.getName(), "intersect"},
     {ScaleIterator.class.getName(), "scale"},
     {UnfilteredCombinationIterator.class.getName(), "rm"},
     {UnfilteredCombinationIterator.class.getName(), "bm25rf"},

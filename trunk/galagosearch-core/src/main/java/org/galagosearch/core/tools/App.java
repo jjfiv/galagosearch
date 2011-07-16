@@ -344,9 +344,9 @@ public class App {
 
     StructuredIndexPartReader reader = StructuredIndex.openIndexPart(args[1]);
     KeyIterator iterator = reader.getIterator();
-    
+
     // if we have a key-list index
-    if (KeyListReader.class.isAssignableFrom( reader.getClass() )) {
+    if (KeyListReader.class.isAssignableFrom(reader.getClass())) {
       while (!iterator.isDone()) {
         ValueIterator vIter = iterator.getValueIterator();
         while (!vIter.isDone()) {
@@ -356,8 +356,8 @@ public class App {
         iterator.nextKey();
       }
 
-    // otherwise we could have a key-value index
-    } else if (KeyValueReader.class.isAssignableFrom( reader.getClass() )) {
+      // otherwise we could have a key-value index
+    } else if (KeyValueReader.class.isAssignableFrom(reader.getClass())) {
       while (!iterator.isDone()) {
         output.println(iterator.getKey() + "\t" + iterator.getValueString());
         iterator.nextKey();
@@ -386,8 +386,8 @@ public class App {
     }
 
     DocumentReader reader = DocumentReader.getInstance(args[1]);
-    DocumentReader.DocumentIterator iterator = (DocumentIterator) reader.getIterator();
 
+    DocumentReader.DocumentIterator iterator = (DocumentIterator) reader.getIterator();
     while (!iterator.isDone()) {
       output.println("#IDENTIFIER: " + iterator.getKey());
       Document document = iterator.getDocument();
@@ -399,6 +399,7 @@ public class App {
       output.println(document.text);
       iterator.nextKey();
     }
+    reader.close();
   }
 
   protected void handleDumpConnection(String[] args) throws IOException {
@@ -720,9 +721,10 @@ public class App {
       output.println("  CSV format.  This can be useful for debugging strange problems ");
       output.println("  in a TupleFlow execution.");
     } else if (command.equals("dump-corpus")) {
-      output.println("galago dump-corpus <corpus>");
+      output.println("galago dump-corpus <corpus> [document name]");
       output.println();
-      output.println("  Dumps all documents from a corpus file to stdout.");
+      output.println(" Dumps the specified document to stdout if specified.");
+      output.println(" Otherwise dumps all documents from a corpus file to stdout.");
     } else if (command.equals("dump-modifier")) {
       output.println("galago dump-modifier <modifier file>");
       output.println();

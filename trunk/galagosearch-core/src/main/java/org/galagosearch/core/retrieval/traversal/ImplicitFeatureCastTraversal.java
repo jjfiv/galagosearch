@@ -21,6 +21,8 @@ import org.galagosearch.tupleflow.Parameters;
  * 
  * (12/21/2010, irmarc): Modified to annotate topdocs feature nodes, as well as generate them
  *                        if specified by construction parameters.
+ * (7/17/2011, irmarc): Added a check for the intersection operator. If found, makes sure to add
+ *                        a -1 as the default distance, which indicates "whole doc".
  *
  * @author trevor, irmarc
  */
@@ -101,7 +103,12 @@ public class ImplicitFeatureCastTraversal implements Traversal {
     return ScoringFunctionIterator.class.isAssignableFrom(outputClass);
   }
 
+  // Put node modification in "before", since we're not replacing the node
   public void beforeNode(Node node) throws Exception {
+    // Indicates we want "whole doc" matching
+    if (node.getOperator().equals("intersect")) {
+      node.getParameters().set("width", "-1");
+    }
   }
 
   public Node afterNode(Node node) throws Exception {

@@ -50,7 +50,7 @@ public class UnorderedWindowIterator extends ExtentConjunctionIterator {
     }
 
     do {
-      boolean match = (maximumPosition - minimumPosition <= width);
+      boolean match = (maximumPosition - minimumPosition <= width) || (width == -1);
       // try to emit an extent here, but only if the width is small enough
       if (match) {
         extents.add(document, minimumPosition, maximumPosition);

@@ -6,7 +6,6 @@
     <artifactId>galagosearch</artifactId>
     <version>3.0-SNAPSHOT</version>
   </parent>
-
   <groupId>org.galagosearch</groupId>
   <artifactId>galagosearch-core</artifactId>
   <packaging>jar</packaging>
@@ -56,6 +55,21 @@
       </plugin>
     </plugins>
   </reporting>
+  <repositories>
+    <repository>
+      <id>AdunaSoftware</id>
+      <name>Aduna Software Repository</name>
+      <layout>default</layout>
+      <releases>
+        <enabled>true</enabled>
+        <checksumPolicy>fail</checksumPolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <url>http://repo.aduna-software.org/maven2/</url>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>xmlenc</groupId>
