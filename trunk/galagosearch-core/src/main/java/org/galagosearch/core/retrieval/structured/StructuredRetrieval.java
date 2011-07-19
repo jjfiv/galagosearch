@@ -141,7 +141,7 @@ public class StructuredRetrieval implements Retrieval {
     // Get the path to the index, and extract its 'name' which is its key
     String[] indexPath = indx.getIndexLocation().toString().split("/");
     String index_key = indexPath[indexPath.length - 1];
-    System.out.println("Logical Index: " + index_key);
+    System.err.println("Logical Index: " + index_key);
 
     // Insert it into the hash map
     this.index.put(index_key, indx);
@@ -286,11 +286,12 @@ public class StructuredRetrieval implements Retrieval {
     // Give it a context
     DocumentContext context = ContextFactory.createContext(parameters);
 
+    System.err.printf("Running transformed query: %s\n", queryTree.toString());
+
     // construct the query iterators
     String index_key = queryTree.getIndexTarget(default_index);
     ScoreValueIterator iterator = (ScoreValueIterator) createIterator(queryTree, context, rankedFeatureFactory.get(index_key));
     int requested = (int) parameters.get("requested", 1000);
-    //System.err.printf("Running ranked query (%d) %s\n", requested, queryTree.toString());
 
     // now there should be an iterator at the root of this tree
     PriorityQueue<ScoredDocument> queue = new PriorityQueue<ScoredDocument>();
@@ -318,6 +319,9 @@ public class StructuredRetrieval implements Retrieval {
         context.document = document;
         context.length = length;
         double score = iterator.score();
+	if (parameters.containsKey("rescale")) {
+	    score = score - iterator.maximumScore();
+	}
         CallTable.increment("scored");
         if (requested < 0 || queue.size() <= requested || queue.peek().score < score) {
           ScoredDocument scoredDocument = new ScoredDocument(document, score);

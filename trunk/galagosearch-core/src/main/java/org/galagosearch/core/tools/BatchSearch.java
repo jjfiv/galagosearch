@@ -87,7 +87,7 @@ public class BatchSearch {
         int rank = i + 1;
 
         out.format("%s Q0 %s %d %s galago\n", query.get("number"), results[i].documentName, rank,
-                formatScore(score));
+		   formatScore(score));
       }
       index++;
       if (parameters.get("print_calls", "false").equals("true")) {

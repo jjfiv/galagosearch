@@ -230,8 +230,7 @@ public class DRMAAStageExecutor extends RemoteStageExecutor {
     // Set the defaults for each job.
     setMemoryUsage(MEMORY_X, MEMORY_S);
     nodeTempDir = NODE_TEMP_DIR;
-    //verbose = false;
-    verbose = true;
+    verbose = false;
     nativeSpecification_each = "-w n";
     nativeSpecification_combined = "-w n";
     // CIIR specific parameters

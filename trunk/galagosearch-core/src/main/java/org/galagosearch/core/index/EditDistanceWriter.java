@@ -22,7 +22,9 @@ public class EditDistanceWriter implements Adjacency.SourceWeightOrder.ShreddedP
   public class InvertedList implements IndexElement {
 
     CompressedRawByteBuffer data = new CompressedRawByteBuffer();
+    CompressedRawByteBuffer edits = null;
     CompressedByteBuffer header = new CompressedByteBuffer();
+    int editCount;
     int numNeighbors;
     int lastID;
     byte[] word;
@@ -40,12 +42,24 @@ public class EditDistanceWriter implements Adjacency.SourceWeightOrder.ShreddedP
     }
 
     public void addWeight(double weight) throws IOException {
+      if (edits != null) {
+	  data.add(editCount);
+	  data.add(edits);
+      }
       int i = (int) Math.round(weight);
       data.add(i);
+      editCount = 0;
+      if (edits == null) {
+	edits = new CompressedRawByteBuffer();
+      } else {
+	edits.clear();
+      }
     }
 
     public void addDestination(byte[] bytes) throws IOException {
-      data.add(bytes);
+      edits.add(bytes.length);
+      edits.add(bytes);
+      editCount++;
       numNeighbors++;
     }
 
@@ -57,7 +71,12 @@ public class EditDistanceWriter implements Adjacency.SourceWeightOrder.ShreddedP
       return data.length() + header.length();
     }
 
-    public void close() {
+    public void close() throws IOException {
+      if (edits != null) {
+	  data.add(editCount);
+	  data.add(edits);
+      }
+      edits.clear();
       header.add(numNeighbors);
     }
   }

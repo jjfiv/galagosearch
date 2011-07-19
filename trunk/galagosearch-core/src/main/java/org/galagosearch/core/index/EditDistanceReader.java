@@ -21,17 +21,21 @@ public class EditDistanceReader extends AbstractModifier {
 
     String currentTerm;
     int score;
+    int scorePos;
+    int scoreCount;
 
     public EditIterator(GenericIndexReader.Iterator it, int limit) throws IOException {
       position = 0;
-      source = new VByteInput(it.getInput());
+      
+      source = new VByteInput(it.getValueStream());
       total = source.readInt();
       this.limit = limit;
+      scoreCount = scorePos = 0;
       next();
     }
 
     public boolean isDone() {
-      return (position < total && score < limit);
+      return (position >= total || score > limit);
     }
 
     public boolean next() throws IOException {
@@ -39,8 +43,17 @@ public class EditDistanceReader extends AbstractModifier {
         return false;
       }
 
-      score = source.readInt();
-      currentTerm = source.readUTF();
+      if (scorePos >= scoreCount) {
+	score = source.readInt();
+	scoreCount = source.readInt();
+	scorePos = 0;
+      }
+
+      int length = (int) source.readInt();
+      byte[] strBytes = new byte[length];
+      source.readFully(strBytes);
+      currentTerm = new String(strBytes);
+      scorePos++;
       position++;
       return true;
     }
@@ -65,7 +78,12 @@ public class EditDistanceReader extends AbstractModifier {
   public Object getModification(Node node) throws IOException {
     String term = node.getDefaultParameter();
     int l = (int) node.getParameters().get("distance", Integer.MAX_VALUE);
-    return new EditIterator(reader.getIterator(Utility.fromString(term)), l);
+    GenericIndexReader.Iterator it = reader.getIterator(Utility.fromString(term));
+    if (it != null) {
+      return new EditIterator(it, l);
+    } else {
+      return null; 
+    }
   }
 
   public void printContents(PrintStream out) throws IOException {
@@ -73,9 +91,11 @@ public class EditDistanceReader extends AbstractModifier {
 
     while (!iterator.isDone()) {
       EditIterator ei = new EditIterator(iterator, Integer.MAX_VALUE);
+      out.printf("Reference string: %s\n", Utility.toString(iterator.getKey()));
       do {
-        out.println(ei.getEntry());
+	out.println(ei.getEntry());
       } while(ei.next());
+      iterator.nextKey();
     }
   }
 }

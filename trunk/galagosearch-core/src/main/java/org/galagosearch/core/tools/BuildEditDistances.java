@@ -32,12 +32,13 @@ public class BuildEditDistances {
     protected String partName;
     protected String method;
     protected int distance;
+    protected Parameters params;
 
     public Stage getReadIndexStage() throws IOException {
         Stage stage = new Stage("readIndex");
         stage.addOutput("terms", new KeyValuePair.KeyOrder());
 
-        Parameters p = new Parameters();
+        Parameters p = params.clone();
         p.set("filename", StructuredIndex.getPartPath(this.indexPath, this.partName));
         stage.add(new Step(VocabularySource.class, p));
         stage.add(new OutputStep("terms"));
@@ -90,6 +91,7 @@ public class BuildEditDistances {
         this.partName = p.get("part");
         this.distance = (int) p.get("distance", 2L);
 	this.method = p.get("method", "levenshtein");
+	this.params = p;
 
         System.out.printf("Creating edit distances for part %s. Maximum allowable distance: %d\n",
                 this.partName, this.distance);
@@ -97,10 +99,8 @@ public class BuildEditDistances {
         job.add(getReadIndexStage());
         job.add(getGenerateDistancesStage());
         job.add(getWriteDistancesStage());
-        //job.add(getWriteTermMappingStage());
         
         job.connect("readIndex", "generateEditDistances", ConnectionAssignmentType.Each);
-	//job.connect("readIndex", "writeTermMapping", ConnectionAssignmentType.Combined);
         job.connect("generateEditDistances", "writeDistances", ConnectionAssignmentType.Combined);
 
 

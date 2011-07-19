@@ -4,6 +4,7 @@
  */
 package org.galagosearch.core.parse;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
@@ -48,17 +49,29 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
 
     // Look for queries to base the extraction
     Parameters p = parameters.getXML();
-    if (p.containsKey("include")) {
+    inclusions = new HashSet<String>();
+    if (p.containsKey("includefile")) {
+	File f = new File(p.get("includefile"));
+	if (f.exists()) {
+	    System.err.printf("Opening inclusion file: %s\n", f.getCanonicalPath());
+	    inclusions = Utility.readFileToStringSet(f);
+	}
+    } else if (p.containsKey("include")) {
       List<String> inc = p.stringList("include");
-      inclusions = new HashSet<String>();
       for (String s : inc) {
         inclusions.add(s);
       }
     }
 
-    if (p.containsKey("exclude")) {
+    exclusions = new HashSet<String>();
+    if (p.containsKey("excludefile")) {
+	File f = new File(p.get("excludefile"));
+	if (f.exists()) {
+	    System.err.printf("Opening exclusion file: %s\n", f.getCanonicalPath());
+	    exclusions = Utility.readFileToStringSet(f);
+	}
+    } else if (p.containsKey("exclude")) {
       List<String> inc = p.stringList("exclude");
-      exclusions = new HashSet<String>();
       for (String s : inc) {
         exclusions.add(s);
       }
@@ -71,17 +84,17 @@ public class VocabularySource implements ExNihiloSource<KeyValuePair> {
     while (!iterator.isDone()) {
 
       // Filter if we need to
-      if (inclusions != null || exclusions != null) {
+	if (!inclusions.isEmpty() || !exclusions.isEmpty()) {
         String s = Utility.toString(iterator.getKey());
-        if (inclusions != null && inclusions.contains(s) == false) {
-          iterator.nextKey();
+        if (inclusions.contains(s) == false) {
+	  iterator.nextKey();
           if (skipCounter != null) {
             skipCounter.increment();
           }
           continue;
         }
 
-        if (exclusions != null && exclusions.contains(s) == true) {
+        if (exclusions.contains(s) == true) {
           iterator.nextKey();
           if (skipCounter != null) {
             skipCounter.increment();
