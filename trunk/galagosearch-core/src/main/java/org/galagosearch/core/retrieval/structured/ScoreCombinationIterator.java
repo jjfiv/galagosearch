@@ -11,9 +11,12 @@ import org.galagosearch.tupleflow.Parameters;
 /**
  * [sjh]: modified to scale the child nodes acording to weights in the parameters object
  * - this fixes hierarchical scaling problems by normalizing the node
+ * 
+ * [irmarc]: I don't think the above is true. Workaround is to pass norm=false, and normalization is turned off.
  *
  * [irmarc]: Part of a refactor - this node now represents a score iterator that navigates
  *          via document-ordered methods
+
  *
  * @author trevor, sjh, irmarc
  */
@@ -24,19 +27,21 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
   protected ScoreValueIterator[] iterators;
   protected boolean done;
   protected boolean printing;
+  protected boolean normalizing;
 
   public ScoreCombinationIterator(Parameters parameters,
           ScoreValueIterator[] childIterators) {
 
     weights = new double[childIterators.length];
     weightSum = 0.0;
-
+  
     for (int i = 0; i < weights.length; i++) {
       String weightString = parameters.get(Integer.toString(i), "1.0");
       weights[i] = Double.parseDouble(weightString);
       weightSum += weights[i];
     }
     printing = parameters.get("print", false);
+    normalizing = parameters.get("norm", true);
     this.iterators = childIterators;
   }
 
@@ -85,11 +90,9 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
 
     for (int i = 0; i < iterators.length; i++) {
       double score = iterators[i].score();
-      //if (printing) System.err.printf("it %s score= %f, weight = %f\n", iterators[i].toString(), score, weights[i]);
       total += weights[i] * score;
     }
-    //if (printing) System.err.printf("Normalized score = %f\n", total / weightSum);
-    return total / weightSum;
+    return (normalizing ? (total / weightSum) : total);
   }
 
   public double score(DocumentContext dc) {
@@ -99,7 +102,7 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
       double score = iterators[i].score(dc);
       total += weights[i] * score;
     }
-    return total / weightSum;
+    return (normalizing ? (total / weightSum) : total);
   }
 
   public boolean isDone() {
@@ -117,7 +120,7 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
     for (int i = 0; i < iterators.length; i++) {
       min += weights[i] * iterators[i].minimumScore();
     }
-    return (min / weightSum);
+    return (normalizing ? (min / weightSum) : min);
   }
 
   public double maximumScore() {
@@ -125,6 +128,6 @@ public abstract class ScoreCombinationIterator implements ScoreValueIterator {
     for (int i = 0; i < iterators.length; i++) {
       max += weights[i] * iterators[i].maximumScore();
     }
-    return (max / weightSum);
+    return (normalizing ? (max / weightSum) : max);
   }
 }

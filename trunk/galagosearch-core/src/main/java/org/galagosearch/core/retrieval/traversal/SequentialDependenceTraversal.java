@@ -81,6 +81,11 @@ public class SequentialDependenceTraversal implements Traversal {
       String uww = parameters.get("uww", unorderedDefault);
 
       Parameters weights = new Parameters();
+      // TODO: Hack for now - need to make this more consistent
+      if (parameters.containsKey("norm")) {
+	  weights.set("norm", parameters.get("norm"));
+      }
+
       ArrayList<Node> immediateChildren = new ArrayList<Node>();
 
       // unigrams - 0.80
