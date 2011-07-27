@@ -86,17 +86,23 @@ public class MultiRetrieval extends Retrieval {
    */
   public ScoredDocument[] runQuery(Node root, Parameters parameters) throws Exception {
     this.root = root;
+    int count = (int) parameters.get("count", 1000);
+    int startAt = (int) parameters.get("startAt", 0);
+    
     String retrievalGroup = parameters.get("retrievalGroup", "all");
     if (!retrievals.containsKey(retrievalGroup)) {
       // this should fail nicely
       // Print a fail, then return null
       throw new Exception("Unable to load id '" + retrievalGroup + "' for query '" + root.toString() + "'");
     }
+        
     Collection<Retrieval> subset = retrievals.get(retrievalGroup);
     List<ScoredDocument> queryResults = new ArrayList<ScoredDocument>();
 
     Parameters shardTemplate = parameters.clone();
-
+    // ensure each child node collects enough docs
+    shardTemplate.set("count", Integer.toString( startAt + count )); 
+    
     // Asynchronous retrieval
     String indexId = parameters.get("indexId", "0");
 
@@ -117,8 +123,6 @@ public class MultiRetrieval extends Retrieval {
     Collections.sort(queryResults, Collections.reverseOrder());
 
     // get the best {requested} results
-    int count = (int) parameters.get("count", 1000);
-    int startAt = (int) parameters.get("startAt", 0);
     return queryResults.subList(startAt, Math.min(queryResults.size(), startAt + count)).toArray(new ScoredDocument[0]);
   }
 
