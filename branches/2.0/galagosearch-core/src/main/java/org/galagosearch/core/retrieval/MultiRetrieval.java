@@ -47,7 +47,7 @@ public class MultiRetrieval extends Retrieval {
 
   public void close() throws IOException {
     for (String desc : retrievals.keySet()) {
-     Collection<Retrieval> collGroup = retrievals.get(desc);
+      Collection<Retrieval> collGroup = retrievals.get(desc);
       for (Retrieval r : collGroup) {
         r.close();
       }
@@ -72,7 +72,7 @@ public class MultiRetrieval extends Retrieval {
   }
 
   public StructuredIterator createIterator(Node node) throws Exception {
-      throw new UnsupportedOperationException("Semantics to instantiate iterator are unclear");
+    throw new UnsupportedOperationException("Semantics to instantiate iterator are unclear");
   }
 
   /**
@@ -100,7 +100,7 @@ public class MultiRetrieval extends Retrieval {
     // Asynchronous retrieval
     String indexId = parameters.get("indexId", "0");
 
-    int i =0;
+    int i = 0;
     for (Retrieval r : subset) {
       Parameters shardParams = shardTemplate.clone();
       shardParams.set("indexId", indexId + "." + Integer.toString(i));
@@ -117,9 +117,9 @@ public class MultiRetrieval extends Retrieval {
     Collections.sort(queryResults, Collections.reverseOrder());
 
     // get the best {requested} results
-    int requested = (int) parameters.get("count", 1000);
-
-    return queryResults.subList(0, Math.min(queryResults.size(), requested)).toArray(new ScoredDocument[0]);
+    int count = (int) parameters.get("count", 1000);
+    int startAt = (int) parameters.get("startAt", 0);
+    return queryResults.subList(startAt, Math.min(queryResults.size(), startAt + count)).toArray(new ScoredDocument[0]);
   }
 
   public void runAsynchronousQuery(Node query, Parameters parameters, List<ScoredDocument> queryResults) throws Exception {
@@ -163,7 +163,7 @@ public class MultiRetrieval extends Retrieval {
     }
   }
 
-  public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception{
+  public ScoredDocument[] runParameterSweep(Node root, Parameters parameters) throws Exception {
     throw new UnsupportedOperationException("Parameter Sweep not yet implemented");
   }
 
@@ -231,9 +231,9 @@ public class MultiRetrieval extends Retrieval {
     for (String partName : intersection.stringList("part")) {
       for (Parameters p : ps) {
         // if some index does not contain the correct part - delete it and all node Classes
-        if (! p.stringList("part").contains(partName)) {
-          for(Value v : intersection.list("part")){
-            if(v.toString().equals(partName)){
+        if (!p.stringList("part").contains(partName)) {
+          for (Value v : intersection.list("part")) {
+            if (v.toString().equals(partName)) {
               intersection.list("part").remove(v);
             }
           }
@@ -272,7 +272,7 @@ public class MultiRetrieval extends Retrieval {
     return count;
   }
 
-    /**
+  /**
    * Currently does this synchronously to make sure it works.
    * We can multi-thread it when we have time.
    */
@@ -318,13 +318,13 @@ public class MultiRetrieval extends Retrieval {
         throw new IOException("The index has no part named '" + partName + "'");
       }
       String operator = node.getOperator();
-      if(! parts.containsKey("nodeType/" + partName + "/" + operator)){
+      if (!parts.containsKey("nodeType/" + partName + "/" + operator)) {
         throw new IOException("The index has no iterator for the operator '" + operator + "'");
-      } 
+      }
       String iteratorClass = parts.get("nodeType/" + partName + "/" + operator);
 
       // may need to do some checking here...
-      return new NodeType( (Class<? extends StructuredIterator>) Class.forName(iteratorClass));
+      return new NodeType((Class<? extends StructuredIterator>) Class.forName(iteratorClass));
     }
     return null;
   }
