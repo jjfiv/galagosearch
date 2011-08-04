@@ -13,13 +13,14 @@ import org.galagosearch.core.retrieval.query.Traversal;
 import org.galagosearch.core.retrieval.Retrieval;
 import org.galagosearch.core.retrieval.structured.RequiredStatistics;
 import org.galagosearch.tupleflow.Parameters;
+import org.tartarus.snowball.ext.englishStemmer;
 
 /*
  * window operator
  * 
  * rewrites the window meta-operator :
  *  #window:part=n3-w1-ordered-h2( term term term )
- *   or
+ *  or
  *  #window:width=1:ordered=true:h=2:docfreq=false:stemmed=false( term term term )
  * 
  * to an operator that can be run on an n-gram index :
@@ -33,11 +34,11 @@ import org.galagosearch.tupleflow.Parameters;
 public class WindowRewriteTraversal implements Traversal {
 
   Parameters availiableParts;
-  Porter2Stemmer stemmer;
+  englishStemmer stemmer;
 
   public WindowRewriteTraversal(Parameters parameters, Retrieval retrieval) throws IOException {
     this.availiableParts = retrieval.getAvailableParts(parameters.get("retrievalGroup"));
-    stemmer = new Porter2Stemmer();
+    stemmer = new englishStemmer();
   }
 
   /*
@@ -67,21 +68,19 @@ public class WindowRewriteTraversal implements Traversal {
   public Node afterNode(Node original) throws Exception {
 
     if (original.getOperator().equals("window")) {
+
       Parameters p = original.getParameters();
-      if (!p.containsKey("part")) {
+      String part;
+      if (p.containsKey("part")) {
+        part = p.get("part");
+      } else {
         int n = original.getInternalNodes().size();
-        String part = getnGramPartName(n, p);
+        part = getnGramPartName(n, p);
         p.add("part", part);
       }
 
-      ArrayList<Node> children = original.getInternalNodes();
-      StringBuilder sb = new StringBuilder();
-      sb.append(children.get(0).getDefaultParameter());
-
-      for (int i = 1; i < children.size(); i++) {
-        sb.append("~").append(children.get(i).getDefaultParameter());
-      }
-      p.set("default", sb.toString());
+      String window = createWindow(original.getInternalNodes(), part.contains("-stemmed"));
+      p.set("default", window);
       return new Node("extents", p, new ArrayList<Node>(), original.getPosition());
     }
     return original;
@@ -104,7 +103,7 @@ public class WindowRewriteTraversal implements Traversal {
   private String getnGramPartName(int n, Parameters p) {
     String selectedPart = null;
     int currentThreshold = Integer.MAX_VALUE;
-    
+
 
     // first build a set of requirements
     HashSet<String> desiredPartAttributes = new HashSet();
@@ -137,21 +136,44 @@ public class WindowRewriteTraversal implements Traversal {
     Collections.sort(parts);
     for (String part : parts) {
       boolean flag = true;
-      for(String attr : desiredPartAttributes){
-        if(!part.contains(attr)){
+      for (String attr : desiredPartAttributes) {
+        if (!part.contains(attr)) {
           flag = false;
         }
       }
       // if all attributes match
-      if(flag){
-        String hValue = part.split("-")[3].replace("h","");
+      if (flag) {
+        String hValue = part.split("-")[3].replace("h", "");
         int h = Integer.parseInt(hValue);
-        if(h <= currentThreshold){
+        if (h <= currentThreshold) {
           currentThreshold = h;
           selectedPart = part;
         }
       }
     }
     return selectedPart;
+  }
+
+  private String createWindow(ArrayList<Node> children, boolean stemming) {
+    StringBuilder sb = new StringBuilder();
+    boolean first = true;
+    String text;
+
+    for (Node child : children) {
+      if (!first) {
+        sb.append("~");
+      }
+      first = false;
+
+      text = child.getDefaultParameter();
+      if (stemming) {
+        stemmer.setCurrent(text);
+        if (stemmer.stem()) {
+          text = stemmer.getCurrent();
+        }
+        sb.append(text);
+      }
+    }
+    return sb.toString();
   }
 }
