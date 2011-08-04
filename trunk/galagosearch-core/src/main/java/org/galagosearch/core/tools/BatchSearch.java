@@ -50,6 +50,7 @@ public class BatchSearch {
 
     // record results requested
     int requested = (int) parameters.get("count", 1000);
+    requested = (int) parameters.get("requested", 1000);
     int index = 0;
     long starttime = System.currentTimeMillis();
     long sumtime = 0;

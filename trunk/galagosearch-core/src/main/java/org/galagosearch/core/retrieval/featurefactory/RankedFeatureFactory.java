@@ -28,7 +28,7 @@ import org.galagosearch.core.retrieval.traversal.FullDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.ImplicitFeatureCastTraversal;
 import org.galagosearch.core.retrieval.traversal.IndriWindowCompatibilityTraversal;
 import org.galagosearch.core.retrieval.traversal.InsideToFieldPartTraversal;
-import org.galagosearch.core.retrieval.traversal.NgramRewriteTraversal;
+import org.galagosearch.core.retrieval.traversal.WindowRewriteTraversal;
 import org.galagosearch.core.retrieval.traversal.RelevanceModelTraversal;
 import org.galagosearch.core.retrieval.traversal.SequentialDependenceTraversal;
 import org.galagosearch.core.retrieval.traversal.TextFieldRewriteTraversal;
@@ -76,7 +76,7 @@ public class RankedFeatureFactory extends FeatureFactory {
     TransformRootTraversal.class.getName(),
     PRMSTraversal.class.getName(),
     InsideToFieldPartTraversal.class.getName(),
-    NgramRewriteTraversal.class.getName(),
+    WindowRewriteTraversal.class.getName(),
     IndriWeightConversionTraversal.class.getName(),
     IndriWindowCompatibilityTraversal.class.getName(),
     TextFieldRewriteTraversal.class.getName(),
