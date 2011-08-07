@@ -41,7 +41,7 @@ public class AdjacencyNameReader extends NameReader {
   }
 
   @Override
-  public String get(int identifier) throws IOException {
+  public String getDocumentName(int identifier) throws IOException {
     return Utility.toString(reader.getValueBytes(Utility.fromInt(identifier)));
   }
 

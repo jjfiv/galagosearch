@@ -21,11 +21,11 @@ import org.tartarus.snowball.ext.englishStemmer;
  * rewrites the window meta-operator :
  *  #window:part=n3-w1-ordered-h2( term term term )
  *  or
- *  #window:width=1:ordered=true:h=2:docfreq=false:stemmed=false( term term term )
+ *  #window:width=1:ordered=true:h=2:usedocfreq=false:stemming=false( term term term )
  * 
  * to an operator that can be run on an n-gram index :
  * 
- *  #extent:part=n3-w2-ordered-h2:term~term~term()
+ *  #extents:part=n3-w2-ordered-h2:term~term~term()
  * 
  * @author sjh
  * 

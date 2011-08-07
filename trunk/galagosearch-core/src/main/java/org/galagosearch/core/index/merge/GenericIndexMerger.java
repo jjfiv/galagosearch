@@ -20,7 +20,6 @@ import org.galagosearch.tupleflow.Utility;
 public abstract class GenericIndexMerger<T> {
 
   // document mapping data
-  protected boolean mappingKeys = false;
   protected DocumentMappingReader mappingReader = null;
   // input readers
   protected PriorityQueue<KeyIteratorWrapper> queue;
@@ -38,7 +37,6 @@ public abstract class GenericIndexMerger<T> {
   }
 
   public void setDocumentMapping(DocumentMappingReader mappingReader) {
-    this.mappingKeys = ( mappingReader != null );
     this.mappingReader = mappingReader;
   }
 
@@ -47,7 +45,8 @@ public abstract class GenericIndexMerger<T> {
     for (StructuredIndexPartReader r : readers.keySet()) {
       KeyIterator iterator = r.getIterator();
       if (iterator != null) {
-        KeyIteratorWrapper w = new KeyIteratorWrapper(readers.get(r), iterator, mappingKeys, mappingReader);
+        KeyIteratorWrapper w = new KeyIteratorWrapper(readers.get(r), iterator, 
+                (mappingKeys() && mappingReader != null), mappingReader);
         queue.offer(w);
         partIds.put(w, readers.get(r));
       }
@@ -80,6 +79,9 @@ public abstract class GenericIndexMerger<T> {
     writer.close();
   }
 
+  // returns a boolean value that indicates if the index key is to be mapped
+  public abstract boolean mappingKeys();
+  
   // creates the writer object - needs to be implemented for each merger
   public abstract Processor<T> createIndexWriter(TupleFlowParameters parameters) throws Exception;
 

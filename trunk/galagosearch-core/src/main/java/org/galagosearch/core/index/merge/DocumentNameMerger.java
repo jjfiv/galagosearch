@@ -19,9 +19,13 @@ public class DocumentNameMerger extends GenericIndexMerger<NumberedDocumentData>
 
   public DocumentNameMerger(TupleFlowParameters p) throws Exception {
     super(p);
-    this.mappingKeys = true;
   }
 
+  @Override
+  public boolean mappingKeys() {
+    return true;
+  }
+  
   @Override
   public Processor<NumberedDocumentData> createIndexWriter(TupleFlowParameters parameters) throws Exception {
     return new DocumentNameWriter(parameters);

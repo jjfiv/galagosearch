@@ -16,6 +16,7 @@ import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.index.VocabularyReader;
 import org.galagosearch.core.index.VocabularyReader.TermSlot;
 import org.galagosearch.core.index.IndexReader;
+import org.galagosearch.core.index.corpus.DocumentReaderFactory;
 import org.galagosearch.tupleflow.ExNihiloSource;
 import org.galagosearch.tupleflow.FileSource;
 import org.galagosearch.tupleflow.IncompatibleProcessorException;
@@ -93,7 +94,7 @@ public class DocumentSource implements ExNihiloSource<DocumentSplit> {
     long corpusSize = 0L;
 
     // if we have a corpus folder
-    if (DocumentReader.isCorpus(fileName)) {
+    if (DocumentReaderFactory.isCorpus(fileName)) {
       File folder = new File(fileName).getParentFile();
       for (File f : folder.listFiles()) {
         corpusSize += f.length();

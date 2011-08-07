@@ -345,7 +345,7 @@ public class StructuredIndex {
   }
 
   public String getName(int document) throws IOException {
-    return namesReader.get(document);
+    return namesReader.getDocumentName(document);
   }
 
   public int getIdentifier(String document) throws IOException {

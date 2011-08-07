@@ -14,6 +14,7 @@ import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.index.corpus.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReaderFactory;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.parse.TagTokenizer;
 import org.galagosearch.core.retrieval.ScoredDocument;
@@ -74,7 +75,7 @@ public class TermSelectionValueModel implements ExpansionModel {
           if (corpusLocation == null) { // keep trying
             corpusLocation = parameters.get("index") + File.separator + "corpus";
           }
-          cReader = CorpusReader.getInstance(corpusLocation);
+          cReader = DocumentReaderFactory.instance(corpusLocation);
         }
 
         if (tokenizer == null) {

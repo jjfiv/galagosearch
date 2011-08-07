@@ -68,11 +68,6 @@ public class WindowIndexReader extends KeyListReader implements AggregateReader 
     }
   }
 
-  public interface AggregateIterator {
-        public long totalEntries();
-        public long totalPositions();
-  }
-
   public class TermExtentIterator extends KeyListReader.ListIterator
           implements AggregateIterator, CountValueIterator, ExtentValueIterator {
 

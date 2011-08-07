@@ -35,7 +35,7 @@ public abstract class KeyListReader extends KeyValueReader {
     protected Map<String, Object> modifiers = null;
 
     public abstract String getEntry();
-      
+
     public int compareTo(ValueIterator other) {
       if (isDone() && !other.isDone()) {
         return 1;
@@ -59,7 +59,7 @@ public abstract class KeyListReader extends KeyValueReader {
     }
 
     public boolean hasModifier(String key) {
-	return ((modifiers != null) && modifiers.containsKey(key));
+      return ((modifiers != null) && modifiers.containsKey(key));
     }
 
     public Object getModifier(String modKey) {

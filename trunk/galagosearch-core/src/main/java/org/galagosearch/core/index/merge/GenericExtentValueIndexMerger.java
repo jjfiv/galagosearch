@@ -65,7 +65,6 @@ public abstract class GenericExtentValueIndexMerger<S> extends GenericIndexMerge
   // overridden functions
   public GenericExtentValueIndexMerger(TupleFlowParameters parameters) throws Exception {
     super(parameters);
-    this.mappingKeys = false;
   }
 
   @Override

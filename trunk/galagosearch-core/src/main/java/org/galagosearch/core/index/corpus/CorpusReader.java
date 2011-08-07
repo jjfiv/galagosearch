@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.index.IndexReader;
+import org.galagosearch.core.index.KeyValueReader;
 import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.retrieval.query.Node;
@@ -27,7 +28,7 @@ import org.galagosearch.tupleflow.Utility;
  *
  * @author sjh
  */
-public class CorpusReader extends DocumentReader {
+public class CorpusReader extends KeyValueReader implements DocumentReader {
 
   boolean compressed;
 
@@ -41,7 +42,7 @@ public class CorpusReader extends DocumentReader {
     compressed = reader.getManifest().get("compressed", true);
   }
   
-  public DocumentReader.DocumentIterator getIterator() throws IOException {
+  public Iterator getIterator() throws IOException {
     return new Iterator(reader);
   }
 
@@ -63,7 +64,7 @@ public class CorpusReader extends DocumentReader {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
-  public class Iterator extends DocumentReader.DocumentIterator {
+  public class Iterator extends KeyValueReader.Iterator implements DocumentIterator {
 
     Iterator(GenericIndexReader reader) throws IOException {
       super(reader);

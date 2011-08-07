@@ -17,5 +17,5 @@ public abstract class NameReader extends KeyValueReader {
     super(reader);
   }
 
-  public abstract String get(int identifier) throws IOException;
+  public abstract String getDocumentName(int identifier) throws IOException;
 }

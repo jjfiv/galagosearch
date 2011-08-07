@@ -19,6 +19,7 @@ import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.index.ValueIterator;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
+import org.galagosearch.core.index.corpus.DocumentReaderFactory;
 import org.galagosearch.core.index.merge.MergeIndexes;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.tupleflow.FileOrderedReader;
@@ -359,7 +360,7 @@ public class App2 {
 
       String indexPath = args[1];
       String identifier = args[2];
-      DocumentReader reader = DocumentReader.getInstance(indexPath);
+      DocumentReader reader = DocumentReaderFactory.instance(indexPath);
 
       Document document = reader.getDocument(identifier);
       output.println(document.text);
@@ -388,7 +389,7 @@ public class App2 {
       DocumentNameReader reader = new DocumentNameReader(indexPath);
 
       if (reader.isForward) {
-        String docIdentifier = reader.get(Integer.parseInt(id));
+        String docIdentifier = reader.getDocumentName(Integer.parseInt(id));
         output.println(docIdentifier);
       } else {
         int docNum = reader.getDocumentId(id);
@@ -433,7 +434,7 @@ public class App2 {
         return;
       }
 
-      DocumentReader reader = DocumentReader.getInstance(args[1]);
+      DocumentReader reader = DocumentReaderFactory.instance(args[1]);
       DocumentReader.DocumentIterator iterator = (DocumentIterator) reader.getIterator();
 
       while (!iterator.isDone()) {

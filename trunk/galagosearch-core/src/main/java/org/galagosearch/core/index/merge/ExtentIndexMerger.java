@@ -23,6 +23,11 @@ public class ExtentIndexMerger extends GenericExtentValueIndexMerger<NumberedExt
   }
 
   @Override
+  public boolean mappingKeys() {
+    return false;
+  }
+  
+  @Override
   public Processor<NumberedExtent> createIndexWriter(TupleFlowParameters parameters) throws Exception {
     ExtentIndexWriter w = new ExtentIndexWriter(parameters);
     NumberedExtent.ExtentNameNumberBeginOrder.TupleShredder shredder = new NumberedExtent.ExtentNameNumberBeginOrder.TupleShredder( w );

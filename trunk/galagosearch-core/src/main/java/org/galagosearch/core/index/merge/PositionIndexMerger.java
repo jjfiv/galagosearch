@@ -23,6 +23,11 @@ public class PositionIndexMerger extends GenericExtentValueIndexMerger<NumberWor
   }
 
   @Override
+  public boolean mappingKeys() {
+    return false;
+  }
+
+  @Override
   public Processor<NumberWordPosition> createIndexWriter(TupleFlowParameters parameters) throws Exception {
     PositionIndexWriter w = new PositionIndexWriter(parameters);
     NumberWordPosition.WordDocumentPositionOrder.TupleShredder shredder = new NumberWordPosition.WordDocumentPositionOrder.TupleShredder(w);

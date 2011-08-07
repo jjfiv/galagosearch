@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
+import org.galagosearch.core.index.corpus.DocumentReaderFactory;
 import org.galagosearch.core.types.DocumentSplit;
 import org.galagosearch.tupleflow.Utility;
 
@@ -21,7 +22,7 @@ public class IndexReaderSplitParser implements DocumentStreamParser {
   DocumentSplit split;
 
   public IndexReaderSplitParser(DocumentSplit split) throws FileNotFoundException, IOException {
-    reader = DocumentReader.getInstance( split.fileName );
+    reader = DocumentReaderFactory.instance( split.fileName );
     iterator = (DocumentIterator) reader.getIterator();
     iterator.skipToKey(split.startKey);
     this.split = split;

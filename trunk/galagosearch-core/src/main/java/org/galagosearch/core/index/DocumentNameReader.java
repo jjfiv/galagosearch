@@ -30,7 +30,7 @@ public class DocumentNameReader extends NameReader {
   }
 
   // gets the document name of the internal id index.
-  public String get(int index) throws IOException {
+  public String getDocumentName(int index) throws IOException {
     if (isForward) {
       byte[] data = reader.getValueBytes(Utility.fromInt(index));
       if (data == null) {

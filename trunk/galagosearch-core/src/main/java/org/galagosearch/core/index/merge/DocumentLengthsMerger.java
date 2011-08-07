@@ -18,7 +18,11 @@ public class DocumentLengthsMerger extends GenericIndexMerger<NumberedDocumentDa
 
   public DocumentLengthsMerger(TupleFlowParameters p) throws Exception {
     super(p);
-    this.mappingKeys = true;
+  }
+
+  @Override
+  public boolean mappingKeys() {
+    return true;
   }
 
   @Override

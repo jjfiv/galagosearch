@@ -38,7 +38,7 @@ public class DocumentLengthsReader extends KeyValueReader {
 
   public Map<String, NodeType> getNodeTypes() {
     HashMap<String, NodeType> types = new HashMap<String, NodeType>();
-    types.put("lengths", new NodeType(Iterator.class));
+    types.put("lengths", new NodeType(ValueIterator.class));
     return types;
   }
 

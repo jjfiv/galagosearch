@@ -11,6 +11,7 @@ import java.util.Set;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.corpus.CorpusReader;
 import org.galagosearch.core.index.corpus.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReaderFactory;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.parse.TagTokenizer;
 import org.galagosearch.core.retrieval.ScoredDocument;
@@ -86,7 +87,7 @@ public class RelevanceModel implements ExpansionModel {
       if (corpusLocation == null) { // keep trying
         corpusLocation = parameters.get("index") + File.separator + "corpus";
       }
-      cReader = CorpusReader.getInstance(corpusLocation);
+      cReader = DocumentReaderFactory.instance(corpusLocation);
     }
     // We also need the document lengths
     if (docLengths == null) {

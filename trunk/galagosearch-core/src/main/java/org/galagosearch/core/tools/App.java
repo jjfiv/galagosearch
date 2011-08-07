@@ -5,15 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
-import java.util.HashMap;
 import java.util.Map.Entry;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import org.galagosearch.core.index.AggregateReader;
 import org.galagosearch.core.index.DocumentLengthsReader;
 import org.galagosearch.core.index.DocumentNameReader;
-import org.galagosearch.core.index.GenericIndexReader;
 import org.galagosearch.core.index.StructuredIndex;
 import org.galagosearch.core.index.StructuredIndexPartReader;
 import org.galagosearch.core.index.ValueIterator;
@@ -23,8 +17,8 @@ import org.galagosearch.core.index.corpus.DocumentReader;
 import org.galagosearch.core.index.KeyIterator;
 import org.galagosearch.core.index.KeyListReader;
 import org.galagosearch.core.index.KeyValueReader;
-import org.galagosearch.core.index.PositionIndexReader;
 import org.galagosearch.core.index.StructuredIndexPartModifier;
+import org.galagosearch.core.index.corpus.DocumentReaderFactory;
 import org.galagosearch.core.index.merge.MergeIndexes;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.execution.Job;
@@ -32,9 +26,7 @@ import org.galagosearch.tupleflow.FileOrderedReader;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.execution.ErrorStore;
 import org.galagosearch.tupleflow.execution.JobExecutor;
-import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.AbstractHandler;
 
 /**
  * TODO: Make distributed jobs generate their own tmp directories, to avoid collisions.
@@ -288,7 +280,7 @@ public class App {
 
     String indexPath = args[1];
     String identifier = args[2];
-    DocumentReader reader = DocumentReader.getInstance(indexPath);
+    DocumentReader reader = DocumentReaderFactory.instance(indexPath);
 
     Document document = reader.getDocument(identifier);
     if (document != null) {
@@ -309,7 +301,7 @@ public class App {
     DocumentNameReader reader = new DocumentNameReader(indexPath);
 
     if (reader.isForward) {
-      String docIdentifier = reader.get(Integer.parseInt(id));
+      String docIdentifier = reader.getDocumentName(Integer.parseInt(id));
       output.println(docIdentifier);
     } else {
       int docNum = reader.getDocumentId(id);
@@ -385,7 +377,7 @@ public class App {
       return;
     }
 
-    DocumentReader reader = DocumentReader.getInstance(args[1]);
+    DocumentReader reader = DocumentReaderFactory.instance(args[1]);
 
     DocumentReader.DocumentIterator iterator = (DocumentIterator) reader.getIterator();
     while (!iterator.isDone()) {

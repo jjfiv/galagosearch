@@ -13,8 +13,10 @@ import org.galagosearch.core.parse.Document;
 import org.galagosearch.core.index.corpus.DocumentIndexReader;
 import org.galagosearch.core.index.IndexReader;
 import org.galagosearch.core.index.corpus.DocumentReader;
+import org.galagosearch.core.index.corpus.DocumentReader.DocumentIterator;
 import org.galagosearch.core.retrieval.query.Node;
 import org.galagosearch.core.retrieval.query.NodeType;
+import org.galagosearch.tupleflow.Parameters;
 
 public class DocumentIndexStoreTest extends TestCase {
 
@@ -22,11 +24,7 @@ public class DocumentIndexStoreTest extends TestCase {
     super(testName);
   }
 
-  class MockReader extends DocumentReader {
-
-    public MockReader() throws IOException {
-      super((GenericIndexReader) null);
-    }
+  class MockReader implements DocumentReader {
 
     public boolean closeCalled = false;
 
@@ -50,6 +48,14 @@ public class DocumentIndexStoreTest extends TestCase {
     }
 
     public ValueIterator getIterator(Node node) throws IOException {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public String getDefaultOperator() {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public Parameters getManifest() {
       throw new UnsupportedOperationException("Not supported yet.");
     }
   }

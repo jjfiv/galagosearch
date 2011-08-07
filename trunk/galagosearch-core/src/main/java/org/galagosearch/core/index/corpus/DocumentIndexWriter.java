@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.galagosearch.core.index.GenericElement;
 import org.galagosearch.core.index.IndexWriter;
+import org.galagosearch.core.index.merge.DocumentIndexMerger;
 import org.galagosearch.core.parse.Document;
 import org.galagosearch.tupleflow.Counter;
 import org.galagosearch.tupleflow.InputClass;
@@ -35,9 +36,10 @@ public class DocumentIndexWriter implements Processor<Document> {
     public DocumentIndexWriter(TupleFlowParameters parameters) throws FileNotFoundException, IOException {
         Parameters p = new Parameters();
         p.add("isCompressed", "true");
-        p.add("writerClass", getClass().getName());
-        p.add("readerClass", DocumentIndexReader.class.getName());
-
+        p.set("writerClass", getClass().getName());
+        p.set("readerClass", DocumentIndexReader.class.getName());
+        p.set("mergerClass", DocumentIndexMerger.class.getName());
+        
         writer = new IndexWriter(parameters.getXML().get("filename"), p);
         documentsWritten = parameters.getCounter("Documents Written");
     }

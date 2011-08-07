@@ -1,7 +1,6 @@
 /*
  *  BSD License (http://www.galagosearch.org/license)
  */
-
 package org.galagosearch.core.index.merge;
 
 import java.io.IOException;
@@ -16,20 +15,21 @@ import org.galagosearch.tupleflow.Utility;
  * @author sjh
  */
 class DocumentMappingReader {
+
   HashMap<Integer, Integer> indexIncrements = new HashMap();
 
   DocumentMappingReader(TypeReader<DocumentMappingData> mappingDataStream) throws IOException {
     DocumentMappingData dat;
-    while( (dat = mappingDataStream.read()) != null ){
+    while ((dat = mappingDataStream.read()) != null) {
       indexIncrements.put(dat.indexId, dat.docNumIncrement);
     }
   }
 
-  public int map(int indexId, int docId){
+  public int map(int indexId, int docId) {
     return docId + indexIncrements.get(indexId);
   }
 
   byte[] map(int indexId, byte[] keyBytes) {
-    return Utility.fromInt( map(indexId, Utility.toInt(keyBytes)) );
+    return Utility.fromInt(map(indexId, Utility.toInt(keyBytes)));
   }
 }
