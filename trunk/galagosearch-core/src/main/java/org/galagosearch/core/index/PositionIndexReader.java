@@ -70,8 +70,9 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
   }
 
   public class TermExtentIterator extends KeyListReader.ListIterator
-      implements AggregateIterator, CountValueIterator, ExtentValueIterator, ContextualIterator {
+          implements AggregateIterator, CountValueIterator, ExtentValueIterator, ContextualIterator {
 
+    GenericIndexReader.Iterator iterator;
     DocumentContext context;
     int documentCount;
     int totalPositionCount;
@@ -82,8 +83,8 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     int currentDocument;
     int currentCount;
     ExtentArray extentArray;
+    // to support resets
     long startPosition, endPosition;
-    RandomAccessFile input;
     // to support skipping
     VByteInput skips;
     VByteInput skipPositions;
@@ -111,8 +112,8 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     // Even though we check for skips multiple times, in terms of how the data is loaded
     // its easier to do the parts when appropriate
     protected void initialize() throws IOException {
-      input.seek(startPosition);
-      DataInput stream = new VByteInput(input);
+      DataStream valueStream = iterator.getSubValueStream(0, dataLength);
+      DataInput stream = new VByteInput(valueStream);
 
       // metadata
       int options = stream.readInt();
@@ -136,36 +137,29 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
         skipPositionsByteLength = stream.readLong();
       }
 
-      long documentStart = input.getFilePointer();
-      long documentEnd = documentStart + documentByteLength;
-
-      long countsStart = documentEnd;
-      long countsEnd = countsStart + countsByteLength;
-
-      long positionsStart = countsEnd;
+      long documentStart = valueStream.getPosition();
+      long countsStart = documentStart + documentByteLength;
+      long positionsStart = countsStart + countsByteLength;
       long positionsEnd = positionsStart + positionsByteLength;
 
+      documentsStream = iterator.getSubValueStream(documentStart, documentByteLength);
+      countsStream = iterator.getSubValueStream(countsStart, countsByteLength);
+      positionsStream = iterator.getSubValueStream(positionsStart, positionsByteLength);
+
+      documents = new VByteInput(documentsStream);
+      counts = new VByteInput(countsStream);
+      positions = new VByteInput(positionsStream);
 
       if ((options & HAS_SKIPS) == HAS_SKIPS) {
 
-        long skipsStart = positionsEnd;
-        long skipsEnd = skipsStart + skipsByteLength;
-
-        long skipPositionsStart = skipsEnd;
+        long skipsStart = positionsStart + positionsByteLength;
+        long skipPositionsStart = skipsStart + skipsByteLength;
         long skipPositionsEnd = skipPositionsStart + skipPositionsByteLength;
 
-        assert skipPositionsEnd == endPosition;
+        assert skipPositionsEnd == endPosition - startPosition;
 
-        // we do these here b/c of scoping issues w/ the variables above
-        documentsStream = new BufferedFileDataStream(input, documentStart, documentEnd);
-        documents = new VByteInput(documentsStream);
-        countsStream = new BufferedFileDataStream(input, countsStart, countsEnd);
-        counts = new VByteInput(countsStream);
-        positionsStream = new BufferedFileDataStream(input, positionsStart, positionsEnd);
-        positions = new VByteInput(positionsStream);
-        skips = new VByteInput(new BufferedFileDataStream(input, skipsStart, skipsEnd));
-        skipPositionsStream = new BufferedFileDataStream(input, skipPositionsStart,
-                skipPositionsEnd);
+        skips = new VByteInput(iterator.getSubValueStream(skipsStart, skipsByteLength));
+        skipPositionsStream = iterator.getSubValueStream(skipPositionsStart, skipPositionsByteLength);
         skipPositions = new VByteInput(skipPositionsStream);
 
         // load up
@@ -174,13 +168,9 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
         countsByteFloor = 0;
         positionsByteFloor = 0;
       } else {
-        assert positionsEnd == endPosition;
+        assert positionsEnd == endPosition - startPosition;
         skips = null;
         skipPositions = null;
-        documents = new VByteInput(new BufferedFileDataStream(input, documentStart, documentEnd));
-        counts = new VByteInput(new BufferedFileDataStream(input, countsStart, countsEnd));
-        positions = new VByteInput(new BufferedFileDataStream(input, positionsStart, positionsEnd));
-
       }
 
       documentIndex = 0;
@@ -215,13 +205,13 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return builder.toString();
     }
 
-    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
+    public void reset(GenericIndexReader.Iterator i) throws IOException {
+      iterator = i;
       key = iterator.getKey();
       dataLength = iterator.getValueLength();
       startPosition = iterator.getValueStart();
       endPosition = iterator.getValueEnd();
-
-      input = iterator.getInput();
+      // input = iterator.getInput();
       reset();
     }
 
@@ -232,7 +222,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       initialize();
     }
 
-    public boolean next() throws IOException {      
+    public boolean next() throws IOException {
       documentIndex = Math.min(documentIndex + 1, documentCount);
       if (!isDone()) {
         loadExtents();
@@ -245,7 +235,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     @Override
     public boolean moveTo(int document) throws IOException {
       if (skips != null && document > nextSkipDocument) {
-	  
+
         // if we're here, we're skipping
         while (skipsRead < numSkips
                 && document > nextSkipDocument) {
@@ -336,9 +326,9 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
 
     // This will pass up topdocs information if it's available
     public void setContext(DocumentContext context) {
-	if ((context != null) && TopDocsContext.class.isAssignableFrom(context.getClass()) &&
-              this.hasModifier("topdocs")) {
-        ((TopDocsContext)context).hold = ((ArrayList<TopDocument>) getModifier("topdocs"));
+      if ((context != null) && TopDocsContext.class.isAssignableFrom(context.getClass())
+              && this.hasModifier("topdocs")) {
+        ((TopDocsContext) context).hold = ((ArrayList<TopDocument>) getModifier("topdocs"));
         // remove the pointer to the mod (don't need it anymore)
         this.modifiers.remove("topdocs");
       }
@@ -352,8 +342,9 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
    *
    */
   public class TermCountIterator extends KeyListReader.ListIterator
-      implements AggregateIterator, CountValueIterator, ContextualIterator {
+          implements AggregateIterator, CountValueIterator, ContextualIterator {
 
+    GenericIndexReader.Iterator iterator;
     DocumentContext context;
     int documentCount;
     int collectionCount;
@@ -364,7 +355,6 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     int currentCount;
     // Support for resets
     long startPosition, endPosition;
-    RandomAccessFile input;
     // to support skipping
     VByteInput skips;
     VByteInput skipPositions;
@@ -389,8 +379,8 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     // Even though we check for skips multiple times, in terms of how the data is loaded
     // its easier to do the parts when appropriate
     protected void initialize() throws IOException {
-      input.seek(startPosition);
-      DataInput stream = new VByteInput(input);
+      DataStream valueStream = iterator.getSubValueStream(0, dataLength);
+      DataInput stream = new VByteInput(valueStream);
 
       // metadata
       int options = stream.readInt();
@@ -414,35 +404,27 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
         skipPositionsByteLength = stream.readLong();
       }
 
-      long documentStart = input.getFilePointer();
-      long documentEnd = documentStart + documentByteLength;
-
-      long countsStart = documentEnd;
-      long countsEnd = countsStart + countsByteLength;
-
-      // Still do this math to ensure correctness in the assertion below
-      long positionsStart = countsEnd;
+      long documentStart = valueStream.getPosition();
+      long countsStart = documentStart + documentByteLength;
+      long positionsStart = countsStart + countsByteLength;
       long positionsEnd = positionsStart + positionsByteLength;
 
+      documentsStream = iterator.getSubValueStream(documentStart, documentByteLength);
+      countsStream = iterator.getSubValueStream(countsStart, countsByteLength);
+
+      documents = new VByteInput(documentsStream);
+      counts = new VByteInput(countsStream);
 
       if ((options & HAS_SKIPS) == HAS_SKIPS) {
 
-        long skipsStart = positionsEnd;
-        long skipsEnd = skipsStart + skipsByteLength;
-
-        long skipPositionsStart = skipsEnd;
+        long skipsStart = positionsStart + positionsByteLength;
+        long skipPositionsStart = skipsStart + skipsByteLength;
         long skipPositionsEnd = skipPositionsStart + skipPositionsByteLength;
 
-        assert skipPositionsEnd == endPosition;
+        assert skipPositionsEnd == endPosition - startPosition;
 
-        // we do these here b/c of scoping issues w/ the variables above
-        documentsStream = new BufferedFileDataStream(input, documentStart, documentEnd);
-        documents = new VByteInput(documentsStream);
-        countsStream = new BufferedFileDataStream(input, countsStart, countsEnd);
-        counts = new VByteInput(countsStream);
-        skips = new VByteInput(new BufferedFileDataStream(input, skipsStart, skipsEnd));
-        skipPositionsStream = new BufferedFileDataStream(input, skipPositionsStart,
-                skipPositionsEnd);
+        skips = new VByteInput(iterator.getSubValueStream(skipsStart, skipsByteLength));
+        skipPositionsStream = iterator.getSubValueStream(skipPositionsStart, skipPositionsByteLength);
         skipPositions = new VByteInput(skipPositionsStream);
 
         // load up
@@ -450,14 +432,13 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
         documentsByteFloor = 0;
         countsByteFloor = 0;
       } else {
-        assert positionsEnd == endPosition;
+
+        assert positionsEnd == endPosition - startPosition;
         skips = null;
         skipPositions = null;
-        documents = new VByteInput(new BufferedFileDataStream(input, documentStart, documentEnd));
-        counts = new VByteInput(new BufferedFileDataStream(input, countsStart, countsEnd));
       }
-      documentIndex = 0;
 
+      documentIndex = 0;
       load();
     }
 
@@ -479,11 +460,12 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return builder.toString();
     }
 
-    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
+    public void reset(GenericIndexReader.Iterator i) throws IOException {
+      iterator = i;
       startPosition = iterator.getValueStart();
       endPosition = iterator.getValueEnd();
       dataLength = iterator.getValueLength();
-      input = iterator.getInput();
+      //input = iterator.getInput();
       key = iterator.getKey();
       initialize();
     }
@@ -584,14 +566,14 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     }
 
     public DocumentContext getContext() {
-	return this.context;
+      return this.context;
     }
 
     // This will pass up topdocs information if it's available
     public void setContext(DocumentContext context) {
-	if ((context != null) && TopDocsContext.class.isAssignableFrom(context.getClass()) &&
-              this.hasModifier("topdocs")) {
-        ((TopDocsContext)context).hold = ((ArrayList<TopDocument>) getModifier("topdocs"));
+      if ((context != null) && TopDocsContext.class.isAssignableFrom(context.getClass())
+              && this.hasModifier("topdocs")) {
+        ((TopDocsContext) context).hold = ((ArrayList<TopDocument>) getModifier("topdocs"));
         // remove the pointer to the mod (don't need it anymore)
         this.modifiers.remove("topdocs");
       }
@@ -666,11 +648,7 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
       return 0;
     }
 
-    long startPosition = iterator.getValueStart();
-    long endPosition = iterator.getValueEnd();
-
-    RandomAccessFile input = iterator.getInput();
-    input.seek(startPosition);
+    DataStream input = iterator.getValueStream();
     DataInput stream = new VByteInput(input);
 
     // header information - have to read b/c it's compressed
@@ -685,11 +663,8 @@ public class PositionIndexReader extends KeyListReader implements AggregateReade
     if (iterator == null) {
       return 0;
     }
-    long startPosition = iterator.getValueStart();
-    long endPosition = iterator.getValueEnd();
 
-    RandomAccessFile input = iterator.getInput();
-    input.seek(startPosition);
+    DataStream input = iterator.getValueStream();
     DataInput stream = new VByteInput(input);
 
     // Can't just seek b/c the numbers are compressed

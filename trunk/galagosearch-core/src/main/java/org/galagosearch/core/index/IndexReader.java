@@ -46,10 +46,11 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class IndexReader extends GenericIndexReader {
 
+  // this input reader needs to be accesed in a synchronous manner.
+  final RandomAccessFile input;
+  // other variables do not
   VocabularyReader vocabulary;
-  RandomAccessFile input;
   Parameters manifest;
-  //int blockSize = 65536;
   int blockSize;
   int vocabGroup = 16;
   long vocabularyOffset;
@@ -141,10 +142,6 @@ public class IndexReader extends GenericIndexReader {
       decompressedData = null;
     }
 
-    public RandomAccessFile getInput() throws IOException {
-      return input;
-    }
-
     /**
      * Returns the key associated with the current inverted list.
      */
@@ -156,12 +153,14 @@ public class IndexReader extends GenericIndexReader {
       byte[] currentKey = this.key;
       byte[] blockFirstKey = block.keys[0];
       byte[] blockLastKey = block.keys[block.keys.length - 1];
-      
-      // check if the desired key is in the current block
-      if ( (Utility.compare(key, blockFirstKey) >= 0)
-         && (Utility.compare(key, blockLastKey) <= 0)) {
 
-        if( Utility.compare(key, currentKey) < 0 ){
+      // check if the desired key is in the current block
+      if ((Utility.compare(key, blockFirstKey) >= 0)
+              && (Utility.compare(key, blockLastKey) <= 0)) {
+
+        if (Utility.compare(key, currentKey) < 0) {
+          // if the desired key preceeds the current key
+          // -> reset the vocab block
           keyIndex = 0;
         }
 
@@ -174,7 +173,7 @@ public class IndexReader extends GenericIndexReader {
           keyIndex++;
         }
 
-        
+
         // otherwise we have to get a new block
       } else {
         TermSlot slot = vocabulary.get(key);
@@ -207,11 +206,11 @@ public class IndexReader extends GenericIndexReader {
       byte[] currentKey = this.key;
       byte[] blockLastKey = block.keys[block.keys.length - 1];
 
-      if(done || (Utility.compare( key, currentKey) < 0)){
+      if (done || (Utility.compare(key, currentKey) < 0)) {
         // this means that the required key does not exist in the index.
         return;
       }
-            
+
       // check if the desired key is in the current block
       if (Utility.compare(key, blockLastKey) <= 0) {
 
@@ -318,6 +317,29 @@ public class IndexReader extends GenericIndexReader {
       }
     }
 
+    public DataStream getSubValueStream(long offset, long length) throws IOException {
+      if (isCompressed) {
+        // Lazy decompression allows fast scans over the key space
+        // of a table without decompressing all the values.
+        if (decompressedData == null) {
+          decompressBlock();
+        }
+
+        return new MemoryDataStream(decompressedData, (int) offset, (int) length);
+      } else {
+
+        long absoluteStart = getValueStart() + offset;
+        long absoluteEnd = getValueStart() + offset + length;
+        long fileLength = input.length();
+        absoluteEnd = Math.min(Math.min(fileLength, absoluteEnd), getValueEnd());
+
+        assert absoluteStart <= absoluteEnd;
+
+        // the end of the sub value is the min of fileLength, valueEnd, or (offset+length);
+        return new BufferedFileDataStream(input, absoluteStart, absoluteEnd);
+      }
+    }
+
     /**
      * Returns the byte offset
      * of the beginning of the current inverted list,
@@ -355,8 +377,11 @@ public class IndexReader extends GenericIndexReader {
     void decompressBlock() throws IOException {
       int blockLength = (int) (block.getValuesEnd() - block.getValuesStart());
       byte[] data = new byte[blockLength];
-      input.seek(block.getValuesStart());
-      input.readFully(data);
+
+      synchronized (input) {
+        input.seek(block.getValuesStart());
+        input.readFully(data);
+      }
 
       ByteArrayInputStream in = new ByteArrayInputStream(data);
       DataInputStream dataIn = new DataInputStream(in);
@@ -377,7 +402,7 @@ public class IndexReader extends GenericIndexReader {
 
     private String print_bytes(byte[] key) {
       StringBuilder sb = new StringBuilder();
-      for(byte b : key){
+      for (byte b : key) {
         sb.append(b).append(",");
       }
       return sb.toString();
@@ -397,29 +422,36 @@ public class IndexReader extends GenericIndexReader {
     // Seek to the end of the file
     long length = input.length();
     footerOffset = length - 2 * Integer.SIZE / 8 - 3 * Long.SIZE / 8 - 1;
-    input.seek(footerOffset);
 
-    // Now, read metadata values:
-    vocabularyOffset = input.readLong();
-    manifestOffset = input.readLong();
-    blockSize = input.readInt();
-    vocabGroup = input.readInt();
-    isCompressed = input.readBoolean();
-    long magicNumber = input.readLong();
+    /* in a constructor this is not strictly necessary
+     * no other threads can use this object before it's creation
+     * However, I'm wrapping *all* usage.
+     */
+    synchronized (input) {
+      input.seek(footerOffset);
+      // Now, read metadata values:
+      vocabularyOffset = input.readLong();
+      manifestOffset = input.readLong();
+      blockSize = input.readInt();
+      vocabGroup = input.readInt();
+      isCompressed = input.readBoolean();
+      long magicNumber = input.readLong();
+      if (magicNumber != IndexWriter.MAGIC_NUMBER) {
+        throw new IOException("This does not appear to be an index file (wrong magic number)");
+      }
 
-    if (magicNumber != IndexWriter.MAGIC_NUMBER) {
-      throw new IOException("This does not appear to be an index file (wrong magic number)");
+      long invertedListLength = vocabularyOffset;
+      long vocabularyLength = manifestOffset - vocabularyOffset;
+
+      input.seek(vocabularyOffset);
+      vocabulary = new VocabularyReader(input, invertedListLength, vocabularyLength);
+
+
+      input.seek(manifestOffset);
+      byte[] xmlData = new byte[(int) (footerOffset - manifestOffset)];
+      input.read(xmlData);
+      manifest = new Parameters(xmlData);
     }
-    long invertedListLength = vocabularyOffset;
-    long vocabularyLength = manifestOffset - vocabularyOffset;
-
-    input.seek(vocabularyOffset);
-    vocabulary = new VocabularyReader(input, invertedListLength, vocabularyLength);
-
-    input.seek(manifestOffset);
-    byte[] xmlData = new byte[(int) (footerOffset - manifestOffset)];
-    input.read(xmlData);
-    manifest = new Parameters(xmlData);
   }
 
   /**
@@ -495,7 +527,9 @@ public class IndexReader extends GenericIndexReader {
    * Closes all files associated with the IndexReader.
    */
   public void close() throws IOException {
-    input.close();
+    synchronized (input) {
+      input.close();
+    }
   }
 
   /**************/
@@ -619,21 +653,5 @@ public class IndexReader extends GenericIndexReader {
 
     boolean result = (magicNumber == IndexWriter.MAGIC_NUMBER);
     return result;
-  }
-
-  /**
-   * TESTING FUNCTION -- TO BE DELETED
-   */
-  public static void main(String[] args) throws Exception {
-    String folder = args[0];
-    System.err.println(folder);
-
-    IndexReader reader = new IndexReader(folder);
-    Iterator i = reader.getIterator();
-    while (!i.isDone()) {
-      String key = Utility.toString(i.getKey());
-      System.err.println(key);
-      i.nextKey();
-    }
   }
 }

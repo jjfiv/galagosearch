@@ -4,6 +4,7 @@ package org.galagosearch.core.index;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import org.galagosearch.core.index.corpus.SplitIndexReader;
+import org.galagosearch.tupleflow.BufferedFileDataStream;
 import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
@@ -35,194 +36,195 @@ import org.galagosearch.tupleflow.Utility;
  */
 public abstract class GenericIndexReader {
 
-    public abstract class Iterator implements Comparable<Iterator> {
-
-        /*
-         * Return the file containing the current value.
-         *  - it is not guarenteed that it is currently pointing
-         *    at the start of the current value
-         */
-        public abstract RandomAccessFile getInput() throws IOException;
-
-        /**
-         * Returns the current key.
-         */
-        public abstract byte[] getKey();
-
-        /*
-         * find the provided key + move iterator to it
-         */
-        public abstract void find(byte[] key) throws IOException;
-
-        /*
-         * Skip iterator to the provided key
-         *  - key must be greater than or equal to the current key.
-         */
-        public abstract void skipTo(byte[] key) throws IOException;
-
-        /**
-         * Advances to the next key in the index.
-         */
-        public abstract boolean nextKey() throws IOException;
-
-        /**
-         * Returns true if no more keys remain to be read.
-         */
-        public abstract boolean isDone();
-
-        /**
-         * Returns the length of the value, in bytes.
-         */
-        public abstract long getValueLength() throws IOException;
-
-        /**
-         * Returns the value as a buffered stream.
-         */
-        public abstract DataStream getValueStream() throws IOException;
-
-        /**
-         *  Returns the byte offset
-         *  of the beginning of the current value
-         *   - note that the corresponding file is returned by
-         */
-        public abstract long getValueStart() throws IOException;
-
-        /**
-         * Returns the byte offset
-         * of the end of the current value,
-         * relative to the start of the whole inverted file.
-         */
-        public abstract long getValueEnd() throws IOException;
-
-        //**********************//
-        // Implemented Functions
-        /**
-         * Returns the value as a string.
-         */
-        public byte[] getValueBytes() throws IOException {
-            DataStream stream = getValueStream();
-            assert stream.length() < Integer.MAX_VALUE;
-            byte[] data = new byte[(int) stream.length()];
-            stream.readFully(data);
-            return data;
-        }
-
-        /**
-         * Returns the value as a string.
-         */
-        public String getValueString() throws IOException {
-            byte[] data = getValueBytes();
-            return Utility.toString(data);
-        }
-
-        /**
-         * Comparator - allows iterators to be read in parallel efficiently
-         */
-        public int compareTo(GenericIndexReader.Iterator i) {
-            return Utility.compare(this.getKey(), i.getKey());
-        }
-    }
-
-    // Abstract functions
-    /**
-     * Returns a Parameters object that contains metadata about
-     * the contents of the index.  This is the place to store important
-     * data about the index contents, like what stemmer was used or the
-     * total number of terms in the collection.
-     */
-    public abstract Parameters getManifest();
+  public abstract class Iterator implements Comparable<Iterator> {
 
     /**
-     * Returns the vocabulary structure for this IndexReader.
-     *  - Note that the vocabulary contains only
-     *    the first key in each block.
+     * Returns the current key.
      */
-    public abstract VocabularyReader getVocabulary();
-
-    /**
-     * Returns an iterator pointing to the very first key in the index.
-     * This is typically used for iterating through the entire index,
-     * which might be useful for testing and debugging tools, but probably
-     * not for traditional document retrieval.
-     */
-    public abstract Iterator getIterator() throws IOException;
-
-    /**
-     * Returns an iterator pointing at a specific key.  Returns
-     * null if the key is not found in the index.
-     */
-    public abstract Iterator getIterator(byte[] key) throws IOException;
-
-    /**
-     * Closes all files associated with the IndexReader.
-     */
-    public abstract void close() throws IOException;
-
-    // Implemented functions
-    /**
-     * Returns the value stored in the index associated with this key.
-     */
-    public String getValueString(byte[] key) throws IOException {
-        Iterator iter = getIterator(key);
-
-        if (iter == null) {
-            return null;
-        }
-
-        return iter.getValueString();
-    }
-
-    /**
-     * Returns the value stored in the index associated with this key.
-     */
-    public byte[] getValueBytes(byte[] key) throws IOException {
-        Iterator iter = getIterator(key);
-
-        if (iter == null) {
-            return null;
-        }
-        return iter.getValueBytes();
-    }
-
-    /**
-     * Gets the value stored in the index associated with this key.
-     *
-     * @param key
-     * @return The index value for this key, or null if there is no such value.
-     * @throws java.io.IOException
-     */
-    public DataStream getValueStream(byte[] key) throws IOException {
-        Iterator iter = getIterator(key);
-
-        if (iter == null) {
-            return null;
-        }
-        return iter.getValueStream();
-    }
+    public abstract byte[] getKey();
 
     /*
-     * Static function to open an index file or folder
+     * find the provided key + move iterator to it
      */
-    public static GenericIndexReader getIndexReader(String pathname) throws IOException {
-        if (SplitIndexReader.isParallelIndex(pathname)) {
-            return new SplitIndexReader(pathname);
-        } else if (IndexReader.isIndexFile(pathname)) {
-            return new IndexReader(pathname);
-        } else {
-            return null;
-        }
+    public abstract void find(byte[] key) throws IOException;
+
+    /*
+     * Skip iterator to the provided key
+     *  - key must be greater than or equal to the current key.
+     */
+    public abstract void skipTo(byte[] key) throws IOException;
+
+    /**
+     * Advances to the next key in the index.
+     */
+    public abstract boolean nextKey() throws IOException;
+
+    /**
+     * Returns true if no more keys remain to be read.
+     */
+    public abstract boolean isDone();
+
+    /**
+     * Returns the length of the value, in bytes.
+     */
+    public abstract long getValueLength() throws IOException;
+
+    /**
+     * Returns the value as a buffered stream.
+     */
+    public abstract DataStream getValueStream() throws IOException;
+
+     /**
+     * Returns a data stream for a subset of the value stream
+     */
+    public abstract DataStream getSubValueStream(long offset, long length) throws IOException ;
+
+
+      /**
+       *  Returns the byte offset
+       *  of the beginning of the current value
+       *   - note that the corresponding file is returned by
+       */
+    
+
+    public abstract long getValueStart() throws IOException;
+
+    /**
+     * Returns the byte offset
+     * of the end of the current value,
+     * relative to the start of the whole inverted file.
+     */
+    public abstract long getValueEnd() throws IOException;
+
+    //**********************//
+    // Implemented Functions
+    /**
+     * Returns the value as a string.
+     */
+    public byte[] getValueBytes() throws IOException {
+      DataStream stream = getValueStream();
+      assert stream.length() < Integer.MAX_VALUE;
+      byte[] data = new byte[(int) stream.length()];
+      stream.readFully(data);
+      return data;
     }
 
     /**
-     * Static function to check if the path contains an index of some type
+     * Returns the value as a string.
      */
-    public static boolean isIndex(String pathname) throws IOException {
-        if (SplitIndexReader.isParallelIndex(pathname)) {
-            return true;
-        }
-        if (IndexReader.isIndexFile(pathname)) {
-            return true;
-        }
-        return false;
+    public String getValueString() throws IOException {
+      byte[] data = getValueBytes();
+      return Utility.toString(data);
     }
+
+    /**
+     * Comparator - allows iterators to be read in parallel efficiently
+     */
+    public int compareTo(GenericIndexReader.Iterator i) {
+      return Utility.compare(this.getKey(), i.getKey());
+    }
+  }
+
+  // Abstract functions
+  /**
+   * Returns a Parameters object that contains metadata about
+   * the contents of the index.  This is the place to store important
+   * data about the index contents, like what stemmer was used or the
+   * total number of terms in the collection.
+   */
+  public abstract Parameters getManifest();
+
+  /**
+   * Returns the vocabulary structure for this IndexReader.
+   *  - Note that the vocabulary contains only
+   *    the first key in each block.
+   */
+  public abstract VocabularyReader getVocabulary();
+
+  /**
+   * Returns an iterator pointing to the very first key in the index.
+   * This is typically used for iterating through the entire index,
+   * which might be useful for testing and debugging tools, but probably
+   * not for traditional document retrieval.
+   */
+  public abstract Iterator getIterator() throws IOException;
+
+  /**
+   * Returns an iterator pointing at a specific key.  Returns
+   * null if the key is not found in the index.
+   */
+  public abstract Iterator getIterator(byte[] key) throws IOException;
+
+  /**
+   * Closes all files associated with the IndexReader.
+   */
+  public abstract void close() throws IOException;
+
+  // Implemented functions
+  /**
+   * Returns the value stored in the index associated with this key.
+   */
+  public String getValueString(byte[] key) throws IOException {
+    Iterator iter = getIterator(key);
+
+    if (iter == null) {
+      return null;
+    }
+
+    return iter.getValueString();
+  }
+
+  /**
+   * Returns the value stored in the index associated with this key.
+   */
+  public byte[] getValueBytes(byte[] key) throws IOException {
+    Iterator iter = getIterator(key);
+
+    if (iter == null) {
+      return null;
+    }
+    return iter.getValueBytes();
+  }
+
+  /**
+   * Gets the value stored in the index associated with this key.
+   *
+   * @param key
+   * @return The index value for this key, or null if there is no such value.
+   * @throws java.io.IOException
+   */
+  public DataStream getValueStream(byte[] key) throws IOException {
+    Iterator iter = getIterator(key);
+
+    if (iter == null) {
+      return null;
+    }
+    return iter.getValueStream();
+  }
+
+  /*
+   * Static function to open an index file or folder
+   */
+  public static GenericIndexReader getIndexReader(String pathname) throws IOException {
+    if (SplitIndexReader.isParallelIndex(pathname)) {
+      return new SplitIndexReader(pathname);
+    } else if (IndexReader.isIndexFile(pathname)) {
+      return new IndexReader(pathname);
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Static function to check if the path contains an index of some type
+   */
+  public static boolean isIndex(String pathname) throws IOException {
+    if (SplitIndexReader.isParallelIndex(pathname)) {
+      return true;
+    }
+    if (IndexReader.isIndexFile(pathname)) {
+      return true;
+    }
+    return false;
+  }
 }

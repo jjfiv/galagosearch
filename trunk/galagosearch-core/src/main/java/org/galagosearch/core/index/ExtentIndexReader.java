@@ -10,6 +10,7 @@ import org.galagosearch.core.retrieval.query.NodeType;
 import org.galagosearch.core.retrieval.structured.*;
 import org.galagosearch.core.util.ExtentArray;
 import org.galagosearch.tupleflow.BufferedFileDataStream;
+import org.galagosearch.tupleflow.DataStream;
 import org.galagosearch.tupleflow.Parameters;
 import org.galagosearch.tupleflow.Utility;
 import org.galagosearch.tupleflow.VByteInput;
@@ -53,9 +54,9 @@ public class ExtentIndexReader extends KeyListReader {
 
   public class ListIterator extends KeyListReader.ListIterator implements CountIterator, ExtentIterator {
 
+    GenericIndexReader.Iterator iterator;
+    DataStream dataStream;
     VByteInput data;
-    BufferedFileDataStream dataStream;
-    RandomAccessFile input;
     long startPosition, endPosition;
     int documentCount;
     int options;
@@ -75,12 +76,12 @@ public class ExtentIndexReader extends KeyListReader {
       reset(iterator);
     }
 
-    public void reset(GenericIndexReader.Iterator iterator) throws IOException {
+    public void reset(GenericIndexReader.Iterator i) throws IOException {
+      iterator = i;
       startPosition = iterator.getValueStart();
       endPosition = iterator.getValueEnd();
       dataLength = iterator.getValueLength();
       key = iterator.getKey();
-      input = iterator.getInput();
       reset();
     }
 
@@ -108,8 +109,9 @@ public class ExtentIndexReader extends KeyListReader {
     }
 
     private void initialize() throws IOException {
-      input.seek(startPosition);
-      DataInput stream = new VByteInput(input);
+//      DataStream valueStream = iterator.getSubValueStream(0, dataLength);
+      DataStream valueStream = iterator.getValueStream();
+      DataInput stream = new VByteInput(valueStream);
 
       options = stream.readInt();
       documentCount = stream.readInt();
@@ -117,29 +119,30 @@ public class ExtentIndexReader extends KeyListReader {
       documentIndex = 0;
 
       long dataStart = 0;
-      long dataEnd = 0;
+      long dataLength = 0;
 
       // check for skips
       if ((options & HAS_SKIPS) == HAS_SKIPS) {
         skipDistance = stream.readInt();
         numSkips = stream.readInt();
-        long remainingLength = stream.readLong();
-        dataStart = input.getFilePointer();
-        dataEnd = dataStart + remainingLength;
+        dataLength = stream.readLong();
+        dataStart = valueStream.getPosition();
       } else {
         skipDistance = 0;
         numSkips = 0;
-        dataStart = input.getFilePointer();
-        dataEnd = endPosition;
+        dataStart = valueStream.getPosition();
+        dataLength = endPosition - dataStart;
       }
 
       // Load data stream
-      dataStream = new BufferedFileDataStream(input, dataStart, dataEnd);
+      dataStream = iterator.getSubValueStream(dataStart, dataLength);
       data = new VByteInput(dataStream);
 
       // Now load skips if they're in
       if (skipDistance > 0) {
-        skips = new VByteInput(new BufferedFileDataStream(input, dataEnd, endPosition));
+        long skipStart = dataStart + dataLength;
+        long skipLength = endPosition - skipStart;
+        skips = new VByteInput( iterator.getSubValueStream(skipStart, skipLength) );
         nextSkipDocument = skips.readInt();
         lastSkipPosition = 0;
         skipsRead = 0;
