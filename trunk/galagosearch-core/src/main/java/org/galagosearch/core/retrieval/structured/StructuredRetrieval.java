@@ -441,16 +441,6 @@ public class StructuredRetrieval implements Retrieval {
     return index.get(index_key).getName(document);
   }
 
-  protected Node parseQuery(String query, Parameters parameters) {
-    String queryType = parameters.get("queryType", "complex");
-
-    if (queryType.equals("simple")) {
-      return SimpleQuery.parseTree(query);
-    }
-
-    return StructuredQuery.parse(query);
-  }
-
   public StructuredIterator createIterator(Node node, DocumentContext context) throws Exception {
     return createIterator(node, context, this.rankedFeatureFactory.get(node.getIndexTarget(default_index)));
   }

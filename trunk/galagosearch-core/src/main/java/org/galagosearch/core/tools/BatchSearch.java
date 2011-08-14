@@ -21,16 +21,6 @@ import org.galagosearch.tupleflow.Utility;
  */
 public class BatchSearch {
 
-  public static Node parseQuery(String query, Parameters parameters) {
-    String queryType = parameters.get("queryType", "complex");
-
-    if (queryType.equals("simple")) {
-      return SimpleQuery.parseTree(query);
-    }
-
-    return StructuredQuery.parse(query);
-  }
-
   public static String formatScore(double score) {
     double difference = Math.abs(score - (int) score);
 

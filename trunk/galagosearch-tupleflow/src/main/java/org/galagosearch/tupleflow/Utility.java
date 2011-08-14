@@ -287,6 +287,21 @@ public class Utility {
     return join(args, " ");
   }
 
+
+  public static String join(Object[] args, String delimiter) {
+    String output = "";
+    StringBuilder builder = new StringBuilder();
+
+    for (Object arg : args) {
+      if (builder.length() > 0) {
+        builder.append(delimiter);
+      }
+      builder.append(arg.toString());
+    }
+
+    return builder.toString();
+  }
+
   public static String caps(String input) {
     if (input.length() == 0) {
       return input;
