@@ -52,7 +52,7 @@ public class ExtentIndexReader extends KeyListReader {
     }
   }
 
-  public class ListIterator extends KeyListReader.ListIterator implements CountIterator, ExtentIterator {
+  public class ListIterator extends KeyListReader.ListIterator implements CountValueIterator, ExtentValueIterator {
 
     GenericIndexReader.Iterator iterator;
     DataStream dataStream;
