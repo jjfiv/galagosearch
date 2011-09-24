@@ -85,7 +85,7 @@ public class StructuredRetrieval implements Retrieval {
     runner = null;
   }
 
-  /** 
+  /**
    * For this constructor, being sent a filename path to the indicies, 
    * we first list out all the directories in the path. If there are none, then 
    * we can safely assume that the filename specifies a single index (the files 
@@ -101,37 +101,7 @@ public class StructuredRetrieval implements Retrieval {
     this.rankedFeatureFactory = new HashMap<String, FeatureFactory>();
 
     default_index = addIndex(new StructuredIndex(filename), parameters);
-
     runner = null;
-
-    /*  [sjh] -- this code isn't doing anything 
-     *        -- i'd prefer a different system of identifying a set of indexes.
-     * 
-    File dir = new File(filename);
-    // This filter only returns directories
-    FileFilter fileFilter = new FileFilter() {
-    public boolean accept(File file) {
-    return file.isDirectory();
-    }
-    };
-    File[] files = dir.listFiles(fileFilter);
-    
-    // This doesn't work for the way we normally strcuture indexes.
-    if(files.length < 2) {
-    if (true) {
-    default_index = addIndex(new StructuredIndex(filename), parameters);
-    }
-    
-    else {
-        for(File file : files)
-        {
-            String key = addIndex(new StructuredIndex(file.toString()), parameters);
-            if(default_index == null)
-                default_index = key;
-        }
-    }
-     * 
-     */
   }
 
   /**
@@ -312,16 +282,17 @@ public class StructuredRetrieval implements Retrieval {
 
     while (!iterator.isDone()) {
       int document = iterator.currentCandidate();
+      lengthsIterator.skipToKey(document);
+      int length = lengthsIterator.getCurrentLength();
+      // This context is shared among all scorers
+      context.document = document;
+      context.length = length;
+
       if (iterator.hasMatch(document)) {
-        lengthsIterator.skipToKey(document);
-        int length = lengthsIterator.getCurrentLength();
-        // This context is shared among all scorers
-        context.document = document;
-        context.length = length;
         double score = iterator.score();
-	if (parameters.containsKey("rescale")) {
-	    score = score - iterator.maximumScore();
-	}
+        if (parameters.containsKey("rescale")) {
+          score = score - iterator.maximumScore();
+        }
         CallTable.increment("scored");
         if (requested < 0 || queue.size() <= requested || queue.peek().score < score) {
           ScoredDocument scoredDocument = new ScoredDocument(document, score);
@@ -461,9 +432,9 @@ public class StructuredRetrieval implements Retrieval {
     StructuredIterator iterator;
 
     // first check if the cache contains this node
-    if (iteratorCache.containsKey(node.toString())) {
-      return iteratorCache.get(node.toString());
-    }
+    // if (iteratorCache.containsKey(node.toString())) {
+    //  return iteratorCache.get(node.toString());
+    // }
 
     try {
       for (Node internalNode : node.getInternalNodes()) {

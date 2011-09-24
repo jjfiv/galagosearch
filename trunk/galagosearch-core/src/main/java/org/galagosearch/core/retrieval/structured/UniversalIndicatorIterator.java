@@ -43,11 +43,13 @@ public class UniversalIndicatorIterator extends AbstractIndicator {
   }
 
   public boolean getStatus() {
-    return (context.document == this.document);
+    boolean status = MoveIterators.allHasMatch(iterators, document);
+    return (context.document == this.document) && status;
   }
   
   public boolean getStatus(int document) {
-    return (document == this.document);
+    boolean status = MoveIterators.allHasMatch(iterators, document);
+    return (document == this.document) && status;
   }
 
   public boolean isDone() {

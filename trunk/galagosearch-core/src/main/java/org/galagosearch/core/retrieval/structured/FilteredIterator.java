@@ -68,22 +68,21 @@ public class FilteredIterator implements ScoreValueIterator {
 
   public boolean hasMatch(int identifier) {
     if (this.document == identifier) {
-      return indicator.getStatus( identifier );
+      return indicator.getStatus(identifier) && scorer.hasMatch(identifier);
     } else {
       return false;
     }
   }
-  
+
   /* 
    *  BE VERY CAREFUL NOT TO CALL next() INTERNALLY
    */
   public boolean next() throws IOException {
     movePast(document);
-    // use a new doccontext to iterate until the indicator is true
-    while((! isDone()) && (! this.hasMatch( document ))){
+    while ((!isDone()) && (!this.hasMatch(document))) {
       movePast(document);
     }
-    return (! isDone() );
+    return (!isDone());
   }
 
   public boolean moveTo(int identifier) throws IOException {
