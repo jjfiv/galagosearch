@@ -79,6 +79,23 @@ public class MoveIterators {
     return true;
   }
 
+  public static boolean anyHasMatch(ValueIterator[] iterators, int document) {
+    if (iterators.length == 0) {
+      return true;
+    }
+
+    for (ValueIterator iterator : iterators) {
+      if (!iterator.isDone()) {
+        if (iterator.hasMatch(document)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+  
+  
   public static boolean allSameDocument(ValueIterator[] iterators) {
     if (iterators.length == 0) {
       return true;

@@ -51,12 +51,14 @@ public class ExistentialIndicatorIterator extends AbstractIndicator {
 
   @Override
   public boolean getStatus() {
-    return (context.document == this.document);
+    boolean status = MoveIterators.anyHasMatch(iterators, document);
+    return (context.document == this.document) && status;
   }
 
   @Override
   public boolean getStatus(int document) {
-    return (document == this.document);
+    boolean status = MoveIterators.anyHasMatch(iterators, document);
+    return (document == this.document) && status;
   }
 
  public boolean moveTo(int identifier) throws IOException {
