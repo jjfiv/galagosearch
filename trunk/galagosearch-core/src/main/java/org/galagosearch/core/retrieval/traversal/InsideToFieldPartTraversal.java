@@ -25,7 +25,7 @@ public class InsideToFieldPartTraversal implements Traversal {
 
   public InsideToFieldPartTraversal(Parameters parameters, Retrieval retrieval) throws IOException {
     Parameters availableParts = retrieval.getAvailableParts("all");
-    HashSet<String> parts = new HashSet(availableParts.stringList("part"));
+    parts = new HashSet(availableParts.stringList("part"));
   }
 
   public void beforeNode(Node original) throws Exception {
@@ -34,13 +34,15 @@ public class InsideToFieldPartTraversal implements Traversal {
   public Node afterNode(Node original) throws Exception {
     if (original.getOperator().equals("inside")) {
       ArrayList<Node> children = original.getInternalNodes();
+
       if (children.size() != 2) {
         return original;
       }
+
       Node text = children.get(0);
       Node field = children.get(1);
 
-      if( ! parts.contains( "field." +  field.getDefaultParameter())) {
+      if (!parts.contains("field." + field.getDefaultParameter())) {
         return original;
       }
 
