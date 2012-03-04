@@ -1,0 +1,13 @@
+
+package org.galagosearch.core.types;
+
+type DocumentSplit {
+    String fileName;
+    String fileType;
+    boolean isCompressed;
+    bytes startKey;
+    bytes endKey;
+
+    order: ;
+    order: +fileName +startKey;
+};

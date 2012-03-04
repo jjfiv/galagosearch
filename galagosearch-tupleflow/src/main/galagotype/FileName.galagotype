@@ -1,0 +1,9 @@
+
+package org.galagosearch.tupleflow.types;
+
+type FileName {
+    String filename;
+    
+    order: ;
+    order: +filename;
+}
