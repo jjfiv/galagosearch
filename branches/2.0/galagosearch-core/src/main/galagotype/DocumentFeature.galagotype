@@ -1,8 +1,0 @@
-package org.galagosearch.core.types;
-
-type DocumentFeature {
-    long document;
-    double value;
-
-    order: +document;
-}
