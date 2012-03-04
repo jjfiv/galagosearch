@@ -30,7 +30,6 @@ For the most recent version, please use the svn command from:
 Assuming you have installed mvn and checked out the most recent version of galago. Within a terminal, go to the galago directory and run the commands:
 
 {{{
-> ./installlib.sh
 > mvn package
 }}}
 
