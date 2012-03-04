@@ -1,9 +1,0 @@
-
-package org.galagosearch.core.types;
-
-type DocumentIndicator {
-    int document;
-    boolean indicator;
-    
-    order: +document;
-}
