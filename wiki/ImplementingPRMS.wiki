@@ -1,9 +1,0 @@
-#summary How PRM-S model was implemented
-
-= Introduction =
-
-PRM-S (Probabilistic Retrieval Model for Semistructured Data) is a novel retrieval model for structured documents.
-
-A detailed tutorial on the implementation can be found at:
-
- * http://lifidea.wordpress.com/2011/03/10/implementing-prm-s-on-galago/
