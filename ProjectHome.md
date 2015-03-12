@@ -1,0 +1,1 @@
+Galago is a search engine toolkit.  It is useful for learning about search engines and experimenting with new search techniques.  Galago includes TupleFlow, a MapReduce-like distributed computing framework.
